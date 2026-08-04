@@ -90,7 +90,7 @@ export function Navbar() {
       >
         <nav
           aria-label="Primary"
-          className="mx-auto flex h-[var(--nav-h)] w-full max-w-6xl items-center justify-between px-[var(--gutter)] 3xl:max-w-7xl"
+          className="mx-auto flex h-[var(--nav-h)] w-full max-w-[var(--stage)] items-center justify-between px-[calc(var(--gutter)+var(--panel-p)*0.42)]"
         >
           <Logo />
 

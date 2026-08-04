@@ -1,11 +1,23 @@
 import type { ReactNode } from "react";
 import { Section } from "@/components/ui/Section";
+import { Panel } from "@/components/ui/Panel";
+import { Row } from "@/components/ui/Stage";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Reveal, RevealItem } from "@/components/ui/Reveal";
 import { LayerStack } from "@/components/effects/LayerStack";
 
 /**
- * Every claim below is checkable against `data/projects.ts` and the repos it
- * points at. The integer cents, the zero cross-context references and the
+ * An asymmetric pair, not a section with a picture beside it.
+ *
+ * The copy panel is the wider of the two and closes with a bordered fact strip
+ * along its base — the same device the hero uses, so the two read as parts of
+ * one system. The visual panel is narrower and is almost entirely illustration:
+ * it carries a label and then gets out of the way, with the stack bleeding
+ * toward its edges rather than sitting politely inside a content box.
+ *
+ * Every claim in the copy is checkable against `data/projects.ts` and the repos
+ * it points at. The integer cents, the zero cross-context references and the
  * refusal path are the three things that actually distinguish this work, so
  * they lead — a paragraph of adjectives would say less and prove nothing.
  */
@@ -44,49 +56,69 @@ const facts = [
 
 export function About() {
   return (
-    <Section
-      id="about"
-      eyebrow="01 — About"
-      title={
-        <>
-          Correctness first.{" "}
-          <span className="text-emphasis">Everything else is negotiable.</span>
-        </>
-      }
-    >
-      <div className="grid items-start gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
-        {/* ── Copy ───────────────────────────────────────────────────────── */}
-        <Reveal as="div" stagger={0.08}>
-          <div
-            className="space-y-5 leading-relaxed text-fg-muted"
-            style={{ fontSize: "var(--text-lead)" }}
-          >
-            {paragraphs.map((body, i) => (
-              <RevealItem key={i}>
-                <p>{body}</p>
-              </RevealItem>
-            ))}
+    <Section id="about" labelledBy="about-title">
+      <Row split="wide-left">
+        {/* ── Copy ─────────────────────────────────────────────────────── */}
+        <Panel bloom="top-left" className="flex flex-col">
+          <div className="flex flex-1 flex-col px-[var(--panel-p)] pt-[var(--panel-p)]">
+            <SectionHeader
+              id="about"
+              eyebrow="01 — About"
+              title={
+                <>
+                  Correctness first.{" "}
+                  <span className="text-emphasis">Everything else is negotiable.</span>
+                </>
+              }
+            />
+
+            <Reveal as="div" stagger={0.08}>
+              <div
+                className="space-y-6 leading-relaxed text-fg-muted"
+                style={{ fontSize: "var(--text-lead)" }}
+              >
+                {paragraphs.map((body, i) => (
+                  <RevealItem key={i}>
+                    <p>{body}</p>
+                  </RevealItem>
+                ))}
+              </div>
+            </Reveal>
           </div>
 
-          <RevealItem>
-            <dl className="mt-10 grid gap-x-8 gap-y-6 border-t border-line-subtle pt-8 sm:grid-cols-3">
-              {facts.map((f) => (
-                <div key={f.label}>
-                  <dt className="label text-fg-subtle">{f.label}</dt>
-                  <dd className="mt-2.5 text-sm font-medium leading-snug text-fg">
-                    {f.value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </RevealItem>
-        </Reveal>
+          {/* Fact strip — closes the panel, mirroring the hero's proof strip. */}
+          <dl className="mt-[clamp(2.5rem,4vw,4rem)] grid border-t border-line-subtle sm:grid-cols-3">
+            {facts.map((f, i) => (
+              <div
+                key={f.label}
+                className={`px-[var(--panel-p)] py-6 sm:px-[clamp(1.25rem,2vw,2rem)] ${
+                  i > 0 ? "border-t border-line-subtle sm:border-l sm:border-t-0" : ""
+                }`}
+              >
+                <dt className="label text-fg-subtle">{f.label}</dt>
+                <dd className="mt-2.5 text-sm font-medium leading-snug text-fg">
+                  {f.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </Panel>
 
-        {/* ── Visual ─────────────────────────────────────────────────────── */}
-        <Reveal as="div">
-          <LayerStack />
-        </Reveal>
-      </div>
+        {/* ── Visual ───────────────────────────────────────────────────── */}
+        <Panel
+          tone="raised"
+          bloom="centre"
+          sheen={false}
+          className="relative flex min-h-[30rem] flex-col lg:min-h-[38rem]"
+        >
+          <Eyebrow className="absolute left-[var(--panel-p)] top-[var(--panel-p)] z-10">
+            How I lay a system out
+          </Eyebrow>
+          <div className="flex flex-1 items-center px-[clamp(1rem,2vw,2rem)] pb-[var(--panel-p)] pt-[calc(var(--panel-p)*1.4)]">
+            <LayerStack />
+          </div>
+        </Panel>
+      </Row>
     </Section>
   );
 }

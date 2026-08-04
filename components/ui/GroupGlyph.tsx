@@ -78,11 +78,14 @@ const GLYPHS: Record<GlyphKey, ReactNode> = {
 };
 
 /**
- * Decorative by design — the group title sits directly beside it, so the glyph
+ * Decorative by design — the group title sits directly beneath it, so the glyph
  * adds no information a screen reader is missing.
  *
- * The hover lift reads `group-hover`, so the nearest ancestor carrying `group`
- * (the Panel) owns the interaction.
+ * The tile is now a *miniature panel* rather than an accent chip: `edge-lit`
+ * gives it the same gradient hairline the page's large panels carry, so six of
+ * these standing in a row read as part of the same lit surface instead of six
+ * ringed badges. It also lost its hover lift — the toolkit is a band of
+ * columns now, and there is no interactive card underneath it to key off.
  */
 export function GroupGlyph({
   glyph,
@@ -95,16 +98,14 @@ export function GroupGlyph({
     <span
       aria-hidden="true"
       className={cn(
-        "inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-lg",
-        "border border-accent-line bg-accent-soft text-accent shadow-e1",
-        "transition-transform duration-[var(--dur-mid)] ease-[var(--ease-out-expo)]",
-        "group-hover:-translate-y-0.5 group-hover:scale-[1.04]",
+        "edge-lit inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl",
+        "bg-accent-soft text-accent",
         className,
       )}
     >
       <svg
-        width="24"
-        height="24"
+        width="22"
+        height="22"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"

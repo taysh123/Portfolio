@@ -2,13 +2,14 @@
 
 import { useCallback, useState } from "react";
 import { Section } from "@/components/ui/Section";
-import { Reveal, RevealItem } from "@/components/ui/Reveal";
+import { Panel } from "@/components/ui/Panel";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+import { Reveal } from "@/components/ui/Reveal";
 import { FeaturedProject } from "@/components/ui/FeaturedProject";
-import { ProjectCard } from "@/components/ui/ProjectCard";
+import { ProjectRow } from "@/components/ui/ProjectRow";
 import { CaseStudyPanel } from "@/components/ui/CaseStudyPanel";
 import { ButtonLink } from "@/components/ui/Button";
 import { GithubIcon } from "@/components/ui/icons";
-import { cn } from "@/lib/cn";
 import { projects, featuredProject } from "@/data/projects";
 import { socials } from "@/data/socials";
 import type { Project } from "@/data/projects";
@@ -16,16 +17,26 @@ import type { Project } from "@/data/projects";
 const rest = projects.filter((p) => p.id !== featuredProject.id);
 
 /**
- * Selected work.
+ * Selected work — the largest region on the page, because it carries the whole
+ * argument.
  *
- * A bento rhythm rather than a uniform grid: one lead panel, two half-width
- * cards, three third-width cards. The size a project gets is proportional to
- * how much it proves — which is a real editorial decision the reader can feel,
- * and it avoids the flat "six identical tiles" look.
+ * Three movements, not a grid:
  *
- * This replaces a 3D carousel that showed one project per ~1,200px of scroll,
- * blurred the other five, auto-advanced against the reader, and re-announced
- * itself to screen readers every 4.2 seconds.
+ *   1. a slim header panel that establishes the full 88rem stage,
+ *   2. the lead project as ONE floating panel at ~80vh, its capture bleeding
+ *      to the panel edge,
+ *   3. five full-width rows, each its own panel, the capture alternating side
+ *      down the page.
+ *
+ * The previous version was a featured panel plus a 3-up grid of ~380px cards.
+ * Five equally-sized tiles say "here are five more things"; five rows the
+ * width of the stage say "here are five more projects, each of which gets the
+ * room to make its case". The size a project gets is the editorial judgement,
+ * and it is the thing a reader feels before they read a word.
+ *
+ * This also replaces a 3D carousel that showed one project per ~1,200px of
+ * scroll, blurred the other five, auto-advanced against the reader, and
+ * re-announced itself to screen readers every 4.2 seconds.
  */
 export function Projects() {
   const [caseStudy, setCaseStudy] = useState<Project | null>(null);
@@ -36,54 +47,59 @@ export function Projects() {
     <>
       <Section
         id="work"
-        eyebrow="02 — Selected work"
-        title="Six projects, built end to end"
-        intro="Each one designed, written, tested and shipped alone. The case studies cover what was actually hard — and what each one still isn't."
-        aside={
-          <ButtonLink
-            href={socials.github.url}
-            external
-            variant="ghost"
-            size="sm"
-            arrow
-          >
-            <GithubIcon size={15} />
-            All repositories
-          </ButtonLink>
-        }
+        labelledBy="work-title"
+        className="flex flex-col gap-[var(--gap)]"
       >
-        <Reveal as="div">
+        {/* ── Header ─────────────────────────────────────────────────────
+            Padded rather than `inset` so the header's own bottom margin can
+            close the panel — an `inset` panel would double it. */}
+        <Panel
+          bloom="top-left"
+          className="px-[var(--panel-p)] pb-0 pt-[var(--panel-p)]"
+        >
+          <SectionHeader
+            id="work"
+            wide
+            eyebrow="02 — Selected work"
+            title="Six projects, built end to end"
+            intro="Each one designed, written, tested and shipped alone. The case studies cover what was actually hard — and what each one still isn't."
+            aside={
+              <ButtonLink href={socials.github.url} external variant="secondary" arrow>
+                <GithubIcon size={15} />
+                All repositories
+              </ButtonLink>
+            }
+          />
+        </Panel>
+
+        {/* ── The lead project ───────────────────────────────────────────
+            The motion wrapper is an ANCESTOR of the panel, never the panel
+            itself: Framer writes an inline transform when the reveal settles,
+            and an inline transform beats a `hover:-translate-y` class, which
+            would kill every panel's hover lift. */}
+        <Reveal>
           <FeaturedProject project={featuredProject} onOpenCaseStudy={open} />
         </Reveal>
 
-        <Reveal
-          as="ul"
-          stagger={0.08}
-          className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-6"
-        >
-          {rest.map((project, i) => {
-            // First two get half width on xl, the remaining three get a third.
-            const wide = i < 2;
-            return (
-              <RevealItem
-                key={project.id}
-                as="li"
-                className={cn(
-                  "min-w-0",
-                  wide ? "xl:col-span-3" : "xl:col-span-2",
-                  // 5 cards in a 2-col layout leaves an orphan — let it span.
-                  i === rest.length - 1 && "md:col-span-2 xl:col-span-2",
-                )}
-              >
-                <ProjectCard
+        {/* ── The rest, as rows ──────────────────────────────────────────
+            Each row reveals on its own as you reach it rather than being
+            staggered off one container trigger — a 5-row container is taller
+            than the viewport, so a shared trigger would have finished
+            animating long before the last row was ever on screen. */}
+        <ul className="flex flex-col gap-[var(--gap)]">
+          {rest.map((project, i) => (
+            <li key={project.id}>
+              <Reveal>
+                <ProjectRow
                   project={project}
-                  size={wide ? "md" : "sm"}
+                  index={i + 2}
+                  reverse={i % 2 === 1}
                   onOpenCaseStudy={open}
                 />
-              </RevealItem>
-            );
-          })}
-        </Reveal>
+              </Reveal>
+            </li>
+          ))}
+        </ul>
       </Section>
 
       <CaseStudyPanel project={caseStudy} onClose={close} />

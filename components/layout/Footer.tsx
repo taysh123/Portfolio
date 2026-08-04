@@ -16,8 +16,8 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="relative border-t border-line-subtle px-[var(--gutter)] py-12">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 sm:flex-row sm:items-end sm:justify-between 3xl:max-w-7xl">
+    <footer className="relative mt-[var(--gap)] px-[var(--gutter)] py-14">
+      <div className="mx-auto flex w-full max-w-[var(--stage)] flex-col gap-8 border-t border-line-subtle pt-10 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <Logo label={`${siteMeta.name} — back to top`} />
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-fg-muted">

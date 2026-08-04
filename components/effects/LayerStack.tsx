@@ -69,8 +69,8 @@ const LAYERS: Layer[] = [
 ];
 
 /** Depth between slabs, and how far a hovered slab pulls out of the stack. */
-const Z_STEP = 170;
-const Z_LIFT = 48;
+const Z_STEP = 196;
+const Z_LIFT = 62;
 
 /** Index 2 (Domain) sits at z = 0, so the stack is centred on the middle slab. */
 const CENTRE = 2;
@@ -80,24 +80,26 @@ export function LayerStack() {
   const [hovered, setHovered] = useState<string | null>(null);
 
   return (
-    <figure className="relative isolate [--k:0] lg:[--k:1]">
-      <figcaption className="mb-6 lg:mb-3">
-        <h3 id="layer-stack-title" className="label text-fg-subtle">
-          How I lay a system out
-        </h3>
+    // `w-full` is load-bearing: at `lg` every child is absolutely positioned, so
+    // the figure has no intrinsic width and collapses to nothing as a flex item.
+    <figure className="relative isolate w-full [--k:0] lg:[--k:1]">
+      {/* The visible label is rendered by the About panel; this keeps the
+          list's accessible name without printing the heading twice. */}
+      <figcaption className="sr-only">
+        <h3 id="layer-stack-title">How I lay a system out</h3>
       </figcaption>
 
       {/* Atmosphere, and only atmosphere — it sits behind the solid slabs. */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 hidden h-[62%] w-[88%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl lg:block"
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 hidden h-[74%] w-[104%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] blur-[80px] lg:block"
         style={{
           background:
             "radial-gradient(closest-side, var(--glow-strong), var(--glow-blue) 46%, transparent 74%)",
         }}
       />
 
-      <div className="relative lg:h-[35rem]" style={{ perspective: "2000px" }}>
+      <div className="relative lg:h-[40rem]" style={{ perspective: "1700px" }}>
         <div
           className="lg:absolute lg:inset-0"
           style={{
@@ -140,11 +142,12 @@ export function LayerStack() {
                     {
                       "--tz": `${z}px`,
                       transform: "translateZ(calc(var(--tz) * var(--k)))",
+                      background: "var(--panel-fill-deep)",
                     } as CSSProperties
                   }
                   className={cn(
-                    "relative overflow-hidden rounded-xl border border-line-subtle bg-surface-1 px-4 py-3.5 shadow-e1",
-                    "lg:absolute lg:inset-x-4 lg:top-1/2 lg:-mt-10 lg:min-h-20 lg:px-5",
+                    "edge-lit relative overflow-hidden rounded-2xl border border-line px-5 py-4 shadow-e2 backdrop-blur-[10px]",
+                    "lg:absolute lg:inset-x-[6%] lg:top-1/2 lg:-mt-12 lg:min-h-24 lg:px-6 lg:py-5",
                     !reduced &&
                       "lg:transition-transform lg:duration-[var(--dur-mid)] lg:ease-[var(--ease-out-expo)]",
                   )}
@@ -172,7 +175,7 @@ export function LayerStack() {
 
                   <div className="relative flex flex-col gap-2">
                     <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                      <p className="text-sm font-medium tracking-[var(--tracking-heading)] text-fg">
+                      <p className="text-base font-medium tracking-[var(--tracking-heading)] text-fg lg:text-lg">
                         {layer.name}
                       </p>
                       <p className="label text-fg-subtle">{layer.note}</p>
@@ -194,8 +197,9 @@ export function LayerStack() {
           {/* Light columns standing along the stack axis, tying the slabs
               together. `rotateX(90deg)` stands them out of the slab plane, so
               they read as part of the scene rather than lines drawn on it. */}
-          <Spine x="26%" />
-          <Spine x="72%" delay="-2.6s" />
+          <Spine x="18%" />
+          <Spine x="50%" delay="-1.8s" />
+          <Spine x="82%" delay="-3.4s" />
         </div>
       </div>
     </figure>
@@ -210,7 +214,7 @@ function Spine({ x, delay }: { x: string; delay?: string }) {
       style={{ left: x, transformStyle: "preserve-3d" }}
     >
       <span
-        className="anim-pulse absolute left-0 top-0 block h-[44rem] w-px"
+        className="anim-pulse absolute left-0 top-0 block h-[50rem] w-px"
         style={{
           transformOrigin: "0 0",
           transform: "rotateX(90deg) translateY(-50%)",

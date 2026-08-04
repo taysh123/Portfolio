@@ -75,3 +75,22 @@ export const staggerContainer = (stagger = 0.07, delay = 0): Variants => ({
  * card grid) trigger before the reader has scrolled past their top edge.
  */
 export const viewportOnce = { once: true, amount: 0.2 } as const;
+
+/**
+ * Panel entrance. Rises, settles and scales up a touch — a large surface needs
+ * a slightly longer, slightly heavier arrival than a text block, or it reads as
+ * a card popping in rather than an object being placed.
+ */
+export const panelRise: Variants = {
+  hidden: { opacity: 0, y: 40, scale: 0.985 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.85, ease: easeOutExpo },
+  },
+};
+
+/** Viewport trigger for large panels — fires a little earlier than the default
+ *  so a tall panel has begun settling before it dominates the screen. */
+export const viewportPanel = { once: true, amount: 0.08 } as const;
