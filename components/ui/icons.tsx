@@ -235,3 +235,30 @@ export function XIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function CodeIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M8 6 3 12l5 6M16 6l5 6-5 6M13.8 4.2l-3.6 15.6" />
+    </svg>
+  );
+}
+
+export function CheckCircleIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m8.4 12.2 2.4 2.4 4.8-5.2" />
+    </svg>
+  );
+}
+
+/** Isometric container — the shipping/packaging glyph. */
+export function PackageIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M12 2.6 20.5 7v10L12 21.4 3.5 17V7z" />
+      <path d="m3.8 7.2 8.2 4.5 8.2-4.5M12 21.2v-9.5" />
+    </svg>
+  );
+}

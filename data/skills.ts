@@ -1,80 +1,124 @@
-export type SkillEntry = {
-  label: string;
-  emphasis?: "advanced" | "primary";
-};
+/**
+ * Toolkit content.
+ *
+ * A note on the design: there are no per-technology brand logos here, and that
+ * is deliberate. Redrawing ~35 third-party marks from memory produces subtly
+ * wrong logos, which reads worse than no logo — and "guessing logo paths" is a
+ * documented anti-pattern. Instead each *group* carries one purpose-drawn
+ * glyph in the site's own visual language, and the technologies inside are
+ * typeset chips. It stays cohesive, and the grouping does the work the icons
+ * were meant to do.
+ *
+ * Only technologies actually used in the shipped projects appear here.
+ */
 
 export type SkillGroup = {
   id: string;
   title: string;
   caption: string;
-  items: SkillEntry[];
+  glyph: GlyphKey;
+  items: { label: string; emphasis?: boolean }[];
 };
+
+export type GlyphKey =
+  | "language"
+  | "interface"
+  | "service"
+  | "store"
+  | "delivery"
+  | "verify";
 
 export const skillGroups: SkillGroup[] = [
   {
     id: "languages",
     title: "Languages",
-    caption: "Core programming",
+    caption: "Where the thinking happens",
+    glyph: "language",
     items: [
+      { label: "C++", emphasis: true },
       { label: "C" },
-      { label: "C++", emphasis: "advanced" },
-      { label: "Python" },
+      { label: "C#", emphasis: true },
+      { label: "TypeScript", emphasis: true },
+      { label: "Python", emphasis: true },
       { label: "Java" },
-      { label: "JavaScript (ES6+)" },
-      { label: "C#" },
-    ],
-  },
-  {
-    id: "web",
-    title: "Web Technologies",
-    caption: "Frontend craft",
-    items: [
-      { label: "React" },
-      { label: "Next.js" },
-      { label: "Vite" },
-      { label: "CSS3" },
-      { label: "HTML5" },
-    ],
-  },
-  {
-    id: "tools",
-    title: "Tools & Databases",
-    caption: "Systems & data",
-    items: [
+      { label: "JavaScript" },
       { label: "SQL" },
-      { label: "PostgreSQL" },
+    ],
+  },
+  {
+    id: "interface",
+    title: "Interface",
+    caption: "What people actually touch",
+    glyph: "interface",
+    items: [
+      { label: "React", emphasis: true },
+      { label: "Next.js", emphasis: true },
+      { label: "React Native / Expo" },
+      { label: "Tailwind CSS" },
+      { label: "Framer Motion" },
+      { label: "Phaser 3" },
+      { label: "JavaFX" },
+    ],
+  },
+  {
+    id: "service",
+    title: "Services & APIs",
+    caption: "The part that has to stay up",
+    glyph: "service",
+    items: [
+      { label: "ASP.NET Core", emphasis: true },
+      { label: "Clean Architecture" },
+      { label: "CQRS / MediatR" },
+      { label: "REST" },
+      { label: "SignalR" },
+      { label: "RabbitMQ / MassTransit", emphasis: true },
+      { label: "JWT / RS256" },
+    ],
+  },
+  {
+    id: "store",
+    title: "Data & State",
+    caption: "Where the truth lives",
+    glyph: "store",
+    items: [
+      { label: "PostgreSQL", emphasis: true },
+      { label: "SQLite / FTS5", emphasis: true },
+      { label: "Redis" },
+      { label: "EF Core" },
       { label: "MySQL" },
       { label: "Firebase" },
+    ],
+  },
+  {
+    id: "delivery",
+    title: "Delivery",
+    caption: "Getting it into hands",
+    glyph: "delivery",
+    items: [
+      { label: "Docker", emphasis: true },
+      { label: "GitHub Actions", emphasis: true },
+      { label: "Vercel" },
+      { label: "Railway" },
       { label: "Linux" },
       { label: "Git" },
-      { label: "GitHub" },
+      { label: "Capacitor" },
+      { label: "PyInstaller" },
     ],
   },
   {
-    id: "ai",
-    title: "AI & Automation",
-    caption: "Modern engineering edge",
+    id: "verify",
+    title: "Verification",
+    caption: "How I know it works",
+    glyph: "verify",
     items: [
-      { label: "AI-assisted development" },
-      { label: "Claude Code workflows" },
-      { label: "LLM-assisted engineering" },
-      { label: "Prompt-driven development" },
-      { label: "API integration" },
-      { label: "Debugging with AI assistance" },
-    ],
-  },
-  {
-    id: "engineering",
-    title: "Engineering Workflow",
-    caption: "How I build",
-    items: [
-      { label: "Clean architecture" },
-      { label: "Reusable components" },
-      { label: "Version control" },
-      { label: "Iterative development" },
-      { label: "Documentation" },
-      { label: "Maintainable code" },
-      { label: "Testing mindset" },
+      { label: "xUnit", emphasis: true },
+      { label: "Vitest" },
+      { label: "Jest" },
+      { label: "pytest" },
+      { label: "Testcontainers" },
+      { label: "Playwright" },
+      { label: "Claude Code", emphasis: true },
+      { label: "Ollama" },
     ],
   },
 ];

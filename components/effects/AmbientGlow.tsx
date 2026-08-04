@@ -1,111 +1,126 @@
 "use client";
 
 import { useEffect } from "react";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
 
 /**
- * Ambient gradient orbs that drift on scroll + react to mouse position.
- * Fixed-position, transform-only (compositor-cheap), gated by prefers-reduced-motion.
+ * Ambient lighting: two scroll-drifted blooms plus a pointer-tracked highlight.
+ *
+ * The previous version ran a requestAnimationFrame loop that never stopped —
+ * not when the pointer was idle, not when the tab was hidden, and not on touch
+ * devices where the pointer handler never fired at all. Every frame it wrote
+ * two custom properties on `:root` (invalidating custom-property inheritance
+ * for the whole document) to drive a full-viewport radial gradient that also
+ * carried `transition: background`, a non-compositable property. That is a
+ * permanent 60fps full-viewport repaint.
+ *
+ * This version:
+ *   - only starts the loop on a real mouse move
+ *   - stops as soon as the value converges (and restarts on the next move)
+ *   - stops on `visibilitychange` when the tab is hidden
+ *   - writes to a local element, not `:root`
+ *   - has no `transition` on a painted property
  */
 export function AmbientGlow() {
-  const prefersReduced = useReducedMotion();
+  const reduced = useReducedMotionPref();
   const { scrollYProgress } = useScroll();
 
-  const cyanX = useTransform(scrollYProgress, [0, 1], ["-6%", "8%"]);
-  const cyanY = useTransform(scrollYProgress, [0, 1], ["-4%", "6%"]);
-  const violetX = useTransform(scrollYProgress, [0, 1], ["6%", "-8%"]);
-  const violetY = useTransform(scrollYProgress, [0, 1], ["4%", "-6%"]);
-  const drift = useTransform(scrollYProgress, [0, 1], [0, -120]);
+  const blueX = useTransform(scrollYProgress, [0, 1], ["-4%", "7%"]);
+  const blueY = useTransform(scrollYProgress, [0, 1], ["-3%", "5%"]);
+  const violetX = useTransform(scrollYProgress, [0, 1], ["5%", "-7%"]);
+  const violetY = useTransform(scrollYProgress, [0, 1], ["3%", "-5%"]);
 
-  // Mouse-reactive glow overlay via CSS custom properties
   useEffect(() => {
-    if (prefersReduced) return;
-    let rafId: number;
-    let targetX = 50;
-    let targetY = 50;
-    let currentX = 50;
-    let currentY = 50;
+    if (reduced) return;
+    const layer = document.getElementById("ambient-pointer");
+    if (!layer) return;
+
+    let raf = 0;
+    let running = false;
+    let tx = 50;
+    let ty = 50;
+    let cx = 50;
+    let cy = 50;
+
+    const tick = () => {
+      cx += (tx - cx) * 0.08;
+      cy += (ty - cy) * 0.08;
+      layer.style.setProperty("--hx", `${cx.toFixed(2)}%`);
+      layer.style.setProperty("--hy", `${cy.toFixed(2)}%`);
+
+      // Converged — stop burning frames until the pointer moves again.
+      if (Math.abs(tx - cx) < 0.05 && Math.abs(ty - cy) < 0.05) {
+        running = false;
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+
+    const start = () => {
+      if (running || document.hidden) return;
+      running = true;
+      raf = requestAnimationFrame(tick);
+    };
 
     const onMove = (e: PointerEvent) => {
       if (e.pointerType !== "mouse") return;
-      targetX = (e.clientX / window.innerWidth) * 100;
-      targetY = (e.clientY / window.innerHeight) * 100;
+      tx = (e.clientX / window.innerWidth) * 100;
+      ty = (e.clientY / window.innerHeight) * 100;
+      start();
     };
 
-    const tick = () => {
-      // Smooth lerp toward target
-      currentX += (targetX - currentX) * 0.06;
-      currentY += (targetY - currentY) * 0.06;
-      document.documentElement.style.setProperty("--mouse-x", `${currentX}%`);
-      document.documentElement.style.setProperty("--mouse-y", `${currentY}%`);
-      rafId = requestAnimationFrame(tick);
+    const onVisibility = () => {
+      if (document.hidden) {
+        cancelAnimationFrame(raf);
+        running = false;
+      }
     };
 
     window.addEventListener("pointermove", onMove, { passive: true });
-    rafId = requestAnimationFrame(tick);
-
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       window.removeEventListener("pointermove", onMove);
-      cancelAnimationFrame(rafId);
-      document.documentElement.style.removeProperty("--mouse-x");
-      document.documentElement.style.removeProperty("--mouse-y");
+      document.removeEventListener("visibilitychange", onVisibility);
+      cancelAnimationFrame(raf);
     };
-  }, [prefersReduced]);
+  }, [reduced]);
 
-  if (prefersReduced) return null;
+  if (reduced) return null;
 
   return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none fixed inset-0 -z-[3] overflow-hidden"
-    >
-      {/* Scroll-driven orbs */}
+    <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-[3] overflow-hidden">
       <motion.div
-        style={{ x: cyanX, y: cyanY }}
-        className="absolute -left-[20%] top-[8%] h-[42rem] w-[42rem] rounded-full opacity-70 blur-[120px]"
+        style={{ x: blueX, y: blueY }}
+        className="absolute -left-[18%] top-[6%] h-[38rem] w-[38rem] rounded-full blur-[110px]"
       >
         <div
           className="h-full w-full rounded-full"
           style={{
-            background:
-              "radial-gradient(closest-side, rgba(91,141,239,0.30), rgba(91,141,239,0) 70%)",
+            background: "radial-gradient(closest-side, var(--glow-blue), transparent 72%)",
           }}
         />
       </motion.div>
 
       <motion.div
         style={{ x: violetX, y: violetY }}
-        className="absolute -right-[18%] top-[42%] h-[40rem] w-[40rem] rounded-full opacity-70 blur-[120px]"
+        className="absolute -right-[16%] top-[44%] h-[36rem] w-[36rem] rounded-full blur-[110px]"
       >
         <div
           className="h-full w-full rounded-full"
           style={{
-            background:
-              "radial-gradient(closest-side, rgba(180,124,255,0.28), rgba(180,124,255,0) 70%)",
+            background: "radial-gradient(closest-side, var(--glow), transparent 72%)",
           }}
         />
       </motion.div>
 
-      <motion.div
-        style={{ y: drift }}
-        className="absolute left-1/2 top-[120%] h-[36rem] w-[36rem] -translate-x-1/2 rounded-full opacity-60 blur-[110px]"
-      >
-        <div
-          className="h-full w-full rounded-full"
-          style={{
-            background:
-              "radial-gradient(closest-side, rgba(91,141,239,0.22), rgba(180,124,255,0.16) 45%, rgba(180,124,255,0) 75%)",
-          }}
-        />
-      </motion.div>
-
-      {/* Mouse-reactive glow layer */}
       <div
+        id="ambient-pointer"
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(44rem 44rem at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(180,124,255,0.055), transparent 65%)",
-          transition: "background 0.05s linear",
+            "radial-gradient(40rem 40rem at var(--hx, 50%) var(--hy, 50%), var(--glow), transparent 62%)",
+          opacity: 0.32,
         }}
       />
     </div>

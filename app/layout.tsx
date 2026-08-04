@@ -5,12 +5,8 @@ import "./globals.css";
 import { siteMeta } from "@/data/socials";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Providers } from "@/components/providers/Providers";
-import {
-  THEME_COOKIE,
-  A11Y_COOKIE,
-  parseTheme,
-  parseA11y,
-} from "@/lib/theme";
+import { THEME_COOKIE, A11Y_COOKIE, parseTheme, parseA11y } from "@/lib/theme";
+import { brand } from "@/lib/tokens";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,7 +21,6 @@ const geistMono = Geist_Mono({
 });
 
 const titleDefault = `${siteMeta.name} — ${siteMeta.role}`;
-const description = siteMeta.tagline;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteMeta.url),
@@ -33,16 +28,19 @@ export const metadata: Metadata = {
     default: titleDefault,
     template: `%s · ${siteMeta.name}`,
   },
-  description,
-  applicationName: `${siteMeta.name} Portfolio`,
+  description: siteMeta.tagline,
+  applicationName: `${siteMeta.name} — Portfolio`,
   keywords: [
     "Tay Shofer",
-    "software developer",
+    "software engineer",
     "junior software engineer",
     "C++",
-    "C",
+    "C#",
+    ".NET",
+    "TypeScript",
     "React",
     "Next.js",
+    "Python",
     "portfolio",
     "Computer Science",
   ],
@@ -62,11 +60,11 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    type: "website",
+    type: "profile",
     url: siteMeta.url,
     siteName: `${siteMeta.name} — Portfolio`,
     title: titleDefault,
-    description,
+    description: siteMeta.tagline,
     locale: siteMeta.locale,
     images: [
       {
@@ -80,19 +78,19 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: titleDefault,
-    description,
+    description: siteMeta.tagline,
     images: ["/opengraph-image"],
   },
-  icons: {
-    icon: "/favicon.ico",
-  },
+  icons: { icon: "/favicon.ico" },
   category: "technology",
 };
 
 export const viewport: Viewport = {
+  // The browser chrome colour cannot read a CSS variable, so it comes from the
+  // token mirror rather than a literal that would drift from globals.css.
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#070709" },
-    { media: "(prefers-color-scheme: light)", color: "#f4f6fb" },
+    { media: "(prefers-color-scheme: dark)", color: brand.bg },
+    { media: "(prefers-color-scheme: light)", color: brand.bgLight },
   ],
   colorScheme: "dark light",
   width: "device-width",
@@ -102,8 +100,16 @@ export const viewport: Viewport = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  // Theme + a11y prefs come from cookies so the server renders the correct
-  // data-* attributes that the client will hydrate to — no mismatch, no flash.
+  /**
+   * Theme and accessibility preferences come from cookies so the server
+   * renders the exact `data-*` attributes the client will hydrate to — no
+   * flash, no hydration mismatch, and no blocking inline script.
+   *
+   * The tradeoff is that reading cookies opts the route out of static
+   * generation. That is a deliberate choice: correctness of the first paint
+   * over a CDN cache hit. Moving to a blocking inline script would restore
+   * static rendering if TTFB ever becomes the bottleneck.
+   */
   const store = await cookies();
   const theme = parseTheme(store.get(THEME_COOKIE)?.value);
   const a11y = parseA11y(store.get(A11Y_COOKIE)?.value);
@@ -120,7 +126,7 @@ export default async function RootLayout({
       <body className="min-h-full bg-bg text-fg">
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:inline-flex focus:items-center focus:gap-2 focus:rounded-full focus:border focus:border-white/20 focus:bg-bg-elevated focus:px-4 focus:py-2 focus:text-sm focus:text-fg"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:inline-flex focus:items-center focus:rounded-full focus:border focus:border-line-strong focus:bg-surface-3 focus:px-5 focus:py-3 focus:text-sm focus:text-fg"
         >
           Skip to content
         </a>

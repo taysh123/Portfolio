@@ -1,18 +1,30 @@
-"use client";
-
-import { useState } from "react";
+import type { ReactNode } from "react";
 import { Section } from "@/components/ui/Section";
 import { Reveal } from "@/components/ui/Reveal";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { Magnetic } from "@/components/ui/Magnetic";
+import { Panel } from "@/components/ui/Panel";
+import { Eyebrow } from "@/components/ui/Eyebrow";
+import { PhoneReveal } from "@/components/ui/PhoneReveal";
+import { OrbitField } from "@/components/effects/OrbitField";
 import {
-  PhoneIcon,
+  ArrowUpRightIcon,
   GithubIcon,
   LinkedinIcon,
-  ArrowUpRightIcon,
 } from "@/components/ui/icons";
-import { socials } from "@/data/socials";
-import { decodePhone } from "@/lib/obfuscate";
+import { availability, siteMeta, socials } from "@/data/socials";
+
+/**
+ * One recipe for every contact channel — the two links here and the phone
+ * control in `PhoneReveal`, which takes it as a prop. Two stacked lines at
+ * `py-3` clear the 44px target on their own; `min-h` is the floor, not the
+ * mechanism.
+ */
+const channelRow =
+  "group/row flex min-h-[3.5rem] w-full items-center gap-3.5 rounded-lg border border-line-subtle " +
+  "bg-surface-1 px-4 py-3 text-left transition-[background-color,border-color] " +
+  "duration-[var(--dur-mid)] ease-[var(--ease-out-expo)] hover:border-accent-line hover:bg-surface-2";
+
+const channelIcon =
+  "shrink-0 text-fg-subtle transition-colors duration-[var(--dur-mid)] group-hover/row:text-accent";
 
 export function Contact() {
   return (
@@ -21,149 +33,143 @@ export function Contact() {
       eyebrow="05 — Contact"
       title={
         <>
-          Let&apos;s build something
-          <br className="hidden sm:block" />{" "}
-          <span className="text-gradient">worth shipping.</span>
+          I&apos;d like to hear{" "}
+          <span className="text-emphasis">what you&apos;re building.</span>
         </>
       }
-      intro="If you're hiring, collaborating, or just want to say hi — I'd love to hear from you."
+      intro="Hiring, collaborating, or just comparing notes on something you're stuck on — email reaches me fastest, and I answer everything that arrives."
     >
-      <Reveal as="div" className="relative">
-        <GlassCard className="relative p-7 sm:p-10 lg:p-14">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -left-32 -top-32 h-72 w-72 rounded-full bg-[#5b8def]/20 blur-3xl"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -bottom-32 -right-32 h-72 w-72 rounded-full bg-[#b47cff]/20 blur-3xl"
-          />
-
-          <div className="relative grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
-            <div>
-              <p className="font-mono text-[0.7rem] uppercase tracking-[0.24em] text-fg-subtle">
-                Primary channel
-              </p>
-              <Magnetic strength={6} className="mt-4 inline-block">
-                <a
-                  href={`mailto:${socials.email}?subject=${encodeURIComponent("Hi Tay")}`}
-                  className="group inline-flex flex-wrap items-baseline gap-2 text-balance text-2xl font-medium tracking-tight text-fg transition-colors hover:text-fg sm:text-4xl lg:text-5xl"
-                  style={{ fontSize: "clamp(1.5rem, 3.8vw, 3rem)" }}
-                >
-                  {socials.email}
-                  <span
-                    aria-hidden="true"
-                    className="inline-flex h-7 w-7 -translate-y-1 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-fg-muted transition-all duration-500 group-hover:translate-y-[-6px] group-hover:border-white/25 group-hover:text-fg sm:h-10 sm:w-10"
-                  >
-                    <ArrowUpRightIcon size={16} />
-                  </span>
-                </a>
-              </Magnetic>
-
-              <ul className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <li>
-                  <a
-                    href={socials.github.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-fg transition-colors hover:border-white/25 hover:bg-white/[0.07]"
-                  >
-                    <GithubIcon size={16} />
-                    github.com/{socials.github.handle}
-                    <ArrowUpRightIcon size={14} />
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href={socials.linkedin.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-fg transition-colors hover:border-white/25 hover:bg-white/[0.07]"
-                  >
-                    <LinkedinIcon size={16} />
-                    LinkedIn — {socials.linkedin.label}
-                    <ArrowUpRightIcon size={14} />
-                  </a>
-                </li>
-                <li>
-                  <PhoneReveal />
-                </li>
-              </ul>
-            </div>
-
+      <Reveal>
+        <Panel tone="raised" className="p-[var(--panel-p)]">
+          <div className="grid gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+            {/*
+              `<address>` wraps the contact details themselves. The previous
+              version put it around the availability copy instead, which
+              declared the wrong thing entirely.
+            */}
             <address className="not-italic">
-              <p className="font-mono text-[0.7rem] uppercase tracking-[0.24em] text-fg-subtle">
-                Status
-              </p>
-              <p className="mt-4 text-balance text-lg leading-relaxed text-fg-muted sm:text-xl">
-                Open to junior software developer roles — onsite, hybrid, or
-                remote. I respond fast, write clearly, and care about the work.
-              </p>
-              <ul className="mt-8 space-y-3 text-sm text-fg-muted">
-                <li className="flex items-center gap-3">
-                  <span
-                    aria-hidden="true"
-                    className="relative inline-flex h-2 w-2"
-                  >
-                    <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/60" />
-                    <span className="relative inline-block h-2 w-2 rounded-full bg-emerald-400" />
-                  </span>
-                  Available now
-                </li>
-                <li className="flex items-center gap-3">
-                  <span
-                    aria-hidden="true"
-                    className="inline-block h-2 w-2 rounded-full bg-white/40"
+              <Eyebrow>Primary channel</Eyebrow>
+
+              {/*
+                Not `--text-h2`: a 20-character mailbox string at that size
+                overflows a half-width column on every viewport below xl. This
+                clamp tops out where the address still fits on one line.
+              */}
+              <a
+                href={`mailto:${socials.email}?subject=${encodeURIComponent("Hello Tay")}`}
+                className="group/mail mt-5 inline-flex max-w-full items-center gap-3 font-medium tracking-[var(--tracking-heading)] text-fg transition-colors duration-[var(--dur-mid)] hover:text-accent"
+                style={{ fontSize: "clamp(1.25rem, 2.7vw, 1.9rem)" }}
+              >
+                <span className="min-w-0 break-words">{socials.email}</span>
+                <span
+                  aria-hidden="true"
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-surface-1 text-fg-muted transition-[transform,border-color,color] duration-[var(--dur-mid)] ease-[var(--ease-out-expo)] group-hover/mail:-translate-y-1 group-hover/mail:border-accent-line group-hover/mail:text-accent"
+                >
+                  <ArrowUpRightIcon size={16} />
+                </span>
+              </a>
+
+              <ul className="mt-10 flex flex-col gap-3">
+                <li>
+                  <ChannelRow
+                    href={socials.github.url}
+                    icon={<GithubIcon size={18} className={channelIcon} />}
+                    label="GitHub"
+                    value={`github.com/${socials.github.handle}`}
                   />
-                  Time zone: Israel (GMT+3)
                 </li>
-                <li className="flex items-center gap-3">
-                  <span
-                    aria-hidden="true"
-                    className="inline-block h-2 w-2 rounded-full bg-white/40"
+                <li>
+                  <ChannelRow
+                    href={socials.linkedin.url}
+                    icon={<LinkedinIcon size={18} className={channelIcon} />}
+                    label="LinkedIn"
+                    value={socials.linkedin.label}
                   />
-                  Working in English
+                </li>
+                <li>
+                  <PhoneReveal className={channelRow} />
                 </li>
               </ul>
             </address>
+
+            <div className="flex flex-col">
+              <OrbitField />
+
+              <div className="mt-8 sm:mt-10">
+                <p className="label inline-flex items-center gap-2.5 rounded-full border border-line bg-surface-1 px-3.5 py-2 text-fg-muted">
+                  {/* The label carries the meaning; the dot only reinforces it. */}
+                  <span
+                    aria-hidden="true"
+                    className="relative inline-flex h-1.5 w-1.5 shrink-0"
+                  >
+                    <span
+                      className="anim-pulse absolute inset-0 rounded-full"
+                      style={{ background: "var(--status-live)" }}
+                    />
+                    <span
+                      className="relative inline-block h-1.5 w-1.5 rounded-full"
+                      style={{ background: "var(--status-live)" }}
+                    />
+                  </span>
+                  {availability.label}
+                </p>
+
+                <p className="mt-5 leading-relaxed text-fg-muted">
+                  {availability.detail}
+                </p>
+
+                <dl className="mt-6 space-y-3 border-t border-line-subtle pt-5 text-sm">
+                  <Fact term="Based in">
+                    {siteMeta.location} · {siteMeta.timezone}
+                  </Fact>
+                  <Fact term="Working language">English</Fact>
+                </dl>
+              </div>
+            </div>
           </div>
-        </GlassCard>
+        </Panel>
       </Reveal>
     </Section>
   );
 }
 
-function PhoneReveal() {
-  const [revealed, setRevealed] = useState<string | null>(null);
-
-  const handleReveal = () => {
-    if (revealed) return;
-    setRevealed(decodePhone(socials.phoneEncoded));
-  };
-
+function ChannelRow({
+  href,
+  icon,
+  label,
+  value,
+}: {
+  href: string;
+  icon: ReactNode;
+  label: string;
+  value: string;
+}) {
   return (
-    <>
-      {revealed ? (
-        <a
-          href={`tel:${revealed.replace(/[^0-9+]/g, "")}`}
-          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-fg transition-colors hover:border-white/25 hover:bg-white/[0.07]"
-        >
-          <PhoneIcon size={16} />
-          {revealed}
-          <ArrowUpRightIcon size={14} />
-        </a>
-      ) : (
-        <button
-          type="button"
-          onClick={handleReveal}
-          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-fg-muted transition-colors hover:border-white/25 hover:bg-white/[0.07] hover:text-fg"
-          aria-label="Reveal phone number"
-        >
-          <PhoneIcon size={16} />
-          Reveal phone
-        </button>
-      )}
-    </>
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={channelRow}
+    >
+      {icon}
+      <span className="min-w-0 flex-1">
+        <span className="label block text-fg-subtle">{label}</span>
+        <span className="mt-1 block truncate text-sm text-fg">{value}</span>
+      </span>
+      <ArrowUpRightIcon
+        size={15}
+        className="shrink-0 text-fg-subtle transition-transform duration-[var(--dur-mid)] ease-[var(--ease-out-expo)] group-hover/row:-translate-y-0.5 group-hover/row:translate-x-0.5"
+      />
+      <span className="sr-only"> (opens in a new tab)</span>
+    </a>
   );
 }
 
+function Fact({ term, children }: { term: string; children: ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4">
+      <dt className="label text-fg-subtle">{term}</dt>
+      <dd className="text-right text-fg">{children}</dd>
+    </div>
+  );
+}

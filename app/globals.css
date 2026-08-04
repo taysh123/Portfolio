@@ -1,108 +1,310 @@
 @import "tailwindcss";
 
-@theme {
-  --color-bg: #070709;
-  --color-bg-elevated: #0d0e12;
-  --color-bg-raised: #11131a;
-  --color-fg: #eff1f6;
-  --color-fg-muted: #a3a8b8;
-  --color-fg-subtle: #6a7080;
-  --color-border: rgba(255, 255, 255, 0.10);
-  --color-border-strong: rgba(255, 255, 255, 0.17);
+/* ═══════════════════════════════════════════════════════════════════════
+   DESIGN TOKENS
+   ───────────────────────────────────────────────────────────────────────
+   Plain CSS custom properties on :root / [data-theme="light"], surfaced to
+   Tailwind through `@theme inline` below.
 
-  --color-accent-cyan: #5b8def;
-  --color-accent-violet: #b47cff;
+   Why `inline`: it makes Tailwind emit `var(--token)` inside each utility
+   instead of copying the literal value at build time, so a `:root`-level
+   theme override cascades normally. Without it we'd be back to overriding
+   on `*` — the hack the previous system needed, and the reason ~90
+   `border-white/x` utilities silently ignored the light theme.
+
+   Two rules this system enforces:
+     1. ACCENT ROLE SPLIT — `--accent` (blue) is the only *interaction*
+        colour: links, rings, primary CTA, emphasis. `--glow` (violet) is
+        atmospheric only: bloom behind solid objects. It is never text and
+        never a border. This is what keeps the palette out of the
+        "AI purple/pink gradient" register and what makes light mode legible.
+     2. BORDERS ARE ALWAYS rgba, never solid grey, and always theme-aware.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  color-scheme: dark;
+
+  /* ── Surfaces ──────────────────────────────────────────────────────────
+     Translucent by design. The page field carries a soft aurora, so a
+     low-alpha surface reads as glass *without* backdrop-filter — which is
+     how this design gets the glass look at ~4 blur layers instead of ~20. */
+  --surface-0: #08090f;
+  --surface-1: rgba(255, 255, 255, 0.030);
+  --surface-2: rgba(255, 255, 255, 0.055);
+  --surface-3: rgba(16, 18, 27, 0.92);
+  --surface-sunken: rgba(0, 0, 0, 0.24);
+
+  /* ── Text ──────────────────────────────────────────────────────────────
+     Contrast vs --surface-0, computed:
+       --fg         17.9:1   --fg-muted   9.2:1   --fg-subtle  7.0:1
+     `--fg-subtle` carries every eyebrow and metadata label at ~11px, so it
+     is held at 7:1 rather than the 4.5:1 minimum. */
+  --fg: #f1f3f9;
+  --fg-muted: #a7afc2;
+  --fg-subtle: #8a93a8;
+
+  /* ── Borders ─────────────────────────────────────────────────────────── */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.18);
+
+  /* ── Accent (interaction) — 6.2:1 on --surface-0 ─────────────────────── */
+  --accent: #5b8def;
+  --accent-hover: #7aa4f5;
+  --accent-soft: rgba(91, 141, 239, 0.13);
+  --accent-line: rgba(91, 141, 239, 0.34);
+  --accent-ring: rgba(91, 141, 239, 0.6);
+  --accent-contrast: #05070d;
+
+  /* ── Glow (atmosphere only) ──────────────────────────────────────────── */
+  --glow: rgba(180, 124, 255, 0.20);
+  --glow-strong: rgba(180, 124, 255, 0.32);
+  --glow-blue: rgba(91, 141, 239, 0.18);
+
+  /* ── Status ──────────────────────────────────────────────────────────── */
+  --status-live: #34d399;
+  --status-wip: #fbbf24;
+  --status-idle: #8a93a8;
+
+  /* ── Elevation ───────────────────────────────────────────────────────── */
+  --shadow-1:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 8px 24px -14px rgba(0, 0, 0, 0.9);
+  --shadow-2:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 20px 48px -22px rgba(0, 0, 0, 0.95);
+  --shadow-3:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 36px 80px -30px rgba(0, 0, 0, 1);
+  --shadow-float: 0 24px 64px -24px rgba(0, 0, 0, 0.9);
+
+  /* ── Type scale ──────────────────────────────────────────────────────── */
+  /* Sized so the longest headline line ("software that solves") fits the hero
+     copy column on one line at every breakpoint. Bigger than this and the
+     headline shatters into five ragged lines. */
+  --text-display: clamp(2.4rem, 4.6vw, 4rem);
+  --text-h1: clamp(2rem, 4.2vw, 3.25rem);
+  --text-h2: clamp(1.65rem, 3.2vw, 2.6rem);
+  --text-h3: clamp(1.15rem, 1.7vw, 1.4rem);
+  --text-lead: clamp(1.0625rem, 1.3vw, 1.1875rem);
+  --text-label: 0.6875rem;
+  --tracking-label: 0.18em;
+  --tracking-display: -0.03em;
+  --tracking-heading: -0.02em;
+
+  /* ── Rhythm ──────────────────────────────────────────────────────────── */
+  --section-y: clamp(4.5rem, 8vw, 7.5rem);
+  --panel-p: clamp(1.5rem, 3vw, 2.5rem);
+  --gutter: clamp(1.25rem, 4vw, 2.5rem);
+  --nav-h: 4rem;
+
+  /* ── Motion ──────────────────────────────────────────────────────────── */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.2, 0.9, 0.25, 1);
+  --dur-fast: 180ms;
+  --dur-mid: 320ms;
+  --dur-slow: 520ms;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  --surface-0: #f6f7fb;
+  --surface-1: rgba(255, 255, 255, 0.72);
+  --surface-2: rgba(255, 255, 255, 0.92);
+  --surface-3: rgba(255, 255, 255, 0.97);
+  --surface-sunken: rgba(11, 14, 26, 0.04);
+
+  /* Contrast vs --surface-0: fg 17.6:1 · muted 8.9:1 · subtle 5.5:1 */
+  --fg: #0b0e1a;
+  --fg-muted: #414a63;
+  --fg-subtle: #5a6480;
+
+  --border-subtle: rgba(11, 14, 26, 0.07);
+  --border: rgba(11, 14, 26, 0.11);
+  --border-strong: rgba(11, 14, 26, 0.18);
+
+  /* Darker accent so it still clears AA as text — 4.8:1 on --surface-0.
+     The dark-mode #5b8def measures only 3.0:1 here, which is why the old
+     single-value accent made light mode fail. */
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: rgba(37, 99, 235, 0.10);
+  --accent-line: rgba(37, 99, 235, 0.28);
+  --accent-ring: rgba(37, 99, 235, 0.55);
+  --accent-contrast: #ffffff;
+
+  --glow: rgba(139, 92, 246, 0.16);
+  --glow-strong: rgba(139, 92, 246, 0.24);
+  --glow-blue: rgba(37, 99, 235, 0.14);
+
+  --status-live: #059669;
+  --status-wip: #b45309;
+  --status-idle: #5a6480;
+
+  /* Dark mode fakes depth with borders; light mode needs real elevation or
+     translucent panels dissolve into the page. */
+  --shadow-1:
+    0 1px 2px rgba(16, 24, 40, 0.04),
+    0 8px 20px -10px rgba(16, 24, 40, 0.12);
+  --shadow-2:
+    0 1px 2px rgba(16, 24, 40, 0.05),
+    0 16px 32px -12px rgba(16, 24, 40, 0.16);
+  --shadow-3:
+    0 2px 4px rgba(16, 24, 40, 0.06),
+    0 32px 64px -20px rgba(16, 24, 40, 0.22);
+  --shadow-float: 0 24px 56px -20px rgba(16, 24, 40, 0.24);
+}
+
+/* ── Tailwind bindings ─────────────────────────────────────────────────── */
+@theme inline {
+  --color-bg: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-sunken: var(--surface-sunken);
+
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+
+  --color-line-subtle: var(--border-subtle);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-line: var(--accent-line);
+  --color-accent-contrast: var(--accent-contrast);
+
+  --color-status-live: var(--status-live);
+  --color-status-wip: var(--status-wip);
+  --color-status-idle: var(--status-idle);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
+  --shadow-e1: var(--shadow-1);
+  --shadow-e2: var(--shadow-2);
+  --shadow-e3: var(--shadow-3);
+  --shadow-float: var(--shadow-float);
+
+  --ease-out-expo: var(--ease-out-expo);
+  --ease-spring: var(--ease-spring);
+
+  --breakpoint-3xl: 1920px;
+}
+
+/* Monotonic radius scale. The previous system overrode xs–xl but left
+   --radius-2xl at Tailwind's 1rem default, so `rounded-xl` (1.75rem) was
+   LARGER than `rounded-2xl` — and 2xl was the dominant card radius. */
+@theme {
   --radius-xs: 0.5rem;
   --radius-sm: 0.75rem;
   --radius-md: 1rem;
   --radius-lg: 1.25rem;
-  --radius-xl: 1.75rem;
-
-  --breakpoint-3xl: 1920px;
-
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-spring-soft: cubic-bezier(0.2, 0.9, 0.25, 1);
+  --radius-xl: 1.5rem;
+  --radius-2xl: 1.75rem;
+  --radius-3xl: 2.25rem;
+  --radius-4xl: 2.75rem;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   BASE
+   ═══════════════════════════════════════════════════════════════════════ */
 @layer base {
   html {
-    scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    background-color: var(--color-bg);
-    color-scheme: dark;
+    background-color: var(--surface-0);
+    /* Next 16 no longer forces scroll-behavior:auto during navigation, and
+       the fixed navbar would otherwise cover hash targets. */
+    scroll-padding-top: calc(var(--nav-h) + 1.5rem);
   }
 
   body {
-    background-color: var(--color-bg);
-    color: var(--color-fg);
-    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
-    overflow-x: hidden;
+    background-color: var(--surface-0);
+    color: var(--fg);
+    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
     position: relative;
+    /*
+      `clip`, not `hidden`. `overflow-x: hidden` on body propagates to the
+      viewport and still permits *programmatic* horizontal scrolling — on a
+      390px screen the ambient blooms left ~51px of scrollable dead space that
+      shows up as rubber-banding on touch. `clip` forbids scrolling outright,
+      and unlike `hidden` it does not create a scroll container, so sticky
+      positioning keeps working.
+    */
+    overflow-x: clip;
   }
 
+  /* Aurora field. Held at the 0.08–0.12 alpha ceiling that keeps ambient
+     lighting from tipping into decoration. */
   body::before {
     content: "";
     position: fixed;
     inset: 0;
     z-index: -2;
-    background:
-      radial-gradient(60rem 60rem at 12% -10%, rgba(91, 141, 239, 0.14), transparent 60%),
-      radial-gradient(50rem 50rem at 95% 8%, rgba(180, 124, 255, 0.13), transparent 60%),
-      radial-gradient(70rem 70rem at 50% 110%, rgba(91, 141, 239, 0.08), transparent 60%);
     pointer-events: none;
+    background:
+      radial-gradient(58rem 46rem at 8% -8%, var(--glow-blue), transparent 62%),
+      radial-gradient(52rem 42rem at 96% 4%, var(--glow), transparent 62%),
+      radial-gradient(64rem 52rem at 48% 104%, var(--glow-blue), transparent 64%);
   }
 
+  /* Schematic grid, masked to the upper field. */
   body::after {
     content: "";
     position: fixed;
     inset: 0;
     z-index: -1;
-    background-image:
-      linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-    background-size: 56px 56px;
-    mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 30%, transparent 80%);
-    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 30%, transparent 80%);
-    opacity: 0.6;
     pointer-events: none;
+    background-image:
+      linear-gradient(var(--border-subtle) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 78% 56% at 50% 26%, #000 26%, transparent 78%);
+    -webkit-mask-image: radial-gradient(ellipse 78% 56% at 50% 26%, #000 26%, transparent 78%);
+    opacity: 0.7;
   }
 
   ::selection {
-    background-color: rgba(180, 124, 255, 0.32);
-    color: var(--color-fg);
+    background-color: var(--accent-soft);
+    color: var(--fg);
   }
 
+  /* One focus treatment for every focusable element — including <select>,
+     <summary> and custom roles, which the previous global `outline: none`
+     stripped without providing a replacement. */
   :focus-visible {
-    outline: none;
+    outline: 2px solid var(--accent-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
   }
 
-  a:focus-visible,
-  button:focus-visible,
-  [role="button"]:focus-visible,
-  input:focus-visible,
-  textarea:focus-visible,
-  [tabindex]:focus-visible {
-    box-shadow:
-      0 0 0 2px var(--color-bg),
-      0 0 0 4px rgba(180, 124, 255, 0.65);
-    border-radius: var(--radius-xs);
+  h1, h2, h3, h4 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   UTILITIES
+   ═══════════════════════════════════════════════════════════════════════ */
 @layer utilities {
-  .text-gradient {
+  /* Premium headline treatment: a LUMINANCE ramp, not a chromatic gradient.
+     Works identically in both themes and sidesteps the unreadable
+     violet→pink tail the old .text-gradient produced on a light field. */
+  .text-sheen {
     background: linear-gradient(
-      120deg,
-      var(--color-accent-cyan) 0%,
-      var(--color-accent-violet) 60%,
-      #f0c0ff 100%
+      175deg,
+      var(--fg) 0%,
+      color-mix(in oklab, var(--fg) 72%, transparent) 100%
     );
     -webkit-background-clip: text;
     background-clip: text;
@@ -110,308 +312,168 @@
     color: transparent;
   }
 
-  .surface-glass {
-    background-color: rgba(255, 255, 255, 0.045);
-    border: 1px solid var(--color-border);
-    backdrop-filter: blur(20px) saturate(150%);
-    -webkit-backdrop-filter: blur(20px) saturate(150%);
+  /* Emphasis inside a headline. A single solid accent — legible everywhere. */
+  .text-emphasis {
+    color: var(--accent);
   }
 
-  .surface-glass-strong {
-    background-color: rgba(255, 255, 255, 0.065);
-    border: 1px solid var(--color-border-strong);
-    backdrop-filter: blur(24px) saturate(160%);
-    -webkit-backdrop-filter: blur(24px) saturate(160%);
+  /* Real glass. Reserved for nav, overlays and floating hero elements —
+     `blur` signals dismissal/elevation, it is not a card texture. */
+  .glass {
+    background-color: var(--surface-3);
+    backdrop-filter: blur(28px) saturate(170%);
+    -webkit-backdrop-filter: blur(28px) saturate(170%);
   }
 
-  .hairline {
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.22),
-      transparent
-    );
-    height: 1px;
-  }
-
-  /* A faint horizontal divider rendered just above a <Section>. */
-  .section-divider {
+  /* Gradient hairline border, brighter at the top edge — the cheap trick
+     that makes a flat panel read as a lit object. */
+  .edge-lit {
     position: relative;
   }
-  .section-divider::before {
+  .edge-lit::before {
     content: "";
     position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: min(60rem, 90%);
-    height: 1px;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
     background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.12) 35%,
-      rgba(180, 124, 255, 0.22) 50%,
-      rgba(255, 255, 255, 0.12) 65%,
-      transparent
+      to bottom,
+      var(--border-strong),
+      var(--border-subtle) 42%,
+      transparent 78%
     );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
     pointer-events: none;
   }
 
-  /* AI card sweep — a slow gradient line traversing the top edge. */
-  @keyframes ai-sweep {
-    0%   { transform: translateX(-100%); opacity: 0; }
-    25%  { opacity: 1; }
-    75%  { opacity: 1; }
-    100% { transform: translateX(120%); opacity: 0; }
-  }
-  .ai-sweep {
-    animation: ai-sweep 7s var(--ease-spring-soft) infinite;
+  .hairline {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
   }
 
-  /* Pointer-driven halo on cards — uses --hx/--hy CSS vars set in JS. */
-  .hover-halo {
+  /* Pointer-tracked halo. --hx/--hy are set from JS, rAF-batched. */
+  .halo {
     position: absolute;
     inset: 0;
     border-radius: inherit;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 500ms var(--ease-out-expo);
+    transition: opacity var(--dur-slow) var(--ease-out-expo);
     background: radial-gradient(
-      28rem 28rem at var(--hx, 50%) var(--hy, 50%),
-      rgba(180, 124, 255, 0.18),
-      rgba(91, 141, 239, 0.08) 35%,
-      transparent 65%
+      22rem 22rem at var(--hx, 50%) var(--hy, 50%),
+      var(--glow-strong),
+      var(--glow-blue) 38%,
+      transparent 66%
     );
   }
-  .group:hover .hover-halo,
-  [data-hover="true"] .hover-halo {
+  .group:hover .halo,
+  [data-hover="true"] .halo {
     opacity: 1;
+  }
+
+  .label {
+    font-family: var(--font-geist-mono), ui-monospace, monospace;
+    font-size: var(--text-label);
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+  }
+
+  /* Tabular figures for stats/metrics so numbers don't jitter on change. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
   }
 }
 
-/* ─── Light Mode ──────────────────────────────────────────────── */
-/*
-  Tailwind v4 defines @theme variables on * (every element), so overriding
-  on html alone is beaten by the * rule on body. We must use [data-theme="light"] *
-  to win the cascade for every descendant.
-*/
-[data-theme="light"],
-[data-theme="light"] *,
-[data-theme="light"] *::before,
-[data-theme="light"] *::after {
-  --color-bg: #f4f6fb;
-  --color-bg-elevated: #edf0f7;
-  --color-bg-raised: #e4e8f2;
-  --color-fg: #0f1220;
-  --color-fg-muted: #3d4561;
-  --color-fg-subtle: #7380a0;
-  --color-border: rgba(0, 0, 0, 0.08);
-  --color-border-strong: rgba(0, 0, 0, 0.14);
-}
-[data-theme="light"] {
-  color-scheme: light;
+/* ═══════════════════════════════════════════════════════════════════════
+   ACCESSIBILITY MODES
+   ═══════════════════════════════════════════════════════════════════════ */
+/* Now a plain :root-level override. Because every surface/border utility
+   resolves through a token (no more `border-white/x`), this actually
+   changes what you see — the previous version could only reach 5 variables
+   and left 109 hardcoded literals untouched. */
+[data-high-contrast="true"] {
+  --fg: #ffffff;
+  --fg-muted: #dfe4f2;
+  --fg-subtle: #c3cadd;
+  --border-subtle: rgba(255, 255, 255, 0.20);
+  --border: rgba(255, 255, 255, 0.34);
+  --border-strong: rgba(255, 255, 255, 0.52);
+  --surface-1: rgba(255, 255, 255, 0.07);
+  --surface-2: rgba(255, 255, 255, 0.11);
+  --accent: #9dbcff;
+  --glow: rgba(180, 124, 255, 0.10);
+  --glow-blue: rgba(91, 141, 239, 0.10);
 }
 
-[data-theme="light"] .surface-glass {
-  background-color: rgba(255, 255, 255, 0.62);
-  border-color: rgba(0, 0, 0, 0.09);
-}
-
-[data-theme="light"] .surface-glass-strong {
-  background-color: rgba(255, 255, 255, 0.78);
-  border-color: rgba(0, 0, 0, 0.12);
-}
-
-[data-theme="light"] .hairline {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(0, 0, 0, 0.14),
-    transparent
-  );
-}
-
-[data-theme="light"] .section-divider::before {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(0, 0, 0, 0.08) 35%,
-    rgba(180, 124, 255, 0.22) 50%,
-    rgba(0, 0, 0, 0.08) 65%,
-    transparent
-  );
-}
-
-[data-theme="light"] .hover-halo {
-  background: radial-gradient(
-    28rem 28rem at var(--hx, 50%) var(--hy, 50%),
-    rgba(180, 124, 255, 0.12),
-    rgba(91, 141, 239, 0.06) 35%,
-    transparent 65%
-  );
-}
-
-/* Light mode: grid overlay is too faint — darken slightly */
-[data-theme="light"] body::after {
-  background-image:
-    linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
-  opacity: 0.5;
-}
-
-/* Light mode: footer/section dividers */
-[data-theme="light"] footer {
-  border-top-color: rgba(0, 0, 0, 0.08);
-}
-
-/* ─── Card Elevation + Carousel Stage (theme-paired) ──────────── */
-/*
-  Dark mode fakes depth with borders; light mode needs real elevation or
-  cards vanish on the near-white background. These tokens give each theme its
-  own surface + shadow so the 3D showcase reads premium in BOTH modes.
-*/
-:root {
-  /* slightly raised (was 0.05) so the card reads without backdrop-blur */
-  --surface-card: rgba(255, 255, 255, 0.07);
-  --surface-card-border: var(--color-border);
-  --surface-card-border-active: var(--color-border-strong);
-  --shadow-card:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 18px 40px -20px rgba(0, 0, 0, 0.7);
-  --shadow-card-active:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 30px 70px -22px rgba(0, 0, 0, 0.8);
-  /* stage spotlight + contact shadow */
-  --stage-floor: radial-gradient(
-    58% 60% at 50% 50%,
-    rgba(120, 140, 255, 0.16),
-    rgba(120, 140, 255, 0) 70%
-  );
-  --stage-contact: rgba(0, 0, 0, 0.38);
-  --ph-line: rgba(255, 255, 255, 0.05);
-  --ph-vignette: rgba(0, 0, 0, 0.22);
-}
-
-[data-theme="light"] {
-  --surface-card: rgba(255, 255, 255, 0.92);
-  --surface-card-border: rgba(15, 18, 32, 0.10);
-  --surface-card-border-active: rgba(15, 18, 32, 0.17);
-  --shadow-card:
-    0 1px 2px rgba(16, 24, 40, 0.05),
-    0 8px 16px -6px rgba(16, 24, 40, 0.10),
-    0 24px 48px -16px rgba(16, 24, 40, 0.16);
-  --shadow-card-active:
-    0 1px 2px rgba(16, 24, 40, 0.06),
-    0 14px 26px -8px rgba(16, 24, 40, 0.14),
-    0 38px 66px -22px rgba(16, 24, 40, 0.22);
-  --stage-floor: radial-gradient(
-    58% 60% at 50% 50%,
-    rgba(91, 120, 220, 0.14),
-    rgba(91, 120, 220, 0) 70%
-  );
-  --stage-contact: rgba(16, 24, 40, 0.16);
-  --ph-line: rgba(15, 18, 32, 0.06);
-  --ph-vignette: rgba(16, 24, 40, 0.10);
-}
-
-/* Grounds the carousel: a soft spotlight floor + a contact shadow under the
-   always-centered front card. Static (reduced-motion safe). */
-.carousel-stage {
-  position: relative;
-}
-/* Radial gradients are already soft — no `filter: blur` needed (cheaper paint). */
-.carousel-stage::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -1.5rem;
-  width: min(48rem, 96%);
-  height: 17rem;
-  transform: translateX(-50%);
-  background: var(--stage-floor);
-  pointer-events: none;
-  z-index: 0;
-}
-.carousel-stage::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: 2.25rem;
-  width: 17rem;
-  height: 2.6rem;
-  transform: translateX(-50%);
-  background: radial-gradient(
-    50% 50% at 50% 50%,
-    var(--stage-contact),
-    transparent 72%
-  );
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ─── Accessibility Modes ─────────────────────────────────────── */
-[data-high-contrast="true"],
-[data-high-contrast="true"] *,
-[data-high-contrast="true"] *::before,
-[data-high-contrast="true"] *::after {
-  --color-fg: #ffffff;
-  --color-fg-muted: #d0d5e8;
-  --color-fg-subtle: #9aa3bf;
-  --color-border: rgba(255, 255, 255, 0.22);
-  --color-border-strong: rgba(255, 255, 255, 0.34);
-}
-
-[data-theme="light"][data-high-contrast="true"],
-[data-theme="light"][data-high-contrast="true"] *,
-[data-theme="light"][data-high-contrast="true"] *::before,
-[data-theme="light"][data-high-contrast="true"] *::after {
-  --color-fg: #000000;
-  --color-fg-muted: #1a1f35;
-  --color-fg-subtle: #3a4060;
-  --color-border: rgba(0, 0, 0, 0.22);
-  --color-border-strong: rgba(0, 0, 0, 0.34);
+[data-theme="light"][data-high-contrast="true"] {
+  --fg: #000000;
+  --fg-muted: #16192b;
+  --fg-subtle: #2b3149;
+  --border-subtle: rgba(0, 0, 0, 0.20);
+  --border: rgba(0, 0, 0, 0.34);
+  --border-strong: rgba(0, 0, 0, 0.52);
+  --surface-1: rgba(255, 255, 255, 0.95);
+  --surface-2: #ffffff;
+  --accent: #1741b8;
 }
 
 [data-large-text="true"] {
   font-size: 112.5%;
 }
 
-/* ─── New Keyframes ───────────────────────────────────────────── */
-@keyframes glow-pulse {
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50%       { opacity: 1;   transform: scale(1.15); }
+/* ═══════════════════════════════════════════════════════════════════════
+   MOTION
+   ═══════════════════════════════════════════════════════════════════════ */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 1; }
 }
 
-@keyframes slide-up-fade {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+@keyframes sweep {
+  0%   { transform: translateX(-110%); opacity: 0; }
+  22%  { opacity: 1; }
+  78%  { opacity: 1; }
+  100% { transform: translateX(130%); opacity: 0; }
 }
 
-@keyframes chat-blink {
-  0%, 100% { opacity: 0.3; }
-  50%       { opacity: 1; }
+@keyframes drift {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(0, -12px, 0); }
 }
 
-/* Hero lattice node breathing — opacity only (SVG-safe, no transform). */
-@keyframes ha-pulse {
-  0%, 100% { opacity: 0.45; }
-  50%       { opacity: 1; }
+@keyframes dash-flow {
+  to { stroke-dashoffset: -24; }
 }
 
-/* ─── Reduced Motion ──────────────────────────────────────────── */
+.anim-sweep { animation: sweep 7s var(--ease-spring) infinite; }
+.anim-drift { animation: drift 9s ease-in-out infinite; }
+.anim-pulse { animation: pulse-soft 3.6s ease-in-out infinite; }
+.anim-flow  { animation: dash-flow 1.6s linear infinite; }
+
+/* CSS-driven motion off-switch. JS-driven motion is gated separately via
+   `useMotionPref` — a CSS rule cannot stop a requestAnimationFrame loop,
+   which is why the previous in-app toggle reached only 4 of 17 components. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
-  .ai-sweep {
+  .anim-sweep, .anim-drift, .anim-pulse, .anim-flow {
     animation: none !important;
-    opacity: 0;
   }
+  .anim-sweep { opacity: 0; }
 }
 
 [data-reduced-motion="true"] *,
@@ -422,7 +484,10 @@
   transition-duration: 0.001ms !important;
   scroll-behavior: auto !important;
 }
-[data-reduced-motion="true"] .ai-sweep {
+[data-reduced-motion="true"] .anim-sweep,
+[data-reduced-motion="true"] .anim-drift,
+[data-reduced-motion="true"] .anim-pulse,
+[data-reduced-motion="true"] .anim-flow {
   animation: none !important;
-  opacity: 0;
 }
+[data-reduced-motion="true"] .anim-sweep { opacity: 0; }

@@ -1,35 +1,12 @@
 import Image from "next/image";
 import { cn } from "@/lib/cn";
-import type { Project, ProjectAccent, ProjectMedia } from "@/data/projects";
-
-export const ACCENT: Record<
-  ProjectAccent,
-  { solid: string; soft: string; from: string; to: string }
-> = {
-  cyan: {
-    solid: "#5b8def",
-    soft: "rgba(91,141,239,0.22)",
-    from: "rgba(91,141,239,0.30)",
-    to: "rgba(91,141,239,0)",
-  },
-  violet: {
-    solid: "#b47cff",
-    soft: "rgba(180,124,255,0.22)",
-    from: "rgba(180,124,255,0.30)",
-    to: "rgba(180,124,255,0)",
-  },
-  amber: {
-    solid: "#fbbf24",
-    soft: "rgba(251,191,36,0.20)",
-    from: "rgba(251,191,36,0.26)",
-    to: "rgba(251,191,36,0)",
-  },
-};
+import { projectAccent } from "@/lib/tokens";
+import type { Project } from "@/data/projects";
 
 function monogram(name: string) {
   return name
     .split(/\s+/)
-    .filter((w) => /[a-z]/i.test(w)) // ignore "&", "·", etc. → "Orders & Delivery" = OD
+    .filter((w) => /[a-z]/i.test(w))
     .slice(0, 2)
     .map((w) => w[0])
     .join("")
@@ -37,88 +14,63 @@ function monogram(name: string) {
 }
 
 /**
- * Renders a project's media with graceful fallbacks:
- *   - `image` + `mobileImage` → art-directed (CSS-swapped) responsive images
- *   - `image` only → single responsive image
- *   - no `image` → branded accent-gradient placeholder (faux app window)
+ * Project media, with a branded fallback for projects that have no screenshot
+ * (a Telegram bot and a desktop Java client don't photograph well).
  *
- * Always fills its parent, which must be `position: relative` with a set size.
+ * `preload` replaces the `priority` prop, which is deprecated in Next 16 — it
+ * emits a `<link rel="preload">` for the LCP image. Only ever pass it for the
+ * one image that is actually the LCP candidate.
  */
 export function ProjectImage({
   project,
   className,
-  sizes = "(max-width: 640px) 100vw, 50vw",
+  sizes,
+  preload = false,
 }: {
   project: Pick<Project, "name" | "accent" | "media">;
   className?: string;
-  sizes?: string;
+  sizes: string;
+  preload?: boolean;
 }) {
-  const media: ProjectMedia | undefined = project.media;
-  const accent = ACCENT[project.accent];
-  const alt = media?.alt ?? `${project.name} — interface screenshot`;
+  const media = project.media;
+  const accent = projectAccent[project.accent];
   const fit = media?.fit ?? "cover";
   const objectClass =
     fit === "contain" ? "object-contain" : "object-cover object-top";
-  // Portrait phone shots ("contain") get an accent-tinted backdrop so the
-  // letterboxing reads as an intentional app-preview frame, not empty space.
-  const containStyle =
+
+  // Portrait phone captures get an accent-tinted bed so the letterboxing reads
+  // as an intentional device frame rather than dead space.
+  const bedStyle =
     fit === "contain"
       ? {
-          backgroundImage: `radial-gradient(120% 100% at 50% 0%, ${accent.from}, ${accent.to} 72%)`,
+          backgroundImage: `radial-gradient(120% 100% at 50% 0%, ${accent}2e, transparent 70%)`,
         }
       : undefined;
 
   return (
-    <div
-      className={cn("relative overflow-hidden", className)}
-      style={containStyle}
-    >
+    <div className={cn("relative overflow-hidden", className)} style={bedStyle}>
       {media?.image ? (
-        media.mobileImage ? (
-          <>
-            <Image
-              src={media.image}
-              alt={alt}
-              fill
-              sizes={sizes}
-              className={cn("hidden sm:block", objectClass)}
-            />
-            <Image
-              src={media.mobileImage}
-              alt={alt}
-              fill
-              sizes={sizes}
-              className={cn("sm:hidden", objectClass)}
-            />
-          </>
-        ) : (
-          <Image
-            src={media.image}
-            alt={alt}
-            fill
-            sizes={sizes}
-            className={objectClass}
-          />
-        )
+        <Image
+          src={media.image}
+          alt={media.alt ?? `${project.name} interface`}
+          fill
+          sizes={sizes}
+          preload={preload}
+          className={cn(objectClass, "transition-transform duration-[600ms] ease-[var(--ease-out-expo)] group-hover:scale-[1.03]")}
+        />
       ) : (
-        // Branded "preview pending" frame — intentional in both themes, no asset.
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 flex flex-col bg-bg-elevated"
-        >
-          {/* accent wash */}
+        <div aria-hidden="true" className="absolute inset-0 flex flex-col bg-surface-2">
           <div
             className="absolute inset-0"
             style={{
-              backgroundImage: `radial-gradient(120% 90% at 50% 0%, ${accent.from}, ${accent.to} 62%)`,
+              backgroundImage: `radial-gradient(120% 90% at 50% 0%, ${accent}30, transparent 62%)`,
             }}
           />
-          {/* fine schematic grid, masked to a soft center */}
           <div
             className="absolute inset-0 opacity-70"
             style={{
               backgroundImage:
-                "linear-gradient(var(--ph-line) 1px, transparent 1px), linear-gradient(90deg, var(--ph-line) 1px, transparent 1px)",
+                "linear-gradient(var(--border-subtle) 1px, transparent 1px), linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px)",
               backgroundSize: "22px 22px",
               maskImage:
                 "radial-gradient(80% 72% at 50% 46%, #000 30%, transparent 82%)",
@@ -126,33 +78,20 @@ export function ProjectImage({
                 "radial-gradient(80% 72% at 50% 46%, #000 30%, transparent 82%)",
             }}
           />
-          {/* window chrome with a faux address pill */}
           <div className="relative flex items-center gap-1.5 px-4 py-3">
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ background: accent.soft }}
-            />
+            <span className="h-2 w-2 rounded-full" style={{ background: `${accent}55` }} />
             <span className="h-2 w-2 rounded-full bg-fg-subtle/30" />
             <span className="h-2 w-2 rounded-full bg-fg-subtle/20" />
             <span className="ml-2 h-2.5 w-[55%] rounded-full bg-fg-subtle/10" />
           </div>
-          {/* monogram */}
           <div className="relative flex flex-1 items-center justify-center">
             <span
-              className="font-mono text-[2.75rem] font-semibold tracking-tight"
-              style={{
-                color: accent.solid,
-                textShadow: `0 0 28px ${accent.soft}`,
-              }}
+              className="font-mono text-[2.5rem] font-semibold tracking-tight"
+              style={{ color: accent, textShadow: `0 0 32px ${accent}44` }}
             >
               {monogram(project.name)}
             </span>
           </div>
-          {/* inner vignette for depth */}
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{ boxShadow: "inset 0 0 52px var(--ph-vignette)" }}
-          />
         </div>
       )}
     </div>

@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -26,7 +26,7 @@ const securityHeaders: Record<string, string> = {
     "camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=()",
 };
 
-export function proxy(_request: NextRequest) {
+export function proxy() {
   const response = NextResponse.next();
   for (const [key, value] of Object.entries(securityHeaders)) {
     response.headers.set(key, value);

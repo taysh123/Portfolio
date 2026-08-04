@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion, type Variants } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
+import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
 import type { ReactNode } from "react";
 import { fadeUp, staggerContainer, viewportOnce } from "@/lib/motion";
 
@@ -26,7 +27,7 @@ export function Reveal({
   stagger,
   amount,
 }: RevealProps) {
-  const prefersReduced = useReducedMotion();
+  const prefersReduced = useReducedMotionPref();
 
   if (prefersReduced) {
     return renderPlain(as, className, children);
@@ -78,7 +79,7 @@ export function RevealItem({
   className,
   variants,
 }: RevealItemProps) {
-  const prefersReduced = useReducedMotion();
+  const prefersReduced = useReducedMotionPref();
 
   if (prefersReduced) {
     return renderPlain(as, className, children);

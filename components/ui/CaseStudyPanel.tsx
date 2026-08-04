@@ -1,175 +1,162 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { type Project } from "@/data/projects";
-import { GithubIcon, ArrowUpRightIcon, XIcon } from "@/components/ui/icons";
+import { useCallback, useRef } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Tag, StatusChip } from "@/components/ui/Tag";
+import { ButtonLink } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
+import { Eyebrow } from "@/components/ui/Eyebrow";
+import { GithubIcon, XIcon } from "@/components/ui/icons";
+import { DUR, easeOutExpo } from "@/lib/motion";
+import { useFocusTrap, useScrollLock } from "@/lib/useFocusTrap";
+import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
+import type { Project } from "@/data/projects";
 
-type Props = {
+/**
+ * Full case study, as a slide-over.
+ *
+ * `aria-modal="true"` is a promise that the rest of the page is unavailable,
+ * so this actually keeps it: `useFocusTrap` cycles Tab inside the panel and
+ * restores focus to the card that opened it. The previous version declared
+ * `aria-modal` with no trap and no focus restoration at all.
+ */
+export function CaseStudyPanel({
+  project,
+  onClose,
+}: {
   project: Project | null;
   onClose: () => void;
-};
+}) {
+  const reduced = useReducedMotionPref();
+  const panelRef = useRef<HTMLElement>(null);
+  const open = Boolean(project);
 
-export function CaseStudyPanel({ project, onClose }: Props) {
-  const prefersReduced = useReducedMotion();
-  const closeRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!project) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    setTimeout(() => closeRef.current?.focus(), 50);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
-  }, [project, onClose]);
+  const handleEscape = useCallback(() => onClose(), [onClose]);
+  useFocusTrap(panelRef, open, handleEscape);
+  useScrollLock(open);
 
   return (
     <AnimatePresence>
-      {project && project.caseStudy && (
+      {project && (
         <>
-          {/* Backdrop */}
           <motion.div
-            key="backdrop"
+            key="scrim"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: DUR.mid }}
             onClick={onClose}
-            className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm"
+            aria-hidden="true"
+            className="fixed inset-0 z-[60] bg-[color-mix(in_oklab,var(--surface-0)_72%,transparent)] backdrop-blur-sm"
           />
 
-          {/* Panel */}
           <motion.aside
             key="panel"
+            ref={panelRef}
             role="dialog"
             aria-modal="true"
-            aria-label={`${project.name} — Case Study`}
-            initial={
-              prefersReduced
-                ? { opacity: 0 }
-                : { x: "100%", opacity: 0 }
-            }
-            animate={{ x: 0, opacity: 1 }}
-            exit={
-              prefersReduced
-                ? { opacity: 0 }
-                : { x: "100%", opacity: 0 }
-            }
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed inset-y-0 right-0 z-[61] flex w-full flex-col overflow-y-auto border-l border-white/[0.08] bg-bg-elevated/98 shadow-2xl backdrop-blur-xl sm:max-w-xl lg:max-w-2xl"
+            aria-labelledby="case-study-title"
+            tabIndex={-1}
+            initial={reduced ? { opacity: 0 } : { x: "100%" }}
+            animate={reduced ? { opacity: 1 } : { x: 0 }}
+            exit={reduced ? { opacity: 0 } : { x: "100%" }}
+            transition={{ duration: DUR.slow, ease: easeOutExpo }}
+            className="glass fixed inset-y-0 right-0 z-[61] flex w-full flex-col overflow-y-auto border-l border-line sm:max-w-xl lg:max-w-2xl"
           >
-            {/* Header */}
-            <header className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-white/[0.06] bg-bg-elevated/95 px-6 py-5 backdrop-blur-sm sm:px-8">
+            <header className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-line-subtle bg-surface-3 px-5 py-4 sm:px-8">
               <div className="min-w-0">
-                <p className="font-mono text-[0.65rem] uppercase tracking-[0.24em] text-fg-subtle">
-                  Case Study
-                </p>
-                <h2 className="mt-1 text-xl font-semibold tracking-tight text-fg sm:text-2xl">
+                <Eyebrow>Case study</Eyebrow>
+                <h2
+                  id="case-study-title"
+                  className="mt-1.5 text-xl font-semibold tracking-[var(--tracking-heading)] text-fg sm:text-2xl"
+                >
                   {project.name}
                 </h2>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
-                {project.liveUrl && (
-                  <a
-                    href={project.liveUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-full bg-fg px-3 py-1.5 text-xs font-medium text-bg transition-opacity hover:opacity-80"
-                  >
-                    Live demo
-                    <ArrowUpRightIcon size={12} />
-                  </a>
-                )}
-                <a
-                  href={project.repoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-white/[0.04] px-3 py-1.5 text-xs text-fg transition-colors hover:border-white/25 hover:bg-white/[0.08]"
-                >
-                  <GithubIcon size={12} />
-                  GitHub
-                </a>
-                <button
-                  ref={closeRef}
-                  type="button"
-                  aria-label="Close case study"
-                  onClick={onClose}
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 text-fg-muted transition-colors hover:border-white/20 hover:text-fg"
-                >
-                  <XIcon size={16} />
-                </button>
-              </div>
+              <IconButton label="Close case study" onClick={onClose} data-autofocus size="sm">
+                <XIcon size={16} />
+              </IconButton>
             </header>
 
-            {/* Body */}
-            <div className="flex-1 space-y-8 px-6 py-8 sm:px-8">
-              {/* Architecture */}
-              <Section title="Architecture">
-                <p className="text-base leading-relaxed text-fg-muted">
-                  {project.caseStudy.architecture}
-                </p>
-              </Section>
+            <div className="flex-1 space-y-9 px-5 py-8 sm:px-8">
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusChip status={project.status} />
+                <span className="label text-fg-subtle">{project.context}</span>
+              </div>
 
-              {/* Challenges */}
-              <Section title="Challenges Solved">
-                <ul className="space-y-2.5">
-                  {project.caseStudy.challenges.map((c, i) => (
-                    <li key={i} className="flex gap-3">
-                      <span
-                        aria-hidden="true"
-                        className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#b47cff]"
-                      />
-                      <span className="text-sm leading-relaxed text-fg-muted">{c}</span>
+              <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {project.metrics.map((m) => (
+                  <div
+                    key={m.label}
+                    className="rounded-lg border border-line-subtle bg-surface-1 px-3 py-2.5"
+                  >
+                    <dd className="tnum text-lg font-semibold text-fg">{m.value}</dd>
+                    <dt className="label mt-1 text-fg-subtle">{m.label}</dt>
+                  </div>
+                ))}
+              </dl>
+
+              <Block title="The problem">
+                <p className="leading-relaxed text-fg-muted">{project.caseStudy.problem}</p>
+              </Block>
+
+              <Block title="Architecture">
+                <p className="leading-relaxed text-fg-muted">{project.caseStudy.architecture}</p>
+              </Block>
+
+              <Block title="Engineering decisions">
+                <ul className="space-y-4">
+                  {project.caseStudy.decisions.map((d) => (
+                    <li
+                      key={d.title}
+                      className="rounded-xl border border-line-subtle bg-surface-1 p-4"
+                    >
+                      <h4 className="text-[0.95rem] font-medium text-fg">{d.title}</h4>
+                      <p className="mt-1.5 text-sm leading-relaxed text-fg-muted">{d.body}</p>
                     </li>
                   ))}
                 </ul>
-              </Section>
+              </Block>
 
-              {/* Decisions */}
-              <Section title="Engineering Decisions">
-                <ul className="space-y-2.5">
-                  {project.caseStudy.decisions.map((d, i) => (
-                    <li key={i} className="flex gap-3">
-                      <span
-                        aria-hidden="true"
-                        className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#5b8def]"
-                      />
-                      <span className="text-sm leading-relaxed text-fg-muted">{d}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Section>
+              <Block title="Challenges">
+                <List items={project.caseStudy.challenges} marker="accent" />
+              </Block>
 
-              {/* Learned */}
-              <Section title="What I Learned">
-                <ul className="space-y-2.5">
-                  {project.caseStudy.learned.map((l, i) => (
-                    <li key={i} className="flex gap-3">
-                      <span
-                        aria-hidden="true"
-                        className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-fg-subtle"
-                      />
-                      <span className="text-sm leading-relaxed text-fg-muted">{l}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Section>
+              <Block title="What I took from it">
+                <List items={project.caseStudy.learned} marker="subtle" />
+              </Block>
 
-              {/* AI Workflow */}
-              {project.caseStudy.aiWorkflow && (
-                <Section title="AI-Assisted Workflow">
-                  <div className="rounded-xl border border-[#b47cff]/20 bg-[#b47cff]/[0.06] p-4">
+              {project.caseStudy.honestNote && (
+                <Block title="What this isn't">
+                  <div className="rounded-xl border border-line bg-surface-1 p-4">
                     <p className="text-sm leading-relaxed text-fg-muted">
-                      {project.caseStudy.aiWorkflow}
+                      {project.caseStudy.honestNote}
                     </p>
                   </div>
-                </Section>
+                </Block>
               )}
+
+              <Block title="Stack">
+                <ul className="flex flex-wrap gap-1.5">
+                  {project.stack.map((s) => (
+                    <li key={s.label}>
+                      <Tag emphasis={s.emphasis}>{s.label}</Tag>
+                    </li>
+                  ))}
+                </ul>
+              </Block>
+
+              <div className="flex flex-wrap gap-3 border-t border-line-subtle pt-7">
+                {project.liveUrl && (
+                  <ButtonLink href={project.liveUrl} external arrow>
+                    {project.liveLabel ?? "Open the app"}
+                  </ButtonLink>
+                )}
+                <ButtonLink href={project.repoUrl} external variant="secondary">
+                  <GithubIcon size={15} />
+                  View source
+                </ButtonLink>
+              </div>
             </div>
           </motion.aside>
         </>
@@ -178,19 +165,30 @@ export function CaseStudyPanel({ project, onClose }: Props) {
   );
 }
 
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function Block({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h3 className="mb-3 font-mono text-[0.7rem] uppercase tracking-[0.24em] text-fg-subtle">
-        {title}
-      </h3>
+      <h3 className="label mb-3 text-fg-subtle">{title}</h3>
       {children}
     </section>
+  );
+}
+
+function List({ items, marker }: { items: string[]; marker: "accent" | "subtle" }) {
+  return (
+    <ul className="space-y-3">
+      {items.map((item) => (
+        <li key={item} className="flex gap-3">
+          <span
+            aria-hidden="true"
+            className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full"
+            style={{
+              background: marker === "accent" ? "var(--accent)" : "var(--fg-subtle)",
+            }}
+          />
+          <span className="text-sm leading-relaxed text-fg-muted">{item}</span>
+        </li>
+      ))}
+    </ul>
   );
 }

@@ -2,55 +2,51 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 
-type SectionProps = {
-  id?: string;
-  ariaLabel?: string;
-  eyebrow?: string;
-  title?: ReactNode;
-  intro?: ReactNode;
-  align?: "left" | "center";
-  className?: string;
-  containerClassName?: string;
-  divider?: boolean;
-  children: ReactNode;
-};
-
+/**
+ * Page section wrapper.
+ *
+ * Vertical rhythm comes from the `--section-y` token rather than a stack of
+ * responsive padding utilities. The previous scale spent roughly 290px of
+ * padding plus an 80px header margin between every section, which is most of
+ * why the page ran to 7.6 viewport-heights while still reading as empty.
+ */
 export function Section({
   id,
-  ariaLabel,
   eyebrow,
   title,
   intro,
-  align = "left",
+  aside,
   className,
-  containerClassName,
-  divider = true,
   children,
-}: SectionProps) {
+}: {
+  id: string;
+  eyebrow?: string;
+  title?: ReactNode;
+  intro?: ReactNode;
+  /** Optional trailing element on the header row — a link, a count, a control. */
+  aside?: ReactNode;
+  className?: string;
+  children: ReactNode;
+}) {
   return (
     <section
       id={id}
-      aria-label={ariaLabel}
-      aria-labelledby={id && title ? `${id}-title` : undefined}
+      aria-labelledby={title ? `${id}-title` : undefined}
+      aria-label={title ? undefined : id}
       className={cn(
-        "relative scroll-mt-24 px-5 py-24 sm:px-8 sm:py-28 lg:py-36 3xl:py-44",
-        divider && "section-divider",
+        "relative scroll-mt-24 px-[var(--gutter)]",
+        "py-[var(--section-y)]",
         className,
       )}
     >
-      <div
-        className={cn(
-          "mx-auto w-full max-w-6xl 3xl:max-w-7xl",
-          containerClassName,
-        )}
-      >
+      <div className="mx-auto w-full max-w-6xl 3xl:max-w-7xl">
         {(eyebrow || title || intro) && (
           <SectionHeader
             id={id}
             eyebrow={eyebrow}
             title={title}
             intro={intro}
-            align={align}
+            aside={aside}
           />
         )}
         {children}
