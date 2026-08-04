@@ -84,6 +84,13 @@
   /* Starfield dust in the substrate. */
   --star: rgba(214, 226, 255, 0.55);
 
+  /* Device material for the intro workstation. White-alpha aluminium reads on
+     a dark field and disappears entirely on a light one, so the shell is a
+     token pair rather than a fixed gradient. */
+  --device-shell: linear-gradient(168deg, rgba(228,236,255,0.62) 0%, rgba(150,163,196,0.34) 26%, rgba(96,106,138,0.30) 62%, rgba(52,58,80,0.42) 100%);
+  --device-base: linear-gradient(180deg, rgba(214,224,248,0.55), rgba(120,130,164,0.32) 38%, rgba(44,49,68,0.42));
+  --device-edge: rgba(255, 255, 255, 0.55);
+
   /* ── Elevation ───────────────────────────────────────────────────────── */
   --shadow-1:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
@@ -182,6 +189,11 @@
   --status-wip: #b45309;
   --status-idle: #5a6480;
   --star: rgba(90, 100, 128, 0.30);
+
+  /* Space-grey on a bright desk — opaque, so it holds its own against the page. */
+  --device-shell: linear-gradient(168deg, #c4cbdb 0%, #9aa2b7 28%, #737a90 64%, #515769 100%);
+  --device-base: linear-gradient(180deg, #b2b9c9, #848b9f 40%, #5b6174);
+  --device-edge: rgba(255, 255, 255, 0.85);
 
   /* Dark mode fakes depth with borders; light mode needs real elevation or
      translucent panels dissolve into the page. */

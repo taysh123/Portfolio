@@ -2,6 +2,7 @@ import { AmbientGlow } from "@/components/effects/AmbientGlow";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Stage } from "@/components/ui/Stage";
+import { IntroSequence } from "@/components/sections/IntroSequence";
 import { Hero } from "@/components/sections/Hero";
 import { About } from "@/components/sections/About";
 import { Projects } from "@/components/sections/Projects";
@@ -17,7 +18,8 @@ import { Contact } from "@/components/sections/Contact";
  * uneven — big, medium, huge, small, medium, big — so the page has rhythm
  * instead of a uniform cadence:
  *
- *   Hero      one dominant panel, ~92svh
+ *   Intro     a workstation you scroll into — full-bleed, no frame
+ *   Hero      one dominant panel, ~92svh — where you land
  *   About     an asymmetric pair
  *   Work      the largest region on the page — it carries the argument
  *   Toolkit   a low, wide band, deliberately quiet after Work
@@ -32,7 +34,12 @@ export default function Page() {
     <>
       <AmbientGlow />
       <Navbar />
-      <main id="main" className="relative pb-[var(--gap)] pt-[var(--gap)]">
+      <main id="main" className="relative pb-[var(--gap)]">
+        {/* The front door sits outside the Stage: it is full-bleed by design,
+            and the stage's gutters would frame a sequence that is supposed to
+            have no frame until you are through it. */}
+        <IntroSequence />
+
         <Stage>
           <Hero />
           <About />
