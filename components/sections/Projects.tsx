@@ -7,10 +7,13 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Reveal } from "@/components/ui/Reveal";
 import { FeaturedProject } from "@/components/ui/FeaturedProject";
 import { ProjectRow } from "@/components/ui/ProjectRow";
+import { ProjectStage } from "@/components/ui/ProjectStage";
 import { CaseStudyPanel } from "@/components/ui/CaseStudyPanel";
 import { ButtonLink } from "@/components/ui/Button";
 import { GithubIcon } from "@/components/ui/icons";
 import { projects, featuredProject } from "@/data/projects";
+import { useMediaQuery } from "@/lib/useMediaQuery";
+import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
 import { socials } from "@/data/socials";
 import type { Project } from "@/data/projects";
 
@@ -42,6 +45,19 @@ export function Projects() {
   const [caseStudy, setCaseStudy] = useState<Project | null>(null);
   const open = useCallback((p: Project) => setCaseStudy(p), []);
   const close = useCallback(() => setCaseStudy(null), []);
+
+  /*
+    The 3D stage is a progressive enhancement, not the only way to read this.
+
+    `useMediaQuery` reports false until mounted, so the SERVER renders the row
+    list — which means every project's name, summary, metrics and links are in
+    the HTML for crawlers and for anyone without JavaScript. The stage then
+    replaces it on capable clients. Under reduced motion the rows stay, because
+    they are a genuinely good presentation rather than a fallback.
+  */
+  const reduced = useReducedMotionPref();
+  const roomy = useMediaQuery("(min-width: 1024px)");
+  const showStage = roomy && !reduced;
 
   return (
     <>
@@ -81,25 +97,32 @@ export function Projects() {
           <FeaturedProject project={featuredProject} onOpenCaseStudy={open} />
         </Reveal>
 
-        {/* ── The rest, as rows ──────────────────────────────────────────
-            Each row reveals on its own as you reach it rather than being
-            staggered off one container trigger — a 5-row container is taller
-            than the viewport, so a shared trigger would have finished
+        {/* ── The rest ───────────────────────────────────────────────────
+            On a roomy viewport with motion allowed, the remaining projects
+            become a 3D stage. Otherwise they stay as full-width rows, each
+            revealing on its own as you reach it — a five-row container is
+            taller than the viewport, so a shared trigger would have finished
             animating long before the last row was ever on screen. */}
-        <ul className="flex flex-col gap-[var(--gap)]">
-          {rest.map((project, i) => (
-            <li key={project.id}>
-              <Reveal>
-                <ProjectRow
-                  project={project}
-                  index={i + 2}
-                  reverse={i % 2 === 1}
-                  onOpenCaseStudy={open}
-                />
-              </Reveal>
-            </li>
-          ))}
-        </ul>
+        {showStage ? (
+          <Panel tone="raised" bloom="centre" sheen={false} className="px-4 py-[clamp(2.5rem,4vw,4rem)]">
+            <ProjectStage projects={rest} onOpenCaseStudy={open} />
+          </Panel>
+        ) : (
+          <ul className="flex flex-col gap-[var(--gap)]">
+            {rest.map((project, i) => (
+              <li key={project.id}>
+                <Reveal>
+                  <ProjectRow
+                    project={project}
+                    index={i + 2}
+                    reverse={i % 2 === 1}
+                    onOpenCaseStudy={open}
+                  />
+                </Reveal>
+              </li>
+            ))}
+          </ul>
+        )}
       </Section>
 
       <CaseStudyPanel project={caseStudy} onClose={close} />

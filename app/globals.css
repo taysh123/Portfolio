@@ -91,6 +91,14 @@
   --device-base: linear-gradient(180deg, rgba(214,224,248,0.55), rgba(120,130,164,0.32) 38%, rgba(44,49,68,0.42));
   --device-edge: rgba(255, 255, 255, 0.55);
 
+  /* An OPAQUE panel fill. Every other surface here is translucent on purpose,
+     but anything stacked in 3D needs to actually occlude what is behind it —
+     a translucent card in a carousel lets the next card's headline read
+     straight through the front one. */
+  --panel-solid:
+    linear-gradient(168deg, #171c2e 0%, #12162553 34%, #10142200 100%),
+    linear-gradient(0deg, #0e1120, #0e1120);
+
   /* ── Elevation ───────────────────────────────────────────────────────── */
   --shadow-1:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
@@ -194,6 +202,10 @@
   --device-shell: linear-gradient(168deg, #c4cbdb 0%, #9aa2b7 28%, #737a90 64%, #515769 100%);
   --device-base: linear-gradient(180deg, #b2b9c9, #848b9f 40%, #5b6174);
   --device-edge: rgba(255, 255, 255, 0.85);
+
+  --panel-solid:
+    linear-gradient(168deg, rgba(255,255,255,0.9) 0%, rgba(246,247,252,0.6) 40%, rgba(139,92,246,0.05) 100%),
+    linear-gradient(0deg, #ffffff, #ffffff);
 
   /* Dark mode fakes depth with borders; light mode needs real elevation or
      translucent panels dissolve into the page. */

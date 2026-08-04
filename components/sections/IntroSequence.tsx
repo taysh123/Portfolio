@@ -16,6 +16,10 @@ import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
  * A tall container with a sticky stage inside it, so scroll drives a timeline
  * rather than translating a page. The beats:
  *
+ * 200vh, not 320: one viewport of travel carries all five beats, which is
+ * enough for the sequence to read as cinematic without making the reader pay
+ * three screens of scroll before they reach any content.
+ *
  *   0.00 → 0.18   arrival — the machine sits shut in the dark
  *   0.12 → 0.34   the lid opens
  *   0.28 → 0.52   the display wakes and the boot log runs
@@ -91,7 +95,7 @@ export function IntroSequence() {
         <StaticFrame />
       </section>
 
-      <div ref={ref} data-intro-stage className="relative hidden h-[320vh] lg:block">
+      <div ref={ref} data-intro-stage className="relative hidden h-[200vh] lg:block">
         <motion.section
           aria-label="Introduction"
           className="sticky top-0 flex h-screen items-center justify-center overflow-hidden"
