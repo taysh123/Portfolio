@@ -18,6 +18,12 @@ export type SkillGroup = {
   caption: string;
   glyph: GlyphKey;
   items: { label: string; emphasis?: boolean }[];
+  /**
+   * Where this group is actually load-bearing, with a number or a specific
+   * behaviour. A capability list without evidence is a wish list — every line
+   * here is checkable against `data/projects.ts` and the repos it points at.
+   */
+  evidence: string;
 };
 
 export type GlyphKey =
@@ -44,6 +50,8 @@ export const skillGroups: SkillGroup[] = [
       { label: "JavaScript" },
       { label: "SQL" },
     ],
+    evidence:
+      "C++ and C# carry SentinelAI and T Poker; Python carries DeveloperOS and Job Assistant. Six projects, five languages in shipped code."
   },
   {
     id: "interface",
@@ -59,6 +67,8 @@ export const skillGroups: SkillGroup[] = [
       { label: "Phaser 3" },
       { label: "JavaFX" },
     ],
+    evidence:
+      "One Expo codebase renders iOS, Android and the live web app for T Poker — designing for the narrowest target first."
   },
   {
     id: "service",
@@ -74,6 +84,8 @@ export const skillGroups: SkillGroup[] = [
       { label: "RabbitMQ / MassTransit", emphasis: true },
       { label: "JWT / RS256" },
     ],
+    evidence:
+      "SentinelAI moves events across 8 bounded contexts over RabbitMQ, with 0 cross-context references and a retry ladder per endpoint."
   },
   {
     id: "store",
@@ -88,6 +100,8 @@ export const skillGroups: SkillGroup[] = [
       { label: "MySQL" },
       { label: "Firebase" },
     ],
+    evidence:
+      "SQLite FTS5 powers DeveloperOS’s grounded retrieval; PostgreSQL and Redis back SentinelAI’s partitioned events and sliding windows."
   },
   {
     id: "delivery",
@@ -104,6 +118,8 @@ export const skillGroups: SkillGroup[] = [
       { label: "Capacitor" },
       { label: "PyInstaller" },
     ],
+    evidence:
+      "SentinelAI comes up from a single Docker command that mints its own RS256 keys. T Poker runs 5 CI jobs on every push."
   },
   {
     id: "verify",
@@ -120,5 +136,7 @@ export const skillGroups: SkillGroup[] = [
       { label: "Claude Code", emphasis: true },
       { label: "Ollama" },
     ],
+    evidence:
+      "1,742 tests across five projects, weighted toward settlement math, threat scoring, retrieval grounding and level progression."
   },
 ];

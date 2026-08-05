@@ -1,6 +1,7 @@
 import { encodePhone } from "@/lib/obfuscate";
 
-const PHONE_PLAIN = "052-8183479";
+/** International format, used consistently wherever the number appears. */
+const PHONE_PLAIN = "+972 52 818 3479";
 
 export const socials = {
   email: "tayshofer05@gmail.com",

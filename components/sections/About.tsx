@@ -5,7 +5,7 @@ import { Row } from "@/components/ui/Stage";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Reveal, RevealItem } from "@/components/ui/Reveal";
-import { LayerStack } from "@/components/effects/LayerStack";
+import { ArchitectureBoard } from "@/components/effects/ArchitectureBoard";
 
 /**
  * An asymmetric pair, not a section with a picture beside it.
@@ -91,14 +91,18 @@ export function About() {
             {facts.map((f, i) => (
               <div
                 key={f.label}
-                className={`px-[var(--panel-p)] py-6 sm:px-[clamp(1.25rem,2vw,2rem)] ${
+                className={`group/fact relative px-[var(--panel-p)] py-7 transition-colors duration-[var(--dur-mid)] hover:bg-surface-1 sm:px-[clamp(1.25rem,2vw,2rem)] ${
                   i > 0 ? "border-t border-line-subtle sm:border-l sm:border-t-0" : ""
                 }`}
               >
                 <dt className="label text-fg-subtle">{f.label}</dt>
-                <dd className="mt-2.5 text-sm font-medium leading-snug text-fg">
+                <dd className="mt-2.5 text-[0.9375rem] font-medium leading-snug text-fg">
                   {f.value}
                 </dd>
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 bg-accent transition-transform duration-[var(--dur-slow)] ease-[var(--ease-out-expo)] group-hover/fact:scale-x-100"
+                />
               </div>
             ))}
           </dl>
@@ -112,10 +116,10 @@ export function About() {
           className="relative flex min-h-[30rem] flex-col lg:min-h-[38rem]"
         >
           <Eyebrow className="absolute left-[var(--panel-p)] top-[var(--panel-p)] z-10">
-            How I lay a system out
+            How a request moves
           </Eyebrow>
-          <div className="flex flex-1 items-center px-[clamp(1rem,2vw,2rem)] pb-[var(--panel-p)] pt-[calc(var(--panel-p)*1.4)]">
-            <LayerStack />
+          <div className="flex flex-1 items-center px-[clamp(1.25rem,2.5vw,2.25rem)] pb-[var(--panel-p)] pt-[calc(var(--panel-p)*1.5)]">
+            <ArchitectureBoard />
           </div>
         </Panel>
       </Row>
