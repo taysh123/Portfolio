@@ -88,7 +88,7 @@
      a dark field and disappears entirely on a light one, so the shell is a
      token pair rather than a fixed gradient. */
   --device-shell: linear-gradient(168deg, rgba(228,236,255,0.62) 0%, rgba(150,163,196,0.34) 26%, rgba(96,106,138,0.30) 62%, rgba(52,58,80,0.42) 100%);
-  --device-base: linear-gradient(180deg, rgba(214,224,248,0.55), rgba(120,130,164,0.32) 38%, rgba(44,49,68,0.42));
+  --device-base: linear-gradient(180deg, rgba(206,216,242,0.50) 0%, rgba(150,161,193,0.40) 24%, rgba(96,105,136,0.34) 62%, rgba(58,64,86,0.40) 100%);
   --device-edge: rgba(255, 255, 255, 0.55);
 
   /* An OPAQUE panel fill. Every other surface here is translucent on purpose,
@@ -534,10 +534,26 @@
   to { stroke-dashoffset: -24; }
 }
 
+/* Ambient life for the workstation: a breath, not a bob. 14s and ±5px is
+   below the threshold where it reads as "animated" and right at the one where
+   the object stops feeling like a still image. */
+@keyframes hover-float {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(0, -5px, 0); }
+}
+
+/* The room light crawling across brushed metal. */
+@keyframes specular-drift {
+  0%, 100% { transform: translate3d(-4%, 0, 0); opacity: 0.7; }
+  50%      { transform: translate3d(4%, 0, 0); opacity: 1; }
+}
+
 .anim-sweep { animation: sweep 7s var(--ease-spring) infinite; }
 .anim-drift { animation: drift 9s ease-in-out infinite; }
 .anim-pulse { animation: pulse-soft 3.6s ease-in-out infinite; }
 .anim-flow  { animation: dash-flow 1.6s linear infinite; }
+.anim-hover { animation: hover-float 14s ease-in-out infinite; }
+.anim-spec  { animation: specular-drift 18s ease-in-out infinite; }
 
 /* CSS-driven motion off-switch. JS-driven motion is gated separately via
    `useMotionPref` — a CSS rule cannot stop a requestAnimationFrame loop,
@@ -549,7 +565,8 @@
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
-  .anim-sweep, .anim-drift, .anim-pulse, .anim-flow {
+  .anim-sweep, .anim-drift, .anim-pulse, .anim-flow,
+  .anim-hover, .anim-spec {
     animation: none !important;
   }
   .anim-sweep { opacity: 0; }
@@ -566,7 +583,9 @@
 [data-reduced-motion="true"] .anim-sweep,
 [data-reduced-motion="true"] .anim-drift,
 [data-reduced-motion="true"] .anim-pulse,
-[data-reduced-motion="true"] .anim-flow {
+[data-reduced-motion="true"] .anim-flow,
+[data-reduced-motion="true"] .anim-hover,
+[data-reduced-motion="true"] .anim-spec {
   animation: none !important;
 }
 [data-reduced-motion="true"] .anim-sweep { opacity: 0; }

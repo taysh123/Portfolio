@@ -20,11 +20,14 @@ import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
  * enough for the sequence to read as cinematic without making the reader pay
  * three screens of scroll before they reach any content.
  *
- *   0.00 → 0.18   arrival — the machine sits shut in the dark
- *   0.12 → 0.34   the lid opens
- *   0.28 → 0.52   the display wakes and the boot log runs
- *   0.46 → 0.66   the workspace loads
- *   0.60 → 1.00   the camera pushes through the screen
+ *   0.00          arrival — the machine is already there, lid open, screen
+ *                 dark, breathing. You should know what you are looking at
+ *                 before you scroll a pixel.
+ *   0.00 → 0.22   the hinge finishes opening as you engage
+ *   0.26 → 0.40   the display wakes
+ *   0.30 → 0.56   the boot log runs
+ *   0.52 → 0.68   the workspace loads
+ *   0.62 → 1.00   the camera pushes through the screen
  *
  * The push is a scale on the whole scene with the bezel fading out, so what
  * remains at the end is the display's own light filling the viewport. The
@@ -60,18 +63,27 @@ export function IntroSequence() {
   const ramp = (from: number, to: number) => (p: number) =>
     Math.min(1, Math.max(0, (p - from) / (to - from)));
 
-  const lidOpen = useTransform(scrollYProgress, ramp(0.12, 0.34));
-  const wake = useTransform(scrollYProgress, ramp(0.28, 0.42));
+  /*
+    The lid starts MOSTLY OPEN, not shut.
+
+    A closed lid is edge-on to the camera, which means the arrival frame was
+    effectively empty — the reader landed on a dark room and had to scroll
+    before anything identified itself as a machine. Starting at 0.78 means the
+    device is unmistakably a laptop from the first pixel; the remaining travel
+    finishes the hinge as the reader engages, so the beat is still there.
+  */
+  const lidOpen = useTransform(scrollYProgress, (p) => 0.78 + ramp(0, 0.22)(p) * 0.22);
+  const wake = useTransform(scrollYProgress, ramp(0.26, 0.4));
   const boot = useTransform(scrollYProgress, ramp(0.3, 0.56));
-  const live = useTransform(scrollYProgress, ramp(0.52, 0.66));
+  const live = useTransform(scrollYProgress, ramp(0.52, 0.68));
 
   // The push. Deliberately not linear: a slow approach, then the last stretch
   // covers most of the distance, which reads as acceleration into the screen.
   const sceneScale = useTransform(scrollYProgress, (p) => {
-    const t = ramp(0.6, 1)(p);
+    const t = ramp(0.62, 1)(p);
     return 1 + Math.pow(t, 2.2) * 8;
   });
-  const sceneY = useTransform(scrollYProgress, (p) => `${ramp(0.6, 1)(p) * -6}%`);
+  const sceneY = useTransform(scrollYProgress, (p) => `${ramp(0.62, 1)(p) * -6}%`);
   const bezelFade = useTransform(scrollYProgress, (p) => 1 - ramp(0.74, 0.93)(p));
   const washIn = useTransform(scrollYProgress, ramp(0.8, 1));
   const stageFade = useTransform(scrollYProgress, (p) => 1 - ramp(0.94, 1)(p));
@@ -144,11 +156,15 @@ export function IntroSequence() {
             }}
           >
             <motion.div style={{ opacity: bezelFade }} className="contents">
+              {/* The float is a wrapper, not a property of the machine: it has
+                  to compose with the camera's scale without fighting it. */}
+              <div className="anim-hover">
               <Workstation open={lidOpen} wake={wake}>
                 <div style={{ containerType: "inline-size" }} className="h-full w-full">
                   <ScreenUI boot={boot} live={live} />
                 </div>
               </Workstation>
+              </div>
             </motion.div>
           </motion.div>
 

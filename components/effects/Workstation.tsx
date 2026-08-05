@@ -87,7 +87,12 @@ export function Workstation({
           {/* Bezel */}
           <div
             className="relative h-full w-full overflow-hidden rounded-[0.85rem]"
-            style={{ background: "#080a12" }}
+            style={{
+              // Even off, a display is glass over a dark panel — a flat fill
+              // reads as a hole cut in the lid.
+              background:
+                "linear-gradient(168deg, #121628 0%, #0b0e1a 46%, #070910 100%)",
+            }}
           >
             {/* Camera notch */}
             <span
@@ -115,48 +120,96 @@ export function Workstation({
               }}
             />
 
-            {/* Glass reflection — a single wide diagonal sweep. Static: a
-                moving glint on a fixed light source would read as wrong. */}
+            {/* Glass reflection. It drifts very slowly — the room light
+                crawling across the panel is what stops a dark screen reading
+                as a flat rectangle before it powers on. */}
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 rounded-[0.85rem]"
+              className="anim-spec pointer-events-none absolute inset-[-10%] rounded-[0.85rem]"
               style={{
                 background:
-                  "linear-gradient(112deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.035) 20%, transparent 46%)",
+                  "linear-gradient(112deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.04) 20%, transparent 46%)",
               }}
             />
           </div>
         </div>
       </motion.div>
 
-      {/* ── Base ─────────────────────────────────────────────────────────── */}
+      {/* ── Deck ─────────────────────────────────────────────────────────
+          The wedge is what makes a laptop identifiable at a glance — an open
+          lid alone is just a monitor. `rotateX(-74deg)` rather than the -88 it
+          started at, because at -88 the deck projects to about 3% of its own
+          height and reads as a hairline. At -74 it projects ~28%, which is
+          enough to show a keyboard field and a trackpad. */}
       <div
         className="absolute left-0 top-full w-full origin-top"
         style={{
-          height: "4.4%",
-          transform: "rotateX(-88deg)",
+          height: "32%",
+          transform: "rotateX(-74deg)",
           transformStyle: "preserve-3d",
-          background:
-            "linear-gradient(180deg, rgba(176,186,212,0.30), rgba(88,96,124,0.20) 40%, rgba(38,42,58,0.30))",
-          borderRadius: "0 0 0.7rem 0.7rem",
-          boxShadow: "0 1px 0 var(--device-edge) inset",
+          background: "var(--device-base)",
+          borderRadius: "0 0 0.9rem 0.9rem",
+          boxShadow:
+            "0 1px 0 var(--device-edge) inset, 0 24px 50px -20px rgba(0,0,0,0.8)",
         }}
       >
         {/* Hinge shadow where the lid meets the deck. */}
         <span
           aria-hidden="true"
-          className="absolute inset-x-[8%] top-0 h-[22%]"
+          className="absolute inset-x-[4%] top-0 h-[16%]"
           style={{
-            background: "linear-gradient(180deg, rgba(0,0,0,0.55), transparent)",
+            background: "linear-gradient(180deg, rgba(0,0,0,0.6), transparent)",
           }}
         />
-        {/* Front-edge notch. */}
+
+        {/* Keyboard field. Rows of keys rather than individual ones — at this
+            scale a real key grid turns to noise, but the block reads correctly. */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-[10%] top-[16%] h-[46%] rounded-[0.2rem]"
+          style={{
+            background: "rgba(0,0,0,0.42)",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10)",
+          }}
+        >
+          <div className="flex h-full flex-col justify-evenly px-[1.5%] py-[6%]">
+            {[0, 1, 2, 3].map((row) => (
+              <span
+                key={row}
+                className="block rounded-full"
+                style={{
+                  height: "13%",
+                  marginInline: row === 3 ? "14%" : "0",
+                  background:
+                    "repeating-linear-gradient(90deg, rgba(210,222,255,0.30) 0 1.2%, transparent 1.2% 2.6%)",
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Trackpad. */}
         <span
           aria-hidden="true"
-          className="absolute bottom-0 left-1/2 h-[18%] w-[13%] -translate-x-1/2 rounded-t-full"
-          style={{ background: "rgba(0,0,0,0.35)" }}
+          className="absolute bottom-[10%] left-1/2 h-[24%] w-[26%] -translate-x-1/2 rounded-[0.18rem]"
+          style={{
+            background: "rgba(255,255,255,0.06)",
+            boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.10)",
+          }}
+        />
+
+        {/*
+          Power indicator — the one thing that moves before the screen wakes.
+          It is what makes the device read as ON but asleep rather than as a
+          photograph of a laptop.
+        */}
+        <span
+          aria-hidden="true"
+          className="anim-pulse absolute bottom-[8%] left-[5%] h-[6%] w-[1.2%] rounded-full"
+          style={{ background: "var(--status-live)", animationDuration: "3.8s" }}
         />
       </div>
+
     </div>
   );
 }
