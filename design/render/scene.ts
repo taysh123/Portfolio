@@ -39,13 +39,49 @@ export const RENDER_H = 2400;
 const SCREEN_W = 74;
 const SCREEN_H = 32;
 
+/** The secondary is portrait — a vertical monitor is one of the most reliable
+ *  "this person reads logs and diffs for a living" signals there is. */
+const SEC_W = 26;
+const SEC_H = 46;
+const SEC_YAW = 0.5;
+
 export type SceneHandles = {
   renderer: THREE.WebGLRenderer;
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
-  /** World-space corners of the primary screen, TL/TR/BR/BL. */
+  /** World-space corners, TL/TR/BR/BL, for each live surface. */
   screenCorners: THREE.Vector3[];
+  secondaryCorners: THREE.Vector3[];
 };
+
+/**
+ * World-space corners of a screen plane.
+ *
+ * Both monitors need this and the secondary is yawed, so the rotation has to
+ * be applied rather than assumed away — hand-writing axis-aligned corners
+ * works for the primary and silently produces a skewed quad for anything
+ * turned even slightly.
+ */
+function screenQuad(
+  centre: THREE.Vector3,
+  w: number,
+  h: number,
+  yaw: number,
+  faceOffset: number,
+): THREE.Vector3[] {
+  const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+  const up = new THREE.Vector3(0, 1, 0);
+  const normal = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
+  const o = centre.clone().add(normal.multiplyScalar(faceOffset));
+  const hx = right.clone().multiplyScalar(w / 2);
+  const hy = up.clone().multiplyScalar(h / 2);
+  return [
+    o.clone().sub(hx).add(hy),
+    o.clone().add(hx).add(hy),
+    o.clone().add(hx).sub(hy),
+    o.clone().sub(hx).sub(hy),
+  ];
+}
 
 /* ── Materials ─────────────────────────────────────────────────────────── */
 
@@ -101,23 +137,31 @@ function materials() {
       metalness: 0.0,
       clearcoat: 0.35,
       clearcoatRoughness: 0.5,
-      envMapIntensity: 0.5,
+      envMapIntensity: 0.2,
     }),
-    // Matte black for every enclosure. Low metalness on purpose: anodised
-    // black plastic and painted metal both read matte, and a shiny black body
-    // is the "gaming" cue the brief rules out.
+    /*
+      Matte black for every enclosure.
+
+      `envMapIntensity` is the number that matters here, and 0.42 was far too
+      high: a studio environment reflecting into every surface lifts the blacks
+      until a "matte black" monitor renders mid-grey plastic. Dropping it to
+      0.12 lets the key light describe the form instead of the environment
+      washing it flat — which is the whole difference between a lit object and
+      a shaded one. Low metalness stays on purpose: a shiny black body is the
+      gaming cue the brief rules out.
+    */
     matte: new THREE.MeshPhysicalMaterial({
-      color: 0x14161a,
-      roughness: 0.66,
-      metalness: 0.12,
-      envMapIntensity: 0.42,
+      color: 0x0e1013,
+      roughness: 0.72,
+      metalness: 0.08,
+      envMapIntensity: 0.12,
     }),
     // Brushed aluminium for arms and stands — the one place metal belongs.
     alu: new THREE.MeshPhysicalMaterial({
-      color: 0x9aa0aa,
-      roughness: 0.38,
-      metalness: 0.92,
-      envMapIntensity: 0.7,
+      color: 0x6f757f,
+      roughness: 0.42,
+      metalness: 0.95,
+      envMapIntensity: 0.45,
     }),
     keycap: new THREE.MeshPhysicalMaterial({
       color: 0x1b1e24,
@@ -294,7 +338,7 @@ export function buildScene(canvas: HTMLCanvasElement): SceneHandles {
   renderer.setSize(RENDER_W, RENDER_H, false);
   renderer.setPixelRatio(1);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.72;
+  renderer.toneMappingExposure = 0.78;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -303,6 +347,7 @@ export function buildScene(canvas: HTMLCanvasElement): SceneHandles {
 
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environmentIntensity = 0.35;
   pmrem.dispose();
 
   const m = materials();
@@ -339,22 +384,20 @@ export function buildScene(canvas: HTMLCanvasElement): SceneHandles {
   primary.group.position.set(2, 26, -22);
   scene.add(primary.group);
 
-  const secondary = makeMonitor(m, 46, 29, false);
-  secondary.group.position.set(-62, 23, -14);
-  secondary.group.rotation.y = 0.42;
-  scene.add(secondary.group);
+  /*
+    The secondary is PORTRAIT, and turned toward the viewer.
 
-  // A dark emissive plane on the secondary, so it reads as ON without needing
-  // legible content — the engineering surfaces live on the primary's DOM.
-  const secPanel = new THREE.Mesh(
-    new THREE.PlaneGeometry(43.6, 26.6),
-    new THREE.MeshBasicMaterial({ color: 0x0d1524 }),
-  );
-  secPanel.position.copy(secondary.group.position);
-  secPanel.position.z += 0.85 * Math.cos(0.42);
-  secPanel.position.x += 0.85 * Math.sin(0.42);
-  secPanel.rotation.y = 0.42;
-  scene.add(secPanel);
+    A vertical monitor is one of the most reliable "this person reads logs and
+    diffs for a living" signals available — it is a working choice rather than
+    a decorative one, which is exactly the test the brief sets for every object
+    on this desk. It is also live DOM at runtime, so its corners are exported
+    alongside the primary's.
+  */
+  const secPos = new THREE.Vector3(-58, 30, -16);
+  const secondary = makeMonitor(m, SEC_W + 2.2, SEC_H + 2.2, true);
+  secondary.group.position.copy(secPos);
+  secondary.group.rotation.y = SEC_YAW;
+  scene.add(secondary.group);
 
   // ── Desk objects ──────────────────────────────────────────────────────
   const mat = new THREE.Mesh(new RoundedBoxGeometry(76, 0.4, 34, 2, 0.6), m.matte);
@@ -382,18 +425,42 @@ export function buildScene(canvas: HTMLCanvasElement): SceneHandles {
   scene.add(mug);
 
   const notebook = new THREE.Mesh(new RoundedBoxGeometry(30, 1.6, 21, 2, 0.4), m.paper);
-  notebook.position.set(-58, 0.8, 26);
+  notebook.position.set(-56, 0.8, 28);
   notebook.rotation.y = -0.22;
   notebook.castShadow = true;
   notebook.receiveShadow = true;
   scene.add(notebook);
+
+  // Speakers. Small, matte, flanking the primary — they belong to the "has a
+  // reason to exist" list rather than the accessory list.
+  for (const x of [-34, 40]) {
+    const sp = new THREE.Mesh(new RoundedBoxGeometry(8, 15, 8, 3, 0.7), m.matte);
+    sp.position.set(x, 7.5, -6);
+    sp.rotation.y = x < 0 ? 0.2 : -0.2;
+    sp.castShadow = true;
+    sp.receiveShadow = true;
+    scene.add(sp);
+  }
 
   /* ── Lighting ────────────────────────────────────────────────────────
      One key, one rim, one ambient bounce, plus the monitors' own emission.
      No coloured practicals — the brief rules out RGB, and a scene lit by one
      directional source with a cool rim is the register that reads as product
      photography rather than as a desk setup. */
-  const key = new THREE.DirectionalLight(0xffeede, 1.35);
+  /*
+    KEY-TO-FILL RATIO IS THE WHOLE GAME.
+
+    The first pass had key 1.35 against ambient 0.55 and a bright environment
+    — roughly 2:1, which is flat lighting, and flat lighting is why the scene
+    read as a mock-up rather than a photograph. Nothing had a dark side, so
+    nothing had form.
+
+    A product shot runs closer to 8:1. Key up, ambient down to a whisper, and
+    the environment pulled back on every material. The result is that objects
+    are lit on one side and fall away on the other, which is what makes them
+    look like objects.
+  */
+  const key = new THREE.DirectionalLight(0xffeede, 3.1);
   key.position.set(-90, 120, 70);
   key.castShadow = true;
   key.shadow.mapSize.set(4096, 4096);
@@ -405,10 +472,10 @@ export function buildScene(canvas: HTMLCanvasElement): SceneHandles {
   key.shadow.camera.top = s;
   key.shadow.camera.bottom = -s;
   key.shadow.bias = -0.0008;
-  key.shadow.radius = 4;
+  key.shadow.radius = 2.5;
   scene.add(key);
 
-  const rim = new THREE.DirectionalLight(0x9fc4ff, 0.85);
+  const rim = new THREE.DirectionalLight(0x9fc4ff, 0.55);
   rim.position.set(120, 60, -110);
   scene.add(rim);
 
@@ -418,7 +485,7 @@ export function buildScene(canvas: HTMLCanvasElement): SceneHandles {
   glow.lookAt(2, 8, 40);
   scene.add(glow);
 
-  scene.add(new THREE.AmbientLight(0x222b42, 0.3));
+  scene.add(new THREE.AmbientLight(0x1a2136, 0.11));
 
   // ── Camera ────────────────────────────────────────────────────────────
   // A long lens, for the same reason as the laptop: it keeps parallel edges
@@ -435,16 +502,10 @@ export function buildScene(canvas: HTMLCanvasElement): SceneHandles {
     rather than eyeballed against the image. If the scene moves, the corners
     move with it and the site picks up the new numbers.
   */
-  const p = primary.group.position;
-  const z = p.z + 0.81;
-  const screenCorners = [
-    new THREE.Vector3(p.x - SCREEN_W / 2, p.y + SCREEN_H / 2, z),
-    new THREE.Vector3(p.x + SCREEN_W / 2, p.y + SCREEN_H / 2, z),
-    new THREE.Vector3(p.x + SCREEN_W / 2, p.y - SCREEN_H / 2, z),
-    new THREE.Vector3(p.x - SCREEN_W / 2, p.y - SCREEN_H / 2, z),
-  ];
+  const screenCorners = screenQuad(primary.group.position, SCREEN_W, SCREEN_H, 0, 0.82);
+  const secondaryCorners = screenQuad(secPos, SEC_W, SEC_H, SEC_YAW, 0.82);
 
-  return { renderer, scene, camera, screenCorners };
+  return { renderer, scene, camera, screenCorners, secondaryCorners };
 }
 
 /** Project a world point to 0..1 image space. */

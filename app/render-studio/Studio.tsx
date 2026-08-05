@@ -19,13 +19,19 @@ export function Studio() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const { renderer, scene, camera, screenCorners } = buildScene(canvas);
+    const { renderer, scene, camera, screenCorners, secondaryCorners } =
+      buildScene(canvas);
     renderer.render(scene, camera);
 
-    // The projected quad, in 0..1 image space. The capture script writes this
-    // next to the image so the runtime never has to guess where the screen is.
-    const projected = screenCorners.map((v) => projectToImage(v, camera));
-    setCorners(JSON.stringify(projected));
+    // Both projected quads, in 0..1 image space. The capture script writes
+    // these next to the image so the runtime never has to guess where either
+    // screen is — the secondary is live DOM too.
+    setCorners(
+      JSON.stringify({
+        primary: screenCorners.map((v) => projectToImage(v, camera)),
+        secondary: secondaryCorners.map((v) => projectToImage(v, camera)),
+      }),
+    );
 
     // Announce readiness only after the frame is actually on the canvas.
     requestAnimationFrame(() => {
