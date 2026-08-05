@@ -87,7 +87,7 @@ export function Projects() {
             id="work"
             wide
             eyebrow="02 — Selected work"
-            title="Six projects, built end to end"
+            title="Production software, built end to end"
             intro="Each one designed, written, tested and shipped alone. The case studies cover what was actually hard — and what each one still isn't."
             aside={
               <ButtonLink href={socials.github.url} external variant="secondary" arrow>

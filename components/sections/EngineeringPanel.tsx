@@ -18,9 +18,10 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
  * they are the only part of the section that is a citation rather than a claim,
  * and they should look like output.
  *
- * The run summary above the board is deliberately made of checkable numbers.
- * Five stations is what the board shows; six projects and 1,742 tests are the
- * same figures the hero and the Toolkit cite, from the same repositories.
+ * The run summary above the board is deliberately made of checkable numbers,
+ * and deliberately not a project count — five stations is what the board
+ * shows, and the languages and tests are the same figures the hero and the
+ * Toolkit cite, from the same repositories.
  *
  * Server Component. `PipelineRun` is the only client leaf — it needs the
  * section's scroll position — and it still renders every word on the server.
@@ -28,7 +29,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 
 const RUN_FACTS = [
   ["stages", String(approachSteps.length)],
-  ["projects", "6"],
+  ["languages", "7"],
   ["tests", "1,742"],
 ] as const;
 

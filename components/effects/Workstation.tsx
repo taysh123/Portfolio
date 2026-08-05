@@ -2,17 +2,39 @@
 
 import type { MotionValue } from "framer-motion";
 import { motion, useTransform } from "framer-motion";
+import { BRUSHED_ALUMINIUM, MICRO_GRAIN } from "@/lib/textures";
 
 /**
- * A laptop, built from layered CSS gradients in a `preserve-3d` scene.
+ * A laptop, built as a real object in a `preserve-3d` scene.
  *
- * WHY NOT WEBGL. The display holds live DOM — that is the entire reason the
- * camera can push through it and the boot log stays crisp instead of turning
- * into a blurry texture. A three.js scene would need render-to-texture to do
- * the same, costs ~150kb plus a model to source and license, and buys nothing
- * this composition actually needs. What made the earlier version read as an
- * illustration was not the technique, it was the material detail. So material
- * detail is what this file is about.
+ * WHY NOT WEBGL — the honest version. React Three Fiber with a PBR aluminium
+ * material and an HDRI environment would produce better metal than this file
+ * can, and drei's `<Html transform>` renders live DOM in 3D, so the old
+ * objection (the display has to stay crisp through the camera push) is
+ * actually solvable. It is still the wrong call HERE: three plus R3F plus an
+ * environment map plus a model is roughly 400kb on the critical path of the
+ * first element on the page, against a brief that also demands no lag on a
+ * mid-range phone — and a literal MacBook model carries trade-dress risk that
+ * a portfolio should not take on. So the constraint is real and the trade-off
+ * is stated rather than hidden.
+ *
+ * WHAT ACTUALLY MADE IT READ AS AN ILLUSTRATION, and what each fix was:
+ *
+ *   a. It was DEAD-ON SYMMETRIC. Product photography essentially never is.
+ *      A face-on rectangle is a diagram of a laptop. Fixed by yawing the whole
+ *      scene ~17deg on arrival — and then orbiting back to face-on as the
+ *      camera pushes in, so the push has a camera MOVE in it rather than just
+ *      a zoom.
+ *   b. It FLOATED IN A VOID. Real objects sit on something and are lit by it.
+ *      Fixed with a desk plane, a horizon, and the machine's own light
+ *      spilling onto it.
+ *   c. The ALUMINIUM WAS PERFECTLY SMOOTH. Real metal has directional grain.
+ *      Fixed with a baked anisotropic noise texture (see `lib/textures.ts`) —
+ *      real `feTurbulence`, rasterised once, streaked along x.
+ *   d. NOTHING REFLECTED ANYTHING. A lid and a dark panel both mirror the
+ *      room. Fixed with an environment layer on the shell and a window
+ *      reflection in the glass.
+ *   e. The SEAMS HAD NO OCCLUSION. Fixed by darkening every junction.
  *
  * WHAT MAKES METAL LOOK REAL, in the order it matters:
  *
@@ -58,13 +80,39 @@ const KEY_ROWS: { h: number; keys: number[] }[] = [
   { h: 1, keys: [1, 1, 1.25, 1.3, 6.1, 1.3, 1.25, 1, 1] },
 ];
 
+/**
+ * Lid thickness, in px.
+ *
+ * Deliberately NOT a percentage: `translateZ()` rejects percentage lengths
+ * outright, and an invalid function drops the ENTIRE transform — which is why
+ * the first version of the edge rendered flat against the lid's face instead of
+ * standing perpendicular to it. A fixed 10px is about right at both the
+ * desktop width and the phone width.
+ */
+const LID_EDGE = 10;
+
+/**
+ * Three constraints, because the machine is bounded in three ways: the size it
+ * wants to be, the width of a phone, and — the one that has to be solved
+ * rather than guessed — the height left under the headline. See the note at
+ * the camera for the derivation of the 1.152.
+ */
+const MACHINE_WIDTH =
+  "min(44rem, 92vw, max(18rem, calc((100vh - 24rem) * 1.152)))";
+
 export function Workstation({
   open,
   wake,
+  yaw,
   children,
 }: {
   open: MotionValue<number>;
   wake: MotionValue<number>;
+  /**
+   * Camera azimuth in degrees. The scene arrives off-axis and orbits to
+   * face-on; pass a static 0 for a straight-on frame.
+   */
+  yaw?: MotionValue<number>;
   children: React.ReactNode;
 }) {
   // -92deg is shut against the deck; -2deg is open and very slightly reclined,
@@ -73,10 +121,117 @@ export function Workstation({
   const screenGlow = useTransform(wake, [0, 1], [0, 1]);
   const contact = useTransform(open, [0, 1], [0.9, 0.55]);
 
+  /*
+    The glass layers, declared here rather than inline in the JSX so the hook
+    calls sit at the top level of the component where they belong.
+
+    All three fade as the panel lights up. A powered display outshines whatever
+    it is reflecting, so the room disappears from it — the coating haze thins,
+    the drifting wash drops back, and the window highlight goes entirely. That
+    transition is itself a realism cue: it is what you watch happen when you
+    wake a real screen in a lit room.
+  */
+  /*
+    These values are small on purpose, and the first attempt proves why: at 0.5
+    the anti-glare grain turned a black panel into a field of grey static. A
+    coating you can consciously SEE is dirt. The whole effect of a real matte
+    display is that it takes the hardness off a reflection — a few percent is
+    the entire budget.
+  */
+  const coatingHaze = useTransform(screenGlow, [0, 1], [0.075, 0.02]);
+  const roomWash = useTransform(screenGlow, [0, 1], [1, 0.25]);
+  const windowGlint = useTransform(screenGlow, [0, 1], [1, 0]);
+
   return (
+    /*
+      TWO nested containers, because the SCENE and the DEVICE are different
+      things. The outer one owns the width and holds the desk; only the inner
+      one carries the camera. The first version put the desk inside the
+      rotating element, so the "floor" yawed with the machine and read as a
+      slab levitating behind it — a desk that turns when the camera turns is
+      not a desk.
+    */
     <div
       className="relative"
       style={{
+        width: MACHINE_WIDTH,
+        /*
+          THE CAMERA LIVES HERE, not on an ancestor.
+
+          It used to be inherited from a wrapper in the intro, and that wrapper
+          is sized by the LID alone — the deck is absolutely positioned and
+          contributes no height. So `perspective-origin: 50% 50%` landed well
+          above the machine's true visual centre, and viewing a yawed object
+          from an off-axis origin keystones it asymmetrically: the deck sheared
+          into a wedge and the whole machine read as ROLLED rather than turned.
+
+          Owning the camera means the origin can be stated against the object
+          it is actually looking at. 58% is the visual centre once the deck's
+          projected depth is counted.
+        */
+        /*
+          A LONG LENS. This is the single most important number in the file.
+
+          `perspective` is focal length: a small value is a wide angle, which
+          exaggerates convergence and makes a yawed object splay and appear to
+          roll. At 2400px against a ~700px machine the near corner ballooned
+          and the lid's top edge sloped hard enough to read as the thing
+          falling over.
+
+          Every product photograph of a laptop you have ever seen was taken on
+          a long lens for exactly this reason: it compresses depth, keeps
+          parallel edges nearly parallel, and lets a 3/4 view read as a turn
+          rather than as a distortion. 5200px is that lens. The yaw still
+          reads — it just no longer keystones.
+        */
+        perspective: "5200px",
+        perspectiveOrigin: "50% 54%",
+      }}
+    >
+      {/* ── The desk ───────────────────────────────────────────────────
+          The machine used to float in a void, which is most of why it read as
+          an illustration: a real object is lit BY its surroundings and puts
+          light back into them.
+
+          A faked plane rather than a rotated one — at this camera elevation a
+          true `rotateX(90deg)` surface and a vertical gradient are
+          indistinguishable, and the fake costs no extra 3D context and no
+          z-fighting with the deck. Radial, not linear: the first version was a
+          linear gradient on a wide box, which faded downward and stopped dead
+          at its left and right edges, putting two hard vertical seams either
+          side of the machine. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-[-46%] top-[126%] -z-20 h-[24rem]"
+        style={{
+          background:
+            "radial-gradient(58% 100% at 50% 0%, var(--desk-near), var(--desk-far) 42%, transparent 76%)",
+        }}
+      />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-[-20%] top-[126%] -z-20 h-px"
+        style={{
+          background:
+            "linear-gradient(90deg, transparent, var(--desk-horizon) 26%, var(--desk-horizon) 74%, transparent)",
+        }}
+      />
+      {/* What the display throws down onto the desk. Grows with `wake`,
+          because before the screen is on there is nothing to spill. */}
+      <motion.span
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-[132%] -z-10 h-[12rem] w-[80%] -translate-x-1/2 rounded-[50%] blur-[56px]"
+        style={{
+          opacity: screenGlow,
+          background:
+            "radial-gradient(closest-side, rgba(96,140,255,0.26), rgba(150,110,255,0.10) 54%, transparent 78%)",
+        }}
+      />
+
+    <motion.div
+      className="relative w-full"
+      style={{
+        rotateY: yaw,
         /*
           Three constraints, because the machine is bounded in three ways.
 
@@ -97,18 +252,25 @@ export function Workstation({
           the scroll hint and the margins between them makes the whole thing
           one expression — and `max(18rem, ...)` stops it collapsing on a
           landscape phone, where the reserve is most of the screen.
+
+          It lives on the OUTER container now (see MACHINE_WIDTH); this one
+          inherits it.
         */
-        width: "min(44rem, 92vw, max(18rem, calc((100vh - 24rem) * 1.152)))",
         transformStyle: "preserve-3d",
         /*
-          Camera elevation. At 9deg the deck projected to ~14% of the lid's
-          height, which is physically right for a straight-on shot and useless
-          for a composition — every material decision below the hinge was
-          invisible. 14deg costs the display almost nothing (it sits at -2deg,
-          so cos(16°) ≈ 0.96) and returns about a quarter more deck. That
+          Camera elevation, as a transform PROPERTY rather than a `transform`
+          string — a raw string would clobber the `rotateY` above, since Framer
+          composes the individual properties into one matrix and a literal
+          `transform` wins outright.
+
+          At 9deg the deck projected to ~14% of the lid's height, which is
+          physically right for a straight-on shot and useless for a
+          composition: every material decision below the hinge was invisible.
+          14deg costs the display almost nothing (it sits at -2deg, so
+          cos(16°) ≈ 0.96) and returns about a quarter more deck. That
           asymmetry is why product photography looks down at these machines.
         */
-        transform: "rotateX(14deg)",
+        rotateX: 14,
       }}
     >
       {/* ── Grounding ──────────────────────────────────────────────────
@@ -149,6 +311,23 @@ export function Workstation({
           aspectRatio: "16 / 10.6",
         }}
       >
+        {/* The lid's THICKNESS. Invisible face-on and unmissable the moment
+            the scene yaws — a lid with no edge reads as a cutout rather than
+            an object. Pushed back half its own depth and rotated to stand
+            perpendicular to the shell, so it is a real face in the 3D scene
+            rather than a stripe painted on the front. */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-y-[1%] left-0 rounded-l-[1.05rem]"
+          style={{
+            width: `${LID_EDGE}px`,
+            background:
+              "linear-gradient(90deg, rgba(18,22,34,0.95), rgba(74,84,110,0.55) 62%, rgba(120,132,164,0.4))",
+            transform: `translateZ(-${LID_EDGE}px) rotateY(-90deg)`,
+            transformOrigin: "left center",
+          }}
+        />
+
         <div
           className="absolute inset-0 rounded-[1.05rem]"
           style={{
@@ -156,6 +335,36 @@ export function Workstation({
             boxShadow: "0 26px 60px -30px rgba(0,0,0,0.9)",
           }}
         >
+          {/* Brushed grain. Real `feTurbulence` streaked along x, baked to a
+              data URI so it costs one rasterisation instead of a live filter —
+              see `lib/textures.ts`. Very low opacity on purpose: at anything
+              you can consciously see it reads as dirt, and at this level it
+              reads as machining. */}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 rounded-[1.05rem]"
+            style={{
+              backgroundImage: BRUSHED_ALUMINIUM,
+              backgroundSize: "220px 160px",
+              opacity: 0.055,
+            }}
+          />
+
+          {/* The room, reflected. Aluminium is a mirror with the contrast
+              turned down: a broad window highlight where the surface faces the
+              light, and a dimmer bounce off the desk lower down. Without this
+              the shell is a gradient; with it, it is a surface with something
+              in front of it. */}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 rounded-[1.05rem]"
+            style={{
+              background:
+                "radial-gradient(120% 70% at 18% -8%, rgba(226,238,255,0.16), transparent 58%)," +
+                "radial-gradient(90% 50% at 82% 108%, rgba(150,176,232,0.09), transparent 62%)",
+            }}
+          />
+
           {/* Chamfer — brightest along the top and upper sides, gone by the
               bottom, exactly as a bevel behaves under a light above and in
               front of it. */}
@@ -208,14 +417,54 @@ export function Workstation({
               }}
             />
 
-            {/* Glass — a wide soft reflection of the room, drifting slowly.
-                This is what stops a dark panel reading as a hole in the lid. */}
-            <span
+            {/*
+              GLASS. This is the layer that decides whether the panel reads as
+              a screen or as a hole cut in the lid.
+
+              Three things stacked, in the order a real display shows them:
+
+              1. The ANTI-GLARE COATING — a fine isotropic grain over the whole
+                 panel. It is what makes a matte display matte, and it is why a
+                 reflection in one is soft-edged rather than mirror-sharp.
+              2. The ROOM — a soft off-axis wash, drifting. Broad, low
+                 contrast, no shape.
+              3. A WINDOW. The specific thing your eye looks for. Real
+                 reflections have EDGES and a source: a bright quadrilateral,
+                 skewed by the panel's angle, with a soft falloff. Only a few
+                 percent opacity, but it is the difference between "dark
+                 surface" and "glass with a room in front of it".
+
+              All of it fades out as the display wakes, because a lit panel
+              overwhelms its own reflections — which is exactly what happens
+              when you turn a real screen on.
+            */}
+            <motion.span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0"
+              style={{
+                opacity: coatingHaze,
+                backgroundImage: MICRO_GRAIN,
+                backgroundSize: "120px 120px",
+              }}
+            />
+            <motion.span
               aria-hidden="true"
               className="anim-spec pointer-events-none absolute inset-[-12%]"
               style={{
+                opacity: roomWash,
                 background:
                   "linear-gradient(118deg, rgba(214,228,255,0.15) 0%, rgba(190,208,245,0.055) 16%, transparent 38%, transparent 62%, rgba(190,208,245,0.035) 84%, rgba(214,228,255,0.075) 100%)",
+              }}
+            />
+            <motion.span
+              aria-hidden="true"
+              className="pointer-events-none absolute left-[6%] top-[8%] h-[46%] w-[34%]"
+              style={{
+                opacity: windowGlint,
+                background:
+                  "linear-gradient(105deg, rgba(198,220,255,0.085), rgba(198,220,255,0.03) 62%, transparent)",
+                transform: "skewX(-14deg) skewY(3deg)",
+                filter: "blur(6px)",
               }}
             />
           </div>
@@ -281,6 +530,18 @@ export function Workstation({
           style={{
             background:
               "radial-gradient(70% 120% at 50% 100%, rgba(232,240,255,0.13), transparent 70%)",
+          }}
+        />
+        {/* Same machining as the lid. The deck is the surface a reader looks
+            at longest, so it is the one where smooth metal is most obviously
+            wrong. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage: BRUSHED_ALUMINIUM,
+            backgroundSize: "220px 160px",
+            opacity: 0.07,
           }}
         />
 
@@ -414,6 +675,7 @@ export function Workstation({
           style={{ background: "var(--status-live)", animationDuration: "3.8s" }}
         />
       </div>
+    </motion.div>
     </div>
   );
 }

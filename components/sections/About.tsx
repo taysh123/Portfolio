@@ -36,8 +36,8 @@ const paragraphs: ReactNode[] = [
   <>
     That started in C and C++, where nothing is handed to you and the machine is
     honest about what you got wrong. It carries into the C#/.NET, TypeScript and
-    Python work I do now — six projects taken from an empty repo to a running
-    system, 1,742 tests between them, because an architecture claim you
+    Python work I do now — every one of these taken from an empty repo to a
+    running system, 1,742 tests between them, because an architecture claim you
     can&apos;t run is just a claim.
   </>,
   <>

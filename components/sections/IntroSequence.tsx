@@ -79,6 +79,29 @@ export function IntroSequence() {
     finishes the hinge as the reader engages, so the beat is still there.
   */
   const lidOpen = useTransform(scrollYProgress, (p) => 0.78 + ramp(0, 0.22)(p) * 0.22);
+
+  /*
+    THE ORBIT.
+
+    The machine arrives off-axis, the way a product is photographed, and the
+    camera swings round to face-on as it moves in. Dead-on symmetry is the
+    signature of an illustration, and almost nothing is shot that way.
+
+    NINE degrees, not the seventeen I started with. Past about ten the lid's
+    top edge slopes far enough that the machine stops reading as "turned" and
+    starts reading as "toppling" — the eye takes a sloping top edge as a
+    horizon cue before it takes it as a perspective cue, and loses the argument
+    with the physics. Nine is enough to break the symmetry and put a visible
+    aluminium edge on the left of the lid, and not enough to look unstable.
+
+    It resolves by 0.66, just BEFORE the push starts covering ground at 0.62 —
+    so the reader gets a camera move and then a camera push, rather than both
+    at once, which was disorienting when I tried it overlapped. By the time the
+    display fills the frame the panel is square to the viewer and the boot log
+    is undistorted.
+  */
+  const yaw = useTransform(scrollYProgress, (p) => 9 * (1 - ramp(0, 0.66)(p)));
+
   const wake = useTransform(scrollYProgress, ramp(0.26, 0.4));
   const boot = useTransform(scrollYProgress, ramp(0.3, 0.56));
   const live = useTransform(scrollYProgress, ramp(0.52, 0.68));
@@ -158,7 +181,11 @@ export function IntroSequence() {
             style={{
               scale: sceneScale,
               y: sceneY,
-              perspective: "2200px",
+              // No `perspective` here. This wrapper is sized by the LID alone —
+              // the deck is absolutely positioned and adds no height — so its
+              // perspective origin sat well above the machine's visual centre
+              // and keystoned the yawed deck into a shear. The camera belongs
+              // to the object; `Workstation` owns it.
               willChange: "transform",
             }}
           >
@@ -166,7 +193,7 @@ export function IntroSequence() {
               {/* The float is a wrapper, not a property of the machine: it has
                   to compose with the camera's scale without fighting it. */}
               <div className="anim-hover">
-              <Workstation open={lidOpen} wake={wake}>
+              <Workstation open={lidOpen} wake={wake} yaw={yaw}>
                 <div style={{ containerType: "inline-size" }} className="h-full w-full">
                   <ScreenUI boot={boot} live={live} />
                 </div>
@@ -244,6 +271,14 @@ function ArrivalFrame({ play }: { play: boolean }) {
   const boot = useMotionValue(play ? 0 : 1);
   const live = useMotionValue(play ? 0 : 1);
   const open = useMotionValue(1);
+  /*
+    A fixed, gentler azimuth than the desktop orbit. Off-axis is what makes the
+    machine read as a photographed object rather than a diagram, and that
+    matters just as much on a phone — but at 17deg the display's own content
+    starts to foreshorten noticeably at 359px wide, and there is no camera move
+    here to resolve it. 11deg keeps the object quality and the legibility.
+  */
+  const restYaw = useMotionValue(7);
 
   const start = () => {
     if (!play) return;
@@ -281,9 +316,9 @@ function ArrivalFrame({ play }: { play: boolean }) {
         onViewportEnter={start}
         viewport={{ once: true, amount: 0.35 }}
         className="relative z-10 mt-[clamp(2rem,6vw,4.5rem)] flex w-full justify-center"
-        style={{ perspective: "2000px" }}
+
       >
-        <Workstation open={open} wake={wake}>
+        <Workstation open={open} wake={wake} yaw={restYaw}>
           <div style={{ containerType: "inline-size" }} className="h-full w-full">
             <ScreenUI boot={boot} live={live} />
           </div>

@@ -152,7 +152,7 @@ export function ProjectDeck({
       </div>
 
       <p className="label mt-5 text-center text-fg-subtle">
-        Swipe to browse — {count} projects
+        Swipe to browse
       </p>
 
       <p className="sr-only" role="status" aria-live="polite">

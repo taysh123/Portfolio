@@ -37,8 +37,17 @@ export const siteMeta = {
  * SentinelAI 103 + 2.
  */
 export const heroStats = [
-  { value: "6", label: "Projects built end to end" },
-  { value: "1,742", label: "Tests across those projects" },
+  /*
+    Deliberately NOT a project count.
+
+    "6 projects" invites the reader to weigh the number, and the number is the
+    least interesting thing here — a portfolio of twenty half-finished repos
+    would score higher. What a reader actually wants to know is whether any of
+    it is real, so the lead stat is that something is running in production
+    right now that they can go and use.
+  */
+  { value: "Live", label: "In production today" },
+  { value: "1,742", label: "Tests across the work" },
   { value: "7", label: "Languages in shipped code" },
   { value: "B.Sc.", label: "Computer Science" },
 ] as const;

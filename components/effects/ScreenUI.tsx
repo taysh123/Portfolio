@@ -10,13 +10,14 @@ import { motion, useTransform } from "framer-motion";
  * real DOM at small scale rather than a bitmap, so they stay crisp as the
  * camera pushes in — which is the whole reason the lid holds live content.
  *
- * Every figure quoted here is one the site can back up elsewhere: six projects,
- * 1,742 tests, eight bounded contexts, zero cross-context references.
+ * Every figure quoted here is one the site can back up elsewhere: 1,742 tests,
+ * eight bounded contexts, zero cross-context references. None of them is a
+ * count of projects — see the note on `heroStats`.
  */
 
 const BOOT = [
   ["mount", "workspace", "ok"],
-  ["index", "projects", "6"],
+  ["attach", "postgres · redis", "ok"],
   ["load", "test suites", "1,742"],
   ["verify", "module graph", "0 cycles"],
 ] as const;

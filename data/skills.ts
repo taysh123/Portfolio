@@ -64,7 +64,7 @@ export const skillGroups: SkillGroup[] = [
       { label: "SQL" },
     ],
     evidence:
-      "C++ and C# carry SentinelAI and T Poker; Python carries DeveloperOS and Job Assistant. Six projects, five languages in shipped code."
+      "C++ and C# carry SentinelAI and T Poker; Python carries DeveloperOS and Job Assistant — five languages load-bearing in shipped code."
   },
   {
     id: "interface",
