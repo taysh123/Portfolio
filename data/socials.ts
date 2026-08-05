@@ -28,8 +28,6 @@ export const siteMeta = {
     should be one thing.
   */
   role: "Software Developer",
-  /** Shown under the wordmark, where there is room for the fuller line. */
-  roleDetail: "Software Developer & Computer Science Graduate",
   headline: "I build production software that solves real problems.",
   tagline:
     "Computer Science graduate building real-time platforms, developer tools, and cross-platform products — designed, tested, and shipped end to end.",

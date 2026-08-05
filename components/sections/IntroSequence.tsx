@@ -190,20 +190,8 @@ export function IntroSequence() {
             </p>
             <p className="label mt-5 flex items-center gap-3 text-fg-muted">
               <span aria-hidden="true" className="inline-block h-px w-10 bg-accent" />
-              {siteMeta.roleDetail}
+              {siteMeta.role}
             </p>
-
-            {/*
-              The only heading in here a screen reader needs. Everything else in
-              this section is choreography and is hidden from the tree.
-            */}
-            <h2
-              className="mt-7 max-w-xl font-medium leading-[1.2] tracking-[var(--tracking-heading)] text-fg-muted"
-              style={{ fontSize: "var(--text-lead)" }}
-            >
-              Everything here runs.
-              <span className="text-emphasis"> Come in and check.</span>
-            </h2>
           </motion.div>
 
           {/* ── The machine ─────────────────────────────────────────────── */}
@@ -245,20 +233,35 @@ export function IntroSequence() {
             }}
           />
 
-          {/* ── Scroll affordance ───────────────────────────────────────── */}
+          {/* ── The statement, doubling as the scroll affordance ──────────
+              The top block is now the wordmark and the role and nothing else,
+              because that is the hierarchy the hero is supposed to have. This
+              line used to sit up there as a third element competing for the
+              same attention; down here it is the invitation instead, which is
+              the job it was always doing.
+
+              It stays an `h2` because it is the section's real heading — the
+              only text in this whole pinned sequence a screen reader needs,
+              and the line the Contact frame answers with "You've seen it
+              run." */}
           <motion.div
-            aria-hidden="true"
             style={{ opacity: hintFade }}
-            className="absolute inset-x-0 bottom-10 z-20 mx-auto flex w-fit items-center gap-3 text-fg-subtle"
+            className="absolute inset-x-0 bottom-10 z-20 mx-auto flex w-fit flex-col items-center gap-3 px-[var(--gutter)] text-center"
           >
-            <span className="hairline w-12" />
-            <span className="label">Scroll to enter</span>
+            <h2
+              className="font-medium leading-[1.3] tracking-[var(--tracking-heading)] text-fg-muted"
+              style={{ fontSize: "var(--text-lead)" }}
+            >
+              Everything here runs.
+              <span className="text-emphasis"> Come in and check.</span>
+            </h2>
             <motion.span
+              aria-hidden="true"
               animate={{ y: [0, 4, 0] }}
               transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-              className="inline-flex"
+              className="inline-flex text-fg-subtle"
             >
-              <ArrowDownIcon size={15} />
+              <ArrowDownIcon size={16} />
             </motion.span>
           </motion.div>
         </motion.section>
@@ -341,16 +344,6 @@ function ArrivalFrame({ play }: { play: boolean }) {
           <span aria-hidden="true" className="inline-block h-px w-8 bg-accent" />
           {siteMeta.role}
         </p>
-        {/* The fuller line is desktop-only: at 390px "Software Developer &
-            Computer Science Graduate" wraps to three lines of 11px label type
-            directly under a display-scale wordmark, which reads as noise. */}
-        <h2
-          className="mt-6 max-w-xl font-medium leading-[1.2] tracking-[var(--tracking-heading)] text-fg-muted"
-          style={{ fontSize: "var(--text-lead)" }}
-        >
-          Everything here runs.
-          <span className="text-emphasis"> Come in and check.</span>
-        </h2>
       </div>
 
       <motion.div
@@ -366,6 +359,18 @@ function ArrivalFrame({ play }: { play: boolean }) {
           </div>
         </Workstation>
       </motion.div>
+
+      {/* The statement sits AFTER the machine here, mirroring the desktop
+          frame where it moved down to the scroll affordance: name, role,
+          object, then the invitation. It is also this section's only real
+          heading, so it cannot simply be dropped along with the top block. */}
+      <h2
+        className="relative z-10 mt-[clamp(1.75rem,5vw,2.75rem)] max-w-xl text-center font-medium leading-[1.3] tracking-[var(--tracking-heading)] text-fg-muted"
+        style={{ fontSize: "var(--text-lead)" }}
+      >
+        Everything here runs.
+        <span className="text-emphasis"> Come in and check.</span>
+      </h2>
     </div>
   );
 }

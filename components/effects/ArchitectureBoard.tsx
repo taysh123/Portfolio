@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 import { cn } from "@/lib/cn";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
 
@@ -85,23 +86,45 @@ const NODES: Node[] = [
 const NW = 92;
 const NH = 44;
 
-type Edge = { from: string; to: string; d: string; kind: "request" | "response" | "side" };
+/**
+ * `label` is what actually turns this from a diagram into an architecture
+ * document.
+ *
+ * The previous version drew anonymous arrows between named boxes, and an
+ * anonymous arrow says only "these two things are connected" — which is the
+ * least interesting fact about a distributed system. What an engineer wants to
+ * know is WHAT crosses the boundary: an HTTP verb, a message type, a query.
+ * Naming the traffic is also the difference between a claim and something a
+ * reader can go and grep for.
+ *
+ * `at` positions the label along the edge, 0 to 1.
+ */
+type Edge = {
+  from: string;
+  to: string;
+  d: string;
+  kind: "request" | "response" | "side";
+  label: string;
+  /** Where on the edge the label sits, in viewBox coordinates. */
+  lx: number;
+  ly: number;
+};
 
 const EDGES: Edge[] = [
   // The request path, left to right along row one.
-  { from: "client",  to: "gateway", kind: "request", d: `M ${96 + NW} ${ROW1} H ${340 - NW}` },
-  { from: "gateway", to: "bus",     kind: "request", d: `M ${340 + NW} ${ROW1} H ${584 - NW}` },
-  { from: "bus",     to: "workers", kind: "request", d: `M ${584 + NW} ${ROW1} H ${828 - NW}` },
+  { from: "client",  to: "gateway", kind: "request", label: "HTTPS", lx: 218, ly: ROW1 - 14, d: `M ${96 + NW} ${ROW1} H ${340 - NW}` },
+  { from: "gateway", to: "bus",     kind: "request", label: "publish", lx: 462, ly: ROW1 - 14, d: `M ${340 + NW} ${ROW1} H ${584 - NW}` },
+  { from: "bus",     to: "workers", kind: "request", label: "consume", lx: 706, ly: ROW1 - 14, d: `M ${584 + NW} ${ROW1} H ${828 - NW}` },
 
   // Satellites: things a request TOUCHES without travelling through. Drawn in
   // the neutral border colour rather than the request accent, because they are
   // not steps in the path and colouring them as if they were is a lie about
   // the shape of the system.
-  { from: "gateway", to: "auth",  kind: "side", d: `M 340 ${ROW1 + NH} V ${ROW2 - NH}` },
-  { from: "workers", to: "cache", kind: "side", d: `M 828 ${ROW1 + NH} V ${ROW2 - NH}` },
+  { from: "gateway", to: "auth",  kind: "side", label: "verify", lx: 348, ly: 250, d: `M 340 ${ROW1 + NH} V ${ROW2 - NH}` },
+  { from: "workers", to: "cache", kind: "side", label: "dedupe", lx: 836, ly: 250, d: `M 828 ${ROW1 + NH} V ${ROW2 - NH}` },
   // A diagonal, because that is where the two nodes are. Elbowing it around
   // would have run it straight down the cache's own edge.
-  { from: "workers", to: "db",    kind: "side", d: `M ${828 - 30} ${ROW1 + NH} L ${584 + NW} ${ROW2 - NH}` },
+  { from: "workers", to: "db",    kind: "side", label: "persist", lx: 726, ly: 236, d: `M ${828 - 30} ${ROW1 + NH} L ${584 + NW} ${ROW2 - NH}` },
 
   /*
     THE RETURN PATH, routed over the top rather than mirrored underneath.
@@ -116,9 +139,25 @@ const EDGES: Edge[] = [
     from: "workers",
     to: "client",
     kind: "response",
+    label: "SignalR push",
+    lx: 462,
+    ly: 50,
     d: `M 828 ${ROW1 - NH} V 86 Q 828 62 800 62 H 124 Q 96 62 96 86 V ${ROW1 - NH}`,
   },
 ];
+
+/**
+ * What happens when a hop fails.
+ *
+ * A topology that only draws the happy path is a sales diagram. The failure
+ * semantics are the part an engineer reads a system for, and every line here
+ * is a real behaviour in these repositories rather than a general principle.
+ */
+const FAILURE_MODES = [
+  ["gateway", "401 before any handler runs — auth is middleware, not a check inside each endpoint"],
+  ["bus", "unacked messages redeliver; poison messages land in a dead-letter queue rather than looping"],
+  ["workers", "retry ladder per endpoint, then the alert is stored unscored rather than dropped"],
+] as const;
 
 const KIND_ACCENT: Record<NodeKind, string> = {
   edge: "var(--status-live)",
@@ -223,6 +262,30 @@ export function ArchitectureBoard() {
                     className={e.kind === "response" ? "anim-edge-rev" : "anim-edge"}
                   />
                 )}
+                {/* WHAT crosses this boundary. An unnamed arrow says only that
+                    two things are connected, which is the least interesting
+                    fact about a distributed system. */}
+                <text
+                  x={e.lx}
+                  y={e.ly}
+                  textAnchor="middle"
+                  fill="var(--fg-subtle)"
+                  style={{
+                    fontFamily: "var(--font-mono, ui-monospace), monospace",
+                    /*
+                      SEVEN, not fifteen. This viewBox is 1000 units wide and
+                      renders around 1900px, so every unit is ~1.9px: at 15 the
+                      labels came out 28px and "publish" grew wider than the
+                      60-unit gap it was centred in, overlapping the cards on
+                      both sides. Type inside a scaled viewBox has to be sized
+                      in the viewBox's units, not in the units it looks like.
+                    */
+                    fontSize: 7,
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  {e.label}
+                </text>
               </g>
             );
           })}
@@ -313,6 +376,34 @@ export function ArchitectureBoard() {
         <p className="label ml-auto text-fg-subtle">
           Every fact here is checkable in a repository
         </p>
+      </div>
+
+      {/* ── What happens when a hop fails ────────────────────────────────
+          The happy path is the easy half. This is the half an engineer reads
+          a system for, and leaving it out is what makes an architecture
+          diagram read as marketing. */}
+      <div className="mt-8 border-t border-line-subtle pt-7">
+        <Eyebrow as="span" className="text-fg-subtle">
+          And when a hop fails
+        </Eyebrow>
+        <dl className="mt-4 grid gap-x-8 gap-y-4 sm:grid-cols-3">
+          {FAILURE_MODES.map(([id, body]) => {
+            const node = NODES.find((n) => n.id === id)!;
+            return (
+              <div key={id} className="min-w-0">
+                <dt className="flex items-center gap-2">
+                  <KindGlyph kind={node.kind} />
+                  <span className="font-mono text-[0.6875rem] uppercase tracking-[0.12em] text-fg-muted">
+                    {node.label}
+                  </span>
+                </dt>
+                <dd className="mt-2 text-[0.8125rem] leading-relaxed text-fg-subtle">
+                  {body}
+                </dd>
+              </div>
+            );
+          })}
+        </dl>
       </div>
     </figure>
   );
