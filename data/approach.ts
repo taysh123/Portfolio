@@ -50,9 +50,17 @@ export const approachSteps: ApproachStep[] = [
     title: "Verify",
     summary:
       "Test the thing you'd argue about. Coverage is a number; a test that pins a disputed behaviour is leverage.",
+    /*
+      This used to be the 1,742-test count — the same sentence the Toolkit's
+      Verification group already carries, almost word for word. Repeating a
+      number in two places does not make it twice as true; it makes the second
+      one filler. The section's own intro promises "a settlement engine pinned
+      by mirrored fixtures", so that is what belongs here, and the count stays
+      where it earns its place.
+    */
     evidence:
-      "1,742 tests across five projects, weighted toward the parts that are genuinely contentious — settlement math, threat scoring, retrieval grounding, level progression.",
-    project: "Across the portfolio",
+      "The settlement engine exists twice — C# on the server, TypeScript on the device, because a game has to be able to close with no signal. The TypeScript fixtures mirror the C# service case for case, so a divergence surfaces as a failing test rather than a wrong payout.",
+    project: "T Poker",
   },
   {
     id: "ship",

@@ -28,6 +28,15 @@ export const siteMeta = {
     should be one thing.
   */
   role: "Software Developer",
+  /*
+    Rendered by the social card, and ONLY there — the hero deliberately leads
+    with the wordmark instead.
+
+    `app/opengraph-image.tsx` repeats this sentence as three literal spans
+    rather than reading it from here, because Satori is flexbox-only and a
+    single text node will not wrap. If this line changes, that one has to
+    change with it; it is the one piece of copy in the project with two homes.
+  */
   headline: "I build production software that solves real problems.",
   tagline:
     "Computer Science graduate building real-time platforms, developer tools, and cross-platform products — designed, tested, and shipped end to end.",

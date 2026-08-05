@@ -136,7 +136,9 @@ export const skillGroups: SkillGroup[] = [
       { label: "PyInstaller" },
     ],
     evidence:
-      "SentinelAI comes up from a single Docker command that mints its own RS256 keys. T Poker runs 5 CI jobs on every push."
+      // The Docker-command line lives in the Approach section's "Ship" stage;
+      // this one leads with CI instead so the two are not the same sentence.
+      "T Poker runs 5 CI jobs on every push across two languages, and SentinelAI's whole stack — API, workers, Postgres, Redis, RabbitMQ — comes up under one compose file."
   },
   {
     id: "verify",
