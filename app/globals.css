@@ -84,27 +84,47 @@
   /* Starfield dust in the substrate. */
   --star: rgba(214, 226, 255, 0.55);
 
-  /* Device material for the intro workstation. White-alpha aluminium reads on
-     a dark field and disappears entirely on a light one, so the shell is a
-     token pair rather than a fixed gradient. */
+  /* ── The machine ───────────────────────────────────────────────────────
+     SPACE BLACK, and OPAQUE, and the same in both themes.
+
+     The previous shell was white-alpha "silver aluminium", and it was the
+     single biggest thing making the intro read as an illustration rather than
+     a product render. Two reasons.
+
+     First, contrast ran the wrong way. In a dark scene a light body is the
+     brightest object in frame, so it competes with the display — and the
+     display is the thing the whole sequence is about. A near-black machine
+     inverts that: the body reads only by its chamfers and edge highlights, and
+     the screen becomes the one bright object. That is the entire lighting idea
+     behind this class of product photography.
+
+     Second, alpha over a variable field means the material changes colour with
+     whatever is behind it, which is exactly what a solid anodised body does
+     not do. These are opaque, so the metal is the same metal everywhere.
+
+     Being opaque also means it no longer needs a light-theme pair: a space
+     black machine is correct on a light field too — more so, in fact, since
+     the body separates from the page instead of dissolving into it. */
   --device-shell:
-    linear-gradient(168deg,
-      rgba(158,172,208,0.40) 0%,
-      rgba(236,243,255,0.72) 15%,
-      rgba(196,208,238,0.52) 24%,
-      rgba(126,138,172,0.34) 48%,
-      rgba(88,98,130,0.30) 74%,
-      rgba(46,52,74,0.44) 100%);
+    linear-gradient(166deg,
+      #2c303a 0%,
+      #444a58 7%,     /* the chamfered top edge catching the key light */
+      #262a33 17%,
+      #1b1e25 46%,
+      #15171d 74%,
+      #101218 100%);
   --device-base:
     linear-gradient(180deg,
-      rgba(120,132,166,0.34) 0%,
-      rgba(224,233,252,0.60) 12%,
-      rgba(168,180,212,0.44) 26%,
-      rgba(112,123,156,0.34) 58%,
-      rgba(150,162,196,0.40) 88%,
-      rgba(206,217,244,0.52) 100%);
-  --device-edge: rgba(255, 255, 255, 0.55);
-  --device-chamfer: rgba(244, 249, 255, 0.92);
+      #101218 0%,     /* deep in the lid's shadow */
+      #2a2f3a 9%,
+      #212530 24%,
+      #1a1d25 52%,
+      #262a34 84%,    /* palm rest turning back toward the light */
+      #14161c 100%);
+  --device-edge: rgba(214, 226, 252, 0.42);
+  /* Still bright: on a black body the diamond-cut chamfer is doing almost all
+     of the work of describing the silhouette. */
+  --device-chamfer: rgba(228, 238, 255, 0.80);
 
   /* The surface the machine stands on. `near` is the lit strip just under the
      front lip where the desk catches the same light the deck does; `far` is
@@ -221,25 +241,11 @@
   --status-idle: #5a6480;
   --star: rgba(90, 100, 128, 0.30);
 
-  /* Space-grey on a bright desk — opaque, so it holds its own against the page. */
-  --device-shell:
-    linear-gradient(168deg,
-      #aab2c6 0%,
-      #e9edf6 14%,
-      #c8cedd 24%,
-      #99a1b5 50%,
-      #757c91 76%,
-      #4e5468 100%);
-  --device-base:
-    linear-gradient(180deg,
-      #8f97ab 0%,
-      #e2e7f1 12%,
-      #c0c7d7 26%,
-      #8d95a9 58%,
-      #aab2c4 88%,
-      #d6dbe6 100%);
-  --device-edge: rgba(255, 255, 255, 0.85);
-  --device-chamfer: rgba(255, 255, 255, 0.98);
+  /* NO device overrides here on purpose — see the note in :root. The machine
+     is space black in both themes, which is a real product decision rather
+     than a shortcut: on a light page a black body separates cleanly, and it
+     keeps the display the brightest thing in frame either way. Overriding it
+     to silver here is what made the light theme render a different product. */
 
   /* On a light field the desk reads by being DARKER than the page, not
      lighter — the same surface, lit from the same place, on the other side of

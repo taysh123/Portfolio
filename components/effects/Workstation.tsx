@@ -98,7 +98,14 @@ const LID_EDGE = 10;
  * the camera for the derivation of the 1.152.
  */
 const MACHINE_WIDTH =
-  "min(44rem, 92vw, max(18rem, calc((100vh - 24rem) * 1.152)))";
+  /*
+    The 1.152 was derived at a 14deg camera. At 19deg the deck projects as
+    sin(35°)=0.574 rather than sin(30°)=0.5, so the scene is now 0.663 +
+    0.62x0.574 = 1.019 times its own width tall, and the width that fills a
+    given height is height x 0.98. Raising the camera without re-deriving this
+    is how a machine grows back into the headline it was just moved out of.
+  */
+  "min(44rem, 92vw, max(18rem, calc((100vh - 24rem) * 0.98)))";
 
 export function Workstation({
   open,
@@ -263,32 +270,47 @@ export function Workstation({
           composes the individual properties into one matrix and a literal
           `transform` wins outright.
 
-          At 9deg the deck projected to ~14% of the lid's height, which is
-          physically right for a straight-on shot and useless for a
-          composition: every material decision below the hinge was invisible.
-          14deg costs the display almost nothing (it sits at -2deg, so
-          cos(16°) ≈ 0.96) and returns about a quarter more deck. That
-          asymmetry is why product photography looks down at these machines.
+          NINETEEN degrees, up from fourteen.
+
+          In the reference shot the deck is not a sliver under the screen — the
+          keyboard and trackpad are a large, legible part of the frame, and
+          that is a camera-height decision, not a modelling one. Elevation buys
+          deck projection cheaply because the two surfaces respond to it
+          differently: the deck gains as sin(elevation + 16°) while the display
+          only loses as cos(elevation - 2°). Going 14° -> 19° adds ~15% deck
+          and costs the display under 2%.
         */
-        rotateX: 14,
+        rotateX: 19,
       }}
     >
       {/* ── Grounding ──────────────────────────────────────────────────
-          Both sit at the deck's FRONT lip, not under the lid — that is where
-          the machine actually touches the desk. The tight one sells contact,
-          the wide one sells mass. */}
+          A DIRECTIONAL cast shadow, thrown away from the key light.
+
+          These were two symmetric ellipses centred under the machine, which is
+          what an object lit from directly in front casts — and nothing in the
+          reference is lit from directly in front. A single source upper-LEFT
+          throws the shadow down and to the RIGHT, stretched and softening as
+          it goes. Getting this wrong undoes the lighting above it: the eye
+          reads the shadow's direction before it reads any highlight.
+
+          The tight one still sells contact at the front lip; the long one
+          sells the light's direction. */}
       <motion.span
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-[150%] h-[3rem] w-[64%] -translate-x-1/2 rounded-[50%] blur-lg"
+        className="pointer-events-none absolute left-[52%] top-[150%] h-[2.6rem] w-[62%] -translate-x-1/2 rounded-[50%] blur-lg"
         style={{
-          background: "radial-gradient(closest-side, rgba(0,0,0,0.92), transparent 70%)",
+          background: "radial-gradient(closest-side, rgba(0,0,0,0.94), transparent 70%)",
           opacity: contact,
         }}
       />
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-[142%] h-[9rem] w-[108%] -translate-x-1/2 rounded-[50%] blur-[52px]"
-        style={{ background: "radial-gradient(closest-side, rgba(0,0,0,0.6), transparent 72%)" }}
+        className="pointer-events-none absolute left-[58%] top-[140%] h-[10rem] w-[116%] -translate-x-1/2 rounded-[50%] blur-[58px]"
+        style={{
+          background:
+            "radial-gradient(closest-side, rgba(0,0,0,0.72), rgba(0,0,0,0.34) 46%, transparent 74%)",
+          transform: "skewX(-14deg)",
+        }}
       />
 
       {/* The light the display throws into the room. */}
@@ -350,18 +372,28 @@ export function Workstation({
             }}
           />
 
-          {/* The room, reflected. Aluminium is a mirror with the contrast
-              turned down: a broad window highlight where the surface faces the
-              light, and a dimmer bounce off the desk lower down. Without this
-              the shell is a gradient; with it, it is a surface with something
-              in front of it. */}
+          {/*
+            ONE KEY LIGHT, FROM UPPER LEFT — and real falloff away from it.
+
+            The reference is lit by a single source and the far side of the
+            machine goes almost completely black. Even illumination is one of
+            the most reliable tells that something was drawn rather than
+            photographed: real light has a direction and a distance, so a real
+            surface is never the same brightness across its whole face.
+
+            Three layers: the key catching the upper-left, a dim desk bounce
+            returning on the lower-left, and — the one that does the most work
+            — a shadow wedge rolling in from the right. Without the falloff the
+            other two just read as smudges on a flat panel.
+          */}
           <span
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 rounded-[1.05rem]"
             style={{
               background:
-                "radial-gradient(120% 70% at 18% -8%, rgba(226,238,255,0.16), transparent 58%)," +
-                "radial-gradient(90% 50% at 82% 108%, rgba(150,176,232,0.09), transparent 62%)",
+                "radial-gradient(120% 75% at 12% -10%, rgba(226,238,255,0.20), transparent 55%)," +
+                "radial-gradient(80% 46% at 6% 104%, rgba(150,176,232,0.07), transparent 60%)," +
+                "linear-gradient(255deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.22) 26%, transparent 52%)",
             }}
           />
 
@@ -520,7 +552,22 @@ export function Workstation({
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(180deg, rgba(0,0,0,0.66) 0%, rgba(0,0,0,0.30) 9%, rgba(0,0,0,0) 22%, rgba(255,255,255,0.055) 62%, rgba(255,255,255,0.085) 82%, rgba(0,0,0,0.28) 100%)",
+              "linear-gradient(180deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.38) 9%, rgba(0,0,0,0) 22%, rgba(255,255,255,0.05) 62%, rgba(255,255,255,0.075) 82%, rgba(0,0,0,0.36) 100%)",
+          }}
+        />
+        {/* The light the DISPLAY throws back down into that shadow.
+
+            A lit panel above a dark deck puts a cool wash across the strip
+            nearest the hinge. It is the give-away that the screen is genuinely
+            on rather than just light-coloured, it ties the two halves of the
+            machine into one lighting situation, and it costs one gradient. */}
+        <motion.span
+          aria-hidden="true"
+          className="absolute inset-x-[5%] top-0 h-[38%]"
+          style={{
+            opacity: screenGlow,
+            background:
+              "linear-gradient(180deg, rgba(126,162,255,0.17), rgba(126,162,255,0.05) 44%, transparent)",
           }}
         />
         {/* The palm rest catches the light broadest at the centre. */}
@@ -542,6 +589,18 @@ export function Workstation({
             backgroundImage: BRUSHED_ALUMINIUM,
             backgroundSize: "128px 96px",
             opacity: 0.07,
+          }}
+        />
+        {/* The same key light, reaching the deck — and the same falloff to the
+            right. The deck and the lid have to agree about where the light is
+            or the machine comes apart at the hinge. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(70% 120% at 14% 60%, rgba(226,238,255,0.11), transparent 62%)," +
+              "linear-gradient(260deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.18) 30%, transparent 56%)",
           }}
         />
 
@@ -634,10 +693,22 @@ export function Workstation({
                     className="block"
                     style={{
                       flex: w,
+                      /*
+                        BLACK KEYS ON A BLACK MACHINE.
+
+                        These were pale — correct against the old silver deck,
+                        and completely wrong now: a light keyboard was the
+                        brightest thing below the hinge and pulled the eye away
+                        from the display. On this class of machine the caps are
+                        as dark as the body and you read them entirely by the
+                        light catching each cap's leading edge, which is what
+                        the top inset highlight is. The fill barely lifts off
+                        the well at all.
+                      */
                       background:
-                        "linear-gradient(180deg, rgba(216,228,254,0.32) 0%, rgba(148,160,196,0.15) 38%, rgba(56,64,88,0.15) 80%, rgba(20,24,36,0.2) 100%)",
+                        "linear-gradient(180deg, rgba(126,138,170,0.20) 0%, rgba(58,66,88,0.13) 42%, rgba(24,28,40,0.16) 82%, rgba(10,12,18,0.22) 100%)",
                       boxShadow:
-                        "inset -0.6px 0 0 rgba(0,0,0,0.85), inset 0 -0.6px 0 rgba(0,0,0,0.72), inset 0 0.6px 0 rgba(255,255,255,0.16)",
+                        "inset -0.6px 0 0 rgba(0,0,0,0.9), inset 0 -0.6px 0 rgba(0,0,0,0.8), inset 0 0.6px 0 rgba(198,212,244,0.20)",
                     }}
                   />
                 ))}
@@ -661,10 +732,14 @@ export function Workstation({
           aria-hidden="true"
           className="absolute bottom-[6%] left-1/2 h-[31%] w-[41%] -translate-x-1/2 rounded-[0.2rem]"
           style={{
+            // Nearly the deck's own colour. A trackpad is glass flush in the
+            // same anodised panel — on a black machine it is close to
+            // invisible, and what identifies it is the machined seam and the
+            // bright chamfer on the near lip of the cutout, not a lighter fill.
             background:
-              "linear-gradient(180deg, rgba(226,236,255,0.05) 0%, rgba(140,152,186,0.03) 55%, rgba(226,236,255,0.045) 100%)",
+              "linear-gradient(180deg, rgba(190,204,238,0.035) 0%, rgba(120,132,166,0.02) 55%, rgba(190,204,238,0.03) 100%)",
             boxShadow:
-              "inset 0 0 0 0.8px rgba(0,0,0,0.34), inset 0 1px 1.5px rgba(0,0,0,0.3), 0 0.6px 0 rgba(255,255,255,0.16)",
+              "inset 0 0 0 0.8px rgba(0,0,0,0.5), inset 0 1px 1.5px rgba(0,0,0,0.42), 0 0.6px 0 rgba(198,212,244,0.16)",
           }}
         />
 

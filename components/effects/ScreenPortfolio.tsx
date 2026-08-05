@@ -28,9 +28,26 @@ export function ScreenPortfolio() {
   return (
     <div
       className="relative h-full w-full overflow-hidden"
+      /*
+        THE DISPLAY IS THE ONLY BRIGHT OBJECT IN THE FRAME, and it has to earn
+        that on a body that is now near-black.
+
+        In the reference the machine is dark and the site on its screen is
+        white, and that inversion is most of the drama. This portfolio is
+        dark-themed, so going white here would buy the contrast and lose the
+        continuity — the camera pushes THROUGH this panel into the real hero,
+        and arriving somewhere a different colour is the cut the whole sequence
+        exists to avoid.
+
+        So the screen stays dark and gets brighter instead: its blacks are
+        lifted well above the chassis's, so the panel reads as emitting rather
+        than as a hole. Measured against the shell's #101218 base, this bottoms
+        out at #10162a — lighter, and bluer, which is what a lit LCD looks like
+        next to anodised aluminium.
+      */
       style={{
         background:
-          "radial-gradient(120% 90% at 18% 0%, #131a30 0%, #0b0f1c 46%, #070a13 100%)",
+          "radial-gradient(120% 90% at 16% -4%, #24304f 0%, #182444 34%, #121a33 68%, #10162a 100%)",
       }}
     >
       {/* The site's own aurora, at screen scale. */}
@@ -38,7 +55,7 @@ export function ScreenPortfolio() {
         className="pointer-events-none absolute left-[14%] top-[-18%] h-[70cqw] w-[70cqw] rounded-full"
         style={{
           background:
-            "radial-gradient(closest-side, rgba(150,110,255,0.22), rgba(91,141,239,0.12) 52%, transparent 76%)",
+            "radial-gradient(closest-side, rgba(150,110,255,0.30), rgba(91,141,239,0.18) 52%, transparent 76%)",
           filter: "blur(6cqw)",
         }}
       />
