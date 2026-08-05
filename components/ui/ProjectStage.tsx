@@ -1,11 +1,9 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { Tag, StatusChip } from "@/components/ui/Tag";
-import { ProjectImage } from "@/components/ui/ProjectImage";
 import { IconButton } from "@/components/ui/IconButton";
-import { Button, ButtonLink } from "@/components/ui/Button";
-import { ArrowLeftIcon, ArrowRightIcon, GithubIcon, BookOpenIcon } from "@/components/ui/icons";
+import { ProjectCard } from "@/components/ui/ProjectCard";
+import { ArrowLeftIcon, ArrowRightIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/cn";
 import type { Project } from "@/data/projects";
 
@@ -29,9 +27,14 @@ import type { Project } from "@/data/projects";
  *      articles; the actions inside them are the interactive elements.
  *
  * Off-axis cards are `inert`, so Tab never lands on something the reader
- * cannot see. The whole component is desktop-and-motion-only — `Projects`
- * renders the row list instead under reduced motion or on small screens,
- * which is a genuinely good experience rather than a degraded one.
+ * cannot see. The whole component is desktop-and-motion-only: below `lg`
+ * `Projects` renders `ProjectDeck` instead — a snap-scroller built on native
+ * touch scrolling, which is a different design rather than this one shrunk.
+ * Under reduced motion it renders the row list, because an arc that only
+ * resolves through movement has nothing to say when movement is off.
+ *
+ * The card is `ProjectCard`, shared with the deck. The two presentations
+ * differ; the object being presented must not.
  */
 
 /**
@@ -187,11 +190,12 @@ export function ProjectStage({
                   transformStyle: "preserve-3d",
                 }}
               >
-                <Card
+                <ProjectCard
                   project={project}
                   active={isActive}
                   onOpenCaseStudy={onOpenCaseStudy}
-                  onFocusRequest={() => setActive(i)}
+                  onFocusCapture={() => setActive(i)}
+                  sizes="(max-width: 1024px) 80vw, 24rem"
                 />
               </div>
             );
@@ -248,94 +252,3 @@ export function ProjectStage({
   );
 }
 
-function Card({
-  project,
-  active,
-  onOpenCaseStudy,
-  onFocusRequest,
-}: {
-  project: Project;
-  active: boolean;
-  onOpenCaseStudy: (project: Project) => void;
-  onFocusRequest: () => void;
-}) {
-  const metrics = project.metrics.slice(0, 2);
-
-  return (
-    <article
-      onFocusCapture={onFocusRequest}
-      className={cn(
-        "edge-lit relative flex flex-col overflow-hidden rounded-3xl border transition-[border-color,box-shadow] duration-[var(--dur-slow)]",
-        active ? "border-accent-line shadow-e3" : "border-line shadow-e2",
-      )}
-      // Opaque: a stacked card has to occlude the ones behind it.
-      style={{ background: "var(--panel-solid)" }}
-    >
-      <div className="relative aspect-[16/10] w-full overflow-hidden border-b border-line-subtle">
-        <ProjectImage
-          project={project}
-          className="h-full w-full"
-          sizes="(max-width: 1024px) 80vw, 24rem"
-        />
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3"
-          style={{
-            background: "linear-gradient(to top, var(--surface-0), transparent)",
-            opacity: 0.55,
-          }}
-        />
-      </div>
-
-      <div className="flex flex-1 flex-col p-6">
-        <div className="flex flex-wrap items-center gap-2">
-          <StatusChip status={project.status} />
-        </div>
-
-        <h3 className="mt-3.5 text-2xl font-semibold tracking-[var(--tracking-heading)] text-fg">
-          {project.name}
-        </h3>
-        <p className="mt-2.5 line-clamp-3 text-sm leading-relaxed text-fg-muted">{project.summary}</p>
-
-        <dl className="mt-5 grid grid-cols-2 gap-3">
-          {metrics.map((m) => (
-            <div key={m.label} className="rounded-lg border border-line-subtle bg-surface-1 px-3 py-2.5">
-              <dd className="tnum text-lg font-semibold leading-none text-fg">{m.value}</dd>
-              <dt className="label mt-1.5 text-fg-subtle">{m.label}</dt>
-            </div>
-          ))}
-        </dl>
-
-        <ul className="mt-5 flex flex-wrap gap-1.5">
-          {project.stack.slice(0, 3).map((s) => (
-            <li key={s.label}>
-              <Tag emphasis={s.emphasis}>{s.label}</Tag>
-            </li>
-          ))}
-        </ul>
-
-        <footer className="mt-auto flex flex-wrap items-center gap-2.5 pt-6">
-          <Button size="sm" onClick={() => onOpenCaseStudy(project)}>
-            <BookOpenIcon size={14} />
-            Case study
-          </Button>
-          {project.liveUrl && (
-            <ButtonLink href={project.liveUrl} external variant="secondary" size="sm" arrow>
-              {project.liveLabel ?? "Open"}
-            </ButtonLink>
-          )}
-          <ButtonLink
-            href={project.repoUrl}
-            external
-            variant="ghost"
-            size="sm"
-            className="ml-auto"
-            aria-label={`${project.name} source on GitHub`}
-          >
-            <GithubIcon size={15} />
-          </ButtonLink>
-        </footer>
-      </div>
-    </article>
-  );
-}

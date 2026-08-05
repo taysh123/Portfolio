@@ -132,11 +132,22 @@ export function Contact() {
                   <span className="label block text-fg-subtle">
                     Primary channel
                   </span>
+                  {/*
+                    The address is too long to hold one line on a phone at a
+                    size worth setting it in, so the question is not whether it
+                    wraps but WHERE. Left to itself it broke at
+                    “tayshofer05@gmail.” / “com”, which reads as a rendering
+                    accident. `<wbr>` puts the only break opportunity before
+                    the @, so it splits into mailbox and domain — and because
+                    `<wbr>` contributes no characters, the address still copies
+                    and reads as one string.
+                  */}
                   <span
-                    className="mt-3 block break-words font-semibold leading-[1.05] tracking-[var(--tracking-heading)] text-fg transition-colors duration-[var(--dur-mid)] group-hover/mail:text-accent"
+                    className="mt-3 block font-semibold leading-[1.05] tracking-[var(--tracking-heading)] text-fg transition-colors duration-[var(--dur-mid)] group-hover/mail:text-accent"
                     style={{ fontSize: "clamp(1.3rem, 3.4vw, 2.9rem)" }}
                   >
-                    {socials.email}
+                    {socials.email.split("@")[0]}
+                    <wbr />@{socials.email.split("@")[1]}
                   </span>
                 </span>
 
@@ -213,7 +224,9 @@ export function Contact() {
               href={socials.github.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-fg-muted underline decoration-line underline-offset-4 transition-colors duration-[var(--dur-mid)] hover:text-accent hover:decoration-accent"
+              // `py-1.5` is not decoration: it lifts this inline link's hit
+              // box from 16px to 28px without moving a pixel of the text.
+              className="inline-block py-1.5 text-fg-muted underline decoration-line underline-offset-4 transition-colors duration-[var(--dur-mid)] hover:text-accent hover:decoration-accent"
             >
               public repository
             </a>

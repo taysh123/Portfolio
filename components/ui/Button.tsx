@@ -10,8 +10,13 @@ type Size = "sm" | "md" | "lg";
  * subordinate. Replaces six near-identical pill recipes that had drifted
  * across four files.
  *
- * Every size clears the 44px touch-target minimum except `sm`, which is only
- * for inline chips inside already-large hit areas.
+ * SIZE IS AN INPUT-DEVICE DECISION, not just a visual one. `sm` used to be
+ * 36px at every width, justified as "only for inline chips inside already-large
+ * hit areas" — which was not where it ended up being used. It carries "Case
+ * study", "Open the app" and the repository link on every project card, and
+ * those are the primary actions on a phone. A mouse is precise and a thumb is
+ * not, so `sm` is a full 44px target up to `lg` and tightens to 36px above it,
+ * where the pointer earns the density.
  */
 const base =
   "group/btn relative inline-flex items-center justify-center gap-2 rounded-full font-medium whitespace-nowrap " +
@@ -19,7 +24,7 @@ const base =
   "active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50";
 
 const sizes: Record<Size, string> = {
-  sm: "h-9 px-4 text-sm",
+  sm: "h-11 px-4 text-sm lg:h-9",
   md: "h-11 px-5 text-sm",
   lg: "h-12 px-6 text-base sm:h-[3.25rem] sm:px-7",
 };

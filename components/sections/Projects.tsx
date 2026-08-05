@@ -8,6 +8,7 @@ import { Reveal } from "@/components/ui/Reveal";
 import { FeaturedProject } from "@/components/ui/FeaturedProject";
 import { ProjectRow } from "@/components/ui/ProjectRow";
 import { ProjectStage } from "@/components/ui/ProjectStage";
+import { ProjectDeck } from "@/components/ui/ProjectDeck";
 import { CaseStudyPanel } from "@/components/ui/CaseStudyPanel";
 import { ButtonLink } from "@/components/ui/Button";
 import { GithubIcon } from "@/components/ui/icons";
@@ -47,17 +48,26 @@ export function Projects() {
   const close = useCallback(() => setCaseStudy(null), []);
 
   /*
-    The 3D stage is a progressive enhancement, not the only way to read this.
+    THREE presentations, chosen by input device rather than by width alone.
 
-    `useMediaQuery` reports false until mounted, so the SERVER renders the row
-    list — which means every project's name, summary, metrics and links are in
-    the HTML for crawlers and for anyone without JavaScript. The stage then
-    replaces it on capable clients. Under reduced motion the rows stay, because
-    they are a genuinely good presentation rather than a fallback.
+    Both interactive ones are progressive enhancements: `useMediaQuery` reports
+    false until mounted, so the SERVER renders the row list — every project's
+    name, summary, metrics and links are in the HTML for crawlers and for
+    anyone without JavaScript — and the richer presentation replaces it on
+    capable clients.
+
+      lg + motion  — the 3D stage. Cards on an arc you drag with a pointer.
+      below lg     — the deck. A native snap-scroller you flick, which is a
+                     different design for a different hand, not this one
+                     scaled down.
+      reduced      — the rows, at every width. An arc that only resolves
+                     through movement has nothing to say without movement,
+                     and the rows are a genuinely good read rather than a
+                     fallback.
   */
   const reduced = useReducedMotionPref();
   const roomy = useMediaQuery("(min-width: 1024px)");
-  const showStage = roomy && !reduced;
+  const mounted = useMediaQuery("(min-width: 0px)");
 
   return (
     <>
@@ -103,11 +113,29 @@ export function Projects() {
             revealing on its own as you reach it — a five-row container is
             taller than the viewport, so a shared trigger would have finished
             animating long before the last row was ever on screen. */}
-        {showStage ? (
-          <Panel tone="raised" bloom="centre" sheen={false} className="px-4 py-[clamp(2.5rem,4vw,4rem)]">
+        {!reduced && roomy && (
+          <Panel
+            tone="raised"
+            bloom="centre"
+            sheen={false}
+            className="px-4 py-[clamp(2.5rem,4vw,4rem)]"
+          >
             <ProjectStage projects={rest} onOpenCaseStudy={open} />
           </Panel>
-        ) : (
+        )}
+
+        {!reduced && mounted && !roomy && (
+          <Panel
+            tone="raised"
+            bloom="centre"
+            sheen={false}
+            className="px-[var(--panel-p)] py-[clamp(2rem,6vw,3rem)]"
+          >
+            <ProjectDeck projects={rest} onOpenCaseStudy={open} />
+          </Panel>
+        )}
+
+        {(reduced || !mounted) && (
           <ul className="flex flex-col gap-[var(--gap)]">
             {rest.map((project, i) => (
               <li key={project.id}>

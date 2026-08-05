@@ -1,7 +1,13 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useMotionValue, useScroll, useTransform } from "framer-motion";
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useScroll,
+  useTransform,
+} from "framer-motion";
 import { Workstation } from "@/components/effects/Workstation";
 import { ScreenUI } from "@/components/effects/ScreenUI";
 import { Eyebrow } from "@/components/ui/Eyebrow";
@@ -91,20 +97,21 @@ export function IntroSequence() {
   const copyFade = useTransform(scrollYProgress, (p) => 1 - ramp(0.16, 0.42)(p));
   const hintFade = useTransform(scrollYProgress, (p) => 1 - ramp(0.08, 0.24)(p));
 
-  // ── Reduced motion / small screens: one static frame, no pin ──────────
+  // ── Reduced motion: one static frame, no pin, nothing playing ─────────
   if (reduced) {
     return (
       <section aria-label="Introduction" className="relative">
-        <StaticFrame />
+        <ArrivalFrame play={false} />
       </section>
     );
   }
 
   return (
     <>
-      {/* Below lg the pinned sequence is replaced by the same scene, static. */}
+      {/* Below lg the pinned sequence is replaced by the arrival frame, which
+          plays the same beats on its own clock. */}
       <section aria-label="Introduction" className="relative lg:hidden">
-        <StaticFrame />
+        <ArrivalFrame play />
       </section>
 
       <div ref={ref} data-intro-stage className="relative hidden h-[200vh] lg:block">
@@ -202,18 +209,51 @@ export function IntroSequence() {
 }
 
 /**
- * The no-pin variant: the same machine, open and booted, rendered once.
+ * The no-pin variant — and, on a phone, a deliberately different design rather
+ * than a smaller copy of the desktop one.
  *
- * Deliberately not a degraded placeholder — it keeps the concept (you are
- * looking at a workstation) and only drops the scroll choreography, which is
- * the part that is unsafe under reduced motion and unpleasant on a phone.
+ * WHY NOT PIN ON MOBILE. The desktop sequence spends a whole viewport of
+ * scroll on choreography, which is affordable on a machine where scrolling is
+ * cheap and reversible. On a phone the same device costs a reader most of a
+ * flick to get past, cannot be skimmed, and fights the browser's own
+ * address-bar collapse. Pinning is the wrong instrument here.
+ *
+ * WHAT REPLACES IT. The beats — the device is alive, the screen powers on, the
+ * boot log runs, the workspace loads — do not actually require scroll. They
+ * require TIME. So on a phone the machine plays them on its own clock the
+ * moment it comes into view: about two and a half seconds, once, and then the
+ * page scrolls normally for the rest of its life. The reader gets the whole
+ * story and keeps their scroll.
+ *
+ * The camera push is the one beat that is genuinely scroll-bound, and it is
+ * the one beat this drops. It is also the one that matters least: it exists to
+ * hand a desktop reader off into the hero, and on a phone the hero is already
+ * the next thing under their thumb.
+ *
+ * `play={false}` (reduced motion) renders the finished frame immediately —
+ * not a slower version, and not a placeholder.
  */
-function StaticFrame() {
-  // One frozen value shared by every slot — the scene renders at its end state.
-  const done = useMotionValue(1);
+function ArrivalFrame({ play }: { play: boolean }) {
+  /*
+    Three slots on one timeline. Started from a viewport callback rather than
+    an effect: this is a response to an event, so it belongs in a handler —
+    and `animate()` on a motion value never touches React state, so the whole
+    sequence costs zero renders.
+  */
+  const wake = useMotionValue(play ? 0 : 1);
+  const boot = useMotionValue(play ? 0 : 1);
+  const live = useMotionValue(play ? 0 : 1);
+  const open = useMotionValue(1);
+
+  const start = () => {
+    if (!play) return;
+    animate(wake, 1, { duration: 0.55, ease: "easeOut" });
+    animate(boot, 1, { duration: 1.25, delay: 0.35, ease: "linear" });
+    animate(live, 1, { duration: 0.7, delay: 1.5, ease: "easeOut" });
+  };
 
   return (
-    <div className="relative flex min-h-[78svh] flex-col items-center justify-center overflow-hidden px-[var(--gutter)] py-[clamp(3rem,8vw,6rem)]">
+    <div className="relative flex min-h-[78svh] flex-col items-center justify-center overflow-hidden px-[var(--gutter)] py-[clamp(2.5rem,8vw,6rem)]">
       <span
         aria-hidden="true"
         className="pointer-events-none absolute left-1/2 top-1/2 h-[62%] w-[86%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] blur-[90px]"
@@ -236,17 +276,19 @@ function StaticFrame() {
         </h2>
       </div>
 
-      <div
+      <motion.div
         aria-hidden="true"
-        className="relative z-10 mt-[clamp(2.5rem,6vw,4.5rem)] flex w-full justify-center"
+        onViewportEnter={start}
+        viewport={{ once: true, amount: 0.35 }}
+        className="relative z-10 mt-[clamp(2rem,6vw,4.5rem)] flex w-full justify-center"
         style={{ perspective: "2000px" }}
       >
-        <Workstation open={done} wake={done}>
+        <Workstation open={open} wake={wake}>
           <div style={{ containerType: "inline-size" }} className="h-full w-full">
-            <ScreenUI boot={done} live={done} />
+            <ScreenUI boot={boot} live={live} />
           </div>
         </Workstation>
-      </div>
+      </motion.div>
     </div>
   );
 }

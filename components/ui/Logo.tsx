@@ -23,6 +23,10 @@ export function Logo({
       aria-label={label ?? `${siteMeta.name} — home`}
       className={cn(
         "group inline-flex items-center gap-2.5 rounded-md text-fg",
+        // The mark is 32px, which is the right visual weight and the wrong
+        // target. `min-h-11` clears 44px for a thumb without growing the mark
+        // by a pixel — the extra height is transparent padding around it.
+        "min-h-11 lg:min-h-0",
         className,
       )}
     >

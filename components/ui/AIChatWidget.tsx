@@ -7,6 +7,7 @@ import { ChatIcon, SendIcon, XIcon } from "@/components/ui/icons";
 import { DUR, easeOutExpo } from "@/lib/motion";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
+import { useScrollIdle } from "@/lib/useScrollIdle";
 import { cn } from "@/lib/cn";
 
 type Message = { id: string; role: "user" | "assistant"; text: string };
@@ -33,6 +34,9 @@ const GREETING =
  */
 export function AIChatWidget() {
   const [open, setOpen] = useState(false);
+  // Never retract an OPEN panel — the reader is using it, and scrolling the
+  // page behind a dialog should not throw the dialog off the screen.
+  const retract = useScrollIdle() && !open;
   const [messages, setMessages] = useState<Message[]>([
     { id: nextId(), role: "assistant", text: GREETING },
   ]);
@@ -111,7 +115,18 @@ export function AIChatWidget() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+    <div
+      className={cn(
+        "fixed right-6 z-50 flex flex-col items-end gap-3",
+        // Clears the home indicator on a notched phone; 1.5rem everywhere else.
+        "bottom-[max(1.5rem,env(safe-area-inset-bottom))]",
+        // Retracts while the reader is scrolling. Below lg this control sits
+        // exactly where a card's actions are; on a desktop it sits in dead
+        // space, so the behaviour is scoped to the size where it is a problem.
+        "transition-[transform,opacity] duration-[var(--dur-slow)] ease-[var(--ease-out-expo)] lg:translate-y-0 lg:opacity-100",
+        retract && "translate-y-[160%] opacity-0",
+      )}
+    >
       <AnimatePresence>
         {open && (
           <motion.div

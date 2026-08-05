@@ -9,6 +9,7 @@ import { AccessibilityIcon, XIcon } from "@/components/ui/icons";
 import { DUR, easeOutExpo } from "@/lib/motion";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
+import { useScrollIdle } from "@/lib/useScrollIdle";
 import { cn } from "@/lib/cn";
 
 const OPTIONS = [
@@ -46,12 +47,22 @@ export function AccessibilityPanel() {
   const prefs = useAccessibility();
   const reduced = useReducedMotionPref();
   const panelRef = useRef<HTMLDivElement>(null);
+  const retract = useScrollIdle() && !open;
 
   const close = useCallback(() => setOpen(false), []);
   useFocusTrap(panelRef, open, close);
 
   return (
-    <div className="fixed bottom-6 left-6 z-50 flex flex-col items-start gap-3">
+    <div
+      className={cn(
+        "fixed left-6 z-50 flex flex-col items-start gap-3",
+        "bottom-[max(1.5rem,env(safe-area-inset-bottom))]",
+        // See the note in AIChatWidget: two fixed controls in the bottom
+        // corners of a phone cover exactly the actions a reader is aiming for.
+        "transition-[transform,opacity] duration-[var(--dur-slow)] ease-[var(--ease-out-expo)] lg:translate-y-0 lg:opacity-100",
+        retract && "translate-y-[160%] opacity-0",
+      )}
+    >
       <AnimatePresence>
         {open && (
           <motion.div
