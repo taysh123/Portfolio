@@ -122,6 +122,21 @@ export function ProjectStage({
 
   const position = active + drag;
 
+  /*
+    The stage is asymmetric at both ends — at the first card there is nothing
+    to the left of it and two cards to the right — and a spotlight nailed to
+    the geometric centre makes that read as a mistake rather than as the start
+    of a deck.
+
+    Wrapping the deck around would balance it and cost more than it is worth:
+    "1 of 5" stops being true, Home and End stop meaning anything, and the
+    linear model that lets off-axis cards be `inert` goes with it. So the deck
+    stays linear and the LIGHT moves instead — biased toward the cards by up to
+    7% of the stage at either end, easing back to centre in the middle. The
+    composition rebalances optically and the semantics are untouched.
+  */
+  const lightBias = (Math.max(0, Math.min(count - 1, position)) / (count - 1) - 0.5) * -14;
+
   return (
     <div
       role="group"
@@ -140,13 +155,55 @@ export function ProjectStage({
         className="relative h-[clamp(34rem,52vw,42rem)] cursor-grab touch-pan-y select-none active:cursor-grabbing"
         style={{ perspective: "1900px" }}
       >
-        {/* Spotlight the active card sits in. */}
+        {/* ── Lighting ─────────────────────────────────────────────────
+            Three layers, all compositor-only, and all of them behind the
+            cards so nothing here can ever intercept a pointer.
+
+            The key light the active card sits in. `translateX` rather than a
+            `left` change, so the bias animates on the compositor instead of
+            invalidating layout on every frame of a drag. */}
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute left-1/2 top-[46%] h-[62%] w-[54%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] blur-[70px]"
+          className={cn(
+            "pointer-events-none absolute left-1/2 top-[44%] h-[62%] w-[54%] -translate-y-1/2 rounded-[50%] blur-[70px]",
+            !dragging &&
+              "transition-transform duration-[var(--dur-slow)] ease-[var(--ease-out-expo)]",
+          )}
           style={{
+            transform: `translate(calc(-50% + ${lightBias}%), -50%)`,
             background:
               "radial-gradient(closest-side, var(--glow-strong), var(--glow-blue) 46%, transparent 76%)",
+          }}
+        />
+
+        {/* The surface the deck stands on. A tight dark pool directly under
+            the cards is what stops them floating in the middle of a panel —
+            the same trick that grounds the workstation, for the same reason. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-[8%] left-1/2 h-[7rem] w-[64%] -translate-x-1/2 rounded-[50%] blur-[38px]"
+          style={{
+            background:
+              "radial-gradient(closest-side, rgba(0,0,0,0.66), transparent 74%)",
+          }}
+        />
+
+        {/* And the light that surface throws back. Not a mirrored copy of the
+            card — that means painting every card twice for a band most of
+            which is below the fold. A soft accent wash under the active card
+            reads as a reflective floor at a fraction of the cost, and it is
+            the cue that actually sells "this is standing on something". */}
+        <span
+          aria-hidden="true"
+          className={cn(
+            "pointer-events-none absolute bottom-[6%] left-1/2 h-[5rem] w-[34%] -translate-y-2 rounded-[50%] blur-[30px]",
+            !dragging &&
+              "transition-transform duration-[var(--dur-slow)] ease-[var(--ease-out-expo)]",
+          )}
+          style={{
+            transform: `translateX(calc(-50% + ${lightBias}%))`,
+            background:
+              "radial-gradient(closest-side, var(--glow-blue), transparent 72%)",
           }}
         />
 
@@ -188,6 +245,16 @@ export function ProjectStage({
                   opacity: Math.max(0, 1 - dist * GEOMETRY.fadeStep),
                   zIndex: 100 - Math.round(dist * 10),
                   transformStyle: "preserve-3d",
+                  // An accent-tinted cast shadow on the front card only. It
+                  // sits on the WRAPPER rather than the card so it inherits
+                  // the 3D transform and leans with the card, which is what
+                  // separates a lit object from a sticker with a glow behind
+                  // it. The card's own border keeps carrying the active state
+                  // for anyone who cannot see the light.
+                  borderRadius: "1.5rem",
+                  boxShadow: isActive
+                    ? "0 34px 90px -26px var(--glow-strong), 0 12px 40px -18px rgba(0,0,0,0.75)"
+                    : undefined,
                 }}
               >
                 <ProjectCard

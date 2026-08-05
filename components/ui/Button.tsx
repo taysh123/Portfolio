@@ -50,7 +50,20 @@ type CommonProps = {
 function inner(children: ReactNode, arrow?: boolean) {
   return (
     <>
-      <span className="relative">{children}</span>
+      {/*
+        This span has to be a FLEX row, not a plain one.
+
+        It wraps all the children together, so for a button like
+        `<Button><BookOpenIcon/>Case study</Button>` the icon and the label end
+        up inside it — which meant the button's own `gap-2` was applying
+        between this span and the arrow, never between the icon and the text,
+        and the SVG was sitting on the text's BASELINE rather than its centre.
+        Measured on the project cards: the glyph rode 10px above the button's
+        middle with no gap after it, on every icon-and-label button on the
+        site. `inline-flex items-center gap-2` fixes the alignment and the
+        spacing together, in the one place that owns them.
+      */}
+      <span className="relative inline-flex items-center gap-2">{children}</span>
       {arrow && (
         <ArrowUpRightIcon
           size={16}
