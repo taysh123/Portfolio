@@ -78,15 +78,9 @@ export type Project = {
   caseStudy: CaseStudy;
 };
 
-/**
- * T Poker's App Store listing.
- *
- * TODO(tay): paste the real listing URL here. Until it is set the badge
- * renders as "coming soon" — which is momentarily understated but never
- * false, and is a great deal better than shipping a button that goes
- * nowhere or, worse, to the wrong app.
- */
-const T_POKER_IOS_URL: string | undefined = undefined;
+/** T Poker's live App Store listing. */
+const T_POKER_IOS_URL: string | undefined =
+  "https://apps.apple.com/us/app/t-poker-poker-trainer/id6781109023";
 
 export const projects: Project[] = [
   {

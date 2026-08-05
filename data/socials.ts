@@ -19,15 +19,17 @@ export const socials = {
 export const siteMeta = {
   name: "Tay Shofer",
   /*
-    "Full Stack Developer", not "Software Engineer".
+    "Software Developer" — your wording, and the right call.
 
-    Chosen from the options on the table because it is the one the
-    repositories actually support end to end: an Expo client, an ASP.NET Core
-    API, and PostgreSQL/Redis behind it, all written by the same person. It is
-    also the phrase a recruiter searches for, which "Product Builder" is not,
-    and it does not overclaim seniority the way "Engineer" was reading.
+    I had chosen "Full Stack Developer" from the earlier list; you have since
+    named "Software Developer" twice, so that is what this is. The B.Sc. is
+    carried separately rather than folded into the title: it belongs in the
+    proof strip, where it sits beside numbers a reader can check, and a title
+    should be one thing.
   */
-  role: "Full Stack Developer",
+  role: "Software Developer",
+  /** Shown under the wordmark, where there is room for the fuller line. */
+  roleDetail: "Software Developer & Computer Science Graduate",
   headline: "I build production software that solves real problems.",
   tagline:
     "Computer Science graduate building real-time platforms, developer tools, and cross-platform products — designed, tested, and shipped end to end.",

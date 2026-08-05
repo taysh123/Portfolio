@@ -190,7 +190,7 @@ export function IntroSequence() {
             </p>
             <p className="label mt-5 flex items-center gap-3 text-fg-muted">
               <span aria-hidden="true" className="inline-block h-px w-10 bg-accent" />
-              {siteMeta.role}
+              {siteMeta.roleDetail}
             </p>
 
             {/*
@@ -341,6 +341,9 @@ function ArrivalFrame({ play }: { play: boolean }) {
           <span aria-hidden="true" className="inline-block h-px w-8 bg-accent" />
           {siteMeta.role}
         </p>
+        {/* The fuller line is desktop-only: at 390px "Software Developer &
+            Computer Science Graduate" wraps to three lines of 11px label type
+            directly under a display-scale wordmark, which reads as noise. */}
         <h2
           className="mt-6 max-w-xl font-medium leading-[1.2] tracking-[var(--tracking-heading)] text-fg-muted"
           style={{ fontSize: "var(--text-lead)" }}
