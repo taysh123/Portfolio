@@ -102,7 +102,7 @@ app/
   
 components/
   sections/            # Hero · About · Projects · Skills · EngineeringPanel · Contact
-  effects/             # SystemDiagram · LayerStack · ProcessRail · OrbitField · AmbientGlow
+  effects/             # Workstation · ScreenUI · ArchitectureBoard · PipelineRun · HeroVisual · OrbitField · AmbientGlow
   ui/                  # the design system + overlays
   layout/              # Navbar · Footer
   providers/           # Theme · Accessibility · SmoothScroll
@@ -127,13 +127,15 @@ proxy.ts               # security headers (Next 16 middleware rename)
 Every illustration is original SVG/CSS in the design system — no stock art, no
 external assets, no third-party brand marks.
 
-- **`SystemDiagram`** (hero) — three `preserve-3d` planes, interface over services over
-  data, with travelling signal on the pipeline and light columns crossing the stack.
-- **`LayerStack`** (about) — an isometric stack of five labelled slabs. The layer names
-  and technologies are real DOM text, not decoration; the roll is held to −6° so the
-  mono labels stay readable.
-- **`ProcessRail`** (approach) — a connector that draws itself on scroll, horizontal on
-  desktop and vertical on mobile.
+- **`Workstation`** + **`ScreenUI`** (intro) — a laptop built from layered CSS gradients in
+  a `preserve-3d` scene: chamfer, specular-band aluminium, hinge barrel, a tapered deck
+  with a six-row keyboard, and a display holding **live DOM** — which is what lets the
+  camera push through it and keep the boot log crisp.
+- **`ArchitectureBoard`** (about) — five layers with continuous packet traffic descending
+  the request rail and returning up the response rail.
+- **`PipelineRun`** (approach) — five stations on a track the reader's own scroll fills;
+  a horizontal board on desktop, a vertical job log on mobile.
+- **`HeroVisual`** (hero) — the layered interface/services/data planes.
 - **`OrbitField`** (contact) — a node field with orbit rings at different inclinations
   and durations, so they never visually sync.
 

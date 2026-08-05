@@ -67,7 +67,8 @@ export function ArchitectureBoard() {
       />
 
       <div className="relative">
-        <Rails hovered={hovered} animated={!reduced} />
+        <Rails hovered={hovered} />
+        {!reduced && <Traffic />}
 
         <ol
           aria-labelledby="architecture-board-title"
@@ -176,6 +177,49 @@ export function ArchitectureBoard() {
   );
 }
 
+/**
+ * Continuous traffic on both rails.
+ *
+ * Four packets per direction, evenly offset in time, so there is always
+ * something in flight — the thing that makes it read as a system under load
+ * rather than a single dot doing laps. Pure CSS transform animation on
+ * absolutely positioned elements: no SVG scaling to distort them, no SMIL
+ * timing to drift, and the global reduced-motion kill-switch reaches it.
+ */
+function Traffic() {
+  const PACKETS = 4;
+  const DURATION = 5.2;
+
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+      {Array.from({ length: PACKETS }).map((_, i) => (
+        <span
+          key={`down-${i}`}
+          className="anim-packet-down absolute left-[-2px] h-1.5 w-1.5 rounded-full"
+          style={{
+            background: "var(--accent)",
+            boxShadow: "0 0 8px 1px var(--accent)",
+            animationDuration: `${DURATION}s`,
+            animationDelay: `${(-DURATION / PACKETS) * i}s`,
+          }}
+        />
+      ))}
+      {Array.from({ length: PACKETS }).map((_, i) => (
+        <span
+          key={`up-${i}`}
+          className="anim-packet-up absolute right-[-2px] h-1 w-1 rounded-full"
+          style={{
+            background: "var(--status-live)",
+            boxShadow: "0 0 7px 1px var(--status-live)",
+            animationDuration: `${DURATION}s`,
+            animationDelay: `${(-DURATION / PACKETS) * i - DURATION / 2}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 function Port({ side, active }: { side: "left" | "right"; active: boolean }) {
   return (
     <span
@@ -196,7 +240,7 @@ function Port({ side, active }: { side: "left" | "right"; active: boolean }) {
  * in percentages, so they track the bands at any board height without any
  * measurement in JS.
  */
-function Rails({ hovered, animated }: { hovered: string | null; animated: boolean }) {
+function Rails({ hovered }: { hovered: string | null }) {
   const down = `M 1.6 ${midY(0)} L 1.6 ${midY(N - 1)}`;
   const up = `M 98.4 ${midY(N - 1)} L 98.4 ${midY(0)}`;
 
@@ -237,18 +281,19 @@ function Rails({ hovered, animated }: { hovered: string | null; animated: boolea
         </g>
       ))}
 
-      {animated && (
-        <>
-          {/* Request descending, response returning — offset so they read as
-              one round trip rather than two unrelated loops. */}
-          <circle r="1.4" fill="var(--accent)">
-            <animateMotion dur="4.5s" repeatCount="indefinite" path={down} />
-          </circle>
-          <circle r="1.2" fill="var(--status-live)">
-            <animateMotion dur="4.5s" begin="2.2s" repeatCount="indefinite" path={up} />
-          </circle>
-        </>
-      )}
+      {/*
+        Packets are NOT drawn here.
+
+        They were, as two SMIL <animateMotion> circles, and it did not work:
+        this SVG uses `preserveAspectRatio="none"`, so a circle is squashed
+        into an ellipse and its motion is distorted along with it. Worse, one
+        packet per rail means most of the cycle has nothing moving at all —
+        which is exactly the "sometimes they disappear, the movement feels
+        disconnected" problem. Continuous traffic needs several packets in
+        flight at once, which SMIL makes awkward and CSS makes trivial.
+
+        See <Traffic> — absolutely positioned, CSS-animated, undistorted.
+      */}
     </svg>
   );
 }

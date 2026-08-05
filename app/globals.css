@@ -87,9 +87,24 @@
   /* Device material for the intro workstation. White-alpha aluminium reads on
      a dark field and disappears entirely on a light one, so the shell is a
      token pair rather than a fixed gradient. */
-  --device-shell: linear-gradient(168deg, rgba(228,236,255,0.62) 0%, rgba(150,163,196,0.34) 26%, rgba(96,106,138,0.30) 62%, rgba(52,58,80,0.42) 100%);
-  --device-base: linear-gradient(180deg, rgba(206,216,242,0.50) 0%, rgba(150,161,193,0.40) 24%, rgba(96,105,136,0.34) 62%, rgba(58,64,86,0.40) 100%);
+  --device-shell:
+    linear-gradient(168deg,
+      rgba(158,172,208,0.40) 0%,
+      rgba(236,243,255,0.72) 15%,
+      rgba(196,208,238,0.52) 24%,
+      rgba(126,138,172,0.34) 48%,
+      rgba(88,98,130,0.30) 74%,
+      rgba(46,52,74,0.44) 100%);
+  --device-base:
+    linear-gradient(180deg,
+      rgba(120,132,166,0.34) 0%,
+      rgba(224,233,252,0.60) 12%,
+      rgba(168,180,212,0.44) 26%,
+      rgba(112,123,156,0.34) 58%,
+      rgba(150,162,196,0.40) 88%,
+      rgba(206,217,244,0.52) 100%);
   --device-edge: rgba(255, 255, 255, 0.55);
+  --device-chamfer: rgba(244, 249, 255, 0.92);
 
   /* An OPAQUE panel fill. Every other surface here is translucent on purpose,
      but anything stacked in 3D needs to actually occlude what is behind it —
@@ -199,9 +214,24 @@
   --star: rgba(90, 100, 128, 0.30);
 
   /* Space-grey on a bright desk — opaque, so it holds its own against the page. */
-  --device-shell: linear-gradient(168deg, #c4cbdb 0%, #9aa2b7 28%, #737a90 64%, #515769 100%);
-  --device-base: linear-gradient(180deg, #b2b9c9, #848b9f 40%, #5b6174);
+  --device-shell:
+    linear-gradient(168deg,
+      #aab2c6 0%,
+      #e9edf6 14%,
+      #c8cedd 24%,
+      #99a1b5 50%,
+      #757c91 76%,
+      #4e5468 100%);
+  --device-base:
+    linear-gradient(180deg,
+      #8f97ab 0%,
+      #e2e7f1 12%,
+      #c0c7d7 26%,
+      #8d95a9 58%,
+      #aab2c4 88%,
+      #d6dbe6 100%);
   --device-edge: rgba(255, 255, 255, 0.85);
+  --device-chamfer: rgba(255, 255, 255, 0.98);
 
   --panel-solid:
     linear-gradient(168deg, rgba(255,255,255,0.9) 0%, rgba(246,247,252,0.6) 40%, rgba(139,92,246,0.05) 100%),
@@ -537,6 +567,21 @@
 /* Ambient life for the workstation: a breath, not a bob. 14s and ±5px is
    below the threshold where it reads as "animated" and right at the one where
    the object stops feeling like a still image. */
+/* Packets travelling the architecture board's rails. Fading in and out at the
+   ends stops them appearing and vanishing abruptly at the board edges. */
+@keyframes packet-down {
+  0%   { transform: translateY(4%); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(96%); opacity: 0; }
+}
+@keyframes packet-up {
+  0%   { transform: translateY(96%); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(4%); opacity: 0; }
+}
+
 @keyframes hover-float {
   0%, 100% { transform: translate3d(0, 0, 0); }
   50%      { transform: translate3d(0, -5px, 0); }
@@ -554,6 +599,8 @@
 .anim-flow  { animation: dash-flow 1.6s linear infinite; }
 .anim-hover { animation: hover-float 14s ease-in-out infinite; }
 .anim-spec  { animation: specular-drift 18s ease-in-out infinite; }
+.anim-packet-down { animation: packet-down linear infinite; }
+.anim-packet-up   { animation: packet-up linear infinite; }
 
 /* CSS-driven motion off-switch. JS-driven motion is gated separately via
    `useMotionPref` — a CSS rule cannot stop a requestAnimationFrame loop,
@@ -566,7 +613,7 @@
     scroll-behavior: auto !important;
   }
   .anim-sweep, .anim-drift, .anim-pulse, .anim-flow,
-  .anim-hover, .anim-spec {
+  .anim-hover, .anim-spec, .anim-packet-down, .anim-packet-up {
     animation: none !important;
   }
   .anim-sweep { opacity: 0; }
@@ -585,7 +632,9 @@
 [data-reduced-motion="true"] .anim-pulse,
 [data-reduced-motion="true"] .anim-flow,
 [data-reduced-motion="true"] .anim-hover,
-[data-reduced-motion="true"] .anim-spec {
+[data-reduced-motion="true"] .anim-spec,
+[data-reduced-motion="true"] .anim-packet-down,
+[data-reduced-motion="true"] .anim-packet-up {
   animation: none !important;
 }
 [data-reduced-motion="true"] .anim-sweep { opacity: 0; }
