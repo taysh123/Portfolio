@@ -35,6 +35,19 @@ export type CaseStudy = {
   honestNote?: string;
 };
 
+/**
+ * App-store presence.
+ *
+ * `url` is optional and its absence is meaningful: a listing with no link
+ * renders as "coming soon" rather than as a dead button, so the badge can
+ * never promise a destination that does not exist.
+ */
+export type StoreListing = {
+  platform: "ios" | "android";
+  status: "live" | "soon";
+  url?: string;
+};
+
 export type ProjectMedia = {
   image?: string;
   alt?: string;
@@ -61,8 +74,19 @@ export type Project = {
   featured?: boolean;
   accent: ProjectAccent;
   media?: ProjectMedia;
+  stores?: StoreListing[];
   caseStudy: CaseStudy;
 };
+
+/**
+ * T Poker's App Store listing.
+ *
+ * TODO(tay): paste the real listing URL here. Until it is set the badge
+ * renders as "coming soon" — which is momentarily understated but never
+ * false, and is a great deal better than shipping a button that goes
+ * nowhere or, worse, to the wrong app.
+ */
+const T_POKER_IOS_URL: string | undefined = undefined;
 
 export const projects: Project[] = [
   {
@@ -80,6 +104,10 @@ export const projects: Project[] = [
     repoUrl: "https://github.com/taysh123/poker-home-games",
     liveUrl: "https://app.tpoker.app/",
     liveLabel: "Open the app",
+    stores: [
+      { platform: "ios", status: T_POKER_IOS_URL ? "live" : "soon", url: T_POKER_IOS_URL },
+      { platform: "android", status: "soon" },
+    ],
     metrics: [
       { value: "892", label: "Tests across both stacks" },
       { value: "5", label: "CI jobs per push" },
@@ -318,6 +346,10 @@ export const projects: Project[] = [
     status: "rc",
     accent: "teal",
     repoUrl: "https://github.com/taysh123/Gravity-Game",
+    stores: [
+      { platform: "ios", status: "soon" },
+      { platform: "android", status: "soon" },
+    ],
     metrics: [
       { value: "150", label: "Levels across 15 worlds" },
       { value: "220", label: "Tests over 28 files" },
