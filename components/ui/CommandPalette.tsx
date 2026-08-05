@@ -249,7 +249,8 @@ export function CommandPalette() {
               ref={listRef}
               role="listbox"
               aria-label="Commands"
-              className="max-h-[min(24rem,50vh)] overflow-y-auto py-2"
+              data-lenis-prevent
+              className="max-h-[min(24rem,50vh)] overflow-y-auto overscroll-contain py-2"
             >
               {filtered.length === 0 && (
                 <li className="px-4 py-10 text-center text-sm text-fg-subtle">

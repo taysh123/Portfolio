@@ -88,6 +88,23 @@ export function CaseStudyPanel({
             animate={{ opacity: 1, y: 0 }}
             exit={reduced ? { opacity: 0 } : { opacity: 0, y: 42 }}
             transition={{ duration: DUR.slow, ease: easeOutExpo }}
+            /*
+              `data-lenis-prevent` IS THE BUG FIX, not a nicety.
+
+              Lenis listens for `wheel` on the window and calls
+              preventDefault() so it can drive the page itself. A nested scroll
+              container therefore never receives the event, and this panel sat
+              at scrollTop 0 no matter how hard you scrolled — while Escape,
+              Tab and End all worked, which is what pointed at the wheel rather
+              than at the panel. Measured before the fix: wheel 0 -> 0,
+              keyboard End -> 3122.
+
+              Lenis skips any event whose composed path contains this
+              attribute, which hands the wheel back to the browser and lets the
+              panel scroll natively. `overscroll-contain` then stops the page
+              behind it from taking over at the ends.
+            */
+            data-lenis-prevent
             className="fixed inset-0 z-[61] overflow-y-auto overscroll-contain"
             style={{ background: "var(--surface-0)" }}
           >

@@ -9,8 +9,7 @@ import {
   useTransform,
 } from "framer-motion";
 import { Workstation } from "@/components/effects/Workstation";
-import { ScreenUI } from "@/components/effects/ScreenUI";
-import { Eyebrow } from "@/components/ui/Eyebrow";
+import { ScreenPortfolio } from "@/components/effects/ScreenPortfolio";
 import { siteMeta } from "@/data/socials";
 import { ArrowDownIcon } from "@/components/ui/icons";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
@@ -102,9 +101,21 @@ export function IntroSequence() {
   */
   const yaw = useTransform(scrollYProgress, (p) => 9 * (1 - ramp(0, 0.66)(p)));
 
-  const wake = useTransform(scrollYProgress, ramp(0.26, 0.4));
-  const boot = useTransform(scrollYProgress, ramp(0.3, 0.56));
-  const live = useTransform(scrollYProgress, ramp(0.52, 0.68));
+  /*
+    THE MACHINE IS ALREADY ON.
+
+    The old sequence was: dark screen → wake → boot log → workspace → push. It
+    made the reader earn the reveal, and it meant the arrival frame — the one
+    frame everybody sees — was a laptop with a dead screen, which is a laptop
+    nobody wants. A product advertisement never shows you the device switched
+    off.
+
+    So the display is lit and showing the portfolio from the first pixel, and
+    the only thing scroll drives is the camera. That is also the sequence the
+    brief asks for: see the machine, then move into it. One continuous move
+    instead of a four-beat animation you have to sit through.
+  */
+  const alwaysOn = useMotionValue(1);
 
   // The push. Deliberately not linear: a slow approach, then the last stretch
   // covers most of the distance, which reads as acceleration into the screen.
@@ -158,16 +169,37 @@ export function IntroSequence() {
             style={{ opacity: copyFade }}
             className="pointer-events-none absolute inset-x-0 top-[9vh] z-20 mx-auto w-full max-w-[var(--stage)] px-[var(--gutter)]"
           >
-            <Eyebrow rule className="justify-start">
-              {siteMeta.name} — {siteMeta.role}
-            </Eyebrow>
             {/*
-              The only text in here a screen reader needs. Everything else in
+              THE NAME LEADS.
+
+              It used to be an 11px eyebrow above the headline — the smallest
+              type in the frame, carrying the one thing a visitor should leave
+              remembering. It is now the largest type on the site, set at
+              display scale with wide tracking so it reads as a wordmark rather
+              than as a sentence, and the statement is demoted to a lead line
+              underneath it. A portfolio's first job is to say whose it is.
+            */}
+            <p
+              className="font-semibold uppercase leading-[0.92] text-fg"
+              style={{
+                fontSize: "var(--text-display)",
+                letterSpacing: "0.02em",
+              }}
+            >
+              {siteMeta.name}
+            </p>
+            <p className="label mt-5 flex items-center gap-3 text-fg-muted">
+              <span aria-hidden="true" className="inline-block h-px w-10 bg-accent" />
+              {siteMeta.role}
+            </p>
+
+            {/*
+              The only heading in here a screen reader needs. Everything else in
               this section is choreography and is hidden from the tree.
             */}
             <h2
-              className="mt-5 max-w-2xl font-semibold leading-[1.05] tracking-[var(--tracking-heading)] text-fg"
-              style={{ fontSize: "var(--text-h2)" }}
+              className="mt-7 max-w-xl font-medium leading-[1.2] tracking-[var(--tracking-heading)] text-fg-muted"
+              style={{ fontSize: "var(--text-lead)" }}
             >
               Everything here runs.
               <span className="text-emphasis"> Come in and check.</span>
@@ -193,9 +225,9 @@ export function IntroSequence() {
               {/* The float is a wrapper, not a property of the machine: it has
                   to compose with the camera's scale without fighting it. */}
               <div className="anim-hover">
-              <Workstation open={lidOpen} wake={wake} yaw={yaw}>
+              <Workstation open={lidOpen} wake={alwaysOn} yaw={yaw}>
                 <div style={{ containerType: "inline-size" }} className="h-full w-full">
-                  <ScreenUI boot={boot} live={live} />
+                  <ScreenPortfolio />
                 </div>
               </Workstation>
               </div>
@@ -262,15 +294,16 @@ export function IntroSequence() {
  */
 function ArrivalFrame({ play }: { play: boolean }) {
   /*
-    Three slots on one timeline. Started from a viewport callback rather than
-    an effect: this is a response to an event, so it belongs in a handler —
-    and `animate()` on a motion value never touches React state, so the whole
-    sequence costs zero renders.
+    The screen is ON, here as on the desktop. A phone reader gets even less
+    patience for a boot sequence than a desktop one, and the arrival frame
+    being a live machine is the whole point.
+
+    What is left on a timer is the LID, which lifts the last few degrees as the
+    machine comes into view. One small movement that says the object is real,
+    rather than four beats of theatre.
   */
-  const wake = useMotionValue(play ? 0 : 1);
-  const boot = useMotionValue(play ? 0 : 1);
-  const live = useMotionValue(play ? 0 : 1);
-  const open = useMotionValue(1);
+  const alwaysOn = useMotionValue(1);
+  const open = useMotionValue(play ? 0.86 : 1);
   /*
     A fixed, gentler azimuth than the desktop orbit. Off-axis is what makes the
     machine read as a photographed object rather than a diagram, and that
@@ -282,9 +315,7 @@ function ArrivalFrame({ play }: { play: boolean }) {
 
   const start = () => {
     if (!play) return;
-    animate(wake, 1, { duration: 0.55, ease: "easeOut" });
-    animate(boot, 1, { duration: 1.25, delay: 0.35, ease: "linear" });
-    animate(live, 1, { duration: 0.7, delay: 1.5, ease: "easeOut" });
+    animate(open, 1, { duration: 1.1, ease: [0.16, 1, 0.3, 1] });
   };
 
   return (
@@ -298,13 +329,21 @@ function ArrivalFrame({ play }: { play: boolean }) {
         }}
       />
 
+      {/* Same billing as the desktop frame: the name leads, at display scale. */}
       <div className="relative z-10 mx-auto w-full max-w-[var(--stage)]">
-        <Eyebrow rule>
-          {siteMeta.name} — {siteMeta.role}
-        </Eyebrow>
+        <p
+          className="font-semibold uppercase leading-[0.92] text-fg"
+          style={{ fontSize: "var(--text-display)", letterSpacing: "0.02em" }}
+        >
+          {siteMeta.name}
+        </p>
+        <p className="label mt-4 flex items-center gap-3 text-fg-muted">
+          <span aria-hidden="true" className="inline-block h-px w-8 bg-accent" />
+          {siteMeta.role}
+        </p>
         <h2
-          className="mt-5 max-w-2xl font-semibold leading-[1.05] tracking-[var(--tracking-heading)] text-fg"
-          style={{ fontSize: "var(--text-h2)" }}
+          className="mt-6 max-w-xl font-medium leading-[1.2] tracking-[var(--tracking-heading)] text-fg-muted"
+          style={{ fontSize: "var(--text-lead)" }}
         >
           Everything here runs.
           <span className="text-emphasis"> Come in and check.</span>
@@ -318,9 +357,9 @@ function ArrivalFrame({ play }: { play: boolean }) {
         className="relative z-10 mt-[clamp(2rem,6vw,4.5rem)] flex w-full justify-center"
 
       >
-        <Workstation open={open} wake={wake} yaw={restYaw}>
+        <Workstation open={open} wake={alwaysOn} yaw={restYaw}>
           <div style={{ containerType: "inline-size" }} className="h-full w-full">
-            <ScreenUI boot={boot} live={live} />
+            <ScreenPortfolio />
           </div>
         </Workstation>
       </motion.div>

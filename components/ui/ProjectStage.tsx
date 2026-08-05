@@ -26,8 +26,8 @@ import type { Project } from "@/data/projects";
  *      invalid: a button takes phrasing content only. Cards are plain
  *      articles; the actions inside them are the interactive elements.
  *
- * Off-axis cards are `inert`, so Tab never lands on something the reader
- * cannot see. The whole component is desktop-and-motion-only: below `lg`
+ * Every card on the stage is reachable — see the note on the click capture
+ * below for why `inert` was removed. The whole component is desktop-and-motion-only: below `lg`
  * `Projects` renders `ProjectDeck` instead — a snap-scroller built on native
  * touch scrolling, which is a different design rather than this one shrunk.
  * Under reduced motion it renders the row list, because an arc that only
@@ -50,8 +50,17 @@ const GEOMETRY = {
   x: 64, // % of the card's own width per step
   z: 220, // px pushed back per step
   rotate: 30, // degrees of yaw per step
-  scaleStep: 0.11,
-  fadeStep: 0.4,
+  /*
+    Neighbours are held much closer to the front card than they were.
+
+    At a 0.11 scale step and a 0.4 fade the second card out sat at 78% and
+    20% — present enough to see, faint enough to read as "not for you". The
+    brief is that no project should feel hidden, and a card at a fifth opacity
+    feels hidden. 0.075 and 0.26 keep the arc's depth cue while leaving the
+    furthest card at 48%, which reads as queued rather than dismissed.
+  */
+  scaleStep: 0.075,
+  fadeStep: 0.26,
   /** Cards further than this from the active one are not rendered at all. */
   visible: 2,
 } as const;
@@ -225,10 +234,51 @@ export function ProjectStage({
                 role="group"
                 aria-roledescription="slide"
                 aria-label={`${i + 1} of ${count}`}
-                aria-hidden={!isActive}
-                inert={!isActive}
+                /*
+                  NOT `inert`, and this is a bug fix.
+
+                  Off-axis cards used to be `inert` and `aria-hidden`. The
+                  reasoning was sound — Tab should not land on something you
+                  cannot see — but the consequence was that a card sitting in
+                  plain view, half-visible beside the active one, silently
+                  swallowed every click. From a reader's side that is
+                  indistinguishable from "the Case study button is broken",
+                  which is exactly how it was reported.
+
+                  These cards are visible, so they are reachable. Focus already
+                  centres a card (`onFocusCapture`), and the capture handler
+                  below centres it on click, so reaching a neighbour by either
+                  route brings it to the front instead of doing nothing. Only
+                  cards beyond the visible range are dropped, and those are not
+                  rendered at all.
+                */
+                /*
+                  A NEIGHBOUR IS ONE TARGET: the card itself.
+
+                  I tried letting its controls through so a click on "Case
+                  study" would act directly, and measurement killed it — an
+                  off-axis card is scaled to 85% and yawed 60 degrees, so its
+                  repository button projects to 24x29. That is the WCAG floor,
+                  on a control nobody can reliably hit, and it turned a clean
+                  responsive sweep into three failures.
+
+                  So the whole card is the target and its interior is
+                  `pointer-events: none`. Every click on a neighbour brings it
+                  forward — which is visible, immediate, and never a dead
+                  click — and once it is in front everything on it works at
+                  full size. Keyboard is unaffected: focus still centres a
+                  card, so tabbing to one makes it live before you can
+                  activate anything on it.
+                */
+                onClickCapture={(e) => {
+                  if (isActive) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setActive(i);
+                }}
                 className={cn(
                   "absolute left-1/2 top-1/2 w-[clamp(19rem,25vw,23rem)]",
+                  !isActive && "cursor-pointer",
                   // No transition while the finger is down — the card should
                   // track the pointer, then ease when released.
                   !dragging &&
@@ -257,13 +307,15 @@ export function ProjectStage({
                     : undefined,
                 }}
               >
-                <ProjectCard
-                  project={project}
-                  active={isActive}
-                  onOpenCaseStudy={onOpenCaseStudy}
-                  onFocusCapture={() => setActive(i)}
-                  sizes="(max-width: 1024px) 80vw, 24rem"
-                />
+                <div className={isActive ? undefined : "pointer-events-none"}>
+                  <ProjectCard
+                    project={project}
+                    active={isActive}
+                    onOpenCaseStudy={onOpenCaseStudy}
+                    onFocusCapture={() => setActive(i)}
+                    sizes="(max-width: 1024px) 80vw, 24rem"
+                  />
+                </div>
               </div>
             );
           })}

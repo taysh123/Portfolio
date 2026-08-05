@@ -40,7 +40,7 @@ const paragraphs: ReactNode[] = [
     can&apos;t run is just a claim.
   </>,
   <>
-    I&apos;m looking for a junior software engineering role on a team that
+    I&apos;m looking for a junior software development role on a team that
     ships: somewhere I can own real surface area, read a lot of code I
     didn&apos;t write, and have people around who will tell me when I&apos;m
     wrong.

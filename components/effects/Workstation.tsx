@@ -345,7 +345,7 @@ export function Workstation({
             className="pointer-events-none absolute inset-0 rounded-[1.05rem]"
             style={{
               backgroundImage: BRUSHED_ALUMINIUM,
-              backgroundSize: "220px 160px",
+              backgroundSize: "128px 96px",
               opacity: 0.055,
             }}
           />
@@ -444,7 +444,7 @@ export function Workstation({
               style={{
                 opacity: coatingHaze,
                 backgroundImage: MICRO_GRAIN,
-                backgroundSize: "120px 120px",
+                backgroundSize: "72px 72px",
               }}
             />
             <motion.span
@@ -540,7 +540,7 @@ export function Workstation({
           className="pointer-events-none absolute inset-0"
           style={{
             backgroundImage: BRUSHED_ALUMINIUM,
-            backgroundSize: "220px 160px",
+            backgroundSize: "128px 96px",
             opacity: 0.07,
           }}
         />

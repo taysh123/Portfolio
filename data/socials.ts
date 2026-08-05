@@ -18,7 +18,16 @@ export const socials = {
 
 export const siteMeta = {
   name: "Tay Shofer",
-  role: "Software Engineer",
+  /*
+    "Full Stack Developer", not "Software Engineer".
+
+    Chosen from the options on the table because it is the one the
+    repositories actually support end to end: an Expo client, an ASP.NET Core
+    API, and PostgreSQL/Redis behind it, all written by the same person. It is
+    also the phrase a recruiter searches for, which "Product Builder" is not,
+    and it does not overclaim seniority the way "Engineer" was reading.
+  */
+  role: "Full Stack Developer",
   headline: "I build production software that solves real problems.",
   tagline:
     "Computer Science graduate building real-time platforms, developer tools, and cross-platform products — designed, tested, and shipped end to end.",
@@ -54,7 +63,7 @@ export const heroStats = [
 
 export const availability = {
   open: true,
-  label: "Available for software engineering roles",
+  label: "Available for software development roles",
   detail:
-    "Open to junior software engineering roles — onsite, hybrid, or remote.",
+    "Open to junior software development roles — onsite, hybrid, or remote.",
 } as const;

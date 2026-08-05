@@ -9,6 +9,17 @@
  * page. Encoded as a data URI and used as a `background-image`, the browser
  * rasterises each of these exactly once and then treats it as any other
  * image: zero filter cost, and it tiles.
+ *
+ * BUT ONCE IS NOT FREE. The lid's texture measured as the LCP element, and on
+ * a cold load it cost 1352ms against 336ms warm — the gap is the browser
+ * computing the turbulence for the first time. `feTurbulence` is evaluated per
+ * pixel per octave, so the price is tile area x octaves, and the first version
+ * asked for 220x160 at two octaves = ~70k samples before anything could paint.
+ *
+ * Both tiles are therefore as small and as cheap as they can be while still
+ * tiling without a visible repeat: one octave, and a tile sized to the
+ * smallest patch that reads as random. At 5-7% opacity the extra octave was
+ * detail nobody could see, being paid for on the critical path.
  */
 
 const svg = (body: string, w: number, h: number) =>
@@ -27,12 +38,12 @@ const svg = (body: string, w: number, h: number) =>
  */
 export const BRUSHED_ALUMINIUM = svg(
   `<filter id='b' x='0' y='0' width='100%' height='100%'>
-     <feTurbulence type='fractalNoise' baseFrequency='0.82 0.014' numOctaves='2' seed='11' result='n'/>
+     <feTurbulence type='fractalNoise' baseFrequency='0.82 0.014' numOctaves='1' seed='11' result='n'/>
      <feColorMatrix in='n' type='saturate' values='0'/>
    </filter>
    <rect width='100%' height='100%' filter='url(#b)'/>`,
-  220,
-  160,
+  128,
+  96,
 );
 
 /**
@@ -42,10 +53,10 @@ export const BRUSHED_ALUMINIUM = svg(
  */
 export const MICRO_GRAIN = svg(
   `<filter id='g' x='0' y='0' width='100%' height='100%'>
-     <feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' seed='3' result='n'/>
+     <feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' seed='3' result='n'/>
      <feColorMatrix in='n' type='saturate' values='0'/>
    </filter>
    <rect width='100%' height='100%' filter='url(#g)'/>`,
-  120,
-  120,
+  72,
+  72,
 );

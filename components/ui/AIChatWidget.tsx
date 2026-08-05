@@ -167,7 +167,14 @@ export function AIChatWidget() {
               </IconButton>
             </div>
 
-            <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+            {/* See the note in CaseStudyPanel: Lenis eats the wheel unless a
+                nested scroller opts out, so this transcript would not scroll
+                by wheel either. */}
+            <div
+              ref={scrollRef}
+              data-lenis-prevent
+              className="flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-4"
+            >
               {messages.map((m) => (
                 <Bubble key={m.id} role={m.role}>
                   {m.text}
