@@ -77,10 +77,28 @@ export function Workstation({
     <div
       className="relative"
       style={{
-        // 92vw below ~765px so the machine still commands a phone screen — a
-        // laptop rendered at 70% of a 390px viewport reads as a thumbnail, and
-        // the whole opening beat depends on it reading as a machine.
-        width: "min(44rem, 92vw)",
+        /*
+          Three constraints, because the machine is bounded in three ways.
+
+          44rem  — the size it wants to be.
+          92vw   — so it still commands a phone screen. A laptop rendered at
+                   70% of a 390px viewport reads as a thumbnail, and the whole
+                   opening beat depends on it reading as a machine.
+          height — so it fits UNDER the headline.
+
+          That last one has to be solved, not guessed at. The machine is
+          centred in the full viewport while the copy is pinned near the top,
+          so a plain `Nvh` cap does not converge: shrinking a centred object
+          moves its top edge DOWN by only half of what you took off, and at
+          1280x720 every value I tried still collided. The scene is about
+          0.868x its own width tall (lid 0.663, plus the deck's 0.62 depth
+          projected at 0.5), so the width that exactly fills a given height is
+          height x 1.152. Reserving 24rem for the nav, the two-line headline,
+          the scroll hint and the margins between them makes the whole thing
+          one expression — and `max(18rem, ...)` stops it collapsing on a
+          landscape phone, where the reserve is most of the screen.
+        */
+        width: "min(44rem, 92vw, max(18rem, calc((100vh - 24rem) * 1.152)))",
         transformStyle: "preserve-3d",
         /*
           Camera elevation. At 9deg the deck projected to ~14% of the lid's
