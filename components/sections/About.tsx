@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { Section } from "@/components/ui/Section";
 import { Panel } from "@/components/ui/Panel";
-import { Row } from "@/components/ui/Stage";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Reveal, RevealItem } from "@/components/ui/Reveal";
@@ -56,11 +55,22 @@ const facts = [
 
 export function About() {
   return (
-    <Section id="about" labelledBy="about-title">
-      <Row split="wide-left">
+    /*
+      TWO BANDS, not two columns.
+
+      The topology used to sit in the narrow right-hand column of a split row,
+      which gave it about 500px — and a seven-node graph at 500px puts every
+      node card at 77px, where every single label truncated to an initial and
+      an ellipsis. A diagram that cannot show its own labels is decoration.
+
+      Copy takes the first band with its measure held to a readable column;
+      the board takes the second at the full width of the stage, which is the
+      width it actually needs.
+    */
+    <Section id="about" labelledBy="about-title" className="flex flex-col gap-[var(--gap)]">
         {/* ── Copy ─────────────────────────────────────────────────────── */}
         <Panel bloom="top-left" className="flex flex-col">
-          <div className="flex flex-1 flex-col px-[var(--panel-p)] pt-[var(--panel-p)]">
+          <div className="flex flex-1 flex-col px-[var(--panel-p)] pt-[var(--panel-p)] [&>*]:max-w-3xl">
             <SectionHeader
               id="about"
               eyebrow="01 — About"
@@ -108,21 +118,18 @@ export function About() {
           </dl>
         </Panel>
 
-        {/* ── Visual ───────────────────────────────────────────────────── */}
-        <Panel
-          tone="raised"
-          bloom="centre"
-          sheen={false}
-          className="relative flex min-h-[30rem] flex-col lg:min-h-[38rem]"
-        >
-          <Eyebrow className="absolute left-[var(--panel-p)] top-[var(--panel-p)] z-10">
-            How a request moves
-          </Eyebrow>
-          <div className="flex flex-1 items-center px-[clamp(1.25rem,2.5vw,2.25rem)] pb-[var(--panel-p)] pt-[calc(var(--panel-p)*1.5)]">
+        {/* ── The system ───────────────────────────────────────────────── */}
+        <Panel tone="raised" bloom="centre" sheen={false} className="relative">
+          <div className="px-[var(--panel-p)] pb-[var(--panel-p)] pt-[var(--panel-p)]">
+            <div className="mb-7 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
+              <Eyebrow rule>How a request moves</Eyebrow>
+              <p className="label text-fg-subtle">
+                SentinelAI · T Poker — the shape both of them share
+              </p>
+            </div>
             <ArchitectureBoard />
           </div>
         </Panel>
-      </Row>
     </Section>
   );
 }

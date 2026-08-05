@@ -1,52 +1,138 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
 
 /**
- * How a request actually moves through a system, drawn as a board.
+ * How a request actually moves through a system, drawn as a TOPOLOGY.
  *
- * This replaces an isometric slab stack. The stack looked like an object; this
- * reads like a diagram an engineer would draw on a whiteboard — which is the
- * point, because the claim being made is "I think in layers", and a diagram
- * argues that better than a rendered solid does.
+ * WHY THIS REPLACED THE LAYER STACK. The previous version was five stacked
+ * bands with a rail down each side. It was accurate about layering and said
+ * nothing about a system: no queue, no fan-out, no return path with its own
+ * cost, no sense that anything is distributed. It read as five labelled boxes
+ * because that is what it was.
  *
- * The two rails are the idea. A request descends the left one through every
- * layer and the response climbs the right one back out, which is the thing
- * that makes it a *system* rather than five labelled boxes: it shows that the
- * layers are ordered, that traffic crosses all of them, and that the return
- * path is a real path with its own cost.
+ * Real engineering diagrams — AWS reference architectures, Kubernetes service
+ * maps, CI graphs, an APM service map — share a specific grammar, and this
+ * borrows it deliberately:
  *
- * Depth comes from progressive inset (each band narrower than the one above)
- * plus edge lighting, not from a 3D transform. Bands stay axis-aligned so the
- * layer names and technologies — which are content, not decoration — stay
- * perfectly legible.
+ *   - NODES ARE TYPED and typed things look different. An edge client, a
+ *     service, a queue and a datastore are drawn with different glyphs and
+ *     different accents, because half of reading a diagram is knowing what
+ *     kind of thing you are looking at before you read its label.
+ *   - EDGES ARE DIRECTED, and the return path is a first-class edge rather
+ *     than an afterthought. A request that never comes back is not a system.
+ *   - EVERY NODE CARRIES A FACT. That is what separates an architecture
+ *     diagram from an illustration of one, and every fact here is checkable
+ *     in a repository.
+ *   - IT IS A GRAPH, not a column. Auth hangs off the gateway and the cache
+ *     hangs off the workers, because that is where they actually sit.
+ *
+ * TRAFFIC. The old board pushed discrete packet divs along its rails, and the
+ * complaint was exactly the failure mode of that technique: packets appear,
+ * vanish and leave gaps, because a packet is an object with a beginning and an
+ * end. Flow here is a marching dash pattern on the edges themselves —
+ * continuous by construction, wrapping seamlessly at one dash period, present
+ * along the whole of every edge at once. It is also what real network diagrams
+ * use. See `.anim-edge` in globals.css.
+ *
+ * GEOMETRY. The board keeps a FIXED aspect ratio and the SVG uses a normal
+ * uniform viewBox — no `preserveAspectRatio="none"`. That decision is load
+ * bearing: the previous board stretched its viewBox, which distorted every
+ * circle into an ellipse and made stroke weights inconsistent between
+ * horizontal and vertical runs. With uniform scaling the curves, the dashes
+ * and the arrowheads are all correct for free, and node cards can be placed in
+ * the same coordinate space as percentages.
  */
 
-type Layer = {
+type NodeKind = "edge" | "service" | "queue" | "store";
+
+type Node = {
   id: string;
-  name: string;
-  /** What this layer is responsible for, in the fewest possible words. */
-  note: string;
-  tech: string[];
+  x: number;
+  y: number;
+  label: string;
+  tech: string;
+  /** A checkable fact, not a status. Nothing here is faked telemetry. */
+  fact: string;
+  kind: NodeKind;
 };
 
-const LAYERS: Layer[] = [
-  { id: "interface", name: "Interface", note: "every state, including the ugly ones", tech: ["React", "Next.js", "Tailwind"] },
-  { id: "services", name: "Services", note: "has to stay up", tech: ["ASP.NET Core", "SignalR", "RabbitMQ"] },
-  { id: "domain", name: "Domain", note: "rules, no I/O", tech: ["C#", "TypeScript", "Clean Architecture"] },
-  { id: "data", name: "Data", note: "the truth lives here", tech: ["PostgreSQL", "SQLite FTS5", "Redis"] },
-  { id: "platform", name: "Platform", note: "one command to run it", tech: ["Docker", "GitHub Actions", "Linux"] },
+/** Coordinate space shared by the SVG viewBox and the node cards. */
+const W = 1000;
+const H = 430;
+
+const ROW1 = 150;
+const ROW2 = 330;
+
+const NODES: Node[] = [
+  { id: "client",  x: 96,  y: ROW1, label: "Client",      tech: "Expo · react-native-web", fact: "3 targets, 1 codebase", kind: "edge" },
+  { id: "gateway", x: 340, y: ROW1, label: "API gateway", tech: "ASP.NET Core · MediatR",  fact: "CQRS, command per use case", kind: "service" },
+  { id: "bus",     x: 584, y: ROW1, label: "Message bus", tech: "RabbitMQ · MassTransit",  fact: "8 bounded contexts", kind: "queue" },
+  { id: "workers", x: 828, y: ROW1, label: "Workers",     tech: "detect · score · alert",  fact: "retry ladder per endpoint", kind: "service" },
+  { id: "auth",    x: 340, y: ROW2, label: "Auth",        tech: "JWT · RS256",             fact: "keys minted on first run", kind: "service" },
+  { id: "db",      x: 584, y: ROW2, label: "PostgreSQL",  tech: "EF Core · partitioned",   fact: "money in integer cents", kind: "store" },
+  { id: "cache",   x: 828, y: ROW2, label: "Redis",       tech: "sliding windows",         fact: "rate + dedupe windows", kind: "store" },
 ];
 
-const N = LAYERS.length;
-/** Vertical centre of band i, as a percentage of the board. */
-const midY = (i: number) => ((i + 0.5) / N) * 100;
+/**
+ * Half-extents of a node card in viewBox units, used both to size the cards
+ * and to land the edge endpoints on their borders. 92 gives a ~220px card at
+ * the full stage width, which is what "API gateway" and "ASP.NET Core ·
+ * MediatR" actually need to render without truncating.
+ */
+const NW = 92;
+const NH = 44;
+
+type Edge = { from: string; to: string; d: string; kind: "request" | "response" | "side" };
+
+const EDGES: Edge[] = [
+  // The request path, left to right along row one.
+  { from: "client",  to: "gateway", kind: "request", d: `M ${96 + NW} ${ROW1} H ${340 - NW}` },
+  { from: "gateway", to: "bus",     kind: "request", d: `M ${340 + NW} ${ROW1} H ${584 - NW}` },
+  { from: "bus",     to: "workers", kind: "request", d: `M ${584 + NW} ${ROW1} H ${828 - NW}` },
+
+  // Satellites: things a request TOUCHES without travelling through. Drawn in
+  // the neutral border colour rather than the request accent, because they are
+  // not steps in the path and colouring them as if they were is a lie about
+  // the shape of the system.
+  { from: "gateway", to: "auth",  kind: "side", d: `M 340 ${ROW1 + NH} V ${ROW2 - NH}` },
+  { from: "workers", to: "cache", kind: "side", d: `M 828 ${ROW1 + NH} V ${ROW2 - NH}` },
+  // A diagonal, because that is where the two nodes are. Elbowing it around
+  // would have run it straight down the cache's own edge.
+  { from: "workers", to: "db",    kind: "side", d: `M ${828 - 30} ${ROW1 + NH} L ${584 + NW} ${ROW2 - NH}` },
+
+  /*
+    THE RETURN PATH, routed over the top rather than mirrored underneath.
+
+    A response does not retrace the request — in both of these systems it
+    arrives over an already-open socket, which is a different route with a
+    different cost, and drawing it as its own sweep is the honest picture. It
+    runs above row one so it crosses nothing: the first version tried to route
+    it along the bottom and had to pass through two datastores to get there.
+  */
+  {
+    from: "workers",
+    to: "client",
+    kind: "response",
+    d: `M 828 ${ROW1 - NH} V 86 Q 828 62 800 62 H 124 Q 96 62 96 86 V ${ROW1 - NH}`,
+  },
+];
+
+const KIND_ACCENT: Record<NodeKind, string> = {
+  edge: "var(--status-live)",
+  service: "var(--accent)",
+  queue: "var(--status-wip)",
+  store: "var(--glow-strong)",
+};
 
 export function ArchitectureBoard() {
   const reduced = useReducedMotionPref();
   const [hovered, setHovered] = useState<string | null>(null);
+
+  /** An edge is lit when either end is the node under the pointer. */
+  const edgeLit = (e: Edge) => hovered === null || e.from === hovered || e.to === hovered;
 
   return (
     <figure className="relative w-full">
@@ -56,7 +142,7 @@ export function ArchitectureBoard() {
         </h3>
       </figcaption>
 
-      {/* Board glow — the light the diagram sits in. */}
+      {/* The light the board sits in. */}
       <span
         aria-hidden="true"
         className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[86%] w-[92%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] blur-[70px]"
@@ -66,234 +152,243 @@ export function ArchitectureBoard() {
         }}
       />
 
-      <div className="relative">
-        <Rails hovered={hovered} />
-        {!reduced && <Traffic />}
+      {/* ── Desktop: the graph ─────────────────────────────────────────── */}
+      <div
+        className="relative hidden lg:block"
+        style={{ aspectRatio: `${W} / ${H}` }}
+      >
+        {/* Dashboard canvas. A faint grid is the single cheapest cue that
+            something is a diagram surface rather than a decorated panel. */}
+        <span
+          aria-hidden="true"
+          className="absolute inset-0 rounded-2xl border border-line-subtle"
+          style={{
+            backgroundImage:
+              "linear-gradient(var(--border-subtle) 1px, transparent 1px)," +
+              "linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px)",
+            backgroundSize: "44px 44px",
+            maskImage:
+              "radial-gradient(120% 100% at 50% 40%, #000 40%, transparent 88%)",
+            WebkitMaskImage:
+              "radial-gradient(120% 100% at 50% 40%, #000 40%, transparent 88%)",
+          }}
+        />
 
-        <ol
-          aria-labelledby="architecture-board-title"
-          className="relative z-10 grid gap-2.5"
-          style={{ gridTemplateRows: `repeat(${N}, minmax(0, 1fr))` }}
+        <svg
+          aria-hidden="true"
+          viewBox={`0 0 ${W} ${H}`}
+          className="absolute inset-0 h-full w-full"
+          fill="none"
         >
-          {LAYERS.map((layer, i) => {
-            const active = hovered === layer.id;
-            // Each band a little narrower than the one above: a stack read
-            // from the front, without tipping the type off horizontal.
-            const inset = i * 1.2;
+          <defs>
+            <marker
+              id="arrow"
+              viewBox="0 0 8 8"
+              refX="6"
+              refY="4"
+              markerWidth="5"
+              markerHeight="5"
+              orient="auto-start-reverse"
+            >
+              <path d="M 0 1 L 7 4 L 0 7 z" fill="var(--border-strong)" />
+            </marker>
+          </defs>
 
+          {EDGES.map((e) => {
+            const lit = edgeLit(e);
+            const colour =
+              e.kind === "response"
+                ? "var(--status-live)"
+                : e.kind === "side"
+                  ? "var(--border-strong)"
+                  : "var(--accent)";
             return (
-              <li
-                key={layer.id}
-                onPointerEnter={(e) => {
-                  // Mouse only — a touch "hover" would strand a band lifted.
-                  if (!reduced && e.pointerType === "mouse") setHovered(layer.id);
-                }}
-                onPointerLeave={() => !reduced && setHovered(null)}
-                style={
-                  {
-                    marginInline: `${inset}%`,
-                    "--lift": active ? "-4px" : "0px",
-                  } as CSSProperties
-                }
-                className={cn(
-                  "edge-lit group/band relative overflow-hidden rounded-2xl border px-5 py-4",
-                  active ? "border-accent-line shadow-e3" : "border-line shadow-e1",
-                  !reduced &&
-                    "transition-[transform,border-color,box-shadow] duration-[var(--dur-mid)] ease-[var(--ease-out-expo)]",
+              <g key={`${e.from}-${e.to}`} opacity={lit ? 1 : 0.22}>
+                {/* The rail: always visible, so the shape of the system reads
+                    even with motion off. */}
+                <path
+                  d={e.d}
+                  stroke={colour}
+                  strokeWidth={1.5}
+                  opacity={0.28}
+                  markerEnd={e.kind === "side" ? undefined : "url(#arrow)"}
+                />
+                {/* The traffic on it. */}
+                {!reduced && (
+                  <path
+                    d={e.d}
+                    stroke={colour}
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    className={e.kind === "response" ? "anim-edge-rev" : "anim-edge"}
+                  />
                 )}
-              >
-                <span
-                  aria-hidden="true"
-                  className="absolute inset-0 -z-10"
-                  style={{ background: "var(--panel-fill-deep)" }}
-                />
-                {/* Pre-rendered highlight, revealed by opacity alone. */}
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    "pointer-events-none absolute inset-0 -z-10",
-                    active ? "opacity-100" : "opacity-0",
-                    !reduced && "transition-opacity duration-[var(--dur-mid)]",
-                  )}
-                  style={{
-                    background:
-                      "linear-gradient(140deg, var(--accent-soft), transparent 68%)",
-                  }}
-                />
-
-                <div
-                  className="flex flex-wrap items-baseline gap-x-3 gap-y-1"
-                  style={{ transform: "translateY(var(--lift))" }}
-                >
-                  <span className="label tnum text-fg-subtle">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <p className="text-base font-medium tracking-[var(--tracking-heading)] text-fg lg:text-lg">
-                    {layer.name}
-                  </p>
-                  <p className="label text-fg-subtle">{layer.note}</p>
-                </div>
-
-                <ul
-                  className="mt-3 flex flex-wrap gap-1.5"
-                  style={{ transform: "translateY(var(--lift))" }}
-                >
-                  {layer.tech.map((t) => (
-                    <li
-                      key={t}
-                      className="rounded-full border border-line-subtle bg-surface-1 px-2.5 py-1 font-mono text-[0.6875rem] leading-none text-fg-muted"
-                    >
-                      {t}
-                    </li>
-                  ))}
-                </ul>
-
-                {/* Ports where the rails meet this band. */}
-                <Port side="left" active={active} />
-                <Port side="right" active={active} />
-              </li>
+              </g>
             );
           })}
+        </svg>
+
+        {/* Nodes are real DOM, so their names, technologies and facts are text
+            a reader and a crawler both get. */}
+        <ol
+          aria-labelledby="architecture-board-title"
+          className="absolute inset-0"
+        >
+          {NODES.map((n) => (
+            <li
+              key={n.id}
+              className="absolute"
+              style={{
+                left: `${(n.x / W) * 100}%`,
+                top: `${(n.y / H) * 100}%`,
+                width: `${((NW * 2) / W) * 100}%`,
+                transform: "translate(-50%, -50%)",
+              }}
+              onPointerEnter={(e) => {
+                if (e.pointerType === "mouse") setHovered(n.id);
+              }}
+              onPointerLeave={() => setHovered(null)}
+            >
+              <NodeCard node={n} dim={hovered !== null && hovered !== n.id} reduced={reduced} />
+            </li>
+          ))}
         </ol>
       </div>
 
-      {/* Legend — names what the two rails mean, so the diagram is readable
+      {/* ── Mobile: the same graph as a route ──────────────────────────────
+          Not the desktop board scaled down — a 1000x560 graph at 358px wide
+          puts every label under 6px. A phone gets the same nodes in the same
+          order as a vertical route with the flow running down its spine,
+          which is how you would read a trace on a small screen anyway. */}
+      <ol className="relative lg:hidden">
+        {NODES.map((n, i) => (
+          <li key={n.id} className="relative pl-11">
+            {i < NODES.length - 1 && (
+              <span
+                aria-hidden="true"
+                className="absolute left-[13px] top-8 bottom-0 w-px"
+                style={{ background: "var(--border)" }}
+              >
+                {!reduced && (
+                  <svg className="absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox="0 0 1 100">
+                    <path
+                      d="M 0.5 0 V 100"
+                      stroke={KIND_ACCENT[n.kind]}
+                      strokeWidth={1.5}
+                      className="anim-edge"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  </svg>
+                )}
+              </span>
+            )}
+            <span
+              aria-hidden="true"
+              className="absolute left-0 top-1 flex h-7 w-7 items-center justify-center rounded-full border border-line bg-surface-3"
+            >
+              <KindGlyph kind={n.kind} />
+            </span>
+            <div className="pb-7">
+              <NodeCard node={n} dim={false} reduced={reduced} />
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      {/* Legend — names what the two colours mean, so the diagram is readable
           rather than merely decorative. */}
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+      <div className="mt-6 flex flex-wrap items-center gap-x-7 gap-y-2">
         <p className="label flex items-center gap-2 text-fg-subtle">
           <span aria-hidden="true" className="inline-block h-px w-6 bg-accent" />
-          Request, descending
+          Request, in
         </p>
         <p className="label flex items-center gap-2 text-fg-subtle">
-          Response, returning
           <span
             aria-hidden="true"
             className="inline-block h-px w-6"
             style={{ background: "var(--status-live)" }}
           />
+          Response, over an open socket
+        </p>
+        <p className="label ml-auto text-fg-subtle">
+          Every fact here is checkable in a repository
         </p>
       </div>
     </figure>
   );
 }
 
-/**
- * Continuous traffic on both rails.
- *
- * Four packets per direction, evenly offset in time, so there is always
- * something in flight — the thing that makes it read as a system under load
- * rather than a single dot doing laps. Pure CSS transform animation on
- * absolutely positioned elements: no SVG scaling to distort them, no SMIL
- * timing to drift, and the global reduced-motion kill-switch reaches it.
- */
-function Traffic() {
-  const PACKETS = 4;
-  const DURATION = 5.2;
-
+function NodeCard({
+  node,
+  dim,
+  reduced,
+}: {
+  node: Node;
+  dim: boolean;
+  reduced: boolean;
+}) {
   return (
-    <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-      {Array.from({ length: PACKETS }).map((_, i) => (
-        <span
-          key={`down-${i}`}
-          className="anim-packet-down absolute left-[-2px] h-1.5 w-1.5 rounded-full"
-          style={{
-            background: "var(--accent)",
-            boxShadow: "0 0 8px 1px var(--accent)",
-            animationDuration: `${DURATION}s`,
-            animationDelay: `${(-DURATION / PACKETS) * i}s`,
-          }}
-        />
-      ))}
-      {Array.from({ length: PACKETS }).map((_, i) => (
-        <span
-          key={`up-${i}`}
-          className="anim-packet-up absolute right-[-2px] h-1 w-1 rounded-full"
-          style={{
-            background: "var(--status-live)",
-            boxShadow: "0 0 7px 1px var(--status-live)",
-            animationDuration: `${DURATION}s`,
-            animationDelay: `${(-DURATION / PACKETS) * i - DURATION / 2}s`,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-function Port({ side, active }: { side: "left" | "right"; active: boolean }) {
-  return (
-    <span
-      aria-hidden="true"
+    <article
       className={cn(
-        "absolute top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full transition-colors duration-[var(--dur-mid)]",
-        side === "left" ? "-left-[3px]" : "-right-[3px]",
+        "edge-lit relative overflow-hidden rounded-xl border px-3.5 py-3",
+        dim ? "border-line-subtle" : "border-line",
+        !reduced && "transition-[opacity,border-color,transform] duration-[var(--dur-mid)]",
+        dim ? "opacity-45" : "opacity-100",
       )}
-      style={{ background: active ? "var(--accent)" : "var(--border-strong)" }}
-    />
+      style={{ background: "var(--panel-solid)" }}
+    >
+      {/* A hairline in the node's own type colour along its top edge. Typed
+          things should be identifiable before they are read. */}
+      <span
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-px"
+        style={{ background: KIND_ACCENT[node.kind], opacity: 0.75 }}
+      />
+
+      <div className="flex items-center gap-2">
+        <span className="hidden lg:inline-flex">
+          <KindGlyph kind={node.kind} />
+        </span>
+        <h4 className="truncate text-[0.9375rem] font-medium tracking-[var(--tracking-heading)] text-fg">
+          {node.label}
+        </h4>
+      </div>
+      <p className="mt-1 truncate font-mono text-[0.6875rem] leading-none text-fg-subtle">
+        {node.tech}
+      </p>
+      <p className="mt-2 text-[0.75rem] leading-snug text-fg-muted">{node.fact}</p>
+    </article>
   );
 }
 
-/**
- * The rails, drawn behind the bands.
- *
- * `preserveAspectRatio="none"` with a 0–100 viewBox lets the paths be written
- * in percentages, so they track the bands at any board height without any
- * measurement in JS.
- */
-function Rails({ hovered }: { hovered: string | null }) {
-  const down = `M 1.6 ${midY(0)} L 1.6 ${midY(N - 1)}`;
-  const up = `M 98.4 ${midY(N - 1)} L 98.4 ${midY(0)}`;
-
+/** One purpose-drawn mark per node type, in the site's own visual language. */
+function KindGlyph({ kind }: { kind: NodeKind }) {
+  const c = KIND_ACCENT[kind];
   return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 100 100"
-      preserveAspectRatio="none"
-      className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
-      fill="none"
-    >
-      {/*
-        `vector-effect="non-scaling-stroke"` is required here. With
-        `preserveAspectRatio="none"` the viewBox stretches x and y by different
-        factors, so a single stroke-width renders hairline-thin on the vertical
-        rails and heavy on the horizontal stubs. This keeps every line the same
-        weight regardless of the board's aspect.
-      */}
-      <path d={down} stroke="var(--accent)" strokeWidth="1.4" vectorEffect="non-scaling-stroke" opacity="0.55" />
-      <path d={up} stroke="var(--border-strong)" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
-
-      {/* Stubs from each rail into its band's port. */}
-      {LAYERS.map((l, i) => (
-        <g key={l.id} opacity={hovered === null || hovered === l.id ? 1 : 0.32}>
-          <path
-            d={`M 1.6 ${midY(i)} L ${5 + i * 1.2} ${midY(i)}`}
-            stroke="var(--accent)"
-            strokeWidth="1.2"
-            vectorEffect="non-scaling-stroke"
-            opacity="0.4"
-          />
-          <path
-            d={`M 98.4 ${midY(i)} L ${95 - i * 1.2} ${midY(i)}`}
-            stroke="var(--border-strong)"
-            strokeWidth="1.2"
-            vectorEffect="non-scaling-stroke"
-          />
-        </g>
-      ))}
-
-      {/*
-        Packets are NOT drawn here.
-
-        They were, as two SMIL <animateMotion> circles, and it did not work:
-        this SVG uses `preserveAspectRatio="none"`, so a circle is squashed
-        into an ellipse and its motion is distorted along with it. Worse, one
-        packet per rail means most of the cycle has nothing moving at all —
-        which is exactly the "sometimes they disappear, the movement feels
-        disconnected" problem. Continuous traffic needs several packets in
-        flight at once, which SMIL makes awkward and CSS makes trivial.
-
-        See <Traffic> — absolutely positioned, CSS-animated, undistorted.
-      */}
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      {kind === "edge" && (
+        <>
+          <rect x="3" y="2" width="10" height="12" rx="2" stroke={c} strokeWidth="1.4" />
+          <path d="M6.5 12h3" stroke={c} strokeWidth="1.4" strokeLinecap="round" />
+        </>
+      )}
+      {kind === "service" && (
+        <>
+          <rect x="2" y="2" width="12" height="12" rx="3" stroke={c} strokeWidth="1.4" />
+          <path d="M5.5 8h5" stroke={c} strokeWidth="1.4" strokeLinecap="round" />
+        </>
+      )}
+      {kind === "queue" && (
+        <>
+          <path d="M2 5h12M2 8h12M2 11h12" stroke={c} strokeWidth="1.4" strokeLinecap="round" />
+        </>
+      )}
+      {kind === "store" && (
+        <>
+          <ellipse cx="8" cy="4.5" rx="5" ry="2.2" stroke={c} strokeWidth="1.4" />
+          <path d="M3 4.5v7c0 1.2 2.2 2.2 5 2.2s5-1 5-2.2v-7" stroke={c} strokeWidth="1.4" />
+        </>
+      )}
     </svg>
   );
 }

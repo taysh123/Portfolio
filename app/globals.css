@@ -582,20 +582,26 @@
 /* Ambient life for the workstation: a breath, not a bob. 14s and ±5px is
    below the threshold where it reads as "animated" and right at the one where
    the object stops feeling like a still image. */
-/* Packets travelling the architecture board's rails. Fading in and out at the
-   ends stops them appearing and vanishing abruptly at the board edges. */
-@keyframes packet-down {
-  0%   { transform: translateY(4%); opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 1; }
-  100% { transform: translateY(96%); opacity: 0; }
-}
-@keyframes packet-up {
-  0%   { transform: translateY(96%); opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 1; }
-  100% { transform: translateY(4%); opacity: 0; }
-}
+/*
+   TRAFFIC ON THE TOPOLOGY'S EDGES.
+
+   This replaces the discrete packets that used to ride the architecture
+   board's rails. A packet is an object with a beginning and an end, so it has
+   to appear somewhere and vanish somewhere — which is exactly the "packets
+   disappear, movement feels disconnected" problem, and no amount of staggering
+   fully removes it, because the gap is inherent to the technique.
+
+   A marching dash pattern has no beginning or end. `stroke-dashoffset` on a
+   dashed stroke is continuous by construction: the pattern is infinite, it
+   wraps seamlessly at one dash period, and every edge in the graph carries
+   flow along its whole length at all times. It is also what every real network
+   and CI diagram uses, for the same reason.
+
+   The period must equal the dasharray total or the loop visibly jumps: 6 + 10
+   = 16.
+*/
+@keyframes edge-flow    { to { stroke-dashoffset: -16; } }
+@keyframes edge-flow-rev { to { stroke-dashoffset: 16; } }
 
 @keyframes hover-float {
   0%, 100% { transform: translate3d(0, 0, 0); }
@@ -614,8 +620,8 @@
 .anim-flow  { animation: dash-flow 1.6s linear infinite; }
 .anim-hover { animation: hover-float 14s ease-in-out infinite; }
 .anim-spec  { animation: specular-drift 18s ease-in-out infinite; }
-.anim-packet-down { animation: packet-down linear infinite; }
-.anim-packet-up   { animation: packet-up linear infinite; }
+.anim-edge     { stroke-dasharray: 6 10; animation: edge-flow 1.05s linear infinite; }
+.anim-edge-rev { stroke-dasharray: 6 10; animation: edge-flow-rev 1.35s linear infinite; }
 
 /* CSS-driven motion off-switch. JS-driven motion is gated separately via
    `useMotionPref` — a CSS rule cannot stop a requestAnimationFrame loop,
@@ -628,7 +634,7 @@
     scroll-behavior: auto !important;
   }
   .anim-sweep, .anim-drift, .anim-pulse, .anim-flow,
-  .anim-hover, .anim-spec, .anim-packet-down, .anim-packet-up {
+  .anim-hover, .anim-spec, .anim-edge, .anim-edge-rev {
     animation: none !important;
   }
   .anim-sweep { opacity: 0; }
@@ -648,8 +654,8 @@
 [data-reduced-motion="true"] .anim-flow,
 [data-reduced-motion="true"] .anim-hover,
 [data-reduced-motion="true"] .anim-spec,
-[data-reduced-motion="true"] .anim-packet-down,
-[data-reduced-motion="true"] .anim-packet-up {
+[data-reduced-motion="true"] .anim-edge,
+[data-reduced-motion="true"] .anim-edge-rev {
   animation: none !important;
 }
 [data-reduced-motion="true"] .anim-sweep { opacity: 0; }
