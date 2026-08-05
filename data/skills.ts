@@ -24,6 +24,19 @@ export type SkillGroup = {
    * here is checkable against `data/projects.ts` and the repos it points at.
    */
   evidence: string;
+  /**
+   * The two groups that carry the argument, given the visual weight to match.
+   *
+   * Six equally-sized modules tell a reader that six things matter equally,
+   * which is never true and is the reason skill sections read as inventory.
+   * These two are the ones this portfolio actually stands on: an architecture
+   * whose boundaries a machine enforces, and the tests that pin the behaviour
+   * inside them. Everything else is real, and supports them.
+   *
+   * `value` is pulled out at display scale, so it has to be a figure a reader
+   * can go and count.
+   */
+  lead?: { value: string; unit: string };
 };
 
 export type GlyphKey =
@@ -85,7 +98,11 @@ export const skillGroups: SkillGroup[] = [
       { label: "JWT / RS256" },
     ],
     evidence:
-      "SentinelAI moves events across 8 bounded contexts over RabbitMQ, with 0 cross-context references and a retry ladder per endpoint."
+      "SentinelAI moves events across 8 bounded contexts over RabbitMQ, with 0 cross-context references and a retry ladder per endpoint.",
+    // The "0 cross-context references" half of this claim lives in the
+    // evidence line beside it — repeating it here wrapped the label to three
+    // cramped lines under the figure.
+    lead: { value: "8", unit: "bounded contexts" },
   },
   {
     id: "store",
@@ -137,6 +154,7 @@ export const skillGroups: SkillGroup[] = [
       { label: "Ollama" },
     ],
     evidence:
-      "1,742 tests across five projects, weighted toward settlement math, threat scoring, retrieval grounding and level progression."
+      "1,742 tests across five projects, weighted toward settlement math, threat scoring, retrieval grounding and level progression.",
+    lead: { value: "1,742", unit: "tests across five projects" },
   },
 ];

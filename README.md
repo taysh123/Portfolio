@@ -136,8 +136,10 @@ external assets, no third-party brand marks.
 - **`PipelineRun`** (approach) — five stations on a track the reader's own scroll fills;
   a horizontal board on desktop, a vertical job log on mobile.
 - **`HeroVisual`** (hero) — the layered interface/services/data planes.
-- **`OrbitField`** (contact) — a node field with orbit rings at different inclinations
-  and durations, so they never visually sync.
+
+Contact deliberately carries **no illustration at all**: its atmosphere is a horizon —
+a soft pool of light with a single hairline through it — because a generic orbit motif
+said nothing about the work and cost 19rem of scroll on a phone to say it.
 
 The Toolkit deliberately has **no per-technology brand logos**. Redrawing ~35
 third-party marks from memory produces subtly wrong logos, which reads worse than none;
