@@ -2502,7 +2502,7 @@ test("gravity world: the field loops only while in view, and never under reduced
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.evaluate(() => document.getElementById("contact")!.scrollIntoView()); await page.waitForTimeout(900);
   expect(await raf(1000)).toBe(0);                             // stopped out of view
-  await expect(page.locator(".world-gravity img")).toHaveAttribute("alt", /.+/);
+  for (const img of await page.locator(".world-gravity img").all()) await expect(img).toHaveAttribute("alt", /.+/);  // every image
   await expect(page.locator(".world-gravity")).toContainText(/Android-only/);
 });
 ```

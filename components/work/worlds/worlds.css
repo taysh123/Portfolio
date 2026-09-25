@@ -98,3 +98,15 @@
 .world-dos__card { position: absolute; left: 50%; bottom: -18px; translate: -50% 0; white-space: nowrap; padding: 10px 16px; border-radius: 999px;
   background: rgba(10,14,20,0.92); border: 1px solid var(--line-strong); color: var(--fg); font: 500 0.8125rem/1 var(--font-mono);
   transform: translateY(calc((1 - var(--assemble)) * 24px)); opacity: var(--assemble); }
+
+/* ── World 04 — GRAVITY FLOW ─────────────────────────────────────────── */
+.world-gravity { position: relative; display: grid; place-items: center; min-height: min(70svh, 680px); }
+.world-gravity__field { position: absolute; inset: -12% -20%; pointer-events: none; }
+.world-gravity__phone { position: relative; margin: 0; width: clamp(150px, 14vw, 220px); aspect-ratio: 1 / 2; border-radius: 26px; overflow: hidden;
+  border: 1px solid var(--line-strong); box-shadow: var(--shadow-float); background: #000;
+  transform: translateY(calc((1 - var(--assemble)) * 80px - (var(--hold) - 0.5) * 24px - var(--recede) * 50px)); opacity: calc(0.4 + var(--assemble) * 0.6 - var(--recede) * 0.5); }
+.world-gravity__phone img { width: 100%; height: 100%; object-fit: cover; }
+.world-gravity__note { position: absolute; bottom: 4%; color: var(--fg-subtle); }
+.world-gravity__inset { position: absolute; right: 8%; top: 12%; margin: 0; width: clamp(80px, 7vw, 110px); aspect-ratio: 1 / 2; border-radius: 16px; overflow: hidden;
+  border: 1px solid var(--line-strong); box-shadow: var(--shadow-float); transform: translateY(calc((1 - var(--assemble)) * 40px + (var(--hold) - 0.5) * -12px)); opacity: calc(var(--assemble) * 0.9 - var(--recede) * 0.6); }
+.world-gravity__inset img { width: 100%; height: 100%; object-fit: cover; }

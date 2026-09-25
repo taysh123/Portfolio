@@ -78,3 +78,18 @@ test("developeros world: four windows converge as the scene assembles; the citat
   expect(await spread(0.5)).toBeLessThan(await spread(0.02));    // converged
   await expect(page.locator(".world-dos__card")).toHaveText(/Grounded answers · file:line citations/);
 });
+
+test("gravity world: the field loops only while in view, and never under reduced motion (Review Focus 3)", async ({ page }) => {
+  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  const raf = (ms: number) => page.evaluate(async (ms) => { let n = 0; const o = requestAnimationFrame; window.requestAnimationFrame = (cb) => o((t) => { n++; cb(t); }); await new Promise((r) => setTimeout(r, ms)); window.requestAnimationFrame = o; return n; }, ms);
+  await page.evaluate(() => document.getElementById("work-gravity-flow")!.scrollIntoView());
+  await page.waitForTimeout(900);
+  expect(await raf(1000)).toBeGreaterThan(20);                 // running in view
+  await page.emulateMedia({ reducedMotion: "reduce" }); await page.waitForTimeout(300);
+  expect(await raf(1000)).toBe(0);                             // stopped under reduced motion
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.evaluate(() => document.getElementById("contact")!.scrollIntoView()); await page.waitForTimeout(900);
+  expect(await raf(1000)).toBe(0);                             // stopped out of view
+  for (const img of await page.locator(".world-gravity img").all()) await expect(img).toHaveAttribute("alt", /.+/);  // every image
+  await expect(page.locator(".world-gravity")).toContainText(/Android-only/);
+});
