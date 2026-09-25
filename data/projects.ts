@@ -341,7 +341,6 @@ export const projects: Project[] = [
     accent: "teal",
     repoUrl: "https://github.com/taysh123/Gravity-Game",
     stores: [
-      { platform: "ios", status: "soon" },
       { platform: "android", status: "soon" },
     ],
     metrics: [

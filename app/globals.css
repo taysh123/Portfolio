@@ -31,7 +31,11 @@
   /* A deep navy-violet field rather than neutral near-black. The violet has to
      live in the substrate — if it only appears in accents it reads as decal
      rather than atmosphere. */
-  --surface-0: #07070f;
+  --bg: #05070a;
+  --bg-raised: #0a0e14;
+  /* The laptop screen's black: the surface the hero is projected onto. */
+  --screen: #05070a;
+  --surface-0: var(--bg);
   --surface-1: rgba(255, 255, 255, 0.030);
   --surface-2: rgba(255, 255, 255, 0.055);
   --surface-3: rgba(16, 18, 30, 0.92);
@@ -54,9 +58,9 @@
        --fg         17.9:1   --fg-muted   9.2:1   --fg-subtle  7.0:1
      `--fg-subtle` carries every eyebrow and metadata label at ~11px, so it
      is held at 7:1 rather than the 4.5:1 minimum. */
-  --fg: #f1f3f9;
-  --fg-muted: #a7afc2;
-  --fg-subtle: #8a93a8;
+  --fg: #f2f4f8;
+  --fg-muted: #9aa3b2;
+  --fg-subtle: #7b8597;
 
   /* ── Borders ─────────────────────────────────────────────────────────── */
   --border-subtle: rgba(255, 255, 255, 0.06);
@@ -64,7 +68,10 @@
   --border-strong: rgba(255, 255, 255, 0.18);
 
   /* ── Accent (interaction) — 6.2:1 on --surface-0 ─────────────────────── */
-  --accent: #5b8def;
+  --accent: #5b9cff;
+  /* Filled buttons: white text on this clears 4.5:1. */
+  --accent-solid: #1d6ef5;          /* white text 4.6:1 */
+  --accent-solid-hover: #185fd6;    /* white text 5.8:1 */
   --accent-hover: #7aa4f5;
   --accent-soft: rgba(91, 141, 239, 0.13);
   --accent-line: rgba(91, 141, 239, 0.34);
@@ -72,8 +79,10 @@
   --accent-contrast: #05070d;
 
   /* ── Glow (atmosphere only) ──────────────────────────────────────────── */
-  --glow: rgba(180, 124, 255, 0.20);
-  --glow-strong: rgba(180, 124, 255, 0.32);
+  --light-cool: rgba(91, 156, 255, 0.14);
+  --light-warm: rgba(255, 180, 107, 0.10);
+  --glow: rgba(91, 156, 255, 0.10);        /* violet retired; aliased until Plan 2 removes its callers */
+  --glow-strong: rgba(91, 156, 255, 0.16);
   --glow-blue: rgba(91, 141, 239, 0.18);
 
   /* ── Status ──────────────────────────────────────────────────────────── */
@@ -196,7 +205,9 @@
 [data-theme="light"] {
   color-scheme: light;
 
-  --surface-0: #eef0f7;
+  --bg: #eef0f7;
+  --screen: #05070a;
+  --surface-0: var(--bg);
   --surface-1: rgba(255, 255, 255, 0.78);
   --surface-2: rgba(255, 255, 255, 0.94);
   --surface-3: rgba(255, 255, 255, 0.97);
@@ -291,6 +302,8 @@
   --color-line-strong: var(--border-strong);
 
   --color-accent: var(--accent);
+  --color-accent-solid: var(--accent-solid);
+  --color-accent-solid-hover: var(--accent-solid-hover);
   --color-accent-hover: var(--accent-hover);
   --color-accent-soft: var(--accent-soft);
   --color-accent-line: var(--accent-line);

@@ -81,9 +81,9 @@ export default async function OpengraphImage() {
               maxWidth: 1000,
             }}
           >
-            <span style={{ display: "flex" }}>I build production software&nbsp;</span>
-            <span style={{ display: "flex" }}>that solves&nbsp;</span>
-            <span style={{ display: "flex", color: brand.accent }}>real problems.</span>
+            <span style={{ display: "flex" }}>I build software&nbsp;</span>
+            <span style={{ display: "flex" }}>people can&nbsp;</span>
+            <span style={{ display: "flex", color: brand.accent }}>actually use.</span>
           </div>
 
           <div
@@ -109,7 +109,7 @@ export default async function OpengraphImage() {
           }}
         >
           <div style={{ display: "flex", gap: 46 }}>
-            {heroStats.slice(0, 3).map((s) => (
+            {heroStats.filter((s) => s.label !== "Languages in shipped code").slice(0, 3).map((s) => (
               <div key={s.label} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <span style={{ display: "flex", fontSize: 34, fontWeight: 600 }}>
                   {s.value}

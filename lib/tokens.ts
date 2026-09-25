@@ -11,20 +11,24 @@
 
 export const brand = {
   /** Page field. Deliberately not #000 — pure black smears on OLED. */
-  bg: "#08090f",
+  bg: "#05070a",
+  bgRaised: "#0a0e14",
+  screen: "#05070a",
   bgLight: "#f6f7fb",
 
-  fg: "#f1f3f9",
-  fgMuted: "#a7afc2",
-  fgSubtle: "#8a93a8",
+  fg: "#f2f4f8",
+  fgMuted: "#9aa3b2",
+  fgSubtle: "#7b8597",
 
   /** Interaction accent. Dark-theme value. */
-  accent: "#5b8def",
+  accent: "#5b9cff",
+  /** Filled-button accent; white text clears 4.5:1. */
+  accentSolid: "#1d6ef5",
   /** Interaction accent, light theme — darker so it still clears AA as text. */
   accentLight: "#2563eb",
 
   /** Atmospheric only: bloom behind solid objects. Never text, never a border. */
-  glow: "#b47cff",
+  glow: "#5b9cff",
 
   statusLive: "#34d399",
   statusWip: "#fbbf24",

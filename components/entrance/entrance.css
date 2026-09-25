@@ -1,0 +1,38 @@
+/* Pinned by default; static under reduced motion (OS or in-app) — decided at first paint. */
+.entrance { position: relative; height: var(--entrance-h, 400svh); }
+.entrance__stage { position: sticky; top: 0; height: 100svh; overflow: hidden; background: var(--bg); isolation: isolate; }
+.entrance__canvas, .entrance__poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* Near-black, not black: the studio reads through it at p = 0 (spec §4.1 Arrival). */
+.entrance__veil { position: absolute; inset: 0; background: #000; opacity: 0.72; pointer-events: none; }
+.entrance__surface { position: absolute; left: 0; top: 0; transform-origin: 0 0; background: var(--screen); opacity: 0; will-change: transform, opacity; }
+.entrance__surface > .entrance__hero { position: absolute; width: 100vw; height: 100svh; background: var(--bg); }
+.entrance__still { display: none; }
+.entrance__skip { position: absolute; right: 24px; bottom: 24px; z-index: 5; }
+
+@media (prefers-reduced-motion: reduce) {
+  .entrance { height: auto; }
+  .entrance__stage { position: static; height: auto; overflow: visible; }
+  .entrance__canvas, .entrance__poster, .entrance__veil, .entrance__overlay, .entrance__skip { display: none; }
+  .entrance__still { display: block; position: relative; height: 100svh; }
+  .entrance__surface { position: static; transform: none !important; opacity: 1 !important; clip-path: none !important; }
+  .entrance__surface > .entrance__hero { position: static; width: auto; height: auto; }
+}
+[data-reduced-motion="true"] .entrance { height: auto; }
+[data-reduced-motion="true"] .entrance__stage { position: static; height: auto; overflow: visible; }
+[data-reduced-motion="true"] .entrance__canvas, [data-reduced-motion="true"] .entrance__poster,
+[data-reduced-motion="true"] .entrance__veil, [data-reduced-motion="true"] .entrance__overlay,
+[data-reduced-motion="true"] .entrance__skip { display: none; }
+[data-reduced-motion="true"] .entrance__still { display: block; position: relative; height: 100svh; }
+[data-reduced-motion="true"] .entrance__surface { position: static; transform: none !important; opacity: 1 !important; clip-path: none !important; }
+[data-reduced-motion="true"] .entrance__surface > .entrance__hero { position: static; width: auto; height: auto; }
+
+/* Nav: hidden until the portal completes; shown at first paint in static mode. */
+[data-reduced-motion="true"] header[data-entrance-nav] { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { header[data-entrance-nav] { opacity: 1; } }
+
+/* Screen choreography hooks. Everything the stage animates is transform or
+   opacity; with no script running none of it is applied and the hero is at rest. */
+.hero-mask { overflow: clip; overflow-clip-margin: 10px; }
+.hero-boot, .hero-tagline { opacity: 0; }
+[data-hero-name] { transform-origin: 50% 50%; }
+.entrance__chapter { position: absolute; left: clamp(20px, 4vw, 40px); top: 24px; z-index: 4; }

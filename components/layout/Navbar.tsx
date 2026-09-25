@@ -13,10 +13,9 @@ import { useFocusTrap, useScrollLock } from "@/lib/useFocusTrap";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
 
 const LINKS = [
-  { href: "#about", label: "About" },
   { href: "#work", label: "Work" },
-  { href: "#skills", label: "Toolkit" },
-  { href: "#approach", label: "Approach" },
+  { href: "#about", label: "About" },
+  { href: "#skills", label: "Stack" },
   { href: "#contact", label: "Contact" },
 ];
 
@@ -81,8 +80,10 @@ export function Navbar() {
   return (
     <>
       <header
+        data-entrance-nav
         className={cn(
-          "fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,backdrop-filter] duration-[var(--dur-slow)] ease-[var(--ease-out-expo)]",
+          // Hidden while the entrance runs; the stage sets data-entrance-done at the portal (or at once in static mode).
+          "fixed inset-x-0 top-0 z-50 opacity-0 [html[data-entrance-done=true]_&]:opacity-100 focus-within:opacity-100 transition-[background-color,border-color,backdrop-filter,opacity] duration-[var(--dur-slow)] ease-[var(--ease-out-expo)]",
           scrolled
             ? "glass border-b border-line-subtle"
             : "border-b border-transparent bg-transparent",
