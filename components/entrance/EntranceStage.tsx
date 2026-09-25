@@ -216,6 +216,7 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       e.preventDefault(); history.replaceState(null, "", a.getAttribute("href")); skipIntro();
     };
     const onHash = () => { if (HERO_HASHES.has(location.hash)) skipIntro(); };
+    const onSkip = () => skipIntro();   // dispatched by the command palette's "Home" (Plan 2 Task 4)
 
     const ro = new ResizeObserver(() => apply());
     renderRef.current = render;
@@ -223,20 +224,28 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
     ro.observe(stage);
     window.addEventListener("resize", apply);
     document.addEventListener("focusin", onFocus); document.addEventListener("click", onClick);
-    window.addEventListener("hashchange", onHash);
+    window.addEventListener("hashchange", onHash); window.addEventListener("entrance:skip", onSkip);
     if (HERO_HASHES.has(location.hash)) requestAnimationFrame(() => skipIntro());
     void document.fonts?.ready.then(() => { if (renderRef.current === render) { measureHooks(); render(s.p); } });
     return () => {
       renderRef.current = null; s.gen++;
       ro.disconnect(); window.removeEventListener("resize", apply);
       document.removeEventListener("focusin", onFocus); document.removeEventListener("click", onClick);
-      window.removeEventListener("hashchange", onHash);
+      window.removeEventListener("hashchange", onHash); window.removeEventListener("entrance:skip", onSkip);
       s.store?.dispose(); cancelAnimationFrame(s.raf);
       // Static mode takes over (reduced motion switched on): hand every element back with no inline geometry.
       const h = s.hooks;
       resetInline([surface, hero, veil, title, chapter, h?.boot, h?.tagline, h?.name, ...(h?.bootLines ?? []), ...(h?.reveals.map(([el]) => el) ?? [])]);
       canvas.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
     };
+  }, [reduced]);
+
+  // Static mode: the hero is in normal flow, so "Home" is a plain scroll plus focus.
+  useEffect(() => {
+    if (!reduced) return;
+    const f = () => { document.getElementById("hero")?.scrollIntoView(); document.getElementById("hero-title")?.focus(); };
+    window.addEventListener("entrance:skip", f);
+    return () => window.removeEventListener("entrance:skip", f);
   }, [reduced]);
 
   return (

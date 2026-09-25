@@ -7,6 +7,7 @@ import { Logo } from "@/components/ui/Logo";
 import { IconButton } from "@/components/ui/IconButton";
 import { ButtonLink } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { availability } from "@/data/socials";
 import { MenuIcon, CloseIcon, SearchIcon } from "@/components/ui/icons";
 import { DUR, easeOutExpo } from "@/lib/motion";
 import { useFocusTrap, useScrollLock } from "@/lib/useFocusTrap";
@@ -134,12 +135,20 @@ export function Navbar() {
               <SearchIcon size={15} />
             </IconButton>
             <ThemeToggle />
-            <ButtonLink href="#contact" size="sm" variant="secondary">
-              Get in touch
-            </ButtonLink>
+            {availability.open && (
+              <a href="#contact" className="label ml-1 inline-flex h-9 items-center gap-2 rounded-full border border-line px-3.5 text-fg-muted transition-colors hover:border-line-strong hover:text-fg">
+                <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--status-live)]" />
+                Available for work
+              </a>
+            )}
           </div>
 
           <div className="flex items-center gap-2 lg:hidden">
+            {availability.open && (
+              <a href="#contact" data-availability-dot aria-label="Available for work — contact" className="inline-flex h-11 w-11 items-center justify-center rounded-full">
+                <span aria-hidden="true" className="h-2 w-2 rounded-full bg-[var(--status-live)]" />
+              </a>
+            )}
             <ThemeToggle />
             <IconButton
               label="Open menu"
@@ -211,6 +220,14 @@ export function Navbar() {
                   </li>
                 ))}
               </ul>
+
+              {/* Spec §5: the sheet carries the theme toggle and the palette too (inside the focus trap). */}
+              <div className="mt-6 flex items-center gap-3 border-t border-line pt-6">
+                <ThemeToggle />
+                <IconButton label="Open command palette" onClick={() => { closeMenu(); openPalette(); }}>
+                  <SearchIcon size={18} />
+                </IconButton>
+              </div>
 
               <div className="mt-auto pt-8">
                 <ButtonLink href="#contact" onClick={closeMenu} size="lg" className="w-full">

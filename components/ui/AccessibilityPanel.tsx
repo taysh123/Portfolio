@@ -54,6 +54,7 @@ export function AccessibilityPanel() {
 
   return (
     <div
+      data-floating-control
       className={cn(
         "fixed left-6 z-50 flex flex-col items-start gap-3",
         "bottom-[max(1.5rem,env(safe-area-inset-bottom))]",

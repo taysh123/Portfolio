@@ -116,6 +116,7 @@ export function AIChatWidget() {
 
   return (
     <div
+      data-floating-control
       className={cn(
         "fixed right-6 z-50 flex flex-col items-end gap-3",
         // Clears the home indicator on a notched phone; 1.5rem everywhere else.

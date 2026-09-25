@@ -22,11 +22,11 @@ type Command = {
 };
 
 const SECTIONS = [
-  { id: "top", label: "Home" },
+  { id: "hero", label: "Home" },
+  { id: "work", label: "Work" },
   { id: "about", label: "About" },
-  { id: "work", label: "Selected work" },
-  { id: "skills", label: "Toolkit" },
-  { id: "approach", label: "Approach" },
+  { id: "skills", label: "Stack" },
+  { id: "approach", label: "Think · Build · Ship" },
   { id: "contact", label: "Contact" },
 ];
 
@@ -77,9 +77,15 @@ export function CommandPalette() {
   }, []);
 
   const commands: Command[] = useMemo(() => {
+    // Navigate AFTER the focus trap has restored focus on close: otherwise that restore pulls focus (and
+    // the scroll) back to wherever the palette was opened from. "Home" lands on the hero at identity via
+    // the entrance (entrance:skip), since #hero lives inside the pinned stage.
     const go = (id: string) => () => {
       close();
-      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+      setTimeout(() => {
+        if (id === "hero") window.dispatchEvent(new Event("entrance:skip"));
+        else document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+      }, 0);
     };
     const openUrl = (url: string) => () => {
       close();

@@ -133,6 +133,11 @@ const heroAtRest = (page: import("playwright/test").Page) => page.evaluate(() =>
 test("switching reduced motion on in the Accessibility panel hands back a hero at rest (review #1)", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 1024 });
   await page.goto("/");
+  // The floating panel is hidden until the entrance completes (spec §5, Plan 2 Task 4), so the real toggle is
+  // reachable only at the portal. There the stage has written its inline identity geometry — which must be cleared.
+  await expect(page.getByRole("button", { name: "Accessibility settings" })).toBeHidden();
+  await page.locator("[data-skip-intro]").click();
+  expect(await page.locator(".entrance__surface").evaluate((el) => el.getAttribute("style") ?? "")).toMatch(/width/);
   await page.getByRole("button", { name: "Accessibility settings" }).click();
   await page.getByRole("switch", { name: /Reduced motion/ }).click();
   await expect(page.locator(".entrance__stage")).toHaveCSS("position", "static");
