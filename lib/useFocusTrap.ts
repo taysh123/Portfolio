@@ -87,10 +87,13 @@ export function useFocusTrap(
     // focusable, else the container itself.
     const initial =
       root?.querySelector<HTMLElement>("[data-autofocus]") ?? focusables()[0] ?? root;
-    initial?.focus?.();
+    // Never scrolls the page: the dialog is an overlay, and a scroll here would strand the reader elsewhere.
+    initial?.focus?.({ preventScroll: true });
 
     return () => {
-      previouslyFocused?.focus?.();
+      // Focus goes back without moving the page: a reader who scrolled on (focus stays put while scrolling)
+      // must not be thrown back to wherever focus last was when they close the overlay (Plan 2 Task 24).
+      previouslyFocused?.focus?.({ preventScroll: true });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, ref]);

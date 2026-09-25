@@ -107,3 +107,19 @@ test("a palette request made before its chunk loads is honoured when it arrives 
   await page.locator("header[data-entrance-nav] nav").getByRole("button", { name: /command palette/i }).click();
   await expect(page.getByRole("combobox", { name: "Search commands" })).toBeVisible({ timeout: 10_000 });
 });
+
+test("the palette is a real overlay: fixed in the viewport, and opening/closing it never moves the page (Plan 2 Task 24)", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.evaluate(() => document.getElementById("about")!.scrollIntoView({ behavior: "instant" as ScrollBehavior }));
+  await page.waitForTimeout(300);
+  const y0 = await page.evaluate(() => Math.round(scrollY));
+  await page.keyboard.press("Control+k");
+  const dialog = page.getByRole("dialog", { name: "Command palette" });
+  await expect(dialog).toBeVisible();
+  expect(await dialog.evaluate((el) => getComputedStyle(el).position)).toBe("fixed");
+  await expect(dialog).toBeInViewport({ ratio: 0.9 });
+  expect(await page.evaluate(() => Math.round(scrollY))).toBe(y0);
+  await page.keyboard.press("Escape"); await expect(dialog).toBeHidden();
+  expect(await page.evaluate(() => Math.round(scrollY))).toBe(y0);
+});

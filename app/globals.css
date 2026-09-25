@@ -483,7 +483,10 @@
 
   /* Gradient hairline border, brighter at the top edge — the cheap trick
      that makes a flat panel read as a lit object. */
-  .edge-lit {
+  /* :where() — zero specificity, so an explicit `fixed`/`absolute` on the same element wins. As a plain
+     class in this layer it beat Tailwind's `.fixed` by source order, and the command palette (glass
+     edge-lit fixed) rendered in flow at the bottom of the page; opening it scrolled there (Plan 2 Task 24). */
+  :where(.edge-lit) {
     position: relative;
   }
   .edge-lit::before {
