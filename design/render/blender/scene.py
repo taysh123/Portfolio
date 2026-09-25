@@ -180,6 +180,21 @@ def cable(name, pts, radius, mat):
 
 
 
+# Look-dev values (Plan 2 Task 8): every tuned number lives here, so a pass is reviewable as one diff.
+LOOKDEV = {
+    # 1 colour separation — the blue lives in the bias light, not over the whole room
+    "L1_halo": 44, "L2_graze": 18, "L5_key": 26, "L6_rim": 24, "L0_fill": 4, "slat": "#18191c", "led_status": "#9cc4ff",
+    # the "10%": the displays light the room (camera-invisible spill in front of each screen, lg_monitors)
+    "spill_c": 8.0, "spill_side": 6.0, "spill_colour": "#8fb0e8",
+    # 5% warm, never on the laptop's face
+    "lamp_bulb": 3.6,
+    # 2 the laptop as product photography
+    "alu": "#9aa0a8", "alu_rough": 0.30, "alu_aniso": 0.25, "trackpad": "#8d939b", "trackpad_coat": 0.0, "trackpad_rough": 0.42, "keys": "#0c0d0f", "keys_rough": 0.45, "key_backlight": 0.12,
+    # 3 reflections: the lid-sweep card peaks mid-lid and is gone by the last lid frames
+    "sweep_peak": 14.0, "L7_card": 12,
+}
+
+
 def build_scene(out_dir: str, lid_deg: float, screen_on: bool) -> dict:
     global HERE, scene, col
     HERE = out_dir
@@ -188,24 +203,24 @@ def build_scene(out_dir: str, lid_deg: float, screen_on: bool) -> dict:
     col = bpy.context.collection
     # ── palette & materials ─────────────────────────────────────────────────
     ICE, CYAN, DEEP, AMBER = lin("#8cc0ff"), lin("#5fd6ff"), lin("#1c3fd6"), lin("#ffab5e")
-    alu = pbr("alu", lin("#a3a9b1"), metal=1, rough=0.28, aniso=0.3)
+    alu = pbr("alu", lin(LOOKDEV["alu"]), metal=1, rough=LOOKDEV["alu_rough"], aniso=LOOKDEV["alu_aniso"])
     alu_chamfer = pbr("chamfer", lin("#d5dae0"), metal=1, rough=0.08)
     alu_dark = pbr("alu_dark", lin("#2a2e35"), metal=1, rough=0.32, aniso=0.3)
     alu_rim = pbr("rim", lin("#6c7076"), metal=1, rough=0.25, aniso=0.5)
     black = pbr("black", lin("#0c0d10"), rough=0.5)
     satin_black = pbr("satin", lin("#0b0c0e"), rough=0.35, coat=0.2)
-    key_black = pbr("keys", lin("#0a0b0d"), rough=0.6)
+    key_black = pbr("keys", lin(LOOKDEV["keys"]), rough=LOOKDEV["keys_rough"])
     pbt = pbr("pbt", lin("#1a1d22"), rough=0.62)
     pbt_enter = pbr("pbt_ice", lin("#7e97b8"), rough=0.6)
     screen_glass = pbr("sglass", lin("#030405"), rough=0.02, coat=1.0, coat_rough=0.02, spec=0.8)
     felt = pbr("felt", lin("#12151a"), rough=0.92)
     wall = pbr("plaster", lin("#0b0e14"), rough=0.95)
-    slat = pbr("slat", lin("#1b1c20"), rough=0.5)
+    slat = pbr("slat", lin(LOOKDEV["slat"]), rough=0.55)
     slat_back = pbr("slatfelt", lin("#050608"), rough=0.98)
     mobo = pbr("mobo", lin("#0e1320"), rough=0.6)
     tglass = glass_mat("tglass", lin("#b8c4d4"))
     white_led = pbr("wled", (0, 0, 0), emit=(1, 1, 1), strength=6)
-    led_green = pbr("lgreen", (0, 0, 0), emit=lin("#8affc4"), strength=6)   # status LEDs: tiny, cool-green is hardware-honest
+    led_green = pbr("lgreen", (0, 0, 0), emit=lin(LOOKDEV["led_status"]), strength=6)   # status LEDs, ice: the hue lock bans green (Plan 2 decision 4)
     led_ice = pbr("lice", (0, 0, 0), emit=ICE, strength=8)
     led_cyan = pbr("lcyan", (0, 0, 0), emit=CYAN, strength=12)
     halo = pbr("halo", (0, 0, 0), emit=ICE, strength=1.6)
@@ -221,8 +236,8 @@ def build_scene(out_dir: str, lid_deg: float, screen_on: bool) -> dict:
     desk.use_nodes = True
     nt = desk.node_tree
     p = nt.nodes["Principled BSDF"]
-    p.inputs["Coat Weight"].default_value = 0.32
-    p.inputs["Coat Roughness"].default_value = 0.16
+    p.inputs["Coat Weight"].default_value = 0.30
+    p.inputs["Coat Roughness"].default_value = 0.18
     tc = nt.nodes.new("ShaderNodeTexCoord")
     mp = nt.nodes.new("ShaderNodeMapping")
     mp.inputs["Scale"].default_value = (1.0, 30.0, 1.0)
@@ -334,7 +349,11 @@ def build_scene(out_dir: str, lid_deg: float, screen_on: bool) -> dict:
     BW, BD, BH = 0.409, 0.285, 0.0168
     lap = add(bpy.data.objects.new("laptop", None))
     box("base", (BW, BD, BH), (0, 0, BH / 2 + 0.002), alu, bevel=0.0045, segs=6, parent=lap)
-    box("base_chamfer", (BW - 0.006, BD - 0.006, 0.0008), (0, 0, BH + 0.0016), alu_chamfer, parent=lap)
+    # 1 mm diamond-cut chamfer around the deck's edge — a frame, not a plate: the old full plate mirrored the dark
+    # room and turned the whole deck black (look-dev pass 4); the deck itself is now anodised aluminium.
+    for nm, dims, loc in (("base_ch_f", (BW - 0.004, 0.001, 0.0008), (0, -BD / 2 + 0.0015, BH + 0.0016)), ("base_ch_b", (BW - 0.004, 0.001, 0.0008), (0, BD / 2 - 0.0015, BH + 0.0016)),
+                          ("base_ch_l", (0.001, BD - 0.004, 0.0008), (-BW / 2 + 0.0015, 0, BH + 0.0016)), ("base_ch_r", (0.001, BD - 0.004, 0.0008), (BW / 2 - 0.0015, 0, BH + 0.0016))):
+        box(nm, dims, loc, alu_chamfer, parent=lap)
     box("well", (0.345, 0.128, 0.0006), (0, 0.052, BH + 0.0022), key_black, parent=lap)
     pitch, k = 0.0232, 0.0196
     for r, n in enumerate([14, 14, 14, 13, 12, 11]):
@@ -350,17 +369,33 @@ def build_scene(out_dir: str, lid_deg: float, screen_on: bool) -> dict:
             else:
                 x = x0 + i * pitch
             box(f"k{r}_{i}", (w, 0.0178, 0.0014), (x, 0.108 - r * 0.0205, BH + 0.0031), key_black, bevel=0.0012, segs=2, parent=lap)
-    box("trackpad", (0.16, 0.097, 0.0004), (0, -0.075, BH + 0.0021), pbr("tp", lin("#3a3f46"), metal=1, rough=0.7), bevel=0.003, segs=3, parent=lap)
+    # satin glass trackpad: a restrained hint of the light bar, never a mirror
+    box("trackpad", (0.16, 0.097, 0.0004), (0, -0.075, BH + 0.0021), pbr("tp", lin(LOOKDEV["trackpad"]), rough=LOOKDEV["trackpad_rough"], coat=LOOKDEV["trackpad_coat"], coat_rough=0.08), bevel=0.003, segs=3, parent=lap)
+    # keyboard-well lip: a 0.6 mm chamfered frame so the well reads as recessed
+    for nm, dims, loc in (("lip_t", (0.347, 0.0006, 0.0009), (0, 0.117, BH + 0.0022)), ("lip_b", (0.347, 0.0006, 0.0009), (0, -0.013, BH + 0.0022)),
+                          ("lip_l", (0.0006, 0.130, 0.0009), (-0.1735, 0.052, BH + 0.0022)), ("lip_r", (0.0006, 0.130, 0.0009), (0.1735, 0.052, BH + 0.0022))):
+        box(nm, dims, loc, alu_chamfer, parent=lap)
+    # feet with a visible air gap under the base
+    for fx in (-0.17, 0.17):
+        for fy in (-0.11, 0.11):
+            cyl(f"foot{fx}{fy}", 0.006, 0.0018, (fx, fy, 0.0009), black, parent=lap)
     for sgn in (-1, 1):
         box(f"grille{sgn}", (0.012, 0.11, 0.0003), (sgn * 0.187, 0.05, BH + 0.0021), key_black, parent=lap)
     cyl("hinge", 0.0055, BW - 0.06, (0, BD / 2 - 0.004, BH + 0.002), alu_dark, rot=(0, math.radians(90), 0), parent=lap)
     box("port1", (0.0015, 0.009, 0.004), (-BW / 2 - 0.0003, 0.02, 0.009), black, parent=lap)
+    # hinge definition: near-black recessed slots at each end of the barrel
+    for sgn in (-1, 1):
+        box(f"hinge_slot{sgn}", (0.018, 0.004, 0.006), (sgn * (BW / 2 - 0.02), BD / 2 - 0.004, BH + 0.002), pbr("slot", lin("#060708"), rough=0.6), parent=lap)
     hinge = add(bpy.data.objects.new("hingeP", None))
     hinge.parent = lap
     hinge.location = (0, BD / 2 - 0.004, BH + 0.0025)
     LD = 0.278
     box("lid", (BW, LD, 0.006), (0, -LD / 2, 0.003), alu, bevel=0.0035, segs=6, parent=hinge)
     box("lid_bezel", (BW - 0.006, LD - 0.006, 0.0006), (0, -LD / 2, -0.0002), screen_glass, parent=hinge)
+    # 1 mm diamond-cut chamfer on the lid's outer edge (the far-edge highlight in K0 and the lid move)
+    for nm, dims, loc in (("lidch_t", (BW - 0.004, 0.001, 0.0008), (0, -0.0015, 0.0062)), ("lidch_b", (BW - 0.004, 0.001, 0.0008), (0, -LD + 0.0015, 0.0062)),
+                          ("lidch_l", (0.001, LD - 0.004, 0.0008), (-BW / 2 + 0.0015, -LD / 2, 0.0062)), ("lidch_r", (0.001, LD - 0.004, 0.0008), (BW / 2 - 0.0015, -LD / 2, 0.0062))):
+        box(nm, dims, loc, alu_chamfer, parent=hinge)
     sx, y1 = 0.1985, -0.015
     y0 = y1 - 0.248
     me = bpy.data.meshes.new("lapscreen")
@@ -418,21 +453,31 @@ def build_scene(out_dir: str, lid_deg: float, screen_on: bool) -> dict:
     cyl("lamp_stem", 0.006, 0.26, (-0.58, 0.44, 0.11), alu_dark)
     shade = cyl("lamp_shade", 0.042, 0.085, (-0.58, 0.44, 0.24), opal)
     shade.visible_shadow = False
-    point("lamp_bulb", (-0.58, 0.44, 0.24), lin("#ffa050"), 6.0, 0.03)
+    point("lamp_bulb", (-0.58, 0.44, 0.24), lin("#ffa050"), LOOKDEV["lamp_bulb"], 0.03)
 
     # ── lights ───────────────────────────────────────────────────────────────
-    area("L1_halo", (0.03, 0.72, 0.42), (0.03, 1.2, 0.62), ICE, 55, 1.0, 0.25)
+    area("L1_halo", (0.03, 0.72, 0.42), (0.03, 1.2, 0.62), ICE, LOOKDEV["L1_halo"], 1.0, 0.25)
     for sx_ in (-0.75, 0.75):
-        area(f"L2_graze{sx_}", (sx_, 1.02, -0.05), (sx_, 1.19, 0.9), lin("#3f6fe0"), 30, 1.0, 0.03)
+        area(f"L2_graze{sx_}", (sx_, 1.02, -0.05), (sx_, 1.19, 0.9), lin("#3f6fe0"), LOOKDEV["L2_graze"], 1.0, 0.03)
     area("L4_lightbar", (0.03, 0.63, 0.64), (0.0, 0.05, 0.0), lin("#e6eeff"), 9, 0.38, 0.03)
-    area("L5_key", (-1.25, -0.85, 1.2), (0.0, 0.1, 0.05), lin("#c9dcff"), 34, 1.0, 0.7)
-    area("L6_rim", (1.25, 0.95, 0.55), (0.05, 0.0, 0.08), CYAN, 30, 0.45)
+    area("L5_key", (-1.25, -0.85, 1.2), (0.0, 0.1, 0.05), lin("#c9dcff"), LOOKDEV["L5_key"], 1.0, 0.7)
+    area("L6_rim", (1.25, 0.95, 0.55), (0.05, 0.0, 0.08), CYAN, LOOKDEV["L6_rim"], 0.45)
     area("L6b_rim_left", (-1.1, 0.95, 0.5), (-0.3, 0.2, 0.1), lin("#5a86ff"), 10, 0.4)
-    area("L7_card", (-0.2, -1.0, 1.0), (0.0, 0.0, 0.02), (1, 1, 1), 20, 1.4, 0.04, glossy_only=True)
+    area("L7_card", (-0.2, -1.0, 1.0), (0.0, 0.0, 0.02), (1, 1, 1), LOOKDEV["L7_card"], 1.4, 0.04, glossy_only=True)
     area("L7b_card", (0.9, -0.6, 0.7), (0.0, 0.05, 0.05), lin("#cfe2ff"), 10, 0.9, 0.04, glossy_only=True)
-    area("L0_fill", (0.0, -1.8, 0.35), (0.0, 0.2, 0.1), lin("#6d86b8"), 5, 1.8, 0.6)
+    area("L0_fill", (0.0, -1.8, 0.35), (0.0, 0.2, 0.1), lin("#6d86b8"), LOOKDEV["L0_fill"], 1.8, 0.6)
+    # the displays light the room: camera-invisible spill just in front of each screen (lg_monitors via "mon_")
+    SPILL = lin(LOOKDEV["spill_colour"])
+    area("mon_c_spill", (0.03, 0.62, 0.44), (0.0, -0.3, 0.05), SPILL, LOOKDEV["spill_c"], 0.70, 0.39)
+    area("mon_r_spill", (0.77, 0.50, 0.41), (0.1, -0.2, 0.05), SPILL, LOOKDEV["spill_side"], 0.59, 0.33)
+    area("mon_l_spill", (-0.57, 0.46, 0.43), (-0.1, -0.2, 0.05), SPILL, LOOKDEV["spill_side"], 0.30, 0.52)
+    # L8 lid-sweep card: glossy-only, camera-invisible; a sheen that travels down the black glass as the lid rises,
+    # peaking mid-lid and gone by the last lid frames (spec §4.6 lg_sweep)
+    sweep = LOOKDEV["sweep_peak"] * max(0.0, math.sin(math.pi * min(lid_deg, 100.0) / 100.0)) if lid_deg < 100 else 0.0
+    if sweep > 0:
+        area("L8_sweep", (0.0, -0.55, 0.55 - 0.3 * lid_deg / 108), (0.0, 0.2, 0.12), lin("#9cb4d8"), sweep, 0.9, 0.08, glossy_only=True)
     if powered:
-        box("key_backlight", (0.34, 0.124, 0.0003), (0, 0.052, BH + 0.0024), pbr("kbl", (0, 0, 0), emit=ICE, strength=0.25), parent=lap)
+        box("key_backlight", (0.34, 0.124, 0.0003), (0, 0.052, BH + 0.0024), pbr("kbl", (0, 0, 0), emit=ICE, strength=LOOKDEV["key_backlight"]), parent=lap)
         # the laptop screen's own spill (camera-invisible)
         sp = area("L9_spill", (0, 0.15, 0.16), (0, -0.2, 0.0), lin("#a8c8ff"), 1.2, 0.36, 0.22)
 
@@ -453,5 +498,17 @@ def build_scene(out_dir: str, lid_deg: float, screen_on: bool) -> dict:
     world.node_tree.nodes["Background"].inputs["Color"].default_value = (*lin("#0a1020"), 1)
     world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.25
     scene.world = world
+
+    # Light linking: the display spill lights the room and the desk but not the laptop, so the hero keeps its
+    # approved product-photography look (pass 2 showed the spill flattening the lid). Everything not listed
+    # stays lit; the laptop's meshes are excluded from the three spill lights only.
+    rx = bpy.data.collections.new("spill_receivers")
+    for ob in [lap, *lap.children_recursive]:
+        if ob.type == "MESH":
+            rx.objects.link(ob)
+    for entry in rx.collection_objects:                   # indexed by position, not name
+        entry.light_linking.link_state = "EXCLUDE"
+    for nm in ("mon_c_spill", "mon_r_spill", "mon_l_spill"):
+        bpy.data.objects[nm].light_linking.receiver_collection = rx
 
     return {"scene": scene, "screen": ls, "hinge": hinge}

@@ -142,8 +142,20 @@ def laptop_bbox(scene, cam):
     return {"x0": max(0.0, min(xs)), "x1": min(1.0, max(xs))}
 
 
+def balance_screen_focus(cam, screen):
+    """Put the focal plane where the nearest and farthest screen corners blur equally: s = 2·dn·df/(dn+df).
+    Focusing on the screen centre left the corners of an angled screen up to ~1.9 px soft at 1920 (audit);
+    this changes only the focus distance — aperture, lens and framing (the approved look) are untouched."""
+    bpy.context.view_layer.update()
+    inv = cam.matrix_world.inverted()
+    ds = [-(inv @ (screen.matrix_world @ v.co)).z for v in screen.data.vertices]
+    dn, df = min(ds), max(ds)
+    cam.data.dof.focus_distance = 2 * dn * df / (dn + df)
+
+
 def corner_coc_px(scene, cam, screen, width_px):
     """Thin-lens circle of confusion at the four screen corners, in output pixels."""
+    bpy.context.view_layer.update()                          # hinge/lid transforms must be current
     cd = cam.data; f = cd.lens / 1000; N = cd.dof.aperture_fstop; s = cd.dof.focus_distance
     sensor = cd.sensor_width / 1000; worst = 0.0
     for v in screen.data.vertices:
@@ -166,6 +178,8 @@ def render_set(kind, quality, names=None, exr=False, out_root=None):
         bpy.ops.wm.read_factory_settings(use_empty=True)
         h_ = build_scene(tex, st["lid_deg"], st["screen_on"])
         scene = h_["scene"]; vl = bpy.context.view_layer; cam = setup_camera(scene, st, kind == "portrait")
+        if step["shot"] != "lid" and screen_faces_camera(st["lid_deg"], st["cam"]):
+            balance_screen_focus(cam, h_["screen"])
         scene.render.engine = "CYCLES"              # before the compositor: render-layer passes depend on the engine
         assign_light_groups(scene, vl)
         weights = beat_weights(step)

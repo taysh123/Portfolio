@@ -5,7 +5,7 @@ HERE = os.path.dirname(os.path.abspath(__file__)); OUT = os.path.join(HERE, "key
 PY = os.path.join(HERE, "..", "..", "..", "bpyenv", "bin", "python")
 # (key, framing, frame name in camera_path.SEQUENCE or "still", audit kind)
 # Frame names chosen by lid angle (frame_state): lid-04 = 15° crack hold, lid-21 = 73.7° (nearest 70°).
-KEYS = [("K0", "landscape", "lid-00", "K0"), ("crack", "landscape", "lid-04", "lid"), ("mid", "landscape", "lid-21", "lid"),
+KEYS = [("K0", "landscape", "lid-00", "K0"), ("crack", "landscape", "lid-04", "crack"), ("mid", "landscape", "lid-21", "lid"),
         ("K1off", "landscape", "lid-35", "K1off"), ("K1on", "landscape", "k1-on", "K1on"), ("still", "landscape", "still", "K1on"),
         ("push78", "landscape", "push-14", "push"), ("K2", "landscape", "push-27", "K2"),
         ("P0", "portrait", "lid-00", "P0"), ("P1", "portrait", "k1-on", "P1"), ("P2", "portrait", "push-11", "P2"), ("Pstill", "portrait", "still", "P1")]

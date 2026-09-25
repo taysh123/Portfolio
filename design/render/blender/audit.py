@@ -89,7 +89,9 @@ def pass_group(filename):
 SPEC = {
     "K0": [("laptop_width", 0.25, 0.29), ("title_p95", 0, 0.15), ("black_floor", 0, 0.05), ("violet", 0, 0.002),
            ("off_lock", 0, 0.003), ("median_atmos", 0.05, 0.08), ("atmos_share", 0.80, 0.88), ("screens_share", 0.08, 0.14), ("warm_share", 0.03, 0.06)],
-    "lid": [("title_p95", 0, 0.15), ("violet", 0, 0.002), ("off_lock", 0, 0.003), ("atmos_share", 0.80, 0.88), ("warm_share", 0.03, 0.06)],
+    # The title zone is asserted on K0 and the still lid-crack frames only (spec §4.6): the title is gone by p 0.17.
+    "crack": [("title_p95", 0, 0.15), ("violet", 0, 0.002), ("off_lock", 0, 0.003), ("atmos_share", 0.80, 0.88), ("warm_share", 0.03, 0.06)],
+    "lid": [("violet", 0, 0.002), ("off_lock", 0, 0.003), ("atmos_share", 0.80, 0.88), ("warm_share", 0.03, 0.06)],
     "K1off": [("laptop_width", 0.44, 0.48), ("violet", 0, 0.002), ("off_lock", 0, 0.003), ("atmos_share", 0.80, 0.88), ("warm_share", 0, 0.03), ("corner_coc", 0, 1.0)],
     "K1on": [("laptop_width", 0.44, 0.48), ("violet", 0, 0.002), ("off_lock", 0, 0.003), ("warm_share", 0, 0.03), ("corner_coc", 0, 1.0)],
     "push": [("violet", 0, 0.002), ("off_lock", 0, 0.003), ("corner_coc", 0, 1.0), ("bokeh_p90", 0.10, 1.0)],
