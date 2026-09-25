@@ -50,28 +50,6 @@ export const siteMeta = {
   timezone: "GMT+3",
 } as const;
 
-/**
- * Hero proof points. Every figure is verifiable from the repositories.
- *
- * The test count is the sum across the five self-directed projects:
- * T Poker 677 + 215, DeveloperOS 363, GRAVITY FLOW 220, Job Assistant 162,
- * Aegis 103 + 2.
- */
-export const heroStats = [
-  /*
-    Deliberately NOT a project count.
-
-    "6 projects" invites the reader to weigh the number, and the number is the
-    least interesting thing here — a portfolio of twenty half-finished repos
-    would score higher. What a reader actually wants to know is whether any of
-    it is real, so the lead stat is that something is running in production
-    right now that they can go and use.
-  */
-  { value: "Live", label: "In production today" },
-  { value: "1,742", label: "Tests across the work" },
-  { value: "B.Sc.", label: "Computer Science" },
-] as const;
-
 export const availability = {
   open: true,
   label: "Available for software development roles",

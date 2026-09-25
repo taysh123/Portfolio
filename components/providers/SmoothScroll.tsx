@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Lenis from "lenis";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
+import { registerLenis, glideTo } from "@/lib/scroll";
 
 /**
  * Momentum scrolling.
@@ -18,8 +19,11 @@ import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
  *   - Conservative lerp. Enough to smooth the wheel, far short of the long
  *     glide that makes a page feel like it's ignoring you.
  *   - The rAF loop stops when the tab is hidden rather than running forever.
- *   - Anchor clicks are handed to Lenis so in-page navigation lands correctly
- *     under the fixed header.
+ *   - In-page anchor clicks glide via Lenis (lib/scroll glideTo), landing under
+ *     the fixed header. Not Lenis's own `anchors` option: it ignores
+ *     preventDefault, so it hijacked links other handlers own (the skip link
+ *     and Back to top land on the hero at identity) — Plan 2 Task 23.
+ *     Keyboard activation keeps the native jump, which also moves focus.
  */
 export function SmoothScroll() {
   const reduced = useReducedMotionPref();
@@ -31,8 +35,20 @@ export function SmoothScroll() {
       lerp: 0.1,
       wheelMultiplier: 1,
       syncTouch: false,
-      anchors: { offset: -88 },
     });
+    registerLenis(lenis);
+
+    // Window listener: runs after the document-level handlers that may claim a link (defaultPrevented).
+    const onAnchor = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.detail === 0 || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = (e.target as Element | null)?.closest?.<HTMLAnchorElement>("a[href^='#']");
+      const hash = a?.getAttribute("href"); if (!hash || hash === "#") return;
+      const el = document.getElementById(decodeURIComponent(hash.slice(1))); if (!el) return;
+      e.preventDefault();
+      history.pushState(null, "", hash);
+      glideTo(el);
+    };
+    window.addEventListener("click", onAnchor);
 
     // The loop runs only while Lenis is actually moving. Input restarts it; when the scroll settles
     // it stops, so an idle page schedules no animation frames at all (spec §9 "Idle work").
@@ -55,7 +71,9 @@ export function SmoothScroll() {
       document.removeEventListener("visibilitychange", onVisibility);
       for (const e of inputs) window.removeEventListener(e, kick);
       window.removeEventListener("scroll", kick);
+      window.removeEventListener("click", onAnchor);
       cancelAnimationFrame(raf);
+      registerLenis(null);
       lenis.destroy();
     };
   }, [reduced]);

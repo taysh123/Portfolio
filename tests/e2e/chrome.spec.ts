@@ -62,3 +62,12 @@ test("every palette section target exists", async ({ page }) => {
   await page.goto("/");
   for (const id of ["hero", "work", "about", "skills", "approach", "contact"]) await expect(page.locator(`#${id}`)).toHaveCount(1);
 });
+
+test("nav anchors glide the section to just under the fixed header (Lenis-aware, Plan 2 Task 23)", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.locator("header[data-entrance-nav] nav").getByRole("link", { name: "About", exact: true }).click();
+  // Lands (after the glide) with the section's top just below the header: 40–140px from the viewport top.
+  await expect.poll(async () => page.locator("#about").evaluate((el) => { const t = el.getBoundingClientRect().top; return t >= 40 && t < 140; }), { timeout: 5000 }).toBe(true);
+  await expect(page).toHaveURL(/#about$/);
+});

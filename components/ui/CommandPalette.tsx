@@ -11,6 +11,7 @@ import { DUR, easeOutExpo } from "@/lib/motion";
 import { useFocusTrap, useScrollLock } from "@/lib/useFocusTrap";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
 import { cn } from "@/lib/cn";
+import { glideTo } from "@/lib/scroll";
 
 type Command = {
   id: string;
@@ -84,7 +85,7 @@ export function CommandPalette() {
       close();
       setTimeout(() => {
         if (id === "hero") window.dispatchEvent(new Event("entrance:skip"));
-        else document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+        else { const el = document.getElementById(id); if (el) glideTo(el); }
       }, 0);
     };
     const openUrl = (url: string) => () => {
@@ -181,10 +182,15 @@ export function CommandPalette() {
     setActiveIdx(0);
   }
 
+  // Keep the active option visible by scrolling the LIST only. scrollIntoView also scrolls every scrollable
+  // ancestor — the window included — so a hover during the close animation dragged the page back to where
+  // the palette was opened, undoing "Home" (Plan 2 Task 23).
   useEffect(() => {
-    listRef.current
-      ?.querySelector<HTMLElement>("[data-active='true']")
-      ?.scrollIntoView({ block: "nearest" });
+    const list = listRef.current, el = list?.querySelector<HTMLElement>("[data-active='true']");
+    if (!list || !el) return;
+    const l = list.getBoundingClientRect(), r = el.getBoundingClientRect();
+    if (r.top < l.top) list.scrollTop += r.top - l.top;
+    else if (r.bottom > l.bottom) list.scrollTop += r.bottom - l.bottom;
   }, [activeIdx]);
 
   const onKeyDown = (e: React.KeyboardEvent) => {

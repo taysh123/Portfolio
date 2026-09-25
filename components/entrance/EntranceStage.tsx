@@ -10,6 +10,7 @@ import { surfaceTransform, containsRect, coverFit, quadToViewport } from "@/lib/
 import { stageGeometry } from "./stageGeometry";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
 import type { Manifest, FrameSet, Quad } from "@/lib/entrance/types";
+import { jumpTo } from "@/lib/scroll";
 
 const VEIL = 0.72; // near-black over the studio at p = 0; matches the CSS first paint
 const CHAPTERS: [number, string][] = [[BEATS.lift[0], "01 — Scroll to begin"], [BEATS.lid[0], "02 — Scroll to open"], [BEATS.identity[0], "03 — Welcome"]];
@@ -41,7 +42,7 @@ const container = () => document.getElementById("entrance")!;
 /** Jump to p = 1 (the hero at identity). Instant: no scroll-driven replay. Focuses the h1 unless told not to. */
 function skipIntro(focusTitle = true) {
   const c = container(), end = c.offsetTop + c.offsetHeight - window.innerHeight;
-  window.scrollTo({ top: end, behavior: "instant" as ScrollBehavior });
+  jumpTo(end);                              // through Lenis when it runs: a native jump mid-glide is undone
   if (focusTitle) document.getElementById("hero-title")?.focus();
 }
 

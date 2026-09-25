@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { siteMeta, heroStats } from "@/data/socials";
+import { siteMeta } from "@/data/socials";
 import { brand } from "@/lib/tokens";
 
 /**
@@ -18,6 +18,19 @@ import { brand } from "@/lib/tokens";
  * Satori is flexbox-only — no CSS grid — and every element needs an explicit
  * `display: flex`.
  */
+
+/**
+ * The social card's own proof points (moved here from `data/socials.ts` when the page stopped using them,
+ * Plan 2 Task 23). Every figure is verifiable from the repositories. The test count is the sum across the
+ * five self-directed projects: T Poker 677 + 215, DeveloperOS 363, GRAVITY FLOW 220, Job Assistant 162,
+ * Aegis 103 + 2. Deliberately not a project count: the lead stat is that something runs in production.
+ */
+const CARD_STATS = [
+  { value: "Live", label: "In production today" },
+  { value: "1,742", label: "Tests across the work" },
+  { value: "B.Sc.", label: "Computer Science" },
+] as const;
+
 export const alt = `${siteMeta.name} — ${siteMeta.role}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -33,7 +46,7 @@ export default async function OpengraphImage() {
           flexDirection: "column",
           justifyContent: "space-between",
           padding: 76,
-          background: `radial-gradient(58% 60% at 12% 4%, rgba(91,141,239,0.30), transparent 62%), radial-gradient(52% 56% at 96% 10%, rgba(180,124,255,0.26), transparent 62%), ${brand.bg}`,
+          background: `radial-gradient(58% 60% at 12% 4%, rgba(91,156,255,0.26), transparent 62%), radial-gradient(52% 56% at 96% 10%, rgba(155,190,255,0.14), transparent 62%), ${brand.bg}`,
           color: brand.fg,
         }}
       >
@@ -109,7 +122,7 @@ export default async function OpengraphImage() {
           }}
         >
           <div style={{ display: "flex", gap: 46 }}>
-            {heroStats.slice(0, 3).map((s) => (
+            {CARD_STATS.map((s) => (
               <div key={s.label} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <span style={{ display: "flex", fontSize: 34, fontWeight: 600 }}>
                   {s.value}
