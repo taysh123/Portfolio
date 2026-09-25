@@ -18,9 +18,10 @@ for (const kind of ["landscape", "portrait"]) {
   const { width, height } = await sharp(`${dir}/${seq[0].n}.png`).metadata();
   const tiers = TIERS[kind].filter((t) => t <= width);
   if (!tiers.length) tiers.push(width); // preview masters are smaller than every tier; never upscale
+  // 8-bit AVIF: the prebuilt sharp binaries reject bitdepth 10.
   for (const t of tiers) {
     await fs.mkdir(`${DST}/${kind}/${t}`, { recursive: true });
-    for (const m of seq) await sharp(`${dir}/${m.n}.png`).resize(t).avif({ quality: 52, effort: 6, bitdepth: 10 }).toFile(`${DST}/${kind}/${t}/${m.n}.avif`);
+    for (const m of seq) await sharp(`${dir}/${m.n}.png`).resize(t).avif({ quality: 52, effort: 6 }).toFile(`${DST}/${kind}/${t}/${m.n}.avif`);
   }
   for (const [name, src] of [["poster", seq[0].n], ["still", "still"]]) {
     await sharp(`${dir}/${src}.png`).resize(tiers[0]).avif({ quality: 55 }).toFile(`${DST}/${name}-${kind}.avif`);
