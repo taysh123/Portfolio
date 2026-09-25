@@ -166,6 +166,7 @@ def render_set(kind, quality, names=None, exr=False, out_root=None):
         bpy.ops.wm.read_factory_settings(use_empty=True)
         h_ = build_scene(tex, st["lid_deg"], st["screen_on"])
         scene = h_["scene"]; vl = bpy.context.view_layer; cam = setup_camera(scene, st, kind == "portrait")
+        scene.render.engine = "CYCLES"              # before the compositor: render-layer passes depend on the engine
         assign_light_groups(scene, vl)
         weights = beat_weights(step)
         apply_weights(scene, weights)
