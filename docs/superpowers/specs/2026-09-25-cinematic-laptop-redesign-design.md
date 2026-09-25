@@ -516,6 +516,21 @@ The first cyber-studio prototype read as *empty*: too much inactive black desk, 
 
 The haze volume adds roughly 20–30% render time at preview quality. That is within the §4.6 A/B rule (≤ 25%), subject to measurement at final quality.
 
+**Approved 2026-09-25:** you approved K0, K1 and K2 (preview round 2) as the visual direction, and approved this spec. The preview scene is committed as the starting point at `design/render/blender/preview/`.
+
+**Look-dev refinement requirements** (your notes at approval; binding for the final key frames, and not a redesign):
+1. **Colour separation:** keep deep obsidian/navy, cyan/ice illumination and neutral dark materials clearly distinct. Never wash the whole room in one blue hue.
+2. **Laptop as premium product photography:**
+   - realistic anodised aluminium;
+   - refined chamfer highlights and better hinge definition;
+   - deeper keyboard construction;
+   - a restrained trackpad reflection;
+   - realistic contact shadows.
+3. **Reflections:** subtle, believable reflections of the surrounding monitors and lights in the laptop glass and aluminium, wherever physically appropriate.
+4. **Depth in K2 and the late push:** keep recognisable bokeh and depth from the monitor arc, tower, slat wall and homelab. The final shot must never collapse into a laptop against an indistinct blue background.
+5. **VERIFY / WRITE / BUILD** stay exactly as the monitor story. The redesigned VERIFY is approved.
+6. **Truth:** no successful status, metric or output is ever fabricated on any screen.
+
 **Still open for look-dev:**
 - The WRITE and BUILD code is denser than ideal.
 - The tower interior glow sits at the top of its 30% budget.
