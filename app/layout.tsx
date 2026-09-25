@@ -124,6 +124,10 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-bg text-fg">
+        {/* Without JavaScript a scroll scene would pin 200svh around a frozen frame: never pin then (Plan 2 Task 5). */}
+        <noscript>
+          <style>{`.scene{height:auto!important}.scene__stage{position:relative!important;height:auto!important}`}</style>
+        </noscript>
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:inline-flex focus:items-center focus:rounded-full focus:border focus:border-line-strong focus:bg-surface-3 focus:px-5 focus:py-3 focus:text-sm focus:text-fg"

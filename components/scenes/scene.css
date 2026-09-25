@@ -1,0 +1,9 @@
+/* A scroll scene (spec §5): pinned 200svh at ≥1024×600 with motion allowed, otherwise a settled,
+   full-height composition. The CSS defaults ARE the settled state, so no-JS, reduced motion and
+   small screens need no script at all. */
+.scene { position: relative; --p: 1; --assemble: 1; --hold: 0.5; --recede: 0; --tbs-line: 1; }
+.scene__stage { position: relative; min-height: 100svh; display: grid; align-items: center; }
+@media (min-width: 1024px) and (min-height: 600px) and (prefers-reduced-motion: no-preference) {
+  html:not([data-reduced-motion="true"]) .scene { height: var(--pin-h, 200svh); }
+  html:not([data-reduced-motion="true"]) .scene__stage { position: sticky; top: 0; height: 100svh; overflow: clip; }
+}

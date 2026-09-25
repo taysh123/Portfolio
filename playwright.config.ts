@@ -10,6 +10,8 @@ export default defineConfig({
     command: "npx next start --port 3400",
     url: "http://localhost:3400",
     reuseExistingServer: true,
+    // Serves the ScrollScene test fixture (app/e2e-fixtures); a hand-started server needs the same env.
+    env: { E2E_FIXTURES: "1" },
     timeout: 120_000,
   },
   projects: [
