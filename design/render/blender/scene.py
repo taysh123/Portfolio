@@ -185,13 +185,19 @@ LOOKDEV = {
     # 1 colour separation — the blue lives in the bias light, not over the whole room
     "L1_halo": 44, "L2_graze": 18, "L5_key": 26, "L6_rim": 24, "L0_fill": 4, "slat": "#18191c", "led_status": "#9cc4ff",
     # the "10%": the displays light the room (camera-invisible spill in front of each screen, lg_monitors)
-    "spill_c": 8.0, "spill_side": 6.0, "spill_colour": "#8fb0e8",
+    "spill_c": 8.0, "spill_side": 6.5, "spill_colour": "#8fb0e8",
     # 5% warm, never on the laptop's face
     "lamp_bulb": 3.6,
     # 2 the laptop as product photography
     "alu": "#9aa0a8", "alu_rough": 0.30, "alu_aniso": 0.25, "trackpad": "#8d939b", "trackpad_coat": 0.0, "trackpad_rough": 0.42, "keys": "#0c0d0f", "keys_rough": 0.45, "key_backlight": 0.12,
     # 3 reflections: the lid-sweep card peaks mid-lid and is gone by the last lid frames
     "sweep_peak": 14.0, "L7_card": 12,
+    # C (user, 2026-09-26): the light-bar diffuser and the second card read as two hard white streaks on the
+    # black K1-off glass — softened to a realistic highlight, not removed
+    "lightbar_diff": 3.0, "L7b_card": 4, "glass_coat_rough": 0.09, "glass_coat": 0.55,
+    # leading line (user, 2026-09-26): a lighter stitched edge on the felt mat catches the key light and runs
+    # diagonally toward the laptop in K0 — a material, not an emitter; no RGB
+    "mat_edge": "#3c424c", "lead_line": 24.0,
 }
 
 
@@ -212,7 +218,7 @@ def build_scene(out_dir: str, lid_deg: float, screen_on: bool) -> dict:
     key_black = pbr("keys", lin(LOOKDEV["keys"]), rough=LOOKDEV["keys_rough"])
     pbt = pbr("pbt", lin("#1a1d22"), rough=0.62)
     pbt_enter = pbr("pbt_ice", lin("#7e97b8"), rough=0.6)
-    screen_glass = pbr("sglass", lin("#030405"), rough=0.02, coat=1.0, coat_rough=0.02, spec=0.8)
+    screen_glass = pbr("sglass", lin("#030405"), rough=0.02, coat=LOOKDEV["glass_coat"], coat_rough=LOOKDEV["glass_coat_rough"], spec=0.8)
     felt = pbr("felt", lin("#12151a"), rough=0.92)
     wall = pbr("plaster", lin("#0b0e14"), rough=0.95)
     slat = pbr("slat", lin(LOOKDEV["slat"]), rough=0.55)
@@ -286,6 +292,9 @@ def build_scene(out_dir: str, lid_deg: float, screen_on: bool) -> dict:
     # ── desk ─────────────────────────────────────────────────────────────────
     box("desk", (2.6, 1.0, 0.04), (0.05, 0.12, -0.02), desk, bevel=0.004, segs=3)
     box("mat", (1.22, 0.44, 0.003), (0.14, -0.03, 0.0015), felt, bevel=0.002, segs=2)
+    stitch = pbr("stitch", lin(LOOKDEV["mat_edge"]), rough=0.55)
+    box("mat_edge_f", (1.216, 0.005, 0.0032), (0.14, -0.2485, 0.0016), stitch, bevel=0.001, segs=1)   # front edge: the leading line
+    box("mat_edge_l", (0.005, 0.436, 0.0032), (-0.4685, -0.03, 0.0016), stitch, bevel=0.001, segs=1)
 
     # rail + arms + monitors
     box("rail", (1.9, 0.04, 0.02), (0.02, 1.15, 0.43), alu_rim, bevel=0.003)
@@ -311,7 +320,7 @@ def build_scene(out_dir: str, lid_deg: float, screen_on: bool) -> dict:
         cable(f"arm{nm}", [(x * 0.9, 1.14, 0.43), (ex, ey, 0.43), (x, y + 0.02, z)], 0.012, alu_dark)
     # light bar on the centre display
     box("lightbar", (0.40, 0.03, 0.016), (0.03, 0.645, 0.655), alu_dark, bevel=0.004)
-    box("lightbar_diff", (0.38, 0.004, 0.004), (0.03, 0.632, 0.648), pbr("lbdiff", (0, 0, 0), emit=lin("#dfe8ff"), strength=4))
+    box("lightbar_diff", (0.38, 0.004, 0.004), (0.03, 0.632, 0.648), pbr("lbdiff", (0, 0, 0), emit=lin("#dfe8ff"), strength=LOOKDEV["lightbar_diff"]))
 
     # ── PC tower (right) ────────────────────────────────────────────────────
     tw = add(bpy.data.objects.new("tower", None))
@@ -459,13 +468,21 @@ def build_scene(out_dir: str, lid_deg: float, screen_on: bool) -> dict:
     area("L1_halo", (0.03, 0.72, 0.42), (0.03, 1.2, 0.62), ICE, LOOKDEV["L1_halo"], 1.0, 0.25)
     for sx_ in (-0.75, 0.75):
         area(f"L2_graze{sx_}", (sx_, 1.02, -0.05), (sx_, 1.19, 0.9), lin("#3f6fe0"), LOOKDEV["L2_graze"], 1.0, 0.03)
-    area("L4_lightbar", (0.03, 0.63, 0.64), (0.0, 0.05, 0.0), lin("#e6eeff"), 9, 0.38, 0.03)
+    l4 = area("L4_lightbar", (0.03, 0.63, 0.64), (0.0, 0.05, 0.0), lin("#e6eeff"), 9, 0.38, 0.03)
+    # C: the lamp's hard rectangle was the dominant K1-off streak. The screen glass's coat is now lightly
+    # diffused (LOOKDEV "glass_coat_rough"), so the light bar reflects as a soft highlight, not a hard white bar.
     area("L5_key", (-1.25, -0.85, 1.2), (0.0, 0.1, 0.05), lin("#c9dcff"), LOOKDEV["L5_key"], 1.0, 0.7)
     area("L6_rim", (1.25, 0.95, 0.55), (0.05, 0.0, 0.08), CYAN, LOOKDEV["L6_rim"], 0.45)
     area("L6b_rim_left", (-1.1, 0.95, 0.5), (-0.3, 0.2, 0.1), lin("#5a86ff"), 10, 0.4)
     area("L7_card", (-0.2, -1.0, 1.0), (0.0, 0.0, 0.02), (1, 1, 1), LOOKDEV["L7_card"], 1.4, 0.04, glossy_only=True)
-    area("L7b_card", (0.9, -0.6, 0.7), (0.0, 0.05, 0.05), lin("#cfe2ff"), 10, 0.9, 0.04, glossy_only=True)
+    area("L7b_card", (0.9, -0.6, 0.7), (0.0, 0.05, 0.05), lin("#cfe2ff"), LOOKDEV["L7b_card"], 0.9, 0.04, glossy_only=True)
     area("L0_fill", (0.0, -1.8, 0.35), (0.0, 0.2, 0.1), lin("#6d86b8"), LOOKDEV["L0_fill"], 1.8, 0.6)
+    # Leading line (user, 2026-09-26): a thin reflection-only card whose soft highlight in the satin desk runs from
+    # the lower left toward the laptop's front edge in K0 — product-photography technique, never visible itself,
+    # light-linked to the desk and mat only (see below). Placed on the mirror rays of desk points (-0.30,-0.10)
+    # and (-0.05,-0.17) seen from the K0 camera.
+    lead = area("L13_lead", (-0.043, 0.317, 0.304), (-0.175, -0.135, 0.0), lin("#cfdcf2"), LOOKDEV["lead_line"], 0.47, 0.012, glossy_only=True)
+    lead.rotation_euler.z += math.radians(-15)
     # the displays light the room: camera-invisible spill just in front of each screen (lg_monitors via "mon_")
     SPILL = lin(LOOKDEV["spill_colour"])
     area("mon_c_spill", (0.03, 0.62, 0.44), (0.0, -0.3, 0.05), SPILL, LOOKDEV["spill_c"], 0.70, 0.39)
@@ -510,5 +527,19 @@ def build_scene(out_dir: str, lid_deg: float, screen_on: bool) -> dict:
         entry.light_linking.link_state = "EXCLUDE"
     for nm in ("mon_c_spill", "mon_r_spill", "mon_l_spill"):
         bpy.data.objects[nm].light_linking.receiver_collection = rx
+    # C: the diagonal card keeps its chamfer hairline but stops streaking across the screen glass
+    glass = bpy.data.collections.new("card_receivers")
+    for nm in ("lapscreen", "lid_bezel"):
+        glass.objects.link(bpy.data.objects[nm])
+    for entry in glass.collection_objects:
+        entry.light_linking.link_state = "EXCLUDE"
+    # Only the small diagonal card is kept off the glass; the main card still reflects, softened by the
+    # diffused coat into one realistic highlight (the two hard white streaks were both cards).
+    bpy.data.objects["L7b_card"].light_linking.receiver_collection = glass
+    # leading line: the lead card lights (reflects in) the desk and the mat only
+    lead_rx = bpy.data.collections.new("lead_receivers")
+    for nm in ("desk", "mat", "mat_edge_f", "mat_edge_l"):
+        lead_rx.objects.link(bpy.data.objects[nm])
+    bpy.data.objects["L13_lead"].light_linking.receiver_collection = lead_rx
 
     return {"scene": scene, "screen": ls, "hinge": hinge}

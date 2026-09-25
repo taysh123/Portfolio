@@ -666,6 +666,16 @@ The full preview sequence is also scrubbed to check for noise boil and continuit
 
 Look-dev continues on each frame until it passes. If a key frame has not converged after three passes, I bring it to you with options rather than lowering the bar. No final batch starts without your approval of the key frames (§13).
 
+**Gate record (approved 2026-09-26).** The user approved the final key frames with these choices:
+- **A1 — accepted trade-off:** screen-corner softness of 1.2–1.6 px CoC at the late push is kept, with the aperture unchanged. It is recorded as a deliberate trade-off, not a defect.
+- **B2:** the camera path is unchanged. In the late push, the room dims less: the monitor, bias-light and practical light groups are weighted `1 − 0.25·t` (was steeper), so the monitor, tower, slat and desk/homelab cues stay readable. The change is restrained.
+- **C:** the harsh K1-off light-bar streaks are toned down. The secondary card light is light-linked away from the glass, and the glass coat is more diffuse and lighter (roughness 0.09, weight 0.55). One soft, realistic reflection remains.
+- **D:** lid frames run at 48 spp (was 64), and push frames from `PUSH_SPLIT` on run at 64 spp (was 96). Both were adopted only after a final-quality side-by-side:
+  - `lid-20`: mean |Δ| 0.51/255, p99 4/255, equal high-frequency noise. At 2× zoom the only difference is a slightly softer desk grain; the lid, keys and screen are unchanged.
+  - `push-20`: mean |Δ| 0.10/255, p99 1/255, visually indistinguishable.
+- **Leading line:** a subtle glossy-only highlight along the mat's stitched edge in K0 leads toward the laptop (`L13_lead`, light-linked to desk and mat only). No RGB strip.
+- **Known, accepted:** the K1-off atmosphere audit reads 0.93 against the target, as it did in the approved frames (0.937).
+
 ### 4.7 Asset pipeline (committed, reproducible)
 
 ```

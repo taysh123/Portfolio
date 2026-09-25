@@ -16,14 +16,15 @@ from scene import build_scene  # noqa: E402
 QUALITY = {"preview": {"landscape": (960, 540), "portrait": (540, 960), "spp": 16},
            "lookdev": {"landscape": (960, 540), "portrait": (540, 960), "spp": 64},
            "final": {"landscape": (1920, 1080), "portrait": (1080, 1920), "spp": 64}}
-PUSH_B_SPP = 96          # spec §4.6: f/2.0 bokeh meets small LEDs in the second half of the push
+PUSH_B_SPP = 64          # push frames j >= PUSH_SPLIT; 96 → 64 approved (gate option D; push-20 diff mean 0.10/255, p99 1/255)
 PUSH_SPLIT = 12          # push frames j >= 12 are shot "push-b"
+LID_SPP = 48             # final lid frames; 64 → 48 approved (gate option D; lid-20 diff mean 0.51/255, p99 4/255)
 
 # Object-name prefix → Cycles light group (spec §4.6 "Light groups"). Names are the scene's own
 # (scene.py); test_groups.py asserts every light and emitter lands in exactly one group.
 LIGHT_GROUPS = [("L1_", "lg_bias"), ("L2_", "lg_bias"), ("shelfstrip", "lg_bias"),
                 ("L0_", "lg_key"), ("L4_", "lg_key"), ("L5_", "lg_key"), ("L6", "lg_key"), ("lightbar_diff", "lg_key"),
-                ("L7", "lg_card"), ("L8_", "lg_sweep"),
+                ("L7", "lg_card"), ("L13_", "lg_card"), ("L8_", "lg_sweep"),
                 ("mon_", "lg_monitors"), ("lapscreen", "lg_screen"), ("L9_", "lg_screen"),
                 ("key_backlight", "lg_backlight"), ("mech_halo", "lg_backlight"),
                 ("t_", "lg_practical"), ("bayled", "lg_practical"), ("portled", "lg_practical"),
@@ -59,6 +60,10 @@ def beat_weights(step):
         for g in w:
             if g not in ("lg_screen", "lg_backlight", "lg_card"):
                 w[g] = 1 - 0.4 * t                                    # the room recedes to ×0.6
+        # B2 (user, 2026-09-26): the depth cues — displays, bias/slat light, tower and LED practicals — recede
+        # only to ×0.75, so the late push keeps recognisable workstation bokeh instead of a flat blue field.
+        for g in ("lg_monitors", "lg_bias", "lg_practical"):
+            w[g] = 1 - 0.25 * t
         w["lg_warm"] = max(0.0, 1 - t / 0.85) if t < 1 else 0.0       # exactly 0 at K2
     return w
 
@@ -165,7 +170,7 @@ def corner_coc_px(scene, cam, screen, width_px):
     return worst
 
 
-def render_set(kind, quality, names=None, exr=False, out_root=None):
+def render_set(kind, quality, names=None, exr=False, out_root=None, spp_override=None):
     keys = LANDSCAPE if kind == "landscape" else PORTRAIT
     w, h = QUALITY[quality][kind]
     out = os.path.join(out_root or os.path.join(HERE, "out"), kind); os.makedirs(out, exist_ok=True)
@@ -186,6 +191,10 @@ def render_set(kind, quality, names=None, exr=False, out_root=None):
         apply_weights(scene, weights)
         setup_compositor(scene, vl, os.path.join(out, step["name"]) if exr else None)
         spp = PUSH_B_SPP if quality == "final" and step["shot"] == "push" and step["j"] >= PUSH_SPLIT else QUALITY[quality]["spp"]
+        if quality == "final" and step["shot"] == "lid":
+            spp = LID_SPP
+        if spp_override:
+            spp = spp_override
         c = scene.cycles
         scene.render.engine, c.device, c.samples = "CYCLES", "CPU", spp
         c.use_denoising, c.denoiser, c.seed = True, "OPENIMAGEDENOISE", 7
@@ -210,7 +219,7 @@ def render_set(kind, quality, names=None, exr=False, out_root=None):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--quality", default="preview"); ap.add_argument("--framing", default="all")
-    ap.add_argument("--names", default=""); ap.add_argument("--exr", action="store_true"); ap.add_argument("--out", default="")
+    ap.add_argument("--names", default=""); ap.add_argument("--exr", action="store_true"); ap.add_argument("--out", default=""); ap.add_argument("--spp", type=int, default=0)
     a = ap.parse_args(sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:])
     for kind in (["landscape", "portrait"] if a.framing == "all" else [a.framing]):
-        render_set(kind, a.quality, [n for n in a.names.split(",") if n], a.exr, os.path.abspath(a.out) if a.out else None)
+        render_set(kind, a.quality, [n for n in a.names.split(",") if n], a.exr, os.path.abspath(a.out) if a.out else None, a.spp or None)
