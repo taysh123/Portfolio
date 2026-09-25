@@ -256,6 +256,10 @@ PW_CHROMIUM=/opt/pw-browsers/chromium npm run measure
 - Playwright reuses an existing server (`reuseExistingServer: true`). A hand-started `next start` must be run with `E2E_FIXTURES=1`, or the scene fixture 404s and `scene.spec.ts` fails.
 - The rAF counters in `idle.spec.ts` and `sections.spec.ts` wrap `window.requestAnimationFrame` after load. Framer's frame loop keeps its own captured reference, so those counters cover Lenis, the stage and GravityField, but not Framer. Framer's loop is event-driven and does not idle-loop, so this is acceptable.
 - Stop the stray `next start` before rebuilding. Kill the server **by its process ID from a pid file**. Never use `pkill -f` with a pattern that also matches your own shell command.
+- **Long background jobs (renders, the batch, texture generation) are tracked by PID file, never by process-name matching.** A waiter such as `while pgrep -f "render.py …"` matches its own command line and never exits; that happened on 2026-09-26 and cost about 90 minutes after the renders had finished.
+  - Launch with a wrapper that records `$!` to `<name>.pid` and writes the exit code to `<name>.exit`.
+  - Wait with `while kill -0 $(cat <name>.pid); do sleep 10; done`, then read `<name>.exit`.
+  - Before waiting on anything that has been running longer than expected, inspect `ps` and the log.
 
 ---
 
@@ -1841,7 +1845,7 @@ for kind in framings:
   - Portrait runs first (`--framing portrait`), then landscape.
   - Frame counts stay at Plan 1's 65 landscape and 29 portrait, plus the stills. Spec §13 decision 12 projected 31 portrait frames; the 16-lid / 12-push portrait split was fixed in Plan 1. Record the difference in the ledger. It is a deviation that saves time without affecting the approved look.
 
-- [ ] **Step 3: Launch in the background, at low priority:** `nohup nice -n 15 npm run render:final -- --framing portrait > <scratchpad>/final-portrait.log 2>&1 &`, then landscape.
+- [ ] **Step 3: Launch in the background, at low priority,** through the PID-file wrapper (per-task gate section): portrait first, `bgjob final-portrait <log> nice -n 15 npm run render:final -- --framing portrait`, then landscape. Wait on the PID only, never on a `pgrep -f` pattern.
   - While a chunk renders, CPU contention inflates `npm run measure`'s LCP and slows e2e.
   - Record budget measurements only between chunks, or with the render paused: `kill -STOP <pid>` for the measurement, then `kill -CONT`.
   - Note in the ledger when a measurement was taken under contention. Check progress by reading the log. Continue with Tasks 11–21 while it runs. **Tasks 11–21 must not touch `design/render` or `public/entrance*`.**
