@@ -117,7 +117,10 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
         decode: (b) => createImageBitmap(b), window: windowFor(tier), concurrency: 4, keep,
       });
       s.store = store;
-      store.onChange(() => render(s.p));
+      // A decoded frame only matters while the room is visible: from identity on, the opaque surface covers
+      // the canvas, so background decodes cost no draw (spec §9 idle work; found in Plan 2 Task 12, where
+      // a scrolled-away entrance kept redrawing for every frame the store finished).
+      store.onChange(() => { if (s.p < identityAt()) render(s.p); });
       store.setPlayhead(0);
       const go = () => { if (s.store === store) store.start(); };
       if (document.readyState === "complete") go(); else window.addEventListener("load", go, { once: true });
@@ -148,23 +151,26 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       s.pContain = f ? f.p : BEATS.push[1];
     };
 
+    // The progress at which the surface reaches identity and covers the viewport.
+    const identityAt = () => (s.kind === "portrait" ? BEATS.portraitOpen[1] : BEATS.push[1]);
+
     const placeSurface = (p: number, quad: Quad | null) => {
       const portrait = s.kind === "portrait";
-      const identityAt = portrait ? BEATS.portraitOpen[1] : BEATS.push[1];
+      const identityP = identityAt();
       // Before identity the surface needs a real quad: with none (frames not decoded yet, a manifest failure)
       // it stays hidden rather than flashing full-screen over the rendered room.
-      const shown = p >= BEATS.wake[0] && (quad !== null || p >= identityAt);
+      const shown = p >= BEATS.wake[0] && (quad !== null || p >= identityP);
       surface.style.opacity = shown ? String(segment(p, BEATS.wake[0], BEATS.wake[0] + 0.04)) : "0";
       // pContain can equal the push end (no push frame covers the viewport): then it is a step, not a ramp.
       let toIdentity = portrait ? segment(p, ...BEATS.portraitOpen)
         : s.pContain < BEATS.push[1] ? segment(p, s.pContain, BEATS.push[1], easeOut) : Number(p >= BEATS.push[1]);
-      if (p >= identityAt || !quad) toIdentity = 1; // no quad (nothing decoded, or a back-facing frame): rest at identity
+      if (p >= identityP || !quad) toIdentity = 1; // no quad (nothing decoded, or a back-facing frame): rest at identity
       const q = quad ?? ([{ x: 0, y: 0 }, { x: s.vw, y: 0 }, { x: s.vw, y: s.vh }, { x: 0, y: s.vh }] as Quad);
       const t = surfaceTransform({ kind: s.kind, quad: q, vw: s.vw, vh: s.vh, toIdentity });
       surface.style.left = `${t.box.x}px`; surface.style.top = `${t.box.y}px`; surface.style.width = `${t.box.w}px`; surface.style.height = `${t.box.h}px`;
       surface.style.transform = t.matrix; surface.style.clipPath = t.clip;
       hero.style.left = `${-t.box.x}px`; hero.style.top = `${-t.box.y}px`;
-      surface.style.pointerEvents = p >= identityAt ? "auto" : "none";
+      surface.style.pointerEvents = p >= identityP ? "auto" : "none";
     };
 
     // Inside the screen: boot log → identity card → the card lands as the name line, the hero rises in.

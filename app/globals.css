@@ -705,3 +705,6 @@
 .seam-top-dark::before { top: 0; background: linear-gradient(to bottom, var(--seam-edge, transparent), transparent); }
 .seam-bottom-dark::after { bottom: 0; background: linear-gradient(to top, var(--seam-edge, transparent), transparent); }
 [data-theme="light"] .seam-top-dark, [data-theme="light"] .seam-bottom-dark { --seam-edge: #f5f6f8; }
+
+/* The content shell for Plan 2 sections: one measure, gutters from the token. */
+.shell { width: min(1240px, 100vw - 2 * var(--gutter)); margin-inline: auto; }

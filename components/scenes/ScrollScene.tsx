@@ -23,10 +23,20 @@ export function ScrollScene({ id, labelledBy, className, dark = false, pinSvh = 
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
 
   // Re-evaluated live: resize across the threshold and either reduced-motion source (Review Focus 2, 3).
+  // Fit guard (Plan 2 Task 12 fix): the pinned stage is exactly one viewport tall and clips, so a
+  // composition taller than the viewport would hide its own copy and buttons under the next scene.
+  // Such a scene gets data-fit="false" and falls back to the settled, unpinned layout (scene.css).
+  // The composition's height is its natural content height in both states, so this cannot oscillate.
   useEffect(() => {
-    const check = () => setPinned(pinEligible(window.innerWidth, window.innerHeight, reduced));
+    const el = ref.current; const content = el?.querySelector(".scene__stage")?.firstElementChild;
+    const check = () => {
+      const f = !content || content.getBoundingClientRect().height <= window.innerHeight;
+      if (el) el.dataset.fit = String(f);
+      setPinned(f && pinEligible(window.innerWidth, window.innerHeight, reduced));
+    };
     check(); window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
+    const ro = content ? new ResizeObserver(check) : null; if (content) ro!.observe(content);
+    return () => { window.removeEventListener("resize", check); ro?.disconnect(); };
   }, [reduced]);
 
   useEffect(() => {

@@ -5,7 +5,7 @@ import { Stage } from "@/components/ui/Stage";
 import { Entrance } from "@/components/entrance/Entrance";
 import { Hero } from "@/components/sections/Hero";
 import { About } from "@/components/sections/About";
-import { Projects } from "@/components/sections/Projects";
+import { Work } from "@/components/work/Work";
 import { Skills } from "@/components/sections/Skills";
 import { EngineeringPanel } from "@/components/sections/EngineeringPanel";
 import { Contact } from "@/components/sections/Contact";
@@ -41,9 +41,10 @@ export default function Page() {
           <Hero />
         </Entrance>
 
+        <Work />
+
         <Stage>
           <About />
-          <Projects />
           <Skills />
           <EngineeringPanel />
           <Contact />

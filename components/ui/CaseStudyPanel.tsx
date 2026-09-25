@@ -71,7 +71,7 @@ export function CaseStudyPanel({
             transition={{ duration: DUR.mid }}
             onClick={onClose}
             aria-hidden="true"
-            className="fixed inset-0 z-[60] bg-[color-mix(in_oklab,var(--surface-0)_86%,transparent)] backdrop-blur-md"
+            className="fixed inset-0 z-[60] bg-[color-mix(in_oklab,var(--bg)_86%,transparent)] backdrop-blur-md"
           />
 
           <motion.aside
@@ -107,10 +107,10 @@ export function CaseStudyPanel({
             */
             data-lenis-prevent
             className="fixed inset-0 z-[61] overflow-y-auto overscroll-contain"
-            style={{ background: "var(--surface-0)" }}
+            style={{ background: "var(--bg)" }}
           >
             {/* ── Sticky chrome ──────────────────────────────────────── */}
-            <header className="sticky top-0 z-20 border-b border-line-subtle bg-surface-3/95 backdrop-blur-md">
+            <header className="sticky top-0 z-20 border-b border-line bg-[color-mix(in_oklab,var(--bg-raised)_95%,transparent)] backdrop-blur-md">
               <div className="mx-auto flex w-full max-w-[68rem] items-center justify-between gap-4 px-[var(--gutter)] py-3.5">
                 <div className="flex min-w-0 items-center gap-3">
                   <Eyebrow as="span">Case study</Eyebrow>
@@ -171,7 +171,7 @@ export function CaseStudyPanel({
                     className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4"
                     style={{
                       background:
-                        "linear-gradient(to top, var(--surface-0), transparent)",
+                        "linear-gradient(to top, var(--bg), transparent)",
                       opacity: 0.7,
                     }}
                   />
@@ -235,7 +235,7 @@ export function CaseStudyPanel({
                 {project.metrics.map((m) => (
                   <div
                     key={m.label}
-                    className="rounded-xl border border-line-subtle bg-surface-1 px-4 py-3.5"
+                    className="raised rounded-xl border border-line px-4 py-3.5"
                   >
                     <dd className="tnum text-2xl font-semibold leading-none text-fg">
                       {m.value}
@@ -258,7 +258,7 @@ export function CaseStudyPanel({
                         <figure>
                           <div
                             className={
-                              "relative w-full overflow-hidden rounded-xl border border-line-subtle " +
+                              "relative w-full overflow-hidden rounded-xl border border-line " +
                               // Same reasoning as the hero: a portrait capture
                               // needs a taller frame or it sits in a pool of
                               // dead space.
@@ -320,7 +320,7 @@ export function CaseStudyPanel({
                   {project.caseStudy.decisions.map((d) => (
                     <li
                       key={d.title}
-                      className="rounded-xl border border-line-subtle bg-surface-1 p-5"
+                      className="raised rounded-xl border border-line p-5"
                     >
                       <h4 className="text-[0.95rem] font-medium text-fg">{d.title}</h4>
                       <p className="mt-2 text-sm leading-relaxed text-fg-muted">{d.body}</p>
@@ -340,7 +340,7 @@ export function CaseStudyPanel({
 
               {project.caseStudy.honestNote && (
                 <Block title="What this isn't" className="mt-14">
-                  <div className="rounded-xl border border-line bg-surface-1 p-5">
+                  <div className="raised rounded-xl border border-line p-5">
                     <p className="leading-relaxed text-fg-muted">
                       {project.caseStudy.honestNote}
                     </p>
@@ -360,7 +360,7 @@ export function CaseStudyPanel({
 
               {/* Closing actions, so a reader who has read to the bottom does
                   not have to scroll back up to act on it. */}
-              <div className="mt-16 flex flex-wrap items-center gap-3 border-t border-line-subtle pt-10">
+              <div className="mt-16 flex flex-wrap items-center gap-3 border-t border-line pt-10">
                 {project.liveUrl && (
                   <ButtonLink href={project.liveUrl} external arrow>
                     {project.liveLabel ?? "Open the app"}

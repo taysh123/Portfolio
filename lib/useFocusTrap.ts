@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type RefObject } from "react";
+import { useEffect, useLayoutEffect, type RefObject } from "react";
 
 const FOCUSABLE = [
   "a[href]",
@@ -25,24 +25,20 @@ export function useFocusTrap(
   active: boolean,
   onEscape?: () => void,
 ) {
-  useEffect(() => {
+  const focusables = () =>
+    Array.from(ref.current?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []).filter(
+      (el) => el.offsetParent !== null || el === document.activeElement,
+    );
+
+  // Keys are trapped from a layout effect, so Escape and Tab work before the overlay's first paint: with an
+  // on-demand chunk under load, a passive effect left a visible case-study panel ignoring Escape (Plan 2
+  // Task 12). Focus itself moves in a passive effect below — restoring it during the layout phase broke
+  // the mobile sheet's return to its menu button.
+  useLayoutEffect(() => {
     if (!active) return;
 
-    const root = ref.current;
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-
-    const focusables = () =>
-      Array.from(root?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []).filter(
-        (el) => el.offsetParent !== null || el === document.activeElement,
-      );
-
-    // Move focus in on open — prefer an explicit target, else the first
-    // focusable, else the container itself.
-    const initial =
-      root?.querySelector<HTMLElement>("[data-autofocus]") ?? focusables()[0] ?? root;
-    initial?.focus?.();
-
     const onKeyDown = (e: KeyboardEvent) => {
+      const root = ref.current;
       if (e.key === "Escape") {
         e.stopPropagation();
         onEscape?.();
@@ -77,11 +73,27 @@ export function useFocusTrap(
     };
 
     document.addEventListener("keydown", onKeyDown, true);
+    return () => document.removeEventListener("keydown", onKeyDown, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, ref, onEscape]);
+
+  useEffect(() => {
+    if (!active) return;
+
+    const root = ref.current;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+
+    // Move focus in on open — prefer an explicit target, else the first
+    // focusable, else the container itself.
+    const initial =
+      root?.querySelector<HTMLElement>("[data-autofocus]") ?? focusables()[0] ?? root;
+    initial?.focus?.();
+
     return () => {
-      document.removeEventListener("keydown", onKeyDown, true);
       previouslyFocused?.focus?.();
     };
-  }, [active, ref, onEscape]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, ref]);
 }
 
 /** Locks body scroll while `active`, preserving the original inline value. */

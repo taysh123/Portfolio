@@ -1,0 +1,34 @@
+.flagship__grid { display: grid; gap: clamp(2rem, 4vw, 4rem); align-items: center; padding-block: clamp(2rem, 8vh, 7rem); }
+@media (min-width: 1024px) { .flagship__grid { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); } }
+.flagship__copy { position: relative; z-index: 2; }                /* never transformed: always legible */
+.flagship__copy dl > div { display: flex; flex-direction: column-reverse; }
+.flagship__world { position: relative; min-height: min(62svh, 640px); }
+/* A world is a definite box bounded by the stage (the pinned stage is one viewport tall; the ScrollScene
+   fit guard unpins anything taller, which must stay the exception). Definite, so nothing shifts on load. */
+.world-frame { position: relative; width: 100%; height: min(60svh, 560px); }
+/* The ghost numeral bleeds past the world by design; clip it at the section, never at the page. */
+.flagship { overflow-x: clip; }
+/* Narrow screens: three metric columns cannot hold an uppercase label, so the metrics stack as rows —
+   value, then label — with the DOM order (dt, dd) unchanged. */
+@media (max-width: 479px) {
+  .flagship__copy dl { grid-template-columns: minmax(0, 1fr); gap: 0.5rem; }
+  .flagship__copy dl > div { flex-direction: row-reverse; justify-content: flex-end; align-items: baseline; gap: 0.75rem; }
+  .flagship__copy dl dt { margin-top: 0; }
+}
+/* Short viewports: the same copy, tighter rhythm, so 1280×720-class laptops keep the pinned story. */
+@media (max-height: 820px) {
+  .flagship__copy h3 { font-size: clamp(1.875rem, 3.2vw, 2.5rem); margin-top: 0.5rem; }
+  .flagship__copy > * + * { margin-top: 0.75rem; }
+  .flagship__copy dl { margin-top: 1rem; padding-top: 0.75rem; }
+  .flagship__copy dl + ul, .flagship__copy ul + div { margin-top: 1rem; }
+}
+.flagship__num { font-variant-numeric: tabular-nums; }
+/* Unpinned (small screens) — spec §5.2 "a single in-view reveal"; never under reduced motion, never in no-JS
+   (data-inview is only ever written by script). One-shot, transform/opacity only. */
+.scene[data-pinned="false"][data-inview="true"] .flagship__world { animation: world-reveal 560ms var(--ease-out) both; }
+@keyframes world-reveal { from { opacity: 0; transform: translateY(24px) scale(0.96); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .flagship__world { animation: none !important; } }
+[data-reduced-motion="true"] .flagship__world { animation: none !important; }
+.flagship__ghost { position: absolute; right: -2%; top: -8%; z-index: 0; pointer-events: none; font: 600 clamp(8rem, 18vw, 16rem)/1 var(--font-sans);
+  letter-spacing: -0.06em; color: var(--fg); opacity: calc(0.06 * var(--assemble) * (1 - var(--recede)));
+  transform: translateY(calc((1 - var(--assemble)) * 48px - var(--recede) * 32px)); }

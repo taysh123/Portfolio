@@ -11,8 +11,7 @@ test("first-load JS for / ≤ 286 KB gzip and HTML ≤ 568 KB", async ({ request
   expect(Buffer.byteLength(html) / 1024).toBeLessThanOrEqual(568);
 });
 
-// un-fixme in Task 12 (August's Projects.tsx still imports the panel statically)
-test.fixme("the case-study panel is not part of first-load JS", async ({ page }) => {
+test("the case-study panel is not part of first-load JS", async ({ page }) => {
   const js: string[] = [];
   page.on("response", async (r) => { if (r.url().endsWith(".js")) js.push(await r.text().catch(() => "")); });
   await page.goto("/", { waitUntil: "networkidle" });

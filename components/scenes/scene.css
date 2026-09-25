@@ -6,4 +6,7 @@
 @media (min-width: 1024px) and (min-height: 600px) and (prefers-reduced-motion: no-preference) {
   html:not([data-reduced-motion="true"]) .scene { height: var(--pin-h, 200svh); }
   html:not([data-reduced-motion="true"]) .scene__stage { position: sticky; top: 0; height: 100svh; overflow: clip; }
+  /* Fit guard (ScrollScene): a composition taller than the viewport is never pinned — it would clip. */
+  html:not([data-reduced-motion="true"]) .scene[data-fit="false"] { height: auto; }
+  html:not([data-reduced-motion="true"]) .scene[data-fit="false"] .scene__stage { position: relative; height: auto; overflow: visible; }
 }

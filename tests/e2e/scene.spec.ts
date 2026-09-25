@@ -37,3 +37,14 @@ test("no JavaScript: settled composition, not pinned", async ({ browser }) => {
   expect(await page.locator("#fx").evaluate((el) => el.getBoundingClientRect().height)).toBeLessThan(900 * 1.5);
   await ctx.close();
 });
+
+test("fit guard: a composition taller than the viewport is never pinned, so nothing is clipped (Plan 2 Task 12)", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("/e2e-fixtures/scene");
+  await expect(page.locator("#fx")).toHaveAttribute("data-fit", "true");
+  await expect(page.locator("#fx")).toHaveAttribute("data-pinned", "true");
+  await expect(page.locator("#fx-tall")).toHaveAttribute("data-fit", "false");
+  await expect(page.locator("#fx-tall")).toHaveAttribute("data-pinned", "false");
+  await expect(page.locator("#fx-tall .scene__stage")).toHaveCSS("position", "relative");
+  await page.locator("#fx-tall [data-bottom]").click();             // reachable, not under the next block
+});
