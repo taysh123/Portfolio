@@ -71,3 +71,27 @@ test("nav anchors glide the section to just under the fixed header (Lenis-aware,
   await expect.poll(async () => page.locator("#about").evaluate((el) => { const t = el.getBoundingClientRect().top; return t >= 40 && t < 140; }), { timeout: 5000 }).toBe(true);
   await expect(page).toHaveURL(/#about$/);
 });
+
+for (const [w, h] of [[844, 390], [667, 375]] as const) {
+  test(`floating controls never cover the hero CTAs at ${w}x${h} (Plan 1 open item)`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    await page.goto("/"); await page.locator("[data-skip-intro]").click();
+    await expect(page.locator("[data-floating-control]").first()).toBeVisible();
+    const hits = await page.evaluate(() => {
+      const fab = [...document.querySelectorAll("[data-floating-control] button")].map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0);
+      const ctas = [...document.querySelectorAll<HTMLElement>("#hero a, #hero button")].filter((e) => e.offsetParent).map((e) => ({ t: e.textContent?.trim(), r: e.getBoundingClientRect() }));
+      return ctas.filter((c) => fab.some((f) => f.left < c.r.right && f.right > c.r.left && f.top < c.r.bottom && f.bottom > c.r.top)).map((c) => c.t);
+    });
+    expect(hits).toEqual([]);
+  });
+}
+
+for (const [w, h] of [[844, 390], [390, 844]] as const) {
+  test(`the accessibility panel fits the viewport at ${w}x${h} (every control reachable)`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    await page.goto("/"); await page.locator("[data-skip-intro]").click();
+    await page.getByRole("button", { name: /accessibility/i }).first().click();
+    const box = (await page.getByRole("dialog").boundingBox())!;
+    expect(box.y).toBeGreaterThanOrEqual(0); expect(box.y + box.height).toBeLessThanOrEqual(h);
+  });
+}

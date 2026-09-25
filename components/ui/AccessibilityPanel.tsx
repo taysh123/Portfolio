@@ -58,6 +58,10 @@ export function AccessibilityPanel() {
       className={cn(
         "fixed left-6 z-50 flex flex-col items-start gap-3",
         "bottom-[max(1.5rem,env(safe-area-inset-bottom))]",
+        // Short landscape screens (≤ 500px tall): the left corner lands on the hero's left-aligned CTAs, which
+        // cannot move higher, so this control stacks above the chat button on the right instead.
+        "[@media(max-height:500px)]:left-auto [@media(max-height:500px)]:right-6 [@media(max-height:500px)]:items-end",
+        "[@media(max-height:500px)]:bottom-[calc(max(1.5rem,env(safe-area-inset-bottom))+4rem)]",
         // See the note in AIChatWidget: two fixed controls in the bottom
         // corners of a phone cover exactly the actions a reader is aiming for.
         "transition-[transform,opacity] duration-[var(--dur-slow)] ease-[var(--ease-out-expo)] lg:translate-y-0 lg:opacity-100",
@@ -76,7 +80,7 @@ export function AccessibilityPanel() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={reduced ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.98 }}
             transition={{ duration: DUR.mid, ease: easeOutExpo }}
-            className="glass edge-lit w-[19rem] overflow-hidden rounded-2xl border border-line p-5 shadow-float"
+            className="glass edge-lit w-[19rem] max-h-[calc(100svh-7rem)] overflow-y-auto overscroll-contain rounded-2xl border border-line p-5 shadow-float [@media(max-height:500px)]:max-h-[calc(100svh-11rem)]"
           >
             <div className="flex items-center justify-between gap-3">
               <Eyebrow as="span">Accessibility</Eyebrow>

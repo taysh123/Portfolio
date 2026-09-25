@@ -14,9 +14,9 @@
 
    Two rules this system enforces:
      1. ACCENT ROLE SPLIT — `--accent` (blue) is the only *interaction*
-        colour: links, rings, primary CTA, emphasis. `--glow` (violet) is
-        atmospheric only: bloom behind solid objects. It is never text and
-        never a border. This is what keeps the palette out of the
+        colour: links, rings, primary CTA, emphasis. `--glow` (a low-alpha
+        cool blue since the violet was retired, spec §3.2) is atmospheric
+        only: bloom behind solid objects. It is never text and never a border. This is what keeps the palette out of the
         "AI purple/pink gradient" register and what makes light mode legible.
      2. BORDERS ARE ALWAYS rgba, never solid grey, and always theme-aware.
    ═══════════════════════════════════════════════════════════════════════ */
@@ -31,9 +31,7 @@
      Translucent by design. The page field carries a soft aurora, so a
      low-alpha surface reads as glass *without* backdrop-filter — which is
      how this design gets the glass look at ~4 blur layers instead of ~20. */
-  /* A deep navy-violet field rather than neutral near-black. The violet has to
-     live in the substrate — if it only appears in accents it reads as decal
-     rather than atmosphere. */
+  /* A deep, cool near-black field (the August navy-violet was retired, spec §3.2). */
   --bg: #05070a;
   --bg-raised: #0a0e14;
   /* The laptop screen's black: the surface the hero is projected onto. */
@@ -44,7 +42,7 @@
   --surface-3: rgba(16, 18, 30, 0.92);
   --surface-sunken: rgba(0, 0, 0, 0.24);
 
-  /* Panels are lit objects: a cool top, a slight violet pooling at the base. */
+  /* Panels are lit objects: a cool top, a slight pooling at the base. */
   --panel-fill:
     linear-gradient(168deg,
       rgba(255, 255, 255, 0.055) 0%,
@@ -91,7 +89,7 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --light-warm: rgba(255, 180, 107, 0.10);
-  --glow: rgba(91, 156, 255, 0.10);        /* violet retired; aliased until Plan 2 removes its callers */
+  --glow: rgba(91, 156, 255, 0.10);        /* violet retired (spec §3.2): a cool atmospheric alias */
   --glow-strong: rgba(91, 156, 255, 0.16);
   --glow-blue: rgba(91, 141, 239, 0.18);
 
