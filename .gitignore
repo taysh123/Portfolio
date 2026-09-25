@@ -47,3 +47,6 @@ next-env.d.ts
 __pycache__/
 *.pyc
 /.superpowers
+/test-results
+/playwright-report
+/bpyenv

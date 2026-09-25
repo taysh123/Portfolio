@@ -6,7 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "render:screens": "python3 design/render/blender/make_screens.py",
+    "render:preview": "bpyenv/bin/python design/render/blender/render.py --quality preview --framing all",
+    "encode:frames": "node scripts/encode-frames.mjs"
   },
   "dependencies": {
     "framer-motion": "^12.40.0",
@@ -18,14 +24,16 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22.20.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.185.4",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "playwright": "^1.62.1",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.0.2"
   }
 }
