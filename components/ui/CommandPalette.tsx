@@ -12,6 +12,7 @@ import { useFocusTrap, useScrollLock } from "@/lib/useFocusTrap";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
 import { cn } from "@/lib/cn";
 import { glideTo } from "@/lib/scroll";
+import { paletteOpenRequested, clearPaletteOpenRequest } from "@/lib/palette";
 
 type Command = {
   id: string;
@@ -44,7 +45,8 @@ const SECTIONS = [
  * previous nesting made ↑/↓ announce nothing at all).
  */
 export function CommandPalette() {
-  const [open, setOpen] = useState(false);
+  // Opens on mount if the nav asked before this dynamic chunk arrived (lib/palette).
+  const [open, setOpen] = useState(paletteOpenRequested);
   const [query, setQuery] = useState("");
   const [activeIdx, setActiveIdx] = useState(0);
   const { theme, toggleTheme } = useTheme();
@@ -68,9 +70,10 @@ export function CommandPalette() {
         setOpen((v) => !v);
       }
     };
-    const onOpen = () => setOpen(true);
+    const onOpen = () => { clearPaletteOpenRequest(); setOpen(true); };
     window.addEventListener("keydown", onKey);
     window.addEventListener("palette:open", onOpen);
+    clearPaletteOpenRequest();   // an early request was honoured by the initial state
     return () => {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("palette:open", onOpen);

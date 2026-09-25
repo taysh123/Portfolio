@@ -95,3 +95,15 @@ for (const [w, h] of [[844, 390], [390, 844]] as const) {
     expect(box.y).toBeGreaterThanOrEqual(0); expect(box.y + box.height).toBeLessThanOrEqual(h);
   });
 }
+
+test("a palette request made before its chunk loads is honoured when it arrives (Plan 2 Task 24)", async ({ page }) => {
+  // Hold back the palette's dynamic chunk (the only script that renders "Search commands") for 2s.
+  await page.route(/\/_next\/static\/chunks\/.*\.js$/, async (route) => {
+    const res = await route.fetch(); const body = await res.text();
+    if (body.includes("Search commands")) await new Promise((r) => setTimeout(r, 2000));
+    await route.fulfill({ response: res, body });
+  });
+  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.locator("header[data-entrance-nav] nav").getByRole("button", { name: /command palette/i }).click();
+  await expect(page.getByRole("combobox", { name: "Search commands" })).toBeVisible({ timeout: 10_000 });
+});

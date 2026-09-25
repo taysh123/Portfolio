@@ -12,6 +12,7 @@ import { MenuIcon, CloseIcon, SearchIcon } from "@/components/ui/icons";
 import { DUR, easeOutExpo } from "@/lib/motion";
 import { useFocusTrap, useScrollLock } from "@/lib/useFocusTrap";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
+import { requestPaletteOpen } from "@/lib/palette";
 
 const LINKS = [
   { href: "#work", label: "Work" },
@@ -74,9 +75,7 @@ export function Navbar() {
     return () => io.disconnect();
   }, []);
 
-  const openPalette = () => {
-    window.dispatchEvent(new CustomEvent("palette:open"));
-  };
+  const openPalette = () => requestPaletteOpen();
 
   return (
     <>
