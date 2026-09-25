@@ -6,6 +6,7 @@ import { Entrance } from "@/components/entrance/Entrance";
 import { Hero } from "@/components/sections/Hero";
 import { About } from "@/components/sections/About";
 import { Work } from "@/components/work/Work";
+import { PokerWorld } from "@/components/work/worlds/PokerWorld";
 import { Skills } from "@/components/sections/Skills";
 import { EngineeringPanel } from "@/components/sections/EngineeringPanel";
 import { Contact } from "@/components/sections/Contact";
@@ -41,7 +42,7 @@ export default function Page() {
           <Hero />
         </Entrance>
 
-        <Work />
+        <Work worlds={{ poker: <PokerWorld /> }} />
 
         <Stage>
           <About />

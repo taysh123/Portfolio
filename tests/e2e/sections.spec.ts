@@ -42,3 +42,17 @@ test("copy never depends on scroll position: every flagship's copy is opaque at 
     expect(await page.locator(`#work-${id} .flagship__copy`).evaluate((el) => getComputedStyle(el).opacity), `${id}@${f}`).toBe("1");
   }
 });
+
+test("poker world: three phones, the front one rises as the others fan (transform-only)", async ({ page }) => {
+  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  const at = async (f: number) => {
+    await page.evaluate((f) => { const s = document.getElementById("work-poker")!; window.scrollTo({ top: s.getBoundingClientRect().top + scrollY + (s.offsetHeight - innerHeight) * f, behavior: "instant" as ScrollBehavior }); }, f);
+    await page.waitForTimeout(200);
+    return page.locator(".world-poker__phone").evaluateAll((els) => els.map((el) => new DOMMatrix(getComputedStyle(el).transform)));
+  };
+  await expect(page.locator(".world-poker__phone")).toHaveCount(3);
+  const early = await at(0.02), held = await at(0.5);
+  expect(held[1].m42).toBeLessThan(early[1].m42);                    // front phone (index 1) has risen
+  expect(Math.abs(held[0].m41)).toBeGreaterThan(Math.abs(early[0].m41)); // side phones fanned out
+  await expect(page.locator(".world-poker img").first()).toHaveAttribute("alt", /.+/);
+});

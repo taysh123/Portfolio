@@ -32,3 +32,31 @@
 .flagship__ghost { position: absolute; right: -2%; top: -8%; z-index: 0; pointer-events: none; font: 600 clamp(8rem, 18vw, 16rem)/1 var(--font-sans);
   letter-spacing: -0.06em; color: var(--fg); opacity: calc(0.06 * var(--assemble) * (1 - var(--recede)));
   transform: translateY(calc((1 - var(--assemble)) * 48px - var(--recede) * 32px)); }
+
+/* ── World 01 — T Poker ─────────────────────────────────────────────── */
+.world-poker { position: relative; height: min(70svh, 680px); }
+/* The floor stays inside the world and fades in from above — no edge that reads as a stripe across the copy. */
+.world-poker__floor { position: absolute; inset: auto 0 0; height: 42%;
+  background: radial-gradient(60% 55% at 50% 0%, var(--light-cool), transparent 72%), linear-gradient(to bottom, #0a0e14, #05070a);
+  -webkit-mask-image: radial-gradient(70% 100% at 50% 100%, #000 45%, transparent 100%); mask-image: radial-gradient(70% 100% at 50% 100%, #000 45%, transparent 100%); }
+.world-poker__phone { position: absolute; bottom: 16%; left: 50%; width: clamp(140px, 15vw, 220px); aspect-ratio: 1290 / 2796; margin: 0;
+  border-radius: 26px; overflow: hidden; border: 1px solid var(--line-strong); background: #000; box-shadow: var(--shadow-float);
+  translate: -50% 0; will-change: transform; }
+.world-poker__phone img { width: 100%; height: 100%; object-fit: cover; }
+/* Single column (< lg): the world sits under the copy; phones scale with the column, not the viewport's 15vw. */
+@media (max-width: 1023px) {
+  .world-poker { height: clamp(320px, 64svh, 560px); }
+  /* Bounded by height too (≈ 80% of the world: 0.369 × 64svh, 2.167 aspect), so landscape phones never overflow. */
+  .world-poker__phone { width: min(clamp(132px, 26vw, 210px), max(118px, 23.6svh)); bottom: 12%; }
+}
+@media (max-width: 639px) { .world-poker { height: 400px; } .world-poker__phone { bottom: 10%; } }
+/* Parallax per layer: 12 px (back) → 40 px (front) across the hold (spec §5.2). */
+.world-poker__phone--front { z-index: 3;
+  transform: translateY(calc((1 - var(--assemble)) * 120px - (var(--hold) - 0.5) * 40px - var(--recede) * 60px)) scale(calc(0.94 + var(--assemble) * 0.06));
+  opacity: calc(0.35 + var(--assemble) * 0.65 - var(--recede) * 0.5); }
+.world-poker__phone--left { z-index: 1;
+  transform: translateX(calc(var(--assemble) * -64%)) translateY(calc(24px - (var(--hold) - 0.5) * 12px)) rotate(calc(var(--assemble) * -7deg)) scale(0.9);
+  opacity: calc(var(--assemble) * 0.85 - var(--recede) * 0.6); }
+.world-poker__phone--right { z-index: 1;
+  transform: translateX(calc(var(--assemble) * 64%)) translateY(calc(24px - (var(--hold) - 0.5) * 12px)) rotate(calc(var(--assemble) * 7deg)) scale(0.9);
+  opacity: calc(var(--assemble) * 0.85 - var(--recede) * 0.6); }

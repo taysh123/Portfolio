@@ -1,5 +1,5 @@
 // Real-browser screenshots for visual passes. Writes PNGs and a contact sheet per theme.
-// usage: npm run shoot -- --out shots/x --theme dark --sizes 1440x900,390x844 --entrance 0,0.45,1 --sections work,about
+// usage: npm run shoot -- --out shots/x --theme dark --sizes 1440x900,390x844 --entrance 0,0.45,1 --sections work,about,work-poker@0.5
 import fs from "node:fs";
 import { chromium } from "playwright";
 import sharp from "sharp";
@@ -23,12 +23,18 @@ for (const size of sizes) {
   for (const s of shots) {
     await page.evaluate(({ kind, key }) => {
       if (kind === "entrance") { const c = document.getElementById("entrance"); window.scrollTo({ top: c.offsetTop + key * (c.offsetHeight - innerHeight), behavior: "instant" }); }
-      else { const el = document.getElementById(key); window.scrollTo({ top: el.getBoundingClientRect().top + scrollY, behavior: "instant" }); }
+      else {
+        // "id@f": a fraction f through a pinned scene. Document-relative, never offsetTop (scenes sit inside the
+        // positioned Work stage).
+        const [id, f] = key.split("@"); const el = document.getElementById(id);
+        const top = el.getBoundingClientRect().top + scrollY + (f === undefined ? 0 : Number(f) * (el.offsetHeight - innerHeight));
+        window.scrollTo({ top, behavior: "instant" });
+      }
     }, s);
     await page.waitForTimeout(1100);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
     if (overflow > 0) report.push(`${size} ${s.key} horizontal overflow ${overflow}px`);
-    const file = `${out}/${theme}-${size}-${s.kind === "entrance" ? "p" + s.key : s.key}.png`;
+    const file = `${out}/${theme}-${size}-${s.kind === "entrance" ? "p" + s.key : s.key.replace("@", "_at_")}.png`;
     await page.screenshot({ path: file }); files.push(file);
   }
   await ctx.close();
