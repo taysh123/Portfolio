@@ -185,7 +185,7 @@ The five input classes or conditions most likely to bite a real visitor that no 
 | `components/sections/ThinkBuildShip.tsx` | Think / Build / Ship (replaces `EngineeringPanel.tsx`). |
 | `components/sections/ThinkBuildShip.css` | Word lighting and the hairline, from `--p`. |
 | `design/render/blender/audit.py` | The spec §4.6 assertions on key frames: composition, hue lock, luminance, and light-group energy shares from EXR. |
-| `design/render/blender/test_audit.py` | Unit tests for `audit.py` on synthetic images (system Python + numpy). |
+| `design/render/blender/test_audit.py` | Unit tests for `audit.py` on synthetic images, run with `bpyenv/bin/python`, which has numpy (system Python does not). |
 | `design/render/blender/batch.py` | Chunked, resumable final batch that encodes and commits per chunk. |
 
 **Test files:** `tests/unit/{tokens,scene,work,about,approach}.test.ts` and `tests/e2e/{budget,entrance-geometry,scene,chrome,sections,theme,idle,a11y}.spec.ts`.
@@ -236,6 +236,8 @@ PW_CHROMIUM=/opt/pw-browsers/chromium npm run measure
 ```
 
 - Record the `measure` JSON line in the ledger.
+- Playwright reuses an existing server (`reuseExistingServer: true`). A hand-started `next start` must be run with `E2E_FIXTURES=1`, or the scene fixture 404s and `scene.spec.ts` fails.
+- The rAF counters in `idle.spec.ts` and `sections.spec.ts` wrap `window.requestAnimationFrame` after load. Framer's frame loop keeps its own captured reference, so those counters cover Lenis, the stage and GravityField, but not Framer. Framer's loop is event-driven and does not idle-loop, so this is acceptable.
 - Stop the stray `next start` before rebuilding. Kill the server **by its process ID from a pid file**. Never use `pkill -f` with a pattern that also matches your own shell command.
 
 ---
@@ -295,11 +297,12 @@ test("portrait: at p = 0.6 the band maps onto the k1-on quad", async ({ page }) 
   const set = manifest.portrait, f = set.frames.find((x) => x.file === "k1-on")!;
   const want = quadToViewport(f.quad!, set.width, set.height, coverFit(set.width, set.height, 390, 844, 1.03));
   // The band is the centred 16:10 strip of the full-viewport surface.
-  const band = await page.locator(".entrance__surface").evaluate((el: HTMLElement) => {
+  const band = () => page.locator(".entrance__surface").evaluate((el: HTMLElement) => {
     const m = new DOMMatrix(getComputedStyle(el).transform), w = el.offsetWidth, bh = w / 1.6, by = (el.offsetHeight - bh) / 2;
     return [[0, by], [w, by], [w, by + bh], [0, by + bh]].map(([x, y]) => { const q = m.transformPoint(new DOMPoint(x, y)); return { x: q.x / q.w, y: q.y / q.w }; });
   });
-  expect(maxErr(band, want)).toBeLessThan(1.5);
+  // Polled like the landscape case: the stage renders in a later frame, after frames decode.
+  await expect.poll(async () => maxErr(await band(), want), { timeout: 8000 }).toBeLessThan(1.5);
 });
 
 test("the canvas brightens across p 0 → 0.12 (spec §10), measured through the veil", async ({ page }) => {
@@ -543,6 +546,17 @@ it("--screen is the dark screen black in both themes", () => {
     Keep the existing light `--surface-*`, `--border-*` and `--accent-*` soft and line values. Update the `/* Contrast … */` comment to the new figures.
 
   - Add `--color-fg-subtle-raised: var(--fg-subtle-raised);` and `--color-raised: var(--bg-raised);` to `@theme inline`.
+  - **Define the shared names that later tasks use.** They do not exist yet: `globals.css` has `--border*` and `--ease-out-expo`. Add them to the dark block; the light block inherits the aliases:
+
+    ```css
+      --line: var(--border);                          /* hairline alias used by every Plan 2 section */
+      --line-strong: var(--border-strong);
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);      /* spec §3.2 motion tokens */
+      --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    ```
+
+    Add `--color-line: var(--line); --color-line-strong: var(--line-strong);` to `@theme inline`, **only if** those Tailwind colours are not already defined. They are: `--color-line` exists and maps to `--border`. So add the CSS custom properties only, and leave `@theme` alone.
+  - Extend `tokens.test.ts` with a check that parses `globals.css` and asserts `--line`, `--line-strong`, `--ease-out` and `--ease-in-out` are declared. A later task's CSS must never reference an undefined token.
   - Add the utilities:
 
     ```css
@@ -729,7 +743,9 @@ test("static mode shows the floating controls from first paint", async ({ browse
 
 test("palette 'Home' lands on the hero at identity with the h1 focused (the removed #top regression)", async ({ page }) => {
   await page.goto("/"); await page.locator("[data-skip-intro]").click();
-  await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" as ScrollBehavior }));
+  // Start from a focused control far down the page, as a keyboard user would: the trap restores focus
+  // here on close, and Home must still win.
+  await page.locator("footer a").first().focus();
   await page.keyboard.press("Control+k");
   await page.getByRole("option", { name: "Home" }).click();
   await expect(page.locator("#hero-title")).toBeFocused();
@@ -765,7 +781,19 @@ test("every palette section target exists", async ({ page }) => {
     </a>
     ```
 
-    Render both only when `availability.open`. The mobile sheet keeps the theme toggle, the palette and "Get in touch".
+    Render both only when `availability.open`.
+  - **Mobile sheet.** Spec §5 requires the links, the theme toggle, the palette and "Get in touch" inside it. Today it has only the links and "Get in touch", and the theme toggle sits in the header outside the focus trap. Inside the sheet's dialog, after the links, add:
+
+    ```tsx
+    <div className="mt-6 flex items-center gap-3 border-t border-line pt-6">
+      <ThemeToggle />
+      <IconButton label="Open command palette" onClick={() => { setOpen(false); window.dispatchEvent(new CustomEvent("palette:open")); }}>
+        <SearchIcon size={18} />
+      </IconButton>
+    </div>
+    ```
+
+    `setOpen` is the sheet's existing state setter. Check its real name in `Navbar.tsx`; the header palette button already dispatches `palette:open`, at line ~77. Keep the header's own `ThemeToggle` for the closed state.
   - `LINKS` already reads Work, About, Stack, Contact (Plan 1).
 
 - [ ] **Step 4: Update the command palette `SECTIONS`:**
@@ -782,7 +810,7 @@ const SECTIONS = [
 ```
 
   In `go`:
-  - for `hero`, call `close(); window.dispatchEvent(new Event("entrance:skip"));`;
+  - for `hero`, call `close()`, then dispatch **after** the focus trap has restored focus: `setTimeout(() => window.dispatchEvent(new Event("entrance:skip")), 0)`. `useFocusTrap`'s cleanup refocuses the previously focused element; dispatching first would let that pull focus, and the scroll, back.
   - otherwise keep `scrollIntoView`.
 
 - [ ] **Step 5: Add the listener in `EntranceStage`.** It is the one Plan 1 runtime change. In the effect, beside `onHash`:
@@ -847,7 +875,9 @@ const SECTIONS = [
 
   - The component: `<ScrollScene id labelledBy className? dark? pinSvh=200 phases="flagship"|"pillars">`.
   - It renders `<section class="scene" data-scene data-pinned="true|false" data-inview="true|false">`, with its children inside `.scene__stage`.
-  - When pinned, it writes the CSS vars `--p`, `--assemble`, `--hold`, `--recede` (flagship) or `--p`, `--line`, `--lit` (pillars) on the section. When not pinned, it removes every var, and the CSS defaults give the settled composition: `--assemble: 1; --hold: .5; --recede: 0; --line: 1; --lit: 2`.
+  - When pinned, it writes the CSS vars `--p`, `--assemble`, `--hold`, `--recede` (flagship) or `--p`, `--tbs-line` (pillars) on the section, plus `data-lit` in pillars mode.
+  - When not pinned, it removes every var and `data-lit`, and the CSS defaults give the settled composition: `--assemble: 1; --hold: .5; --recede: 0; --tbs-line: 1`.
+  - The pillar hairline variable is deliberately **not** `--line`, which is the hairline colour token (Task 2).
 
 - [ ] **Step 1: Write the failing unit test**
 
@@ -917,7 +947,7 @@ export function pillarState(p: number): { lit: 0 | 1 | 2; line: number } {
 /* A scroll scene (spec §5): pinned 200svh at ≥1024×600 with motion allowed, otherwise a settled,
    full-height composition. The CSS defaults ARE the settled state, so no-JS, reduced motion and
    small screens need no script at all. */
-.scene { position: relative; --p: 1; --assemble: 1; --hold: 0.5; --recede: 0; --line: 1; --lit: 2; }
+.scene { position: relative; --p: 1; --assemble: 1; --hold: 0.5; --recede: 0; --tbs-line: 1; }
 .scene__stage { position: relative; min-height: 100svh; display: grid; align-items: center; }
 @media (min-width: 1024px) and (min-height: 600px) and (prefers-reduced-motion: no-preference) {
   html:not([data-reduced-motion="true"]) .scene { height: var(--pin-h, 200svh); }
@@ -938,7 +968,7 @@ import { pinEligible, scenePhases, pillarState } from "@/lib/scene";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
 import "./scene.css";
 
-const VARS = ["--p", "--assemble", "--hold", "--recede", "--line", "--lit"];
+const VARS = ["--p", "--assemble", "--hold", "--recede", "--tbs-line"];
 
 /**
  * The one client primitive behind every scroll-driven section. It writes progress into CSS vars
@@ -964,7 +994,7 @@ export function ScrollScene({ id, labelledBy, className, dark = false, pinSvh = 
   useEffect(() => {
     const el = ref.current; if (!el) return;
     el.dataset.pinned = String(pinned);
-    if (!pinned) for (const v of VARS) el.style.removeProperty(v);
+    if (!pinned) { for (const v of VARS) el.style.removeProperty(v); delete el.dataset.lit; }
     else write(scrollYProgress.get());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pinned]);
@@ -984,7 +1014,7 @@ export function ScrollScene({ id, labelledBy, className, dark = false, pinSvh = 
       el.style.setProperty("--assemble", s.assemble.toFixed(4)); el.style.setProperty("--hold", s.hold.toFixed(4)); el.style.setProperty("--recede", s.recede.toFixed(4));
     } else {
       const s = pillarState(p);
-      el.style.setProperty("--line", s.line.toFixed(4)); el.style.setProperty("--lit", String(s.lit));
+      el.style.setProperty("--tbs-line", s.line.toFixed(4)); el.dataset.lit = String(s.lit);
     }
   }
   useMotionValueEvent(scrollYProgress, "change", (p) => { if (pinned) write(p); });
@@ -1035,13 +1065,13 @@ test("pins at 1440×900 and drives --assemble from scroll", async ({ page }) => 
   await page.goto("/e2e-fixtures/scene");
   await expect(page.locator("#fx")).toHaveAttribute("data-pinned", "true");
   await expect(page.locator("#fx .scene__stage")).toHaveCSS("position", "sticky");
-  await page.evaluate(() => window.scrollTo({ top: document.getElementById("fx")!.offsetTop, behavior: "instant" as ScrollBehavior }));
+  await page.evaluate(() => window.scrollTo({ top: document.getElementById("fx")!.getBoundingClientRect().top + scrollY, behavior: "instant" as ScrollBehavior }));
   await expect.poll(() => probeY(page)).toBeGreaterThan(90);   // p = 0 → assemble 0 → 100px
 });
 
 test("resizing below the threshold unpins live and clears every var (Review Focus 2)", async ({ page }) => {
   await page.goto("/e2e-fixtures/scene");
-  await page.evaluate(() => window.scrollTo({ top: document.getElementById("fx")!.offsetTop, behavior: "instant" as ScrollBehavior }));
+  await page.evaluate(() => window.scrollTo({ top: document.getElementById("fx")!.getBoundingClientRect().top + scrollY, behavior: "instant" as ScrollBehavior }));
   await page.setViewportSize({ width: 900, height: 700 });
   await expect(page.locator("#fx")).toHaveAttribute("data-pinned", "false");
   await expect(page.locator("#fx .scene__stage")).toHaveCSS("position", "relative");
@@ -1051,7 +1081,7 @@ test("resizing below the threshold unpins live and clears every var (Review Focu
 
 test("reduced motion mid-scene settles it (Review Focus 3)", async ({ page }) => {
   await page.goto("/e2e-fixtures/scene");
-  await page.evaluate(() => window.scrollTo({ top: document.getElementById("fx")!.offsetTop, behavior: "instant" as ScrollBehavior }));
+  await page.evaluate(() => window.scrollTo({ top: document.getElementById("fx")!.getBoundingClientRect().top + scrollY, behavior: "instant" as ScrollBehavior }));
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(page.locator("#fx")).toHaveAttribute("data-pinned", "false");
   await expect.poll(() => probeY(page)).toBe(0);
@@ -1098,7 +1128,7 @@ test("no JavaScript: settled composition, not pinned", async ({ browser }) => {
 # design/render/blender/test_audit.py — run: bpyenv/bin/python -m unittest design/render/blender/test_audit.py
 import unittest
 import numpy as np
-from audit import srgb_to_lum, title_zone_p95, black_floor_share, violet_share, off_lock_share, median_lum, bottom_rows_black, group_shares, width_share
+from audit import srgb_to_lum, title_zone_p95, black_floor_share, violet_share, off_lock_share, median_lum, bottom_rows_black, group_shares, width_share, pass_group
 
 def img(rgb, h=90, w=160):
     a = np.zeros((h, w, 3), np.float32); a[:] = np.array(rgb, np.float32) / 255; return a
@@ -1132,6 +1162,10 @@ class Audit(unittest.TestCase):
         self.assertAlmostEqual(s["atmosphere"], 0.8, 3); self.assertAlmostEqual(s["screens"], 0.1, 3); self.assertAlmostEqual(s["warm"], 0.1, 3)
     def test_width_share(self):
         self.assertAlmostEqual(width_share({"x0": 0.25, "x1": 0.52}), 0.27)
+    def test_pass_group_names(self):
+        self.assertEqual(pass_group("Combined_lg_key.exr"), "lg_key")
+        self.assertEqual(pass_group("Combined_lg_monitors0001.exr"), "lg_monitors")
+        self.assertIsNone(pass_group("Mist0001.exr")); self.assertIsNone(pass_group("notes.txt"))
 
 if __name__ == "__main__":
     unittest.main()
@@ -1220,6 +1254,14 @@ def width_share(bbox):
     return round(bbox["x1"] - bbox["x0"], 4)
 
 
+def pass_group(filename):
+    """'Combined_lg_key0001.exr' / 'Combined_lg_key.exr' → 'lg_key'; anything else → None.
+    Blender's File Output node names files after the item and may append the frame number."""
+    import re
+    m = re.fullmatch(r"Combined_(lg_[a-z]+)\d*\.exr", filename)
+    return m.group(1) if m else None
+
+
 # kind → list of (name, value_fn(report) -> float, lo, hi). Calibrated targets are loaded from
 # targets.json (Step 6) and override these spec defaults key by key.
 SPEC = {
@@ -1278,8 +1320,8 @@ def main():
     d = png_path[:-4]; groups = {}
     if os.path.isdir(d):
         for f in os.listdir(d):
-            if f.startswith("lg_") and f.endswith(".exr"):
-                groups[f[3:-4].replace("Combined_", "")] = np.flipud(load(os.path.join(d, f)).reshape(H, W, 4)[..., :3])
+            g = pass_group(f)
+            if g: groups[g] = np.flipud(load(os.path.join(d, f)).reshape(H, W, 4)[..., :3])
     tpath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "targets.json")
     targets = json.load(open(tpath)) if os.path.exists(tpath) else {}
     r, fails = report(png, meta, groups, kind, targets)
@@ -1375,6 +1417,7 @@ if __name__ == "__main__":
         sock["B_Color"].default_value = (0.043 * 0.12, 0.078 * 0.12, 0.133 * 0.12, 1)   # #0b1422 at ≤12%
         ng.links.new(next(o for o in mix.outputs if o.identifier == "Result_Color"), out.inputs[0])
         if exr_dir:
+            # Files land as "<item name>[frame digits].exr", e.g. Combined_lg_key0001.exr; audit.pass_group parses exactly that.
             fo = ng.nodes.new("CompositorNodeOutputFile"); fo.directory = exr_dir + "/"; fo.file_name = ""
             fo.format.media_type = "IMAGE"; fo.format.file_format = "OPEN_EXR"; fo.format.color_depth = "32"; fo.format.exr_codec = "PIZ"
             for name in [o.name for o in rl.outputs if o.enabled and (o.name.startswith("Combined_lg_") or o.name == "Mist")]:
@@ -1519,7 +1562,7 @@ for i, (name, n) in enumerate(counts):
   - BUILD shows at most 22 build lines and 20 log lines, at 32 px.
   - Every drawn string still goes through `strings.txt`.
 
-- [ ] **Step 4: Record provenance.** Add to the `screens.json` payload:
+- [ ] **Step 4: Record provenance.** `make_screens.py` builds the `screens.json` dict inline in `json.dump(...)`. First bind it to a variable, `payload = {...}; json.dump(payload, ...)`. Then add:
 
 ```python
 import hashlib
@@ -1528,7 +1571,7 @@ payload["verify_counts"] = dict(counts)
 payload["sources"] = {"data/projects.ts": sha("data/projects.ts"), "lib/entrance/surface.ts": sha("lib/entrance/surface.ts")}
 ```
 
-  In `encode-frames.mjs`, read these values and write `manifest.sources` and `manifest.verifyCounts`. Extend `types.ts`:
+  In `encode-frames.mjs`, read these values from **`design/render/blender/out/screens.json`**, the frozen texture output. Do not read them from `--src`, since `out-final/` has no `screens.json`. Write `manifest.snapshot`, `manifest.sources` and `manifest.verifyCounts` from that file. Extend `types.ts`:
 
   ```ts
   export type Manifest = { version: 1; snapshot: string; sources?: Record<string, string>; verifyCounts?: Record<string, number>; landscape: FrameSet; portrait: FrameSet };
@@ -1583,7 +1626,8 @@ for key, framing, name, kind in KEYS:
 json.dump(results, open(os.path.join(OUT, "audit.json"), "w"), indent=1, default=float)
 ```
 
-  - Frame indices, from Plan 1 `SEQUENCE`: `lid-03` sits in the crack hold (about 12–15° lid); `lid-24` is about 70°; `lid-35` is the last lid frame, which is K1-off. Confirm them by printing `frame_state` for these names before the first render.
+  - Frame names, from Plan 1 `SEQUENCE`: `lid-03` sits in the crack hold, and `lid-35` is the last lid frame (K1-off).
+  - **Choose the "mid" frame by angle, not by index.** Print `frame_state(...)["lid_deg"]` for every lid frame and pick the one nearest 70°. `lid-24` is about 91°, not 70°. Update `KEYS` with that name before the first render.
   - Each final frame takes about 3.6 min, so the full set is about 45 min. Run it in the background and do the next step's scene work in the meantime.
 
 - [ ] **Step 2: Look-dev pass 1 in `scene.py`.** Each item maps to one approved requirement, with starting values. Keep a `LOOKDEV` dict at the top of `scene.py`, so every tuned value lives in one reviewable place.
@@ -1688,6 +1732,7 @@ base.paste(warped, (0, 0), mask); base.save(out); print(out)
 
   The message must contain:
   - the audit table (every key × every assertion, with values), and the calibrated targets with their reasons;
+  - the spec §10 render checks that `audit.py` does **not** measure, each marked "checked on the sheet" with a one-line finding: laptop centring (±2%); the leading-line band in the bottom 2–15%; K2 perpendicular within 0.1° with 2–4% overscan (the latter from the K2 quad in its JSON); D0–D5 separation ≥ 1.5×; prop clearance ≥ 2 cm; K0 monitor text 4–6 px soft. Report plainly any that could not be verified;
   - `weakness-check.md`;
   - the recruiter-test stand-in result;
   - the measured per-frame render time and the projected batch duration, plus any budget-gate cuts applied;
@@ -1747,6 +1792,12 @@ TRAILER = os.environ.get("COMMIT_TRAILER")   # the harness's attribution lines, 
 if not TRAILER: sys.exit("batch.py: set COMMIT_TRAILER to the commit attribution lines from the harness reminder")
 def done(kind, name): return all(os.path.exists(os.path.join(OUT, kind, name + ext)) for ext in (".png", ".json"))
 def sh(*a): subprocess.run(a, cwd=REPO, check=True)
+def git_retry(*a, tries=6):
+    import time
+    for i in range(tries):                     # index.lock clashes with the executor's own git calls
+        if subprocess.run(("git", *a), cwd=REPO).returncode == 0: return
+        time.sleep(5 * (i + 1))
+    raise SystemExit(f"git {' '.join(a)} failed after {tries} tries")
 framings = [sys.argv[sys.argv.index("--framing") + 1]] if "--framing" in sys.argv else ["landscape", "portrait"]
 for kind in framings:
     names = [s["name"] for s in SEQUENCE[kind]] + ["still"]
@@ -1757,9 +1808,10 @@ for kind in framings:
         # Encode this framing's finished frames only (tiers + a partial manifest.<kind>.json); the full
         # manifest.json is written once, after both framings complete (Step 4).
         sh("node", "scripts/encode-frames.mjs", "--src", os.path.relpath(OUT, REPO), "--dst", "public/entrance-final", "--only-framing", kind)
-        sh("git", "add", "public/entrance-final")
-        sh("git", "commit", "-m", f"Final frames: {kind} {chunk[0]}…{chunk[-1]}", "-m", TRAILER)
-        sh("git", "push", "origin", BRANCH)
+        # Commit ONLY this path: the executor may have files staged for a section task in the same index.
+        git_retry("add", "--", "public/entrance-final")
+        git_retry("commit", "--only", "-m", f"Final frames: {kind} {chunk[0]}…{chunk[-1]}", "-m", TRAILER, "--", "public/entrance-final")
+        git_retry("push", "origin", BRANCH)
         print("chunk done", kind, chunk, flush=True)
 ```
 
@@ -1770,8 +1822,12 @@ for kind in framings:
     - it does not write `manifest.json`.
   - The run without the flag, in Step 4, merges both partial manifests into the final `manifest.json`, with `sources` and `verifyCounts`, and deletes the partials.
   - Portrait runs first (`--framing portrait`), then landscape.
+  - Frame counts stay at Plan 1's 65 landscape and 29 portrait, plus the stills. Spec §13 decision 12 projected 31 portrait frames; the 16-lid / 12-push portrait split was fixed in Plan 1. Record the difference in the ledger. It is a deviation that saves time without affecting the approved look.
 
-- [ ] **Step 3: Launch in the background:** `nohup npm run render:final -- --framing portrait > <scratchpad>/final-portrait.log 2>&1 &`, then landscape. Check progress by reading the log. Continue with Tasks 11–21 while it runs. **Tasks 11–21 must not touch `design/render` or `public/entrance*`.**
+- [ ] **Step 3: Launch in the background, at low priority:** `nohup nice -n 15 npm run render:final -- --framing portrait > <scratchpad>/final-portrait.log 2>&1 &`, then landscape.
+  - While a chunk renders, CPU contention inflates `npm run measure`'s LCP and slows e2e.
+  - Record budget measurements only between chunks, or with the render paused: `kill -STOP <pid>` for the measurement, then `kill -CONT`.
+  - Note in the ledger when a measurement was taken under contention. Check progress by reading the log. Continue with Tasks 11–21 while it runs. **Tasks 11–21 must not touch `design/render` or `public/entrance*`.**
 
 - [ ] **Step 4: After the last chunk:**
   - Run `node scripts/encode-frames.mjs --src design/render/blender/out-final --dst public/entrance-final --check-budget`.
@@ -1941,8 +1997,10 @@ test("Work: one h2, four flagship h3s in order, then two more-work h3s", async (
 
 test("restored scroll inside a pinned flagship shows a legible composition (Review Focus 1)", async ({ page }) => {
   await skip(page);
-  await page.evaluate(() => { const s = document.getElementById("work-sentinelai")!; window.scrollTo({ top: s.offsetTop + s.offsetHeight * 0.4, behavior: "instant" as ScrollBehavior }); });
+  await page.evaluate(() => { const s = document.getElementById("work-sentinelai")!; window.scrollTo({ top: s.getBoundingClientRect().top + scrollY + s.offsetHeight * 0.4, behavior: "instant" as ScrollBehavior }); });
   await page.reload(); await page.waitForTimeout(600);
+  // Scroll targets are always document-relative (getBoundingClientRect().top + scrollY): #work-* sits inside
+  // the positioned .work__stage, so offsetTop would be off by the whole entrance height.
   const copy = page.locator("#work-sentinelai .flagship__copy");
   await expect(copy).toBeInViewport();
   expect(await copy.evaluate((el) => getComputedStyle(el).opacity)).toBe("1");
@@ -1965,7 +2023,7 @@ test("case study: Enter opens, Escape closes, focus returns to the opener — lo
 test("copy never depends on scroll position: every flagship's copy is opaque at scene p = 0, .5 and 1", async ({ page }) => {
   await skip(page);
   for (const id of ["poker", "sentinelai", "developeros", "gravity-flow"]) for (const f of [0.02, 0.5, 0.98]) {
-    await page.evaluate(({ id, f }) => { const s = document.getElementById(`work-${id}`)!; window.scrollTo({ top: s.offsetTop + (s.offsetHeight - innerHeight) * f, behavior: "instant" as ScrollBehavior }); }, { id, f });
+    await page.evaluate(({ id, f }) => { const s = document.getElementById(`work-${id}`)!; window.scrollTo({ top: s.getBoundingClientRect().top + scrollY + (s.offsetHeight - innerHeight) * f, behavior: "instant" as ScrollBehavior }); }, { id, f });
     await page.waitForTimeout(150);
     expect(await page.locator(`#work-${id} .flagship__copy`).evaluate((el) => getComputedStyle(el).opacity), `${id}@${f}`).toBe("1");
   }
@@ -2052,8 +2110,11 @@ export function CaseStudyHost() {
     document.addEventListener("click", onClick);
     return () => document.removeEventListener("click", onClick);
   }, []);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { if (project) setMounted(true); }, [project]);
   const close = useCallback(() => { setProject(null); requestAnimationFrame(() => opener.current?.focus()); }, []);
-  return project ? <CaseStudyPanel project={project} onClose={close} /> : null;
+  // Stay mounted after the first open with project = null, so the panel's own AnimatePresence plays its exit.
+  return mounted || project ? <CaseStudyPanel project={project} onClose={close} /> : null;
 }
 ```
 
@@ -2076,7 +2137,8 @@ import "./worlds/worlds.css";
 export function Work({ worlds = {} }: { worlds?: Partial<Record<string, React.ReactNode>> }) {
   return (
     <section id="work" aria-labelledby="work-title">
-      <div data-theme="dark" className="work__stage seam-top-dark seam-bottom-dark bg-[var(--bg)]">
+      {/* Hero above is dark in both themes, so no top seam; the bottom seam leads into the themed More Work. */}
+      <div data-theme="dark" className="work__stage seam-bottom-dark bg-[var(--bg)]">
         <header className="shell pt-[clamp(7rem,14vh,12rem)] pb-10">
           <p className="label text-fg-subtle">Work</p>
           <h2 id="work-title" className="mt-4 text-[clamp(2.25rem,5vw,4.5rem)] font-semibold tracking-[-0.035em] text-fg">Selected work</h2>
@@ -2106,6 +2168,12 @@ export function Work({ worlds = {} }: { worlds?: Partial<Record<string, React.Re
 .flagship__world { position: relative; min-height: min(62svh, 640px); }
 .world-frame { border-radius: 16px; overflow: hidden; border: 1px solid var(--line-strong); box-shadow: var(--shadow-float); }
 .flagship__num { font-variant-numeric: tabular-nums; }
+/* Unpinned (small screens) — spec §5.2 "a single in-view reveal"; never under reduced motion, never in no-JS
+   (data-inview is only ever written by script). One-shot, transform/opacity only. */
+.scene[data-pinned="false"][data-inview="true"] .flagship__world { animation: world-reveal 560ms var(--ease-out) both; }
+@keyframes world-reveal { from { opacity: 0; transform: translateY(24px) scale(0.96); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .flagship__world { animation: none !important; } }
+[data-reduced-motion="true"] .flagship__world { animation: none !important; }
 .flagship__ghost { position: absolute; right: -2%; top: -8%; z-index: 0; pointer-events: none; font: 600 clamp(8rem, 18vw, 16rem)/1 var(--font-sans);
   letter-spacing: -0.06em; color: var(--fg); opacity: calc(0.06 * var(--assemble) * (1 - var(--recede)));
   transform: translateY(calc((1 - var(--assemble)) * 48px - var(--recede) * 32px)); }
@@ -2143,7 +2211,7 @@ export function Work({ worlds = {} }: { worlds?: Partial<Record<string, React.Re
 test("poker world: three phones, the front one rises as the others fan (transform-only)", async ({ page }) => {
   await page.goto("/"); await page.locator("[data-skip-intro]").click();
   const at = async (f: number) => {
-    await page.evaluate((f) => { const s = document.getElementById("work-poker")!; window.scrollTo({ top: s.offsetTop + (s.offsetHeight - innerHeight) * f, behavior: "instant" as ScrollBehavior }); }, f);
+    await page.evaluate((f) => { const s = document.getElementById("work-poker")!; window.scrollTo({ top: s.getBoundingClientRect().top + scrollY + (s.offsetHeight - innerHeight) * f, behavior: "instant" as ScrollBehavior }); }, f);
     await page.waitForTimeout(200);
     return page.locator(".world-poker__phone").evaluateAll((els) => els.map((el) => new DOMMatrix(getComputedStyle(el).transform)));
   };
@@ -2207,7 +2275,7 @@ export function PokerWorld() {
 
 - [ ] **Step 4: Run** the test (PASS) and the full gate, then `npm run measure`. The JS delta must be about 0, since this is a server component.
 
-- [ ] **Step 5: Screenshot** `--sections work-poker` at all six sizes, dark and light, plus the pinned p = 0.02, 0.5 and 0.95 via an ad-hoc `page.evaluate` in `shoot.mjs` (`--sections work-poker@0.02,work-poker@0.5`). Extend the section parser for `id@fraction` in this step. Review the result.
+- [ ] **Step 5: Screenshot** `--sections work-poker` at all six sizes, dark and light, plus the pinned p = 0.02, 0.5 and 0.95 via an ad-hoc `page.evaluate` in `shoot.mjs` (`--sections work-poker@0.02,work-poker@0.5`). Extend the section parser for `id@fraction` in this step. Compute the target as `el.getBoundingClientRect().top + scrollY + (el.offsetHeight - innerHeight) * fraction`. Never use `offsetTop`, which is relative to the positioned Work stage. Review the result.
 
 - [ ] **Step 6: Commit:** "World 01: T Poker phones in depth, transform-only parallax".
 
@@ -2228,6 +2296,7 @@ test("sentinel world: dashboard monitor, three alert rows, one scan pass per ent
   await page.evaluate(() => document.getElementById("work-sentinelai")!.scrollIntoView());
   await expect(page.locator(".world-sentinel__row")).toHaveCount(3);
   const scan = page.locator(".world-sentinel__scan");
+  await expect(scan).toHaveCSS("animation-name", "sentinel-scan");      // the animation actually resolved (valid tokens)
   await expect(scan).toHaveCSS("animation-iteration-count", "1");
   await expect(page.locator(".world-sentinel")).toContainText(/local demo/i);
 });
@@ -2304,7 +2373,7 @@ export function SentinelWorld() {
 test("developeros world: four windows converge as the scene assembles; the citation card is present", async ({ page }) => {
   await page.goto("/"); await page.locator("[data-skip-intro]").click();
   const spread = async (f: number) => {
-    await page.evaluate((f) => { const s = document.getElementById("work-developeros")!; window.scrollTo({ top: s.offsetTop + (s.offsetHeight - innerHeight) * f, behavior: "instant" as ScrollBehavior }); }, f);
+    await page.evaluate((f) => { const s = document.getElementById("work-developeros")!; window.scrollTo({ top: s.getBoundingClientRect().top + scrollY + (s.offsetHeight - innerHeight) * f, behavior: "instant" as ScrollBehavior }); }, f);
     await page.waitForTimeout(200);
     return page.locator(".world-dos__win").evaluateAll((els) => els.reduce((a, el) => a + Math.hypot(new DOMMatrix(getComputedStyle(el).transform).m41, new DOMMatrix(getComputedStyle(el).transform).m42), 0));
   };
@@ -2415,6 +2484,9 @@ export function GravityWorld() {
       <figure className="world-gravity__phone">
         <Image src="/projects/gravity-flow/gameplay.webp" alt="GRAVITY FLOW gameplay: a gravity well pulling a star through a level" width={640} height={1280} sizes="(min-width:1024px) 14vw, 40vw" />
       </figure>
+      <figure className="world-gravity__inset">
+        <Image src="/projects/gravity-flow/boss.webp" alt="GRAVITY FLOW world boss encounter" width={640} height={1280} sizes="8vw" />
+      </figure>
       <p className="world-gravity__note label">v1.0.0-rc · Android-only</p>
     </div>
   );
@@ -2492,6 +2564,9 @@ export function GravityField() {
   transform: translateY(calc((1 - var(--assemble)) * 80px - (var(--hold) - 0.5) * 24px - var(--recede) * 50px)); opacity: calc(0.4 + var(--assemble) * 0.6 - var(--recede) * 0.5); }
 .world-gravity__phone img { width: 100%; height: 100%; object-fit: cover; }
 .world-gravity__note { position: absolute; bottom: 4%; color: var(--fg-subtle); }
+.world-gravity__inset { position: absolute; right: 8%; top: 12%; margin: 0; width: clamp(80px, 7vw, 110px); aspect-ratio: 1 / 2; border-radius: 16px; overflow: hidden;
+  border: 1px solid var(--line-strong); box-shadow: var(--shadow-float); transform: translateY(calc((1 - var(--assemble)) * 40px + (var(--hold) - 0.5) * -12px)); opacity: calc(var(--assemble) * 0.9 - var(--recede) * 0.6); }
+.world-gravity__inset img { width: 100%; height: 100%; object-fit: cover; }
 ```
 
   - `data-inview` flips when the scene's IntersectionObserver fires (Task 5); scrolling away stops the loop. The MutationObserver watches only that attribute.
@@ -2768,9 +2843,10 @@ export function PointerLight() {
 }
 ```
 
-  Add to `globals.css`:
+  Put this CSS in `components/sections/stack.css`, imported by `Stack.tsx`. The card's content must sit above the light, so give the card's direct children `position: relative; z-index: 1`:
 
 ```css
+.stack-card > * { position: relative; z-index: 1; }
 /* Pointer light (spec §5.4): drawn only while --mx is set, i.e. on the hovered card, with a fine pointer. */
 .stack-card::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity var(--dur-mid, 320ms);
   background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), var(--light-cool), transparent 70%); }
@@ -2786,7 +2862,7 @@ export function PointerLight() {
 ### Task 20: Think · Build · Ship — a typographic, pinned sequence
 
 **Files:**
-- Modify: `data/approach.ts` (add `pillars`), `components/scenes/ScrollScene.tsx` (in `pillars` mode, also write `data-lit`, cleared when unpinned)
+- Modify: `data/approach.ts` (add `pillars`)
 - Create: `components/sections/ThinkBuildShip.tsx`, `components/sections/ThinkBuildShip.css`
 - Modify: `app/page.tsx` (replace `<EngineeringPanel />`)
 - Test: `tests/unit/approach.test.ts`, `sections.spec.ts`, `tests/e2e/scene.spec.ts` (the `data-lit` cleared case)
@@ -2834,7 +2910,7 @@ export const pillars = [
 
   Run the test: PASS.
 
-- [ ] **Step 3: Extend `ScrollScene`.** In `write()` for `pillars`, add `el.dataset.lit = String(s.lit)`. In the unpinned branch, add `delete el.dataset.lit`. Extend `scene.spec.ts` with a pillars fixture, which asserts that `data-lit` is absent after resizing below the threshold.
+- [ ] **Step 3: Test `ScrollScene`'s pillars mode.** It already writes `data-lit` and `--tbs-line`, and clears both when unpinned (Task 5). Extend `scene.spec.ts` with a pillars fixture: add a second `ScrollScene phases="pillars"` to `app/e2e-fixtures/scene/page.tsx`. Assert that `data-lit` is set while pinned, and absent after resizing below the threshold.
 
 - [ ] **Step 4: Implement the section.**
 
@@ -2873,7 +2949,7 @@ export function ThinkBuildShip() {
 .tbs__words { display: flex; gap: 0.4em; flex-wrap: wrap; font-size: clamp(3rem, 9vw, 8rem); font-weight: 600; letter-spacing: -0.045em; line-height: 1; }
 .tbs__word { color: var(--fg); transition: color 320ms var(--ease-out); }
 .tbs__line { margin-top: 24px; height: 1px; background: var(--line); }
-.tbs__line > span { display: block; height: 100%; background: var(--accent); transform-origin: 0 50%; transform: scaleX(var(--line)); }
+.tbs__line > span { display: block; height: 100%; background: var(--accent); transform-origin: 0 50%; transform: scaleX(var(--tbs-line)); }
 .tbs__slots { margin-top: 40px; display: grid; gap: 40px; }
 /* Pinned: data-lit is present → one word lit, one slot shown (the others stay in the DOM for screen readers). */
 .tbs[data-lit] .tbs__word { color: var(--fg-subtle); }
@@ -2965,7 +3041,7 @@ import { GithubIcon, LinkedinIcon, MailIcon } from "@/components/ui/icons";
 export function Contact() {
   const channel = "inline-flex min-h-11 items-center gap-2.5 rounded-full border border-line px-4 text-sm text-fg-muted hover:border-line-strong hover:text-fg";
   return (
-    <section id="contact" aria-labelledby="contact-title" data-theme="dark" className="contact seam-top-dark relative overflow-hidden bg-[var(--bg)]">
+    <section id="contact" aria-labelledby="contact-title" data-theme="dark" className="contact seam-top-dark seam-bottom-dark relative overflow-hidden bg-[var(--bg)]">
       <div className="contact__horizon" aria-hidden="true" />
       <div className="shell relative py-[clamp(8rem,18vh,14rem)] text-center">
         {availability.open && <p className="label inline-flex items-center gap-2 text-fg-muted"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--status-live)]" />{availability.label}</p>}
@@ -2987,6 +3063,8 @@ export function Contact() {
   );
 }
 ```
+
+Put this CSS in `components/sections/contact.css`, imported by `Contact.tsx`:
 
 ```css
 /* Planet-horizon light (spec §5.6): a CSS arc, a faint grid, cool light pooling. No image, no loop. */
@@ -3103,7 +3181,7 @@ export default function Page() {
 - `app/gl-spike/`, `app/render-studio/`
 - `design/render/scene.ts`, `design/render/capture.mjs`
 - `public/arrival/`
-- `heroStats` in `data/socials.ts`, if no importer remains (spec §6)
+- `heroStats` in `data/socials.ts` (spec §6). Its last importer is `app/opengraph-image.tsx`. Move the three stats the card shows (Live, 1,742, B.Sc.) into that file as a local, commented `CARD_STATS`, since they are the social card's own copy, then delete `heroStats`. In the same step, restyle the OG card to the Plan 1 palette: `brand.bg` `#05070a`, `brand.accent` `#5b9cff`. Plan 1 changed only its headline.
 
 **Modify:**
 - `package.json`: remove `three` and `@types/three`, then `npm install` to update the lockfile.
@@ -3127,7 +3205,8 @@ const all = src.map((f) => fs.readFileSync(f, "utf8")).join("\n");
 it("every component module is imported by something", () => {
   const orphans = files("components").filter((f) => /\.tsx?$/.test(f)).filter((f) => {
     const base = path.basename(f).replace(/\.tsx?$/, "");
-    return !new RegExp(`from ["'][^"']*/${base}["']`).test(all);
+    // static `from ".../X"` or dynamic `import(".../X")` (CaseStudyPanel and GravityField are loaded only dynamically)
+    return !new RegExp(`(from\\s*|import\\(\\s*)["'][^"']*/${base}["']`).test(all);
   });
   expect(orphans).toEqual([]);
 });
@@ -3135,6 +3214,9 @@ it("three.js and the spike routes are gone", () => {
   const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
   expect(pkg.dependencies?.three).toBeUndefined(); expect(pkg.devDependencies?.["@types/three"]).toBeUndefined();
   expect(fs.existsSync("app/gl-spike")).toBe(false); expect(fs.existsSync("app/render-studio")).toBe(false); expect(fs.existsSync("public/arrival")).toBe(false);
+});
+it("the e2e fixture route is never in the sitemap", () => {
+  expect(fs.readFileSync("app/sitemap.ts", "utf8")).not.toMatch(/e2e-fixtures/);
 });
 ```
 
@@ -3189,6 +3271,7 @@ await b.close(); process.exit(p95 > 8 ? 1 : 0);
   - Run `npm run shoot` at 1440×900, 1366×768, 768×1024, 390×844, 375×667 and 844×390, in both themes, across the entrance beats and every section (including pinned mid-points).
   - Inspect every sheet yourself: geometry, clipping, z-index, wrapping, pin lengths, overflow, contrast, nav timing, seams and the dark spine.
   - Fix, re-shoot and record in the log.
+  - **Plan 1 open item:** at 844×390, the floating accessibility button must not overlap the hero CTAs at p = 1. If it does, add `padding-bottom` at max-height 500 px to the hero so the CTAs clear it. Re-shoot to confirm.
   - **Overlays** (spec §6, "restyled"): open and screenshot at 1440×900 and 390×844, in both themes:
     - the command palette;
     - the accessibility panel;
@@ -3216,7 +3299,7 @@ await b.close(); process.exit(p95 > 8 ? 1 : 0);
 
 ### Task 25: Fresh whole-branch review, fix pass, push, report — then stop
 
-- [ ] **Step 1: Dispatch a fresh reviewer** (general-purpose, on the most capable model) over `git diff 3264b56..HEAD`, with the same brief as Plan 1's final review. It is read-only and prioritises Critical / Important / Minor with file:line and a failure scenario. Its brief adds:
+- [ ] **Step 1: Dispatch a fresh reviewer** (general-purpose, on the most capable model) over `git diff 3264b56..HEAD`. The diff base is intentionally the commit before Plan 1's execution (the same base Plan 1's review used), so the review covers the whole redesign, entrance included. with the same brief as Plan 1's final review. It is read-only and prioritises Critical / Important / Minor with file:line and a failure scenario. Its brief adds:
   - the scene primitive's pin and unpin lifecycle;
   - the GRAVITY FLOW loop gating;
   - the case-study lazy load and focus restoration;
