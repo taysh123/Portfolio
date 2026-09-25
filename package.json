@@ -12,7 +12,9 @@
     "test:e2e": "playwright test",
     "render:screens": "python3 design/render/blender/make_screens.py",
     "render:preview": "bpyenv/bin/python design/render/blender/render.py --quality preview --framing all",
-    "encode:frames": "node scripts/encode-frames.mjs"
+    "encode:frames": "node scripts/encode-frames.mjs",
+    "measure": "node scripts/measure.mjs",
+    "shoot": "node scripts/shoot.mjs"
   },
   "dependencies": {
     "framer-motion": "^12.40.0",
