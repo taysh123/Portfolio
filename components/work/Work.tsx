@@ -1,5 +1,6 @@
 import { FlagshipScene } from "./FlagshipScene";
 import { CaseStudyHost } from "./CaseStudyHost";
+import { MoreWork } from "./MoreWork";
 import { flagships, projectOf } from "@/data/work";
 import Image from "next/image";
 import "./worlds/worlds.css";
@@ -22,7 +23,8 @@ export function Work({ worlds = {} }: { worlds?: Partial<Record<string, React.Re
             <div className="world-frame"><Image src={p.media!.image!} alt={p.media!.alt ?? ""} fill sizes="(min-width:1024px) 58vw, 100vw" className="object-contain" /></div>)} />;
         })}
       </div>
-      {/* More Work (Task 17) renders here, in the site theme. */}
+      {/* More Work follows the site theme. */}
+      <MoreWork />
       <CaseStudyHost />
       <noscript><style>{".case-study-trigger{display:none}"}</style></noscript>
     </section>

@@ -2,8 +2,7 @@
 import { test, expect, type Page } from "playwright/test";
 const skip = async (page: Page) => { await page.goto("/"); await page.locator("[data-skip-intro]").click(); };
 
-// un-fixme in Task 17 (More Work supplies the last two h3s)
-test.fixme("Work: one h2, four flagship h3s in order, then two more-work h3s", async ({ page }) => {
+test("Work: one h2, four flagship h3s in order, then two more-work h3s", async ({ page }) => {
   await skip(page);
   await expect(page.locator("#work h2")).toHaveCount(1);
   await expect(page.locator("#work h3")).toHaveText(["T Poker", "Aegis", "DeveloperOS", "GRAVITY FLOW", "Job Assistant", "Orders & Delivery"]);
@@ -92,4 +91,26 @@ test("gravity world: the field loops only while in view, and never under reduced
   expect(await raf(1000)).toBe(0);                             // stopped out of view
   for (const img of await page.locator(".world-gravity img").all()) await expect(img).toHaveAttribute("alt", /.+/);  // every image
   await expect(page.locator(".world-gravity")).toContainText(/Android-only/);
+});
+
+test("more work: two unpinned rows with their pipeline diagrams, and the coursework label", async ({ page }) => {
+  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  const rows = page.locator(".more-work__row");
+  await expect(rows).toHaveCount(2);
+  // Exactly one drawing is displayed per row (across on wide rows, down on phones).
+  await expect(rows.nth(0).locator("svg:visible")).toHaveCount(1);
+  await expect(rows.nth(0).locator("svg:visible text")).toHaveText(["collect", "filter", "dedup", "deliver"]);
+  await expect(rows.nth(1).locator("svg:visible text")).toHaveText(["client", "TCP", "server"]);
+  await expect(rows.nth(1)).toContainText("Coursework");
+  await expect(page.locator(".more-work .scene")).toHaveCount(0);          // never pinned
+});
+
+test("more work on a phone: the pipeline is drawn down the column, labels at a legible size", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  const svg = page.locator(".more-work__row").nth(0).locator("svg:visible");
+  await expect(svg).toHaveCount(1); await expect(svg).toHaveClass(/pipeline--v/);
+  const px = await svg.evaluate((el) => { const t = el.querySelector("text")!; return t.getBoundingClientRect().height; });
+  expect(px).toBeGreaterThanOrEqual(11);                                   // rendered glyph box, not the nominal size
+  await expect(page.getByRole("img", { name: /Job Assistant: collect → filter → dedup → deliver/ })).toHaveCount(1);
 });
