@@ -72,3 +72,13 @@ export const approachSteps: ApproachStep[] = [
     project: "Aegis · DeveloperOS",
   },
 ];
+
+/** Think · Build · Ship (spec §5.5): three words, each with one real example condensed from the steps above. */
+export const pillars = [
+  { word: "Think", line: "Architecture before implementation.", from: ["understand"], project: "T Poker",
+    example: "The hard part of T Poker wasn't the poker UI: it was guaranteeing the money is exact on a phone with no signal, and still correct when the server reconnects." },
+  { word: "Build", line: "Clean, maintainable systems.", from: ["design"], project: "Aegis",
+    example: "Eight bounded contexts, structured so a cross-module reference fails to compile — verified by a script, not by code review." },
+  { word: "Ship", line: "Test. Deploy. Improve.", from: ["verify", "ship"], project: "T Poker · Aegis",
+    example: "The TypeScript settlement fixtures mirror the C# service case for case, and Aegis comes up from a single Docker command that gates on health." },
+] as const;

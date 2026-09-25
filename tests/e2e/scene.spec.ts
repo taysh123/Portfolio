@@ -48,3 +48,14 @@ test("fit guard: a composition taller than the viewport is never pinned, so noth
   await expect(page.locator("#fx-tall .scene__stage")).toHaveCSS("position", "relative");
   await page.locator("#fx-tall [data-bottom]").click();             // reachable, not under the next block
 });
+
+test("pillars mode: data-lit is written while pinned and cleared when the scene unpins (Plan 2 Task 20)", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("/e2e-fixtures/scene");
+  await page.evaluate(() => { const s = document.getElementById("fx-pillars")!; window.scrollTo({ top: s.getBoundingClientRect().top + scrollY + (s.offsetHeight - innerHeight) * 0.5, behavior: "instant" as ScrollBehavior }); });
+  await expect(page.locator("#fx-pillars")).toHaveAttribute("data-pinned", "true");
+  await expect(page.locator("#fx-pillars")).toHaveAttribute("data-lit", /^[012]$/);
+  await page.setViewportSize({ width: 900, height: 720 });
+  await expect(page.locator("#fx-pillars")).toHaveAttribute("data-pinned", "false");
+  await expect(page.locator("#fx-pillars")).not.toHaveAttribute("data-lit", /.*/);
+});

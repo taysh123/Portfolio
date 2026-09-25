@@ -1,0 +1,14 @@
+/* Think · Build · Ship (spec §5.5). */
+/* Static (default, reduced motion, small screens, no JS): every word lit, all three slots stacked. */
+.tbs__words { display: flex; gap: 0.4em; flex-wrap: wrap; font-size: clamp(3rem, 9vw, 8rem); font-weight: 600; letter-spacing: -0.045em; line-height: 1; }
+.tbs__word { color: var(--fg); transition: color 320ms var(--ease-out); }
+.tbs__line { margin-top: 24px; height: 1px; background: var(--line); }
+.tbs__line > span { display: block; height: 100%; background: var(--accent); transform-origin: 0 50%; transform: scaleX(var(--tbs-line)); }
+.tbs__slots { margin-top: 40px; display: grid; gap: 40px; }
+/* Pinned: data-lit is present → one word lit, one slot shown (the others stay in the DOM for screen readers). */
+.tbs[data-lit] .tbs__word { color: var(--fg-subtle); }
+.tbs[data-lit="0"] .tbs__word[data-i="0"], .tbs[data-lit="1"] .tbs__word[data-i="1"], .tbs[data-lit="2"] .tbs__word[data-i="2"] { color: var(--fg); }
+.tbs[data-lit] .tbs__slots { display: grid; grid-template-areas: "slot"; }
+/* Exit runs at ~65% of the enter: 210ms out, 320ms in (the lit rule below). */
+.tbs[data-lit] .tbs__slot { grid-area: slot; opacity: 0; transform: translateY(12px); transition: opacity 210ms var(--ease-out), transform 210ms var(--ease-out); }
+.tbs[data-lit="0"] .tbs__slot[data-i="0"], .tbs[data-lit="1"] .tbs__slot[data-i="1"], .tbs[data-lit="2"] .tbs__slot[data-i="2"] { opacity: 1; transform: none; transition-duration: 320ms; }

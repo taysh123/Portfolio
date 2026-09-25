@@ -11,7 +11,7 @@ import { AegisWorld } from "@/components/work/worlds/AegisWorld";
 import { DeveloperOSWorld } from "@/components/work/worlds/DeveloperOSWorld";
 import { GravityWorld } from "@/components/work/worlds/GravityWorld";
 import { Stack } from "@/components/sections/Stack";
-import { EngineeringPanel } from "@/components/sections/EngineeringPanel";
+import { ThinkBuildShip } from "@/components/sections/ThinkBuildShip";
 import { Contact } from "@/components/sections/Contact";
 
 /**
@@ -51,8 +51,9 @@ export default function Page() {
 
         <Stack />
 
+        <ThinkBuildShip />
+
         <Stage>
-          <EngineeringPanel />
           <Contact />
         </Stage>
       </main>

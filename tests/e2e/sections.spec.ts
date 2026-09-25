@@ -146,3 +146,32 @@ test("pointer light follows the hovered card only, and not under reduced motion"
   await page.emulateMedia({ reducedMotion: "reduce" }); await page.mouse.move(box.x + 90, box.y + 60);
   await expect.poll(() => card.evaluate((el) => el.style.getPropertyValue("--mx"))).toBe("");
 });
+
+const litIndex = (page: Page) => page.locator("#approach .tbs__word").evaluateAll((els) => {
+  const c = els.map((e) => getComputedStyle(e).color); const fg = getComputedStyle(document.querySelector("#approach h3")!).color;
+  return c.map((x, i) => (x === fg ? i : -1)).filter((i) => i >= 0);
+});
+const toApproach = (page: Page, f: number) => page.evaluate((f) => { const s = document.getElementById("approach")!; window.scrollTo({ top: s.getBoundingClientRect().top + scrollY + (s.offsetHeight - innerHeight) * f, behavior: "instant" as ScrollBehavior }); }, f);
+
+test("think · build · ship: pinned at 1440, one word lit at a time", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await skip(page);
+  await toApproach(page, 0.2); await expect.poll(() => litIndex(page)).toEqual([0]);
+  await toApproach(page, 0.85); await expect.poll(() => litIndex(page)).toEqual([2]);
+});
+
+for (const [name, setup] of [
+  ["at 390 × 844", async (page: Page) => { await page.setViewportSize({ width: 390, height: 844 }); await skip(page); }],
+  // Reduced motion: the entrance is static and has no skip control, so the page is simply loaded.
+  ["under reduced motion", async (page: Page) => { await page.emulateMedia({ reducedMotion: "reduce" }); await page.goto("/"); }],
+] as const) {
+  test(`think · build · ship ${name}: all three slots visible, stacked`, async ({ page }) => {
+    await setup(page);
+    await page.locator("#approach").scrollIntoViewIfNeeded();
+    const slots = page.locator("#approach .tbs__slot");
+    await expect(slots).toHaveCount(3);
+    const tops = await slots.evaluateAll((els) => els.map((e) => [e.getBoundingClientRect().top, +getComputedStyle(e).opacity]));
+    for (const [, o] of tops) expect(o).toBe(1);
+    expect(tops[0][0]).toBeLessThan(tops[1][0]); expect(tops[1][0]).toBeLessThan(tops[2][0]);
+  });
+}
