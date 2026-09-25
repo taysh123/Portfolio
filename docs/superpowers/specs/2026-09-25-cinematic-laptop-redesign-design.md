@@ -164,7 +164,7 @@ The token architecture stays as August built it: semantic CSS variables on `:roo
 | Realism | Illustration. Measured twice: four August passes, and the package screenshot above | "Clean 3D mock-up". Rasterised lighting has no global illumination, soft bounce or depth of field ([August render](assets/2026-09-25-august-render.webp)) | Photographic. A Cycles path tracer gives real bounce light, soft shadows, reflections on the glass and keys, and depth of field |
 | Lid reflections that evolve with the angle (brief) | Faked with gradients | Yes | Yes, physically |
 | Runtime cost | Low | +~150 KB gzip JS, a GPU context, and per-device shader and lighting risk | **No WebGL, no new JS library.** A 2D canvas draws one or two images per scroll change |
-| Payload | ~0 | ~150 KB JS | Frames, projected for the richer studio (§4.6) at 15–25 KB per 960×540 AVIF frame: ~1.9–2.5 MB at the 1280 tier and ~3.5–4.6 MB at the 1920 tier (desktop), ~1.8–2.5 MB portrait. Held to the §9 budgets by the levers in §4.7. Fetched after first paint |
+| Payload | ~0 | ~150 KB JS | Frames, projected for the richer studio (§4.6) at 15–25 KB per 960×540 AVIF frame: ~1.9–2.5 MB at the 1280 tier and ~3.5–4.6 MB at the 1920 tier (desktop), ~0.95–1.2 MB for the portrait plan (§4.4: 31 frames at the 720 tier). The 1920 tier may exceed its budget; the §4.7 levers close that gap. Fetched after first paint |
 | Screen → website | Easy (it is DOM) | Hard (DOM projected onto a moving 3D quad) | Easy and exact: every frame carries its projected screen corners, and the DOM rides them via `matrix3d` |
 | Failure mode | Looks cheap | Looks like a game asset, or janks on weak GPUs | A poster instead of motion, if frames fail to load |
 
@@ -191,9 +191,9 @@ The story narrows as you scroll: **room → workstation → laptop → screen �
 | `p` | Beat | Journey | Frames | What moves |
 |---|---|---|---|---|
 | 0.00 | **Arrival** | Room | K0, 1 rendered frame (the poster) | A near-black veil over the studio (§4.6). The closed silver laptop carries a chamfer hairline and a soft reflection of the code display. "01 — Scroll to begin" in mono, top left. |
-| 0.00–0.12 | **Darkness lifts** | Room | 2D over K0 | The exposure veil goes 1 → 0 (ease-out); CSS scales the frame 1.00 → 1.03. "TAY SHOFER / Software Developer" fades in, letterspaced, in the title quiet zone above the laptop (§4.6), never over the code display. |
-| 0.12–0.38 | **Lid opens** | Workstation → laptop | 36 rendered | ~5 still frames while the lid cracks and the key backlight spills a thin ice line across the mat (concept frame 02). Then the camera cranes down and in (30 → 40 mm) as the hinge goes 0° → 108°. The laptop grows from ≈ 27% to ≈ 46% of the width as the monitor arc falls behind it. The sweep travels down the black glass and the lid's shadow crosses the mat. "02 — Scroll to open". |
-| 0.38–0.53 | **Power-on** | Laptop → screen | 2D: cross-fade K1-off → K1-on (one render, via light groups) | Only the laptop wakes. Its spill onto the keys and mat is in the render; the room does not change. The DOM screen wakes: backlight, then the restrained boot log (`> initializing portfolio…` / `> loading projects…` / `> ready.`). The room title fades out. |
+| 0.00–0.12 | **Darkness lifts** | Room | 2D over K0 | The exposure veil goes 1 → 0 (ease-out), and a stage zoom goes 1.00 → 1.03 and is then **held for the rest of the sequence**. FramePlayer applies the zoom in its cover fit, and screenSurface applies it to every quad, so the first lid frame does not jump. "TAY SHOFER / Software Developer" fades in, letterspaced, in the title quiet zone above the laptop (§4.6), never over the code display. |
+| 0.12–0.38 | **Lid opens** | Workstation → laptop | 36 rendered | ~5 still frames while the lid cracks and the key backlight spills a thin ice line across the mat (concept frame 02). The room title fades out over 0.12–0.17, before the crane starts. Then the camera cranes down and in (30 → 40 mm) as the hinge goes 0° → 108°. The laptop grows from ≈ 27% to ≈ 46% of the width as the monitor arc falls behind it. The sweep travels down the black glass and the lid's shadow crosses the mat. "02 — Scroll to open". |
+| 0.38–0.53 | **Power-on** | Laptop → screen | 2D: cross-fade K1-off → K1-on (one render, via light groups) | Only the laptop wakes. Its spill onto the keys and mat is in the render; the room does not change. The DOM screen wakes. It is hidden until here, so the rendered glass reflections show through the lid move and at K1-off. First the backlight, then the restrained boot log (`> initializing portfolio…` / `> loading projects…` / `> ready.`). |
 | 0.53–0.68 | **Identity** | Tay Shofer | 2D: K1-on held, with the DOM on it | On the screen, the log gives way to **TAY SHOFER / Software Developer / Building products that ship.** "03 — Welcome". The laptop's framing is held so the identity is legible. |
 | 0.68–0.88 | **Camera** | Screen fills the view | 28 rendered | The push, in two phases: first a square-up onto the screen normal, then a dolly along it (40 → 50 mm; the aperture opens only after the square-up). The room dims to ×0.6 and the warm light goes to 0. Monitors, tower and homelab dissolve into bokeh and leave the frame. The screen surface rides the projected corners, and eases to identity once the screen covers the viewport (§4.3). |
 | 0.88–1.00 | **Portal** | Website | DOM over K2 (static) | K2 is perpendicular to the screen and overscans the frame, so the bezel has already gone. The surface is at identity. This phase is content and colour continuity: the identity becomes the hero (§4.3). The nav fades in over 0.96–1.00, and the pin releases at 1.00. |
@@ -206,25 +206,40 @@ There is no duplicate hero and no cross-fade to a separate page:
 
 - **The hero section is the screen surface.** The real `<section id="hero">` with the real `<h1>` is mounted inside the pinned stage. While the screen is visible inside the laptop, its transform is the homography that maps it onto the screen quad of the frame being drawn. By K2 (p 0.88) that transform is exactly the identity, so when the pin releases the thing on screen simply *is* the hero and scrolls away like any section.
 - **Aspect ratio and hand-off:** the laptop screen is 16:10 and viewports are not.
-  - The surface is laid out at viewport size. The homography maps a centred 16:10 crop of it onto the screen quad, clipped to that crop.
-  - The bezel leaves the viewport **during the late, rendered push**.
-  - From the first frame in which the rendered screen quad contains the viewport, the transform eases from the quad homography to identity, and the crop grows to the full viewport, over the remaining push frames. So there is no scale "bounce" at the hand-off.
+  - **Landscape entrance (aspect ≥ 0.9):**
+    - The surface is laid out at viewport size and extended to the 16:10 rectangle that *circumscribes* the viewport. The extra bands are `--screen`, the same black as the panel, so they are invisible.
+    - The homography maps that rectangle onto the screen quad.
+    - When the rendered quad first contains the viewport during the late push, the content scale is therefore already ≈ 1.00. The bezel leaves the viewport in rendered frames, and the transform eases to exact identity by K2 (p 0.88), with no scale "bounce".
+    - 0.88–1.00 is content and colour continuity only.
+  - **Portrait entrance (aspect < 0.9):**
+    - A landscape screen can't contain a portrait viewport, so the surface maps a centred band of the viewport onto the quad.
+    - At P2 the quad spans the full width with ≥ 3% overscan. Over 0.88–0.96, on the static P2 frame, the DOM band **opens vertically** to full height, covering the rendered bezel and desk above and below it, and reaches identity at 0.96.
+    - 0.96–1.00 is continuity only.
+  - **Guarantee:** for p ≥ 0.88 in landscape, and p ≥ 0.96 in portrait, the surface is at identity **whatever frame is drawn**. Missing push frames can never strand the hero inside the laptop.
   - You see the screen *expand*, not a letterbox.
-  - 0.88–1.00 is content and colour continuity only.
 - **Content continuity:** "TAY SHOFER" glides and shrinks into the hero's name line and "Software Developer" merges into it. "Building products that ship." gives way to the headline *I build software / people can actually use.*, which rises in with a mask reveal, followed by the supporting line and CTAs. Every step is transform or opacity.
 - **Background continuity:** the screen's black is `--screen`, which cross-fades to `--bg` during the portal. That is a no-op in the dark theme (§1, assumption 4). The bezel and desk leave frame because they are *outside* the screen, so nothing fades to black.
 - **Glass:** a faint reflection gradient sits over the surface while it is "inside" the laptop and fades to 0 as it reaches the viewport.
 
 ### 4.4 Mobile and portrait: its own composition
 
-This applies whenever the viewport aspect is below 0.9, which covers phones and portrait tablets:
+**Which entrance each device class gets:**
+
+| Viewport | Frames | Container |
+|---|---|---|
+| Aspect < 0.9 (phones and tablets in portrait) | Portrait set | 260svh |
+| Aspect ≥ 0.9 and height ≥ 500 px (laptops, desktops, tablets in landscape) | Landscape set (1280 tier by default; 1920 tier at DPR ≥ 1.5 and width ≥ 1280) | 400svh |
+| Aspect ≥ 0.9 and height < 500 px (phones in landscape) | Landscape set, 1280 tier | 260svh |
+
+The portrait composition:
 
 - A separate **portrait render**, 1080×1920 with vertical sensor fit, at **260svh**. It follows the same journey (§4.6):
   - **P0 room:** 32 mm. The laptop is ≈ 45% of the width in the lower third, with the whole code display above it.
   - **P1 laptop:** 38 mm, ≈ 85% of the width.
   - **P2 screen:** 40 mm, on the screen normal, ≥ 103% of the width.
   - Out-of-frame props stay in the scene, invisible to the camera, so their light and reflections remain.
-- Fewer frames: P0, 24 lid, 1 wake render (giving the off and on frames), 16 push. The same beats, compressed. There is no room title, because the name appears on the screen instead.
+- Fewer frames, to fit the 1.2 MB budget: P0, **16 lid**, 1 wake render (giving the off and on frames), **12 push**, 31 frames in all. Cross-fades cover the wider steps. The same beats, compressed. There is no room title, because the name appears on the screen instead.
+- A **720×1280 delivery tier**, encoded from the 1080×1920 master. The DOM screen stays crisp at any density; the frames are mostly depth of field.
 - The portal expands a landscape screen into a portrait viewport. The 16:10 band opens vertically into the full screen, which reads as the screen unfolding, and it is designed rather than accidental.
 - Native touch scroll only: Lenis already leaves touch alone, and there is no scroll-jacking.
 
@@ -237,10 +252,12 @@ The **layout is decided in CSS at first paint**, which is what keeps CLS at 0. I
   - The hero surface drops out of its absolute, transformed position into normal flow.
   - There is no frame sequence, dolly or parallax, and JS applies no transforms in this mode.
   - The nav is visible from the first paint. The floating palette, chat and accessibility buttons are client-only, so without JS they don't exist; with JS they appear immediately.
-- **The poster and the still** are `<picture>` elements (AVIF plus a JPEG fallback) so that every browser can show them. **Sequence frames** are AVIF only. If a frame will not decode, the entrance drops to static mode.
+- **The poster and the still** exist per framing (landscape and portrait). They are `<picture>` elements (AVIF plus a JPEG fallback) so that every browser can show them. **Sequence frames** are AVIF only.
+- **If a frame will not decode, the pinned layout stays,** and the entrance shows the poster and still inside it. It never unpins after first paint, which would shift the layout and jump the scroll position.
 - **Frames missing or late**, whether on a cold load or after a failure, never produce a mismatch:
   - The DOM surface always takes its quad from **the frame actually drawn**, never from the frame that "should" be there.
-  - Load order is poster → still → sparse lid frames → fill → push.
+  - Load order is poster → still → K2 (P2 in portrait) → sparse lid frames → fill → push. The Save-Data sparse set always includes K1-on and K2.
+  - Frames whose screen faces away from the camera (the closed lid and the crack frames) have a **null quad** in the manifest. The surface stays hidden until power-on at 0.38 in any case.
   - The still (the K1 framing) stands in only for `p ≥ 0.38`. A missing lid frame falls back to the nearest decoded lid frame, then to the poster, because the lid move travels too far for the still to substitute.
   - It degrades to "less motion", never to "broken".
 - **Save-Data or 2G/3G:** only every fourth frame is fetched, and cross-fades cover the gaps.
@@ -289,22 +306,22 @@ Units are metres. The laptop sits at the origin, +y points away from the camera,
   - About 62 vertical smoked-oak slats, 28 mm wide with 14 mm gaps, spanning x −1.30..+1.30 from the floor to z 1.60.
   - Built as one bevelled slat plus an Array modifier, over black felt.
   - The graze light (L2) catches each edge in a fine ice line, brightest at desk height and fading to navy by z ≈ 1.0.
-- **Homelab niche** (right; depth layer L5):
+- **Homelab niche** (right; depth layer D5):
   - A recess at x +1.30..+1.95, z −0.10..+1.10, going back to y 1.61.
   - Two dark-oak shelves hold a 2-bay NAS, an 8-port switch and a mini-PC.
   - A hidden strip in the niche head lights the device fronts, so they read as objects rather than floating dots.
 - **Wall rail:** brushed aluminium, 20×40 mm, at y 1.17, z 0.45. All three monitors hang from it on articulated arms. There is no desk pole, so the desk behind the laptop stays an empty, reflective quiet zone.
 - **Desk:** 2.40 × 1.00 × 0.04 in black-stained ash with a 4 mm front bevel. The 0.59 m gap between the desk and the wall hides the graze light and a cable tray.
-- **Depth layers:** each layer has its own separation light, and in K0 adjacent layers differ in luminance by at least 1.5× where they meet.
+- **Depth layers** (D0–D5, named apart from the lights L1–L12). Each has its own separation light. In K0, adjacent layers differ in luminance by at least 1.5× where they meet, and that is asserted: it is the measurable guarantee of "more spatial depth".
 
-  | Layer | Contents |
-  |---|---|
-  | L0 | Mat and desk front |
-  | L1 | Laptop, keyboard, mouse, macro pad, notebook |
-  | L2 | Lamp, headphones, tower, dock |
-  | L3 | Monitors |
-  | L4 | Rail and slats |
-  | L5 | Niche |
+  | Layer | Contents | Separated by |
+  |---|---|---|
+  | D0 | Mat and desk front | L5 key, L4 light bar |
+  | D1 | Laptop, keyboard, mouse, macro pad, notebook | L6 rim, L7 card, L10–L11 backlight |
+  | D2 | Lamp, headphones, tower, dock | Tower interior glow, L6 rim, L12 lamp |
+  | D3 | Monitors | L1 halo, aluminium rims |
+  | D4 | Rail and slats | L2 graze |
+  | D5 | Niche | L3 niche strip |
 
 - **Zoning:** the left side is human and warm (lamp, notebook, macro pad). The right side is machine and cool (keyboard, mouse, tower, headphones, homelab). The laptop sits on the seam.
 
@@ -312,7 +329,7 @@ Units are metres. The laptop sits at the origin, +y points away from the camera,
 
 | # | Object | Specification | Position (x, y); yaw |
 |---|---|---|---|
-| 1 | **Laptop (hero)** | 16-inch class at 1.15 scale. Base 0.409 × 0.285 × 0.0168, lid 6 mm, hinge 0° → 108°. 16:10 panel, active area 0.397 × 0.248, bezels 7 / 8.5 / 15 mm, **no notch, no logo**. 1 mm diamond-cut chamfers with their own material; recessed keyboard well; speaker grilles; glass trackpad; feet with a hairline air gap; two USB-C ports with one braided cable to the dock. Silver: the only large light-valued object in the room. Its dominance comes from the lens, not from scale | (0, 0) |
+| 1 | **Laptop (hero)** | 16-inch class. **The listed dimensions are final world-space sizes, at object scale 1.0.** The footprint is ~15% larger than a real 16-inch machine; the 16.8 mm thickness is deliberately not scaled, so the machine reads thin and premium. Base 0.409 × 0.285 × 0.0168, lid 6 mm, hinge 0° → 108°. 16:10 panel, active area 0.397 × 0.248, bezels 7 / 8.5 / 15 mm, **no notch, no logo**. 1 mm diamond-cut chamfers with their own material; recessed keyboard well; speaker grilles; glass trackpad; feet with a hairline air gap; two USB-C ports with one braided cable to the dock. Silver: the only large light-valued object in the room. Most of its dominance comes from the lens, not from the ~15% footprint increase | (0, 0) |
 | 2 | Centre display: **flat** 32-inch 4K, 16:9 | Active area 0.708 × 0.398, 7 mm bezel, aluminium rim, tilted back 4°. A **monitor light bar** sits on top. A curved ultrawide was rejected as the most gaming-coded object on a desk | (0, 0.74), z 0.50 |
 | 3 | Right display, 27-inch 16:9 | Active area 0.597 × 0.336 | (0.74, 0.70), z 0.46; −0.30 rad |
 | 4 | Left display, 24-inch **portrait** | Active area 0.30 × 0.53 | (−0.76, 0.60), z 0.585; +0.50 rad |
@@ -387,7 +404,7 @@ Even out of focus, the arc of displays reads as engineering: code in the centre,
 | lg_key | **L4 monitor light bar:** the one visible diffuser, at no more than 0.6 display luminance | 6500 K, ~7 W | Motivated top key on the laptop and mat |
 | | **L5 cool key:** area 1.0×0.7, upper left, spread 60° | 7000 K, ~12 W | Form; the mat's stitching; soft contact shadows |
 | | **L6 cyan rim:** back right | #5fd6ff, ~15 W | Edges of the lid, keyboard, mouse, headphones and tower top |
-| lg_card | **L7 product card:** 1.2×0.05, glossy-only. Placed for each key frame by reflecting the camera ray about the chamfer normal | 6500 K | The hairline highlight on the laptop's chamfer |
+| lg_card | **L7 product card:** 1.2×0.05, glossy-only and camera-invisible. **Re-solved on every frame** by reflecting the camera ray about the chamfer normal, so it tracks the moving camera without popping | 6500 K | The hairline highlight on the laptop's chamfer |
 | lg_sweep | **L8 lid-sweep card:** gradient emission, glossy-only. Its weight ramps to 0 over the last ~6 lid frames | #9cb4d8 | A designed sheen travelling down the black glass as the lid rises |
 | lg_monitors | Emission of the three displays | Per the brightness hierarchy | The "10%": room fill and desk reflections |
 | lg_screen | The laptop screen proxy, plus **L9**, a camera-invisible spill light | #a8c8ff, ~3 W | Spill on the keys and mat after power-on |
@@ -400,8 +417,8 @@ Even out of focus, the arc of displays reads as engineering: code in the centre,
 | Frames | Atmosphere groups (world, bias, key, card, sweep, backlight, practical) | lg_monitors + lg_screen | lg_warm |
 |---|---|---|---|
 | K0 and lid | 80–88% | 8–14% | 3–6% |
-| K1-off and K1-on | — | — | ≤ 3% |
-| Push and K2 | — | — | 0 |
+| K1-off | 80–88% | 8–14% | ≤ 3% |
+| K1-on and the push | Not asserted. The screen dominates by design | Not asserted | K1-on ≤ 3%; through the push it ramps down, and is exactly 0 at K2 |
 
 Area checks are kept only where area is the right measure:
 - pixels at the black floor ≤ 5%;
@@ -477,12 +494,14 @@ Key frames are also checked on a laptop panel at 50% brightness and on a phone, 
 | Key | p (frames) | Lens, aperture | Camera | Targets (asserted by `render.py`) |
 |---|---|---|---|---|
 | **K0 Room** | 0–0.12 (1, the poster) | 30 mm, f/3.5; focus on the closed lid's front edge | ≈ (−0.26, −1.22, 0.46), held level with lens shift so verticals stay vertical. The aim is solved by the laptop-centring assertion, not fixed coordinates | • Laptop ≈ 27% of the width, centred within ±2%.<br>• Centre display spans ≈ 9–33% of the height.<br>• The lit mat edge and the desk bevel cross the bottom 2–15% as a diagonal leading line, and no row in the bottom 5% sits at the black floor.<br>• Lamp inside the left third; tower cropped by no more than 1/3; niche visible at upper right.<br>• Monitor text 4–6 px soft. |
-| **Lid move** | 0.12–0.38 (36) | 30 → 40 mm, f/3.5 → f/3.2 | • About 5 still frames while the lid cracks (the crack of light).<br>• Then an ease-in-out crane down and in, arcing x −0.26 → −0.05, with yaw change ≤ 10° and travel ≤ 0.30 m.<br>• Lens shift hands over to tilt, and focus racks from the lid edge to the screen plane. | • Laptop 27% → ≈ 40% at mid-move → K1.<br>• The sweep crosses the glass mid-lid, and the lid shadow crosses the mat. |
+| **Lid move** | 0.12–0.38 (36) | 30 → 40 mm, f/3.5 → f/3.2 | • About 5 still frames while the lid cracks (the crack of light).<br>• Then an ease-in-out crane down and in, arcing x −0.26 → −0.05, with yaw change ≤ 10° over a path of ≈ 0.5–0.6 m. That path length is set by the K0 and K1 endpoints, which are fixed by the 27% and 46% width targets.<br>• Lens shift hands over to tilt, and focus racks from the lid edge to the screen plane. | • Laptop 27% → ≈ 40% at mid-move → K1.<br>• The sweep crosses the glass mid-lid, and the lid shadow crosses the mat. |
 | **K1 Laptop** | 0.38–0.68 (1 render, which gives the off and on frames) | 40 mm, f/3.2 | ≈ (−0.05, −0.78, 0.35) | • Lid ≈ 46% of the width; screen centre ≈ (50%, 41%).<br>• Only the bottom ~10% of the centre display, and its halo, show above the lid.<br>• Wings soft and cropped; lamp out of frame, surviving only as amber edges.<br>• **Circle of confusion < 1 px at all four screen corners.**<br>• Solver priority: corner blur and lid width first, framing second, monitor visibility third.<br>• The laptop's share is deliberately **held** across 0.38–0.68 so the identity is legible. |
 | **Push** | 0.68–0.88 (28) | 40 → 50 mm; f/3.2, opening to f/2.0 only after the square-up | • **Phase (a), frames 0–11:** square up onto the screen normal.<br>• **Phase (b), frames 12–27:** dolly along it, easing out over the last 15%. | • Lid ≈ 62% of the width at p 0.75, 80% at p 0.82, ≥ 100% at the end.<br>• Monitors, LEDs and fan rings become round bokeh and leave the frame.<br>• Corner blur < 1 px throughout. |
 | **K2 Screen** | 0.88 | 50 mm, f/2.0 | On the screen normal, solved analytically, perpendicular within 0.1° | The active area **overscans** the frame by 2–4% of the width, so the bezel has already left the frame (§4.3) |
 
-**Title quiet zone** (K0 until p 0.53):
+**Title quiet zone:**
+- The room title follows concept frames 01–02. It is fully visible over 0–0.12, then fades out over 0.12–0.17, while the camera is still holding for the lid crack. It is gone before the crane moves anything into its zone, and before the on-screen identity beat (0.53).
+- The zone is asserted on K0 and the still lid-crack frames only.
 - Centred, covering 40–54% of the height and 36% of the width.
 - It sits over the wall seen through the desk–wall gap and the slats' centre valley, **never over the code display**.
 - Asserted: the 95th-percentile relative luminance in the zone is ≤ 0.15, so `--fg` has at least 4.5:1 contrast.
@@ -514,7 +533,7 @@ Props that are out of frame are made **camera-invisible, but keep casting light 
    - Once on, the laptop screen is the brightest thing in frame, and the background displays reach ≤ 65% of it.
    - The tower is ≤ 30% of the centre display, and the underglow ≤ 50% of the slat band.
    - The laptop is the only large light-valued object.
-4. **Nothing changes but the story:** only the camera, the lid and the light-group weights change between frames. Nothing blinks, and there is no clock, because scrubbing makes any change read as a glitch.
+4. **Nothing changes but the story:** only the camera, the lid, the light-group weights and the camera-invisible glossy-only cards that track the camera (L7, L8) change between frames. Nothing blinks, and there is no clock, because scrubbing makes any change read as a glitch.
 5. **Honest screens:** banned outright:
    - Matrix rain, hex dumps, "ACCESS GRANTED" and scrolling gibberish;
    - world or threat maps and globes;
@@ -553,7 +572,7 @@ Props that are out of frame are made **camera-invisible, but keep casting light 
 | ~84 keycaps and ~62 slats as separate objects | Geometry Nodes instancing and an Array modifier |
 | Felt fibres and braided cables as geometry | Sheen and bump in the shader |
 | Fireflies from bokeh and tiny LEDs | Clamp direct 8 / indirect 3; filter glossy 0.5; adaptive threshold 0.015 |
-| Noise "boil" when scrubbing | Fixed seed; one sample count per shot; OIDN with albedo and normal passes; persistent data on |
+| Noise "boil" when scrubbing | Fixed seed; one sample count per shot, with the push split into two shots; OIDN with albedo and normal passes; persistent data on |
 | Re-rendering just to rebalance the lights | Light groups in multilayer EXR |
 
 **Modelling effort follows focus:**
@@ -561,24 +580,31 @@ Props that are out of frame are made **camera-invisible, but keep casting light 
 - **Tier B**, silhouette and edges only: monitors, arms, rail, light bar, mouse, headphones, tower shell and glass, dock, lamp.
 - **Tier C**, bokeh proxies: tower internals, NAS, switch, mini-PC, mug, far slats.
 
-**Samples:** 64 spp for K0, the lid frames, K1 and push phase (a). **96 spp for push phase (b)**, where f/2.0 bokeh meets small bright LEDs.
+**Samples:** 64 spp for K0, the lid frames, K1 and push phase (a). **96 spp for push phase (b)**, where f/2.0 bokeh meets small bright LEDs. The two push phases are separate `render.py` shots (`push-a`, `push-b`), and the preview scrub checks for noise boil at the join between frames 11 and 12.
 
 **Light paths:** total 8, diffuse 3, glossy 3, transmission 4, volume 0.
 
 #### Key frames: look-dev before any batch
 
-These are rendered at final 1080p quality and must pass the assertions, the pixel audit and the recruiter test (or its stand-in) before the batch starts:
+These are rendered at **final quality, 1920×1080** (portrait 1080×1920). Every pixel target in §4.6 is stated at that reference resolution. Each must pass the assertions, the light-balance audit and the recruiter test (or its stand-in) before the batch starts:
 
 - K0, the poster;
 - the lid crack (≈ 12–15°), the crack of light;
 - lid mid-way (≈ 70°), with the sweep on the glass;
 - K1-off;
-- K1-on, which is also the reduced-motion still;
+- K1-on (screen-on, with the boot/identity proxy texture);
+- the **still**: a separate `still` shot at the K1 framing with the identity baked in, used in static mode, plus a portrait still at the P1 framing;
 - the push at p ≈ 0.78;
 - K2 with the real DOM overlaid;
 - P0, P1 and P2.
 
 The full preview sequence is also scrubbed to check for noise boil and continuity.
+
+**Quality pass condition (the brief's "clearly more cinematic than the test renders"):**
+- Each key frame is judged side by side with the matching old render: spike 1, prototype 2, and the August three.js render where one applies.
+- Every row of the prototype-2 weakness table is checked off as visibly fixed.
+- A frame that is not clearly better gets another look-dev pass.
+- The batch does not start until every key frame passes.
 
 Look-dev continues on each frame until it passes. If a key frame has not converged after three passes, I bring it to you with options rather than lowering the bar. You see the key frames before the batch (§13).
 
@@ -587,7 +613,7 @@ Look-dev continues on each frame until it passes. If a key frame has not converg
 ```
 design/render/blender/
   scene.py        procedural studio, laptop and props. No downloaded models, no licence surface
-  render.py       renders a named shot (lid | wake | push | still) for a framing
+  render.py       renders a named shot (lid | wake | push-a | push-b | still) for a framing
                   (landscape | portrait) at a quality (preview | lookdev | final); writes
                   multilayer EXR with light groups, composites to PNG masters, and asserts the
                   §4.6 composition targets, light-balance audit, corner CoC and prop clearance
@@ -600,7 +626,8 @@ scripts/
   encode-frames.mjs   PNG masters → AVIF tiers (JPEG as well for poster and still) with sharp,
                       and writes manifest.json (corners, source hashes, texture snapshot hash)
 public/entrance/
-  landscape/{1280,1920}/lid-00.avif …   portrait/900/…   poster.*  still.*  manifest.json
+  landscape/{1280,1920}/lid-00.avif …   portrait/720/…
+  poster-{landscape,portrait}.{avif,jpg}   still-{landscape,portrait}.{avif,jpg}   manifest.json
 ```
 
 - **The manifest:** `manifest.json` gives, for every frame, the four projected screen corners in image space, generated by the renderer rather than measured by eye. It follows the same principle as August's `workspace.json`.
@@ -609,10 +636,10 @@ public/entrance/
   | Tier | Settings | Time per frame | Used for |
   |---|---|---|---|
   | Preview | 960×540, 16 spp | ~15 s | Timing |
-  | Look-dev | 960×540, 64 spp | ~50–60 s | The §4.6 key frames |
+  | Look-dev | 960×540, 64 spp | ~50–60 s | Iterating on key frames. Their pass/fail renders are final quality (§4.6) |
   | Final | 1920×1080 landscape and 1080×1920 portrait; 64 spp, or 96 spp for the bokeh-heavy half of the push | ~3–4 min | The shipped sequences |
 
-  The final total is **≈ 6 h of CPU**: landscape ≈ 3.6 h, portrait ≈ 2.2 h, stills ≈ 10 min. It is measured on the first 1080p frame and runs in background chunks.
+  The raw estimate is **≈ 7–7.5 h of CPU**: ≈ 3.6 min per 64-spp frame and ≈ 5.4 min per 96-spp frame, for 65 landscape frames, 31 portrait frames and the stills. It drops to **≈ 6 h after the budget-gate cuts** below. It is measured on the first 1080p frame, and the background chunks are scheduled against the raw figure.
 - **Budget gate:** the raw scaled estimate is already ≈ 3.6 min per frame, so this is expected to trigger. If a 64-spp frame projects above 3.5 min, cut in this order:
   1. underglow and tower interior as lights, keeping them as emission only;
   2. the mug;
@@ -620,12 +647,14 @@ public/entrance/
   4. lid frames 64 → 48 spp;
   5. push phase (b) 96 → 64 spp.
 - **Disk:** the multilayer EXRs (about 10 light groups plus albedo, normal, mist and depth) are ≈ 35–60 MB per frame. EXRs are kept only for the key frames and the chunk currently rendering. That is why the light balance is locked on the key frames before the batch.
-- **What goes into git per chunk:** only the encoded tiers and the updated manifest, ≈ 90–110 KB per landscape frame across both tiers and ≈ 45–60 KB per portrait frame. The masters stay out of git in `out/`. Any frame can be regenerated from the committed scene and the pinned texture snapshot.
+- **What goes into git per chunk:** only the encoded tiers and the updated manifest, ≈ 90–110 KB per landscape frame across both tiers and ≈ 30–38 KB per portrait frame at the 720 tier. The masters stay out of git in `out/`. Any frame can be regenerated from the committed scene and the pinned texture snapshot.
 - **Payload levers**, applied in order if the first final chunk exceeds §9. §9 does not relax.
   1. Lower AVIF quality on push frames, where bokeh hides the loss.
   2. Serve push frames beyond p 0.80 from the 1280 tier.
   3. Soften the slats with depth of field.
-  4. Cut portrait push frames from 16 to 12, with cross-fades covering the gap.
+  4. Portrait only: lower AVIF quality across the whole portrait set, then cut portrait lid frames from 16 to 12.
+
+  The portrait plan (§4.4) is projected to fit its budget before any lever: 31 frames × 30–38 KB ≈ 0.95–1.2 MB. None of the studio's content is simplified to meet a budget. Only tiers, frame counts and encoder quality move.
 
   10-bit AVIF is preferred over dither for banding. Dither is a banding fix with a byte cost, not a payload lever.
 - **Blender is a dev-time tool only:** `pip install bpy` into a Python **3.11** venv, which the wheel requires, documented in the README. It is never a `package.json` dependency. `sharp` becomes an explicit devDependency, because the encoder uses it and it is currently only transitive through Next.
@@ -815,12 +844,12 @@ These are measured, not estimated. They are verified in a production build.
 | Metric | Budget |
 |---|---|
 | CLS | **< 0.02** (layout mode is decided by CSS at first paint) |
-| LCP (desktop, production build, local) | ≤ 1.2 s. The LCP element is the poster, K0: ~60–90 KB AVIF, re-measured on the first final render. Or it is the hero text. The poster is a plain `<picture>` that varies by viewport, so it gets `fetchPriority="high"`, not `preload`, which the Next 16 image docs advise against in that case |
+| LCP (desktop, production build, local) | ≤ 1.2 s. The LCP element is the poster, K0: ~60–90 KB AVIF, re-measured on the first final render. In static mode it is the still. Or it is the hero text. The poster is a plain `<picture>` that varies by viewport, so it gets `fetchPriority="high"`, not `preload`, which the Next 16 image docs advise against in that case |
 | First-load JS for `/` | **≤ 286 KB gzip**, today's measured baseline (12 scripts, 942 KB raw, recorded 2026-09-25). The target is lower: the removed components are among the heaviest |
 | HTML for `/` | **≤ 568 KB**, today's baseline (inlined CSS plus the RSC payload). The target is lower |
 | Entrance frames, desktop | ≤ 2.5 MB AVIF at the 1280 tier, ≤ 4 MB at the 1920 tier (DPR ≥ 1.5 and width ≥ 1280) |
 | Entrance frames, portrait | ≤ 1.2 MB |
-| Frames before `load` | **0**, except the poster |
+| Frames before `load` | **0**, except the poster (pinned mode) or the still (static mode) for the current framing |
 | Main-thread time per scroll frame in the entrance | ≤ 8 ms (Chrome performance trace) |
 | Idle work | 0 active animation-frame loops while no looping scene is in view, asserted at the Contact section in e2e |
 
@@ -838,14 +867,16 @@ If a budget fails, the effect is simplified. The budget is not relaxed.
 - `manifest.json`:
   - every file exists;
   - quads are finite, convex and consistently wound;
-  - quads lie within [0,1] for lid and wake frames, while push frames may exceed it;
-  - the K2 and P2 quads contain the whole frame with the §4.6 overscan;
+  - quads are null for frames where the screen faces away (the closed lid and the crack frames);
+  - quads lie within [0,1] for the remaining lid and wake frames, while push frames may exceed it;
+  - the K2 quad contains the whole frame with the §4.6 overscan, and the P2 quad spans the full width with ≥ 3% overscan;
   - the lid sequence is monotonic;
   - the texture snapshot hash is present.
 - Content: every project has a repo URL and existing images; banned claims (e.g. "6+", invented counts) stay out; nav targets exist; no project lists a store for a platform its honest note excludes.
-- Store and screen-quad fallback: the quad returned always belongs to the frame drawn (§4.5).
+- Store and screen-quad fallback: the quad returned always belongs to the frame drawn (§4.5). For p ≥ 0.88 (landscape) or 0.96 (portrait) the surface is at identity even when only the still is loaded.
+- Hand-off: the content scale is monotonic through the push and the portal, with no bounce, at aspects 0.9, 1.6, 1.78 and 2.33, plus the portrait band opening.
 
-**Render checks** (Python, dev-time, not in CI). `render.py` asserts, per key frame:
+**Render checks** (Python, dev-time, not in CI). `render.py` asserts **every** §4.6 target on every key frame. The list below is a summary, not an exhaustive set:
 - the §4.6 composition targets:
   - laptop share and centring;
   - the leading-line band;
@@ -853,13 +884,16 @@ If a budget fails, the effect is simplified. The budget is not relaxed.
   - K2 perpendicular within 0.1° with 2–4% overscan;
   - screen-corner circle of confusion < 1 px;
 - the light-group balance audit and the hue lock;
-- ≥ 2 cm clearance between props.
+- ≥ 2 cm clearance between props;
+- the adjacent depth layers D0–D5 separated by at least 1.5× in K0;
+- K0's monitor text 4–6 px soft at 1920×1080.
 
 `make_screens.py` fails on any number without a source, and its `strings.txt` is reviewed before the finals.
 
 **End-to-end (Playwright, already a devDependency):**
 
 - One `h1`; no horizontal overflow at 375, 390, 768, 1366 and 1440, and in phone landscape (844×390).
+- Each device class in §4.4 gets the right entrance: the frame set and the container height.
 - Reduced-motion mode (both sources) and no-JS have no pinned heights, and the nav is visible.
 - Skip intro, the skip link, and tabbing into the hero while `p < 1` all focus the `h1` or the target control with `p = 1`.
 - Keyboard traversal of the nav, the mobile menu sheet (theme toggle and palette included) and the case study, with focus restored.
@@ -890,7 +924,7 @@ This is one spec and one implementation plan, split into phases that can each be
 
 | Risk | Mitigation |
 |---|---|
-| Render time: ~3 min per final frame at 1080p (64 spp) and ~4 min for the 16 bokeh-heavy push frames (96 spp), about 6 h on 4 cores | Preview and look-dev renders for all iteration. Finals only after the key frames pass. Chunked. The first 1080p frame is measured, and the §4.7 budget gate applies |
+| Render time: raw ≈ 7–7.5 h on 4 cores (≈ 3.6 min per 64-spp frame, ≈ 5.4 min per 96-spp frame), ≈ 6 h after the budget-gate cuts | Preview and look-dev renders for all iteration. Finals only after the key frames pass. Chunked. The first 1080p frame is measured, and the §4.7 budget gate applies |
 | The container is reclaimed mid-render | Encoded chunks committed as they finish (masters stay out of git); the scene is code, so any frame can be regenerated |
 | The procedural scene falls short of the concept | Depth of field and low-key lighting carry most of it. Detail follows focus (§4.6 tiers). Every key frame must pass the §4.6 assertions and review before the batch |
 | The room drifts toward a gaming room as emitters accumulate | Hue lock, brightness hierarchy, a light-balance audit on every key frame, and a recruiter test with an ordered cut list (§4.6) |
@@ -920,6 +954,6 @@ Override any of these at review:
 9. **Screen content comes from this repository only** (TypeScript, the Python render scripts, real build, lint and git output, and real test counts), until you grant read access to other project repositories.
 10. **Key frames are shared with you before the ~6 h final batch.** This is a courtesy, not a blocking gate, unless you ask for one.
 11. **Recruiter test stand-in:** unless you run the 5-second test with 3–5 outside people, the stand-in is the light-balance audit plus my side-by-side review against prototype 2 and the concept.
-12. **Payload:** the richer frames will probably push the portrait set past its 1.2 MB budget, and possibly the 1920 tier past 4 MB. The default is §9's rule: simplify with the §4.7 levers, and never relax the budget.
+12. **Payload:** the portrait entrance is re-planned to fit its 1.2 MB budget: 31 frames at a 720×1280 tier. The 1920 landscape tier may still exceed 4 MB, and the §4.7 levers close that gap. §9 never relaxes, and no studio content is cut to meet a budget.
 
 **One fact I could not verify from this session:** T Poker's `repoUrl` (`github.com/taysh123/poker-home-games`) does not show up in GitHub's public search, where the other five do. This container can't reach github.com to check directly. **If that repository is private,** the "Source" button should become "Private repository", with no link, rather than a link that 404s for visitors.
