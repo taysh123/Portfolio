@@ -1840,6 +1840,45 @@ for (const [w, h] of [[375, 667], [390, 844], [768, 1024], [1366, 768], [1440, 9
   });
 }
 
+test("no JavaScript: static entrance, hero in flow, nav usable, content without the runtime", async ({ browser }) => {
+  const ctx = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1440, height: 900 } });
+  const page = await ctx.newPage();
+  const frameRequests: string[] = [];
+  page.on("request", (r) => { if (/\/entrance\/(landscape|portrait)\/|manifest\.json/.test(r.url())) frameRequests.push(r.url()); });
+  await page.goto("/");
+  // not pinned
+  await expect(page.locator(".entrance__stage")).toHaveCSS("position", "static");
+  const entranceH = await page.locator("#entrance").evaluate((el) => el.getBoundingClientRect().height);
+  expect(entranceH).toBeLessThan(900 * 2.5);
+  // static still renders (the poster/canvas layers are hidden)
+  const still = page.locator(".entrance__still img");
+  await expect(still).toBeVisible();
+  expect(await still.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
+  await expect(page.locator(".entrance__canvas")).toBeHidden();
+  // the real Hero in normal flow, visible, below the still
+  const hero = page.locator("#hero");
+  await expect(hero).toBeVisible();
+  await expect(page.locator("#hero-title")).toBeVisible();
+  const heroPos = await page.locator(".entrance__surface").evaluate((el) => getComputedStyle(el).position);
+  expect(heroPos).toBe("static");
+  await expect(page.locator("h1")).toHaveCount(1);
+  // nav visible from first paint
+  await expect(page.locator("header[data-entrance-nav]")).toHaveCSS("opacity", "1");
+  // nav links work without JS (plain anchors)
+  for (const [label, id] of [["Work", "work"], ["About", "about"], ["Stack", "skills"], ["Contact", "contact"]] as const) {
+    const link = page.locator("header[data-entrance-nav] nav a", { hasText: label }).first();
+    await expect(link).toHaveAttribute("href", `#${id}`);
+    await link.click();
+    await expect(page).toHaveURL(new RegExp(`#${id}$`));
+    await expect(page.locator(`#${id}`)).toBeInViewport();
+  }
+  // no horizontal overflow
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+  // content never depended on the canvas/frame runtime
+  expect(frameRequests).toEqual([]);
+  await ctx.close();
+});
+
 test("no frames are requested before load except the poster", async ({ page }) => {
   const early: string[] = [];
   page.on("request", (r) => { if (/\/entrance\/(landscape|portrait)\//.test(r.url())) early.push(r.url()); });
@@ -1847,6 +1886,8 @@ test("no frames are requested before load except the poster", async ({ page }) =
   expect(early).toEqual([]);
 });
 ```
+
+The no-JavaScript test was added at your review, 2026-09-25. It is a real browser context with JavaScript disabled, not an inference from the `<noscript>` CSS. On a phone-width viewport the desktop nav links sit behind the menu button, which needs JS, so the test runs at 1440×900 where the links are plain anchors. Task 9's Navbar keeps them as plain `<a href>`.
 
 - [ ] **Step 2: Run the suite.**
   `npm run build && PW_CHROMIUM=/opt/pw-browsers/chromium npm run test:e2e`
