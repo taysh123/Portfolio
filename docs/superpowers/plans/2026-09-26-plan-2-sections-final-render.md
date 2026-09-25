@@ -1964,7 +1964,7 @@ export const flagships: Flagship[] = [
             "The whole stack comes up from one Docker command that mints its own RS256 keys."],
     metricLabels: ["Bounded contexts", "Cross-context references", "Tests, incl. Testcontainers"],
     statusNote: "Runs locally — the live stream shown is a local demo",
-    // TEMPORARY: pre-rename captures (in-app wordmark reads SentinelAI) until the user supplies Aegis screenshots.
+    // TEMPORARY: captured before the rename (the in-app wordmark still reads SentinelAI) until the user supplies Aegis screenshots.
     worldAssets: { monitor: "/projects/aegis/dashboard.webp", rows: { src: "/projects/aegis/live-alerts.webp", centres: [0.34, 0.46, 0.58] } } },
   { id: "developeros", number: "03", kicker: "A local-first code workspace that refuses to answer without evidence",
     story: ["It indexes your own projects into a private SQLite FTS5 index and answers with real file and line citations, declining when the index can't support an answer.",
