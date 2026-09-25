@@ -82,19 +82,23 @@ src = open(R + "data/projects.ts").read()
 counts = [("T Poker", 892), ("DeveloperOS", 363), ("GRAVITY FLOW", 220), ("Job Assistant", 162), ("Aegis", 105)]
 for name, n in counts:
     assert re.search(rf"(?<![\d,]){n}(?![\d,])", src), name  # provenance: every number appears in data/projects.ts as a whole number
+# Project test suites — FACTUAL METADATA from data/projects.ts, not runs. They were not executed for
+# this snapshot, so no check mark, no pass colour, no "passed" wording (user decision, 2026-09-26).
 y0 = 290 + len(CHECKS) * 130 + 40
-d.text((60, y0), "test suites", font=F(MONO, 34), fill=MUTED)
+d.text((60, y0), "project test suites", font=F(MONO, 34), fill=MUTED)
+d.text((60, y0 + 44), "counts from data/projects.ts", font=F(MONO, 26), fill=(96, 108, 128))
+NEUTRAL_BAR = (58, 70, 92)
 mx = max(n for _, n in counts)
 for i, (name, n) in enumerate(counts):
-    y = y0 + 70 + i * 250
-    d.rounded_rectangle((60, y, W - 60, y + 220), 20, fill=PANEL, outline=LINE, width=2)
-    check(d, 92, y + 34, 56)
-    d.text((176, y + 30), name, font=F(SANS, 58), fill=FG)
+    y = y0 + 110 + i * 240
+    d.rounded_rectangle((60, y, W - 60, y + 210), 20, fill=PANEL, outline=LINE, width=2)
+    d.ellipse((96, y + 58, 112, y + 74), fill=(120, 132, 152))              # neutral bullet, not a status
+    d.text((140, y + 30), name, font=F(SANS, 58), fill=FG)
     t = f"{n} tests"
     d.text((W - 100 - d.textlength(t, font=F(MONO, 50)), y + 38), t, font=F(MONO, 50), fill=FG)
-    bx0, bx1, by = 100, W - 100, y + 150
-    d.rounded_rectangle((bx0, by, bx1, by + 26), 13, fill=(22, 30, 44))
-    d.rounded_rectangle((bx0, by, bx0 + (bx1 - bx0) * n / mx, by + 26), 13, fill=ICE)
+    bx0, bx1, by = 100, W - 100, y + 145
+    d.rounded_rectangle((bx0, by, bx1, by + 22), 11, fill=(22, 30, 44))
+    d.rounded_rectangle((bx0, by, bx0 + (bx1 - bx0) * n / mx, by + 22), 11, fill=NEUTRAL_BAR)
 tot = sum(n for _, n in counts)
 d.rounded_rectangle((60, Hh - 300, W - 60, Hh - 80), 22, fill=(12, 24, 44), outline=ICE, width=3)
 d.text((110, Hh - 262), f"{tot:,}", font=F(SANS, 120), fill=FG)
@@ -108,17 +112,18 @@ header(d, W, "WRITE", f"{BRANCH}")
 d.rectangle((0, 172, 420, Hh), fill=(10, 14, 21))
 d.text((40, 200), "EXPLORER", font=F(MONO, 28), fill=MUTED)
 files = subprocess.check_output(["git", "-C", R, "ls-files", "app", "components", "lib", "data"]).decode().split()
-for i, p in enumerate(files[:40]):
+EDITOR = "lib/entrance/surface.ts"      # the solver that places this very screen (spec §4.6)
+for i, p in enumerate(files[:28]):
     depth = p.count("/")
-    d.text((40 + depth * 18, 250 + i * 29), p.split("/")[-1], font=F(SANS, 24), fill=(160, 172, 190) if "useFocusTrap" not in p else ICE)
+    d.text((40 + depth * 18, 250 + i * 40), p.split("/")[-1], font=F(SANS, 28), fill=(160, 172, 190) if p != EDITOR else ICE)
 d.rectangle((420, 172, W, 236), fill=(12, 17, 25))
 d.rectangle((440, 180, 800, 236), fill=(18, 25, 37))
-d.text((470, 192), "useFocusTrap.ts", font=F(SANS, 30), fill=FG)
+d.text((470, 192), EDITOR.split("/")[-1], font=F(SANS, 30), fill=FG)
 kw = {"import", "from", "export", "function", "const", "let", "return", "if", "else", "type", "for", "of", "new", "true", "false", "null"}
-code = open(R + "lib/useFocusTrap.ts").read().splitlines()
-fm = F(MONO, 30)
-for n, line in enumerate(code[:36]):
-    y = 262 + n * 32
+code = open(R + EDITOR).read().splitlines()
+fm = F(MONO, 36)
+for n, line in enumerate(code[:26]):
+    y = 262 + n * 44
     d.text((450, y), f"{n + 1:>3}", font=fm, fill=(60, 70, 88))
     x = 530
     for tok in re.split(r"(\s+|[(){}\[\];,.=<>:])", line[:95]):
@@ -139,24 +144,24 @@ im.save(H + "screen_write.png")
 # ── RIGHT: BUILD (2560x1440) — real next build + git log ─────────────────
 im = Image.new("RGB", (W, Hh), (6, 9, 14)); d = ImageDraw.Draw(im)
 header(d, W, "BUILD", "next build · git")
-fm = F("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 30)
+fm = F("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 32)
 d.rectangle((40, 210, 1260, Hh - 40), outline=LINE, width=2)
 d.text((70, 225), "$ npx next build", font=fm, fill=ICE)
 bl = [l.rstrip() for l in open(H + "build.txt").read().splitlines() if l.strip() and "Generating static pages using 3 workers (" not in l or "11/11" in l]
 y = 280
-for l in bl[:30]:
+for l in bl[:22]:
     col = CYAN if "✓" in l else (180, 192, 210)
     if "✓" in l:
         check(d, 70, y + 4, 28); l = l.replace("✓", " ")
-    d.text((110, y), l[:62], font=fm, fill=col); y += 40
+    d.text((110, y), l[:56], font=fm, fill=col); y += 50
 d.rectangle((1300, 210, W - 40, Hh - 40), outline=LINE, width=2)
 d.text((1330, 225), "$ git log --oneline", font=fm, fill=ICE)
-gl = subprocess.check_output(["git", "-C", R, "log", "--oneline", "-26"]).decode().splitlines()
+gl = subprocess.check_output(["git", "-C", R, "log", "--oneline", "-20"]).decode().splitlines()
 for i, l in enumerate(gl):
-    y = 280 + i * 42
+    y = 280 + i * 54
     d.ellipse((1335, y + 12, 1351, y + 28), fill=ICE if i == 0 else (60, 80, 110))
     d.text((1370, y), l[:7], font=fm, fill=CYAN)
-    d.text((1370 + 150, y), l[8:62], font=fm, fill=(180, 192, 210))
+    d.text((1370 + 160, y), l[8:56], font=fm, fill=(180, 192, 210))
 im.save(H + "screen_build.png")
 
 # ── laptop proxy (boot + identity) ───────────────────────────────────────
@@ -183,5 +188,9 @@ for i in range(15):
     else: d.rectangle((cx - 18, cy - 14, cx + 18, cy + 14), outline=col, width=4)
 A.save(H + "pad_atlas.png")
 open(H + "strings.txt", "w").write("\n".join(DRAWN))
-json.dump({"snapshot": SNAP, "checks": EXIT, "drawn_checks": CHECKS}, open(H + "screens.json", "w"))
+import hashlib
+sha = lambda p: hashlib.sha256(open(R + p, "rb").read()).hexdigest()
+payload = {"snapshot": SNAP, "checks": EXIT, "drawn_checks": CHECKS, "verify_counts": dict(counts),
+           "sources": {"data/projects.ts": sha("data/projects.ts"), EDITOR: sha(EDITOR)}}
+json.dump(payload, open(H + "screens.json", "w"))
 print("textures ok", SNAP, BRANCH, "checks:", CHECKS)

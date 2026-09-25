@@ -12,4 +12,6 @@ export type FrameSet = {
   still: string;
   pushEndIndex: number;        // index of K2 / P2 in frames
 };
-export type Manifest = { version: 1; snapshot: string; landscape: FrameSet; portrait: FrameSet };
+/** `sources` (sha256 by repo path) and `verifyCounts` record what the VERIFY/WRITE screens drew (spec §4.6 provenance). */
+export type Manifest = { version: 1; snapshot: string; sources?: Record<string, string>; verifyCounts?: Record<string, number>;
+  landscape: FrameSet; portrait: FrameSet };

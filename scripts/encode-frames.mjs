@@ -6,10 +6,11 @@ import sharp from "sharp";
 const SRC = "design/render/blender/out";
 const DST = "public/entrance";
 const TIERS = { landscape: [1280, 1920], portrait: [720] };
-const snapshot = JSON.parse(await fs.readFile(`${SRC}/screens.json`, "utf8")).snapshot
-  ?? execSync("git rev-parse --short HEAD").toString().trim();
+// Texture provenance always comes from the frozen screen textures (make_screens.py), whatever --src is.
+const screens = JSON.parse(await fs.readFile("design/render/blender/out/screens.json", "utf8"));
+const snapshot = screens.snapshot ?? execSync("git rev-parse --short HEAD").toString().trim();
 
-const manifest = { version: 1, snapshot };
+const manifest = { version: 1, snapshot, ...(screens.sources && { sources: screens.sources }), ...(screens.verify_counts && { verifyCounts: screens.verify_counts }) };
 for (const kind of ["landscape", "portrait"]) {
   const dir = `${SRC}/${kind}`;
   const names = (await fs.readdir(dir)).filter((f) => f.endsWith(".json")).map((f) => f.slice(0, -5));

@@ -42,4 +42,11 @@ describe("validateManifest", () => {
     for (const k of ["landscape", "portrait"] as const)
       for (const f of m[k].frames) expect(fs.existsSync(`public/entrance/${k}/${m[k].tiers[0]}/${f.file}.avif`)).toBe(true);
   });
+  it("requires provenance on a final (1920) set", () => {
+    const m = man(); m.landscape.width = 1920;
+    expect(validateManifest(m)).toEqual(expect.arrayContaining(["final set: sources must hash data/projects.ts", "final set: verifyCounts must be recorded"]));
+    m.sources = { "data/projects.ts": "ab" }; m.verifyCounts = { Aegis: 105 };
+    expect(validateManifest(m)).toEqual([]);
+  });
 });
+
