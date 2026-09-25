@@ -22,6 +22,13 @@ What it fixes:
   *Think. Build. Ship.*; and the contact *Let's build something great.* over a
   planet horizon.
 
+What it no longer fixes: **the environment.** The art-direction revision of
+2026-09-25 replaced the concept's lifestyle desk (plant, mug, warm light on the
+right) with a *Premium Cyber Developer Studio*. See §4.6 of the spec and
+`docs/superpowers/specs/assets/2026-09-25-render-spike-cyber-studio.webp`. The
+concept still fixes the story beats, the closed-to-open laptop hero and the
+palette.
+
 What it does NOT fix: facts. The About panel's "6+ Shipped projects" and any
 other figure in the image are placeholders. Every number on the site comes
 from `data/*.ts`, which was checked against each project's repository.
