@@ -18,3 +18,13 @@ test("the case-study panel is not part of first-load JS", async ({ page }) => {
   // A string that only CaseStudyPanel renders:
   expect(js.some((t) => t.includes("Close case study"))).toBe(false);
 });
+
+test("project data (case-study bodies) is not in first-load JS (review I2)", async ({ request, baseURL }) => {
+  const html = await (await request.get("/")).text();
+  const srcs = [...new Set([...html.matchAll(/<script[^>]+src="([^"]+)"/g)].map((m) => m[1]))];
+  for (const s of srcs) {
+    const js = await (await request.get(new URL(s, baseURL).toString())).text();
+    // A sentence that only a case-study body (data/projects.ts, Orders & Delivery honestNote) contains:
+    expect(js.includes("listing it as such"), s).toBe(false);
+  }
+});

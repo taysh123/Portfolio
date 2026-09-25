@@ -73,7 +73,9 @@ export function CommandPalette() {
     const onOpen = () => { clearPaletteOpenRequest(); setOpen(true); };
     window.addEventListener("keydown", onKey);
     window.addEventListener("palette:open", onOpen);
-    clearPaletteOpenRequest();   // an early request was honoured by the initial state
+    // An early request was honoured by the initial state; one made between render and this effect (the event
+    // fired before the listener existed) is honoured now rather than cleared (review M6).
+    if (paletteOpenRequested()) queueMicrotask(onOpen);
     return () => {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("palette:open", onOpen);

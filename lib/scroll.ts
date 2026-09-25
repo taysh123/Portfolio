@@ -25,6 +25,12 @@ export function jumpTo(top: number) {
 /** A smooth glide to an element, landing under the fixed header like a native anchor. Lenis already applies
  *  the root's scroll-padding-top and the target's scroll-margin-top to element targets — no extra offset. */
 export function glideTo(el: HTMLElement) {
-  if (!active) { el.scrollIntoView({ behavior: "smooth" }); return; }
+  if (!active) {
+    // No Lenis: usually reduced motion (either source), where an explicit JS "smooth" would still animate —
+    // the CSS scroll-behavior kill-switch does not override it (review I3). Glide only when motion is allowed.
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.dataset.reducedMotion === "true";
+    el.scrollIntoView({ behavior: reduced ? "auto" : "smooth" });
+    return;
+  }
   active.scrollTo(el, { force: true });
 }

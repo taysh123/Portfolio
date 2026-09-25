@@ -1,5 +1,4 @@
 import type { ProjectStatus } from "@/components/ui/Tag";
-import type { ProjectAccent } from "@/lib/tokens";
 
 /**
  * Project content.
@@ -83,7 +82,6 @@ export type Project = {
    * captured screenshots still carry it (Aegis was formerly SentinelAI, renamed 2026-09-26).
    */
   formerly?: string;
-  accent: ProjectAccent;
   media?: ProjectMedia;
   stores?: StoreListing[];
   caseStudy: CaseStudy;
@@ -104,7 +102,6 @@ export const projects: Project[] = [
       "Two products in one: a study platform with lessons, daily drills and an AI coach, and a home-game manager with a buy-in ledger, tournament clock and end-of-night settlement. One Expo codebase renders iOS, Android and the live web app; behind it sits an ASP.NET Core backend built on Clean Architecture with MediatR CQRS over PostgreSQL. The financial core runs in integer cents and is covered by 892 tests across both languages.",
     context: "Solo build · 714 commits",
     status: "live",
-    accent: "amber",
     featured: true,
     repo: { visibility: "private" }, // internal URL: data/internal-repos.ts
     liveUrl: "https://app.tpoker.app/",
@@ -191,7 +188,6 @@ export const projects: Project[] = [
       "A self-hosted SOC platform modelled on the tools it imitates. Security events move through an ingestion → normalisation → detection → threat-scoring → alerting pipeline carried by MassTransit over RabbitMQ, backed by a range-partitioned PostgreSQL and a Redis layer that holds sliding detection windows. Alerts and incident updates reach the Next.js dashboard over SignalR. The whole stack comes up from one Docker command that mints its own RS256 keys.",
     context: "Solo build · 7 tagged releases",
     status: "local",
-    accent: "blue",
     featured: true,
     repo: { url: "https://github.com/taysh123/SentinelAI", visibility: "public" }, // the repository keeps its former name — not renamed (Plan 2 decision 6)
     metrics: [
@@ -272,7 +268,6 @@ export const projects: Project[] = [
       "Point it at your code and it builds a private FTS5 index that powers ranked search and grounded question-answering, where every response cites real file and line locations and the system declines outright when the index doesn't support an answer. It ships as one Python package with no runtime dependencies, reachable four ways — CLI, browser dashboard, installable PWA, or a standalone Windows desktop window with a per-user installer.",
     context: "Solo build · v1.0.0 in ~14 days",
     status: "released",
-    accent: "violet",
     featured: true,
     repo: { url: "https://github.com/taysh123/DeveloperOS", visibility: "public" },
     metrics: [
@@ -351,7 +346,6 @@ export const projects: Project[] = [
       "Press and hold to spawn an inverse-square gravity well and pull a lost star home. 150 data-driven levels across 15 worlds build on seven core mechanics, alongside a deterministic seeded endless mode and a cosmetics economy that is explicitly incapable of affecting gameplay. Built on Phaser 3 with strict TypeScript and a Vitest suite that pins both the physics and the progression logic.",
     context: "Solo build · 215 commits",
     status: "rc",
-    accent: "teal",
     repo: { url: "https://github.com/taysh123/Gravity-Game", visibility: "public" },
     stores: [
       { platform: "android", status: "soon" },
@@ -431,7 +425,6 @@ export const projects: Project[] = [
       "Pulls software-engineering postings from seven adapters, scores them against a deterministic rule engine of 310 filter terms, deduplicates across sources with different shapes, and delivers a single paginated Telegram digest whose job cards carry Save, Ignore, Open and Mark-Applied actions. It began as free GitHub Actions crons that committed SQLite back into the repo, and has since been rebuilt around one always-on process shipped as a Docker image.",
     context: "Solo build · 287 jobs collected over 61 runs",
     status: "local",
-    accent: "blue",
     repo: { url: "https://github.com/taysh123/job-assistant", visibility: "public" },
     metrics: [
       { value: "7", label: "Source adapters" },
@@ -498,7 +491,6 @@ export const projects: Project[] = [
       "A two-tier ordering and dispatch system built for an advanced Java course. A multithreaded server speaks a hand-written JSON-over-TCP protocol to a JavaFX desktop client, routing sixteen domain actions through a controller factory to a generic DAO layer. Delivery routing injects a shortest-path strategy over a weighted city graph to produce routes and ETAs.",
     context: "University coursework · HIT",
     status: "coursework",
-    accent: "violet",
     repo: { url: "https://github.com/taysh123/orders-delivery-management-system", visibility: "public" },
     metrics: [
       { value: "16", label: "Protocol routes" },

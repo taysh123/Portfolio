@@ -8,7 +8,8 @@
 /* Pinned: data-lit is present → one word lit, one slot shown (the others stay in the DOM for screen readers). */
 .tbs[data-lit] .tbs__word { color: var(--fg-subtle); }
 .tbs[data-lit="0"] .tbs__word[data-i="0"], .tbs[data-lit="1"] .tbs__word[data-i="1"], .tbs[data-lit="2"] .tbs__word[data-i="2"] { color: var(--fg); }
-.tbs[data-lit] .tbs__slots { display: grid; grid-template-areas: "slot"; }
+.tbs[data-lit] .tbs__slots, .tbs[data-measuring] .tbs__slots { display: grid; grid-template-areas: "slot"; }
+.tbs[data-measuring] .tbs__slot { grid-area: slot; }   /* the fit guard measures the pinned composition */
 /* Exit runs at ~65% of the enter: 210ms out, 320ms in (the lit rule below). */
 .tbs[data-lit] .tbs__slot { grid-area: slot; opacity: 0; transform: translateY(12px); transition: opacity 210ms var(--ease-out), transform 210ms var(--ease-out); }
 .tbs[data-lit="0"] .tbs__slot[data-i="0"], .tbs[data-lit="1"] .tbs__slot[data-i="1"], .tbs[data-lit="2"] .tbs__slot[data-i="2"] { opacity: 1; transform: none; transition-duration: 320ms; }

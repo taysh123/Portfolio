@@ -9,7 +9,7 @@ export default async function Page() {
   return (
     <main>
       <div style={{ height: "100svh" }} />
-      <ScrollScene id="fx" labelledBy="fx-t"><h2 id="fx-t">Fixture</h2><div data-probe style={{ transform: "translateY(calc((1 - var(--assemble)) * 100px))" }}>probe</div></ScrollScene>
+      <ScrollScene id="fx" labelledBy="fx-t"><div><h2 id="fx-t">Fixture</h2><div data-probe style={{ transform: "translateY(calc((1 - var(--assemble)) * 100px))" }}>probe</div></div></ScrollScene>
       <div style={{ height: "100svh" }} />
       <ScrollScene id="fx-pillars" labelledBy="fx-pillars-t" phases="pillars"><h2 id="fx-pillars-t">Pillars</h2></ScrollScene>
       <div style={{ height: "100svh" }} />

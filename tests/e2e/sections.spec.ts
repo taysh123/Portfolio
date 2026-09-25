@@ -188,3 +188,12 @@ test("case study: a slow first load shows an announced loading state, then the p
   await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
   await expect(page.locator("[data-case-study-loading]")).toHaveCount(0);
 });
+
+test("think · build · ship pins at 1280×720 on a fresh load, and pinning never depends on history (review I1)", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await skip(page);
+  await expect(page.locator("#approach")).toHaveAttribute("data-fit", "true");
+  await expect(page.locator("#approach")).toHaveAttribute("data-pinned", "true");
+  await page.setViewportSize({ width: 1440, height: 900 }); await page.setViewportSize({ width: 1280, height: 720 });
+  await expect(page.locator("#approach")).toHaveAttribute("data-pinned", "true");
+});

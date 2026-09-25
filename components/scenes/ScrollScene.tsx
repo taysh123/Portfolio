@@ -26,13 +26,21 @@ export function ScrollScene({ id, labelledBy, className, dark = false, pinSvh = 
   // Fit guard (Plan 2 Task 12 fix): the pinned stage is exactly one viewport tall and clips, so a
   // composition taller than the viewport would hide its own copy and buttons under the next scene.
   // Such a scene gets data-fit="false" and falls back to the settled, unpinned layout (scene.css).
-  // The composition's height is its natural content height in both states, so this cannot oscillate.
+  // It measures the PINNED composition in every state: `data-measuring` is set synchronously around the
+  // read, and a scene whose pinned layout differs (Think · Build · Ship shows one slot, not three) opts that
+  // layout in under [data-measuring]. Layout is forced without a paint, so nothing flashes, and the answer
+  // no longer depends on whether the scene happened to be pinned (fresh review I1).
   useEffect(() => {
     const el = ref.current; const content = el?.querySelector(".scene__stage")?.firstElementChild;
     const check = () => {
-      const f = !content || content.getBoundingClientRect().height <= window.innerHeight;
+      let h = 0;
+      if (el && content) { el.dataset.measuring = ""; h = content.getBoundingClientRect().height; delete el.dataset.measuring; }
+      const f = !content || h <= window.innerHeight;
       if (el) el.dataset.fit = String(f);
-      setPinned(f && pinEligible(window.innerWidth, window.innerHeight, reduced));
+      // Read both reduced-motion sources directly too: during hydration the hook still reports the server
+      // snapshot (false), which could pin and write vars for one pass before the real value (review M5).
+      const r = reduced || matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.dataset.reducedMotion === "true";
+      setPinned(f && pinEligible(window.innerWidth, window.innerHeight, r));
     };
     check(); window.addEventListener("resize", check);
     const ro = content ? new ResizeObserver(check) : null; if (content) ro!.observe(content);

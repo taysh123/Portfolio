@@ -21,6 +21,10 @@
      2. BORDERS ARE ALWAYS rgba, never solid grey, and always theme-aware.
    ═══════════════════════════════════════════════════════════════════════ */
 
+/* A dark subtree re-asserts its ink as well as its tokens: text without a text-* class would otherwise
+   inherit the light theme's computed body colour inside a dark stage (review M7). */
+[data-theme="dark"] { color: var(--fg); }
+
 /* `[data-theme="dark"]` also scopes a subtree: the entrance stage is a lit room
    in both themes, so it re-asserts the dark tokens beneath a light <html>. */
 :root,
@@ -41,18 +45,6 @@
   --surface-2: rgba(255, 255, 255, 0.055);
   --surface-3: rgba(16, 18, 30, 0.92);
   --surface-sunken: rgba(0, 0, 0, 0.24);
-
-  /* Panels are lit objects: a cool top, a slight pooling at the base. */
-  --panel-fill:
-    linear-gradient(168deg,
-      rgba(255, 255, 255, 0.055) 0%,
-      rgba(255, 255, 255, 0.018) 34%,
-      rgba(91, 156, 255, 0.022) 100%);
-  --panel-fill-deep:
-    linear-gradient(168deg,
-      rgba(255, 255, 255, 0.075) 0%,
-      rgba(255, 255, 255, 0.022) 38%,
-      rgba(91, 156, 255, 0.032) 100%);
 
   /* ── Text ──────────────────────────────────────────────────────────────
      Contrast vs --bg (#05070a), computed:
@@ -88,7 +80,6 @@
   --line-strong: var(--border-strong);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-  --light-warm: rgba(255, 180, 107, 0.10);
   --glow: rgba(91, 156, 255, 0.10);        /* violet retired (spec §3.2): a cool atmospheric alias */
   --glow-strong: rgba(91, 156, 255, 0.16);
   --glow-blue: rgba(91, 141, 239, 0.18);
@@ -122,34 +113,6 @@
      Being opaque also means it no longer needs a light-theme pair: a space
      black machine is correct on a light field too — more so, in fact, since
      the body separates from the page instead of dissolving into it. */
-  --device-shell:
-    linear-gradient(166deg,
-      #2c303a 0%,
-      #444a58 7%,     /* the chamfered top edge catching the key light */
-      #262a33 17%,
-      #1b1e25 46%,
-      #15171d 74%,
-      #101218 100%);
-  --device-base:
-    linear-gradient(180deg,
-      #101218 0%,     /* deep in the lid's shadow */
-      #2a2f3a 9%,
-      #212530 24%,
-      #1a1d25 52%,
-      #262a34 84%,    /* palm rest turning back toward the light */
-      #14161c 100%);
-  --device-edge: rgba(214, 226, 252, 0.42);
-  /* Still bright: on a black body the diamond-cut chamfer is doing almost all
-     of the work of describing the silhouette. */
-  --device-chamfer: rgba(228, 238, 255, 0.80);
-
-  /* The surface the machine stands on. `near` is the lit strip just under the
-     front lip where the desk catches the same light the deck does; `far` is
-     where it falls away into the room. The horizon is the only hard edge —
-     without it the plane reads as a smudge rather than as a surface ending. */
-  --desk-near: rgba(128, 146, 190, 0.22);
-  --desk-far: rgba(64, 74, 108, 0.10);
-  --desk-horizon: rgba(186, 204, 244, 0.34);
 
   /* An OPAQUE panel fill. Every other surface here is translucent on purpose,
      but anything stacked in 3D needs to actually occlude what is behind it —
@@ -196,16 +159,13 @@
      page field shows through between panels, and `--panel-p` is the generous
      interior padding that lets each panel breathe. */
   --stage: 88rem;
-  --gap: clamp(0.75rem, 1.2vw, 1.25rem);
   --panel-p: clamp(1.75rem, 3.4vw, 3.75rem);
   --gutter: clamp(0.875rem, 2vw, 1.75rem);
-  --section-y: clamp(3rem, 5vw, 5rem);
   --nav-h: 4.5rem;
 
   /* ── Motion ──────────────────────────────────────────────────────────── */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.2, 0.9, 0.25, 1);
-  --dur-fast: 180ms;
   --dur-mid: 320ms;
   --dur-slow: 520ms;
 }
@@ -221,17 +181,6 @@
   --surface-2: rgba(255, 255, 255, 0.94);
   --surface-3: rgba(255, 255, 255, 0.97);
   --surface-sunken: rgba(11, 14, 26, 0.04);
-
-  --panel-fill:
-    linear-gradient(168deg,
-      rgba(255, 255, 255, 0.96) 0%,
-      rgba(255, 255, 255, 0.86) 40%,
-      rgba(20, 89, 217, 0.04) 100%);
-  --panel-fill-deep:
-    linear-gradient(168deg,
-      rgba(255, 255, 255, 0.99) 0%,
-      rgba(255, 255, 255, 0.92) 44%,
-      rgba(20, 89, 217, 0.05) 100%);
 
   /* Contrast vs --bg #f5f6f8: fg 17.9:1 · muted 8.1:1 · subtle 5.8:1 (floor 5.4, tokens.test.ts) */
   --fg: #0b0e14;            /* ink */
@@ -263,21 +212,12 @@
   --status-idle: #5a6480;
   --star: rgba(90, 100, 128, 0.30);
 
-  /* NO device overrides here on purpose — see the note in :root. The machine
-     is space black in both themes, which is a real product decision rather
-     than a shortcut: on a light page a black body separates cleanly, and it
-     keeps the display the brightest thing in frame either way. Overriding it
-     to silver here is what made the light theme render a different product. */
-
   /* On a light field the desk reads by being DARKER than the page, not
      lighter — the same surface, lit from the same place, on the other side of
      the background's value. */
-  --desk-near: rgba(96, 108, 140, 0.13);
-  --desk-far: rgba(120, 132, 162, 0.05);
-  --desk-horizon: rgba(120, 134, 170, 0.30);
 
   --panel-solid:
-    linear-gradient(168deg, rgba(255,255,255,0.9) 0%, rgba(246,247,252,0.6) 40%, rgba(139,92,246,0.05) 100%),
+    linear-gradient(168deg, rgba(255,255,255,0.9) 0%, rgba(246,247,252,0.6) 40%, rgba(91,156,255,0.05) 100%),
     linear-gradient(0deg, #ffffff, #ffffff);
 
   /* Dark mode fakes depth with borders; light mode needs real elevation or
@@ -453,26 +393,6 @@
    UTILITIES
    ═══════════════════════════════════════════════════════════════════════ */
 @layer utilities {
-  /* Premium headline treatment: a LUMINANCE ramp, not a chromatic gradient.
-     Works identically in both themes and sidesteps the unreadable
-     violet→pink tail the old .text-gradient produced on a light field. */
-  .text-sheen {
-    background: linear-gradient(
-      175deg,
-      var(--fg) 0%,
-      color-mix(in oklab, var(--fg) 72%, transparent) 100%
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-  }
-
-  /* Emphasis inside a headline. A single solid accent — legible everywhere. */
-  .text-emphasis {
-    color: var(--accent);
-  }
-
   /* Real glass. Reserved for nav, overlays and floating hero elements —
      `blur` signals dismissal/elevation, it is not a card texture. */
   .glass {
@@ -594,71 +514,6 @@
 /* ═══════════════════════════════════════════════════════════════════════
    MOTION
    ═══════════════════════════════════════════════════════════════════════ */
-@keyframes pulse-soft {
-  0%, 100% { opacity: 0.35; }
-  50%      { opacity: 1; }
-}
-
-@keyframes sweep {
-  0%   { transform: translateX(-110%); opacity: 0; }
-  22%  { opacity: 1; }
-  78%  { opacity: 1; }
-  100% { transform: translateX(130%); opacity: 0; }
-}
-
-@keyframes drift {
-  0%, 100% { transform: translate3d(0, 0, 0); }
-  50%      { transform: translate3d(0, -12px, 0); }
-}
-
-@keyframes dash-flow {
-  to { stroke-dashoffset: -24; }
-}
-
-/* Ambient life for the workstation: a breath, not a bob. 14s and ±5px is
-   below the threshold where it reads as "animated" and right at the one where
-   the object stops feeling like a still image. */
-/*
-   TRAFFIC ON THE TOPOLOGY'S EDGES.
-
-   This replaces the discrete packets that used to ride the architecture
-   board's rails. A packet is an object with a beginning and an end, so it has
-   to appear somewhere and vanish somewhere — which is exactly the "packets
-   disappear, movement feels disconnected" problem, and no amount of staggering
-   fully removes it, because the gap is inherent to the technique.
-
-   A marching dash pattern has no beginning or end. `stroke-dashoffset` on a
-   dashed stroke is continuous by construction: the pattern is infinite, it
-   wraps seamlessly at one dash period, and every edge in the graph carries
-   flow along its whole length at all times. It is also what every real network
-   and CI diagram uses, for the same reason.
-
-   The period must equal the dasharray total or the loop visibly jumps: 6 + 10
-   = 16.
-*/
-@keyframes edge-flow    { to { stroke-dashoffset: -16; } }
-@keyframes edge-flow-rev { to { stroke-dashoffset: 16; } }
-
-@keyframes hover-float {
-  0%, 100% { transform: translate3d(0, 0, 0); }
-  50%      { transform: translate3d(0, -5px, 0); }
-}
-
-/* The room light crawling across brushed metal. */
-@keyframes specular-drift {
-  0%, 100% { transform: translate3d(-4%, 0, 0); opacity: 0.7; }
-  50%      { transform: translate3d(4%, 0, 0); opacity: 1; }
-}
-
-.anim-sweep { animation: sweep 7s var(--ease-spring) infinite; }
-.anim-drift { animation: drift 9s ease-in-out infinite; }
-.anim-pulse { animation: pulse-soft 3.6s ease-in-out infinite; }
-.anim-flow  { animation: dash-flow 1.6s linear infinite; }
-.anim-hover { animation: hover-float 14s ease-in-out infinite; }
-.anim-spec  { animation: specular-drift 18s ease-in-out infinite; }
-.anim-edge     { stroke-dasharray: 6 10; animation: edge-flow 1.05s linear infinite; }
-.anim-edge-rev { stroke-dasharray: 6 10; animation: edge-flow-rev 1.35s linear infinite; }
-
 /* CSS-driven motion off-switch. JS-driven motion is gated separately via
    `useMotionPref` — a CSS rule cannot stop a requestAnimationFrame loop,
    which is why the previous in-app toggle reached only 4 of 17 components. */
@@ -669,11 +524,6 @@
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
-  .anim-sweep, .anim-drift, .anim-pulse, .anim-flow,
-  .anim-hover, .anim-spec, .anim-edge, .anim-edge-rev {
-    animation: none !important;
-  }
-  .anim-sweep { opacity: 0; }
 }
 
 [data-reduced-motion="true"] *,
@@ -684,17 +534,6 @@
   transition-duration: 0.001ms !important;
   scroll-behavior: auto !important;
 }
-[data-reduced-motion="true"] .anim-sweep,
-[data-reduced-motion="true"] .anim-drift,
-[data-reduced-motion="true"] .anim-pulse,
-[data-reduced-motion="true"] .anim-flow,
-[data-reduced-motion="true"] .anim-hover,
-[data-reduced-motion="true"] .anim-spec,
-[data-reduced-motion="true"] .anim-edge,
-[data-reduced-motion="true"] .anim-edge-rev {
-  animation: none !important;
-}
-[data-reduced-motion="true"] .anim-sweep { opacity: 0; }
 
 /* A raised card. Rebinds the label colour so 11px text on it keeps ≥ 5.4:1 (tokens.test.ts). */
 .raised { background: var(--bg-raised); --fg-subtle: var(--fg-subtle-raised); }

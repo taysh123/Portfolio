@@ -36,12 +36,3 @@ export const brand = {
   statusWip: "#fbbf24",
 } as const;
 
-/** Per-project accent hues, used by placeholder artwork and status chips. */
-export const projectAccent = {
-  blue: "#5b8def",
-  violet: "#b47cff",
-  teal: "#2dd4bf",
-  amber: "#fbbf24",
-} as const;
-
-export type ProjectAccent = keyof typeof projectAccent;

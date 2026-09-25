@@ -39,6 +39,9 @@ async function encodeFraming(kind, partial) {
       const src = `${dir}/${m.n}.png`, out = `${DST}/${kind}/${t}/${m.n}.avif`;
       if (!fresh(src, out)) await sharp(src).resize(t).avif({ quality: 52, effort: 6 }).toFile(out);
     }
+    // Prune frames no longer in the set: they would still ship and still count toward the budget (review M1).
+    const keep = new Set(seq.map((m) => `${m.n}.avif`));
+    for (const f of await fs.readdir(`${DST}/${kind}/${t}`)) if (f.endsWith(".avif") && !keep.has(f)) await fs.rm(`${DST}/${kind}/${t}/${f}`);
   }
   for (const [name, src] of [["poster", seq[0].n], ["still", "still"]]) {
     if (!existsSync(`${dir}/${src}.png`)) continue; // a partial chunk may not have the still yet
@@ -53,24 +56,36 @@ async function encodeFraming(kind, partial) {
 }
 
 await fs.mkdir(DST, { recursive: true });
+const encoded = {};
 if (ONLY) {
-  const set = await encodeFraming(ONLY, true);
+  const set = await encodeFraming(ONLY, true); encoded[ONLY] = set;
   await fs.writeFile(`${DST}/manifest.${ONLY}.json`, JSON.stringify(set));
   console.log("encoded", set.frames.length, ONLY, "(partial manifest)");
 } else {
   const manifest = { version: 1, snapshot, ...(screens.sources && { sources: screens.sources }), ...(screens.verify_counts && { verifyCounts: screens.verify_counts }) };
-  for (const kind of ["landscape", "portrait"]) manifest[kind] = await encodeFraming(kind, false);
+  for (const kind of ["landscape", "portrait"]) encoded[kind] = manifest[kind] = await encodeFraming(kind, false);
   await fs.writeFile(`${DST}/manifest.json`, JSON.stringify(manifest));
   for (const kind of ["landscape", "portrait"]) await fs.rm(`${DST}/manifest.${kind}.json`, { force: true });
   console.log("encoded", manifest.landscape.frames.length, "landscape,", manifest.portrait.frames.length, "portrait");
 }
 
 if (process.argv.includes("--check-budget")) {
+  // Budgets per named tier (spec §9); only the framings this run encoded, only the tiers they actually have
+  // (a preview set's tiers are its master width and are reported, not budgeted).
+  const BUDGET = { landscape: { 1280: 2.5e6, 1920: 4e6 }, portrait: { 720: 1.2e6 } };
   const size = async (d) => (await Promise.all((await fs.readdir(d)).map(async (f) => (await fs.stat(`${d}/${f}`)).size))).reduce((a, b) => a + b, 0);
-  const b = { l1280: await size(`${DST}/landscape/1280`), l1920: await size(`${DST}/landscape/1920`), p720: await size(`${DST}/portrait/720`) };
-  for (const kind of ["landscape", "portrait"]) b[`poster_${kind}`] = (await fs.stat(`${DST}/poster-${kind}.avif`)).size;
+  const b = {}, over = [];
+  for (const [kind, set] of Object.entries(encoded)) {
+    for (const t of set.tiers) {
+      const n = await size(`${DST}/${kind}/${t}`); b[`${kind}_${t}`] = n;
+      if (BUDGET[kind][t] !== undefined && n > BUDGET[kind][t]) over.push(`${kind} ${t}: ${n} > ${BUDGET[kind][t]}`);
+    }
+    if (existsSync(`${DST}/poster-${kind}.avif`)) {
+      const n = (await fs.stat(`${DST}/poster-${kind}.avif`)).size; b[`poster_${kind}`] = n;
+      if (n > 90e3) over.push(`poster ${kind}: ${n} > 90000`);
+      if (n < 60e3) console.warn(`poster ${kind} under 60 KB — check it is not visibly degraded (spec §9 targets 60–90 KB)`);
+    }
+  }
   console.log(JSON.stringify(b));
-  const posters = [b.poster_landscape, b.poster_portrait];
-  if (posters.some((s) => s < 60e3)) console.warn("poster AVIF under 60 KB — check it is not visibly degraded (spec §9 targets 60–90 KB)");
-  if (b.l1280 > 2.5e6 || b.l1920 > 4e6 || b.p720 > 1.2e6 || posters.some((s) => s > 90e3)) { console.error("payload budget exceeded (spec §9) — apply the §4.7 levers in order"); process.exit(1); }
+  if (over.length) { console.error("payload budget exceeded (spec §9) — apply the §4.7 levers in order:\n  " + over.join("\n  ")); process.exit(1); }
 }

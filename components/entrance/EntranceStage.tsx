@@ -114,7 +114,8 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       const store = new FrameStore<ImageBitmap>({
         count: set.frames.length,
         order: loadOrder(set.frames.length, { stillIndex, pushEndIndex: set.pushEndIndex, lidEnd: stillIndex - 1, saveData: saveData() }),
-        fetchBlob: async (i) => (await fetch(`/entrance/${kind}/${tier}/${set.frames[i].file}.avif`)).blob(),
+        // A 404 must fail the fetch, not hand an HTML error page to the decoder (review M9).
+        fetchBlob: async (i) => { const r = await fetch(`/entrance/${kind}/${tier}/${set.frames[i].file}.avif`); if (!r.ok) throw new Error(`frame ${i}: ${r.status}`); return r.blob(); },
         decode: (b) => createImageBitmap(b), window: windowFor(tier), concurrency: 4, keep,
       });
       s.store = store;
