@@ -126,6 +126,8 @@ for n, line in enumerate(code[:26]):
     y = 262 + n * 44
     d.text((450, y), f"{n + 1:>3}", font=fm, fill=(60, 70, 88))
     x = 530
+    # Geist Mono has no arrows or maths symbols; draw their ASCII forms rather than a missing-glyph box.
+    line = line.replace("→", "->").replace("←", "<-").replace("≥", ">=").replace("≤", "<=").replace("×", "x").replace("—", "-")
     for tok in re.split(r"(\s+|[(){}\[\];,.=<>:])", line[:95]):
         if not tok:
             continue
