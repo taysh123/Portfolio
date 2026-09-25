@@ -22,3 +22,10 @@ test("wheel scrolling still animates smoothly (the loop restarts on input)", asy
   await page.mouse.wheel(0, 600); await page.waitForTimeout(700);
   expect(await page.evaluate(() => scrollY)).toBeGreaterThan(before + 300);
 });
+
+test("no animation-frame loop while Contact is in view (spec §9)", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  await page.evaluate(() => document.getElementById("contact")!.scrollIntoView({ behavior: "instant" as ScrollBehavior }));
+  await page.waitForTimeout(1200);
+  expect(await countRaf(page, 1000)).toBe(0);
+});

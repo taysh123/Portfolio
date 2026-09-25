@@ -16,6 +16,11 @@ const lineStyle = { fontSize: "clamp(2.25rem, min(7.2vw, 10.5svh), 6.75rem)", li
 export function Hero() {
   return (
     <section id="hero" aria-labelledby="hero-title" className="hero-surface-content relative flex min-h-[100svh] flex-col justify-center px-[clamp(20px,4vw,40px)] pt-[var(--nav-h)] pb-6">
+      {/* The hero's one atmospheric element (spec §5.1): the dark horizon arc, static, at 40% of Contact's recipe so
+          the page's first and last frames rhyme. Clipped to the hero; behind the content. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        <div className="hero-horizon absolute inset-x-[-20%] bottom-[-70%] h-full rounded-[50%_50%_0_0/100%_100%_0_0] [background:radial-gradient(60%_40%_at_50%_0%,rgba(91,156,255,0.10),transparent_70%)] [box-shadow:0_-1px_0_rgba(155,190,255,0.18)]" />
+      </div>
       {/* The screen's boot log and identity card. Decorative: the same words
           are in the h1 and the name line below. */}
       <div data-hero-boot aria-hidden="true" className="hero-boot pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
@@ -29,7 +34,7 @@ export function Hero() {
         Building products that ship.
       </p>
 
-      <div className="mx-auto w-full max-w-[1240px]">
+      <div className="relative z-10 mx-auto w-full max-w-[1240px]">
         <h1 id="hero-title" tabIndex={-1} className="outline-none">
           {/* Not masked: this line travels (the screen's identity card lands here). */}
           <span className="mb-8 block [@media(max-height:500px)]:mb-3">

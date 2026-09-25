@@ -1,7 +1,5 @@
-import { AmbientGlow } from "@/components/effects/AmbientGlow";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { Stage } from "@/components/ui/Stage";
 import { Entrance } from "@/components/entrance/Entrance";
 import { Hero } from "@/components/sections/Hero";
 import { About } from "@/components/sections/About";
@@ -15,47 +13,29 @@ import { ThinkBuildShip } from "@/components/sections/ThinkBuildShip";
 import { Contact } from "@/components/sections/Contact";
 
 /**
- * The page is a composed surface, not a stack of sections.
- *
- * Everything lives inside one `Stage`, and the panels are separated by a
- * narrow gutter the lit field shows through. Section weight is deliberately
- * uneven — big, medium, huge, small, medium, big — so the page has rhythm
- * instead of a uniform cadence:
+ * The page (spec §5): one continuous story, not a stack of panels.
  *
  *   Entrance  the studio you scroll into; the laptop's screen becomes the hero
- *   About     an asymmetric pair
- *   Work      the largest region on the page — it carries the argument
- *   Toolkit   a low, wide band, deliberately quiet after Work
- *   Approach  one wide panel
- *   Contact   one large closing panel
+ *   Work      four flagship worlds on a dark stage, then two more-work rows
+ *   About     engineer by training, builder by nature
+ *   Stack     the six groups as a bento
+ *   Think · Build · Ship   a typographic, pinned sequence
+ *   Contact   a dark closing stage, one primary action
  *
- * Work sits second because a recruiter scanning for evidence should reach the
- * projects on the second screen, not after a wall of technology names.
+ * The entrance, the flagship run and Contact are dark in both themes (Plan 2
+ * decision 1); About, Stack and Think · Build · Ship follow the site theme.
  */
 export default function Page() {
   return (
     <>
-      <AmbientGlow />
       <Navbar />
-      <main id="main" className="relative pb-[var(--gap)]">
-        {/* The front door sits outside the Stage: it is full-bleed by design,
-            and the stage's gutters would frame a sequence that is supposed to
-            have no frame until you are through it. */}
-        <Entrance>
-          <Hero />
-        </Entrance>
-
+      <main id="main" className="relative">
+        <Entrance><Hero /></Entrance>
         <Work worlds={{ poker: <PokerWorld />, aegis: <AegisWorld />, developeros: <DeveloperOSWorld />, "gravity-flow": <GravityWorld /> }} />
-
         <About />
-
         <Stack />
-
         <ThinkBuildShip />
-
-        <Stage>
-          <Contact />
-        </Stage>
+        <Contact />
       </main>
       <Footer />
     </>

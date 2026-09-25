@@ -12,3 +12,5 @@
 /* Exit runs at ~65% of the enter: 210ms out, 320ms in (the lit rule below). */
 .tbs[data-lit] .tbs__slot { grid-area: slot; opacity: 0; transform: translateY(12px); transition: opacity 210ms var(--ease-out), transform 210ms var(--ease-out); }
 .tbs[data-lit="0"] .tbs__slot[data-i="0"], .tbs[data-lit="1"] .tbs__slot[data-i="1"], .tbs[data-lit="2"] .tbs__slot[data-i="2"] { opacity: 1; transform: none; transition-duration: 320ms; }
+/* The same vertical rhythm as the other sections; when pinned the stage still centres it (fits: ~580px at 1440×900). */
+.tbs .shell { padding-block: clamp(4rem, 10vh, 8rem); }
