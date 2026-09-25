@@ -1968,3 +1968,18 @@ Then stop and report to the user. Plan 2 (sections, final look-dev behind the vi
 - Look-dev notes from the approval.
 - The floating accessibility button grazes the CTA row at 844×390.
 - In the light theme the hero stays a dark band under the light nav, by design of the dark screen; confirm or restyle.
+
+### Fresh review and fix pass (2026-09-25)
+
+A fresh reviewer of the whole branch reported 1 critical, 5 important and 9 minor findings. All the critical and important ones are fixed in `d91b677`, as are most of the minor ones.
+
+After the fixes:
+- The gate is green: vitest 51/51, and Playwright 23/23 run three times over (69/69).
+- JS is 279.6 KB, HTML 502 KB, CLS 0, and LCP 444 ms (desktop) and 340 ms (mobile).
+- No frames are requested before `load`.
+
+Left open for Plan 2:
+- The VERIFY monitor draws ✓ beside per-project test counts that come from `data/projects.ts` (self-reported, not re-run). This is the approved VERIFY design, and changing it changes an approved visual.
+- The manifest does not yet carry source hashes.
+- Dead August components are still in the tree.
+- In-flight frame fetches are not aborted on dispose.
