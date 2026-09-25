@@ -29,7 +29,11 @@ Evidence referenced below lives in `docs/superpowers/specs/assets/` and `design/
 1. **The September direction replaces the August arrival.** The branch's last work was Concept B, a dual-monitor workspace with its screen already on. Your concept image and brief describe a closed laptop that opens and boots, so Concept B is retired. Its *pipeline idea* is kept and upgraded: render offline, export screen corners, and map live DOM onto the render.
 2. **The August section compositions are retired, but their facts stay.** That means the instrument-panel page, the topology board, the pipeline run and the arc carousel go, while every fact-checked number and caveat in `data/*.ts` stays.
 3. **Copy that the new direction replaces:** "I build production software that solves real problems.", "Everything here runs. Come in and check." and "You've seen it run." give way to the approved lines above.
-4. **The light theme keeps working** because the brief says to preserve theme behaviour. The site is designed dark-first, and the rendered entrance is always dark.
+4. **The light theme keeps working** because the brief says to preserve theme behaviour. The site is designed dark-first, and the rendered entrance is always dark. The hero *follows the theme*, and it enters through a dark screen:
+   - While the hero is "inside" the laptop, its background is `--screen`, which is dark in both themes. The boot log and identity always sit on it, as a terminal does.
+   - During the portal (0.88–1.00), `--screen` cross-fades to `--bg`. In the dark theme that is a no-op. In the light theme the lights come up as you step through the screen.
+   - The render's baked backlight spill assumes a dark screen, which matches, because the brightening happens only once the desk has left frame.
+   - There is no dark-to-light seam at Work, and no forced-dark token scope.
 
 ---
 
@@ -50,7 +54,7 @@ I fetched it read-only (`git archive`, no checkout or merge), ran it locally, an
 | CSS/DOM pseudo-3D laptop (`IntroScene.tsx`) | **Do not port** | See §4.1. On screen it reads as an illustration, and the August history already spent four CSS passes trying to get past that. |
 | Portal = a `portal-veil` fading to solid `#05070a` | **Do not port** | It is exactly the "cheap fade-to-black followed by a normal webpage" the brief rules out. At 20% scroll the whole viewport goes black. |
 | GSAP + ScrollTrigger | **Do not add** | See §7. It would be a second animation library doing Framer Motion's existing job. |
-| `AmbientCanvas` particle field | **Rewrite** | Its `requestAnimationFrame` loop runs forever at 60 fps, including while offscreen. Ours runs only while visible and settles. |
+| `AmbientCanvas` particle field | **Drop** | Its `requestAnimationFrame` loop runs forever at 60 fps, including while offscreen. The atmosphere it adds is carried here by the render and the static horizon light. A page-wide particle canvas would be a permanent cost for very little. |
 | `data/*.ts` in the package | **Do not port**: it contradicts the repo in ways that are *factually wrong* (see below) | The repo was fact-checked against each project's own repository in August. |
 | `scripts/sync-assets.mjs` | **Not needed** | The real screenshots are already in `public/projects/**` as WebP. The package's PNGs are identical placeholders. |
 
@@ -65,7 +69,13 @@ I fetched it read-only (`git archive`, no checkout or merge), ran it locally, an
 | Job Assistant terminal: "1,077 roles collected / 103 matched" | 287 jobs collected over 61 runs. Crons are disabled; it runs as a Docker service |
 | About: "6+ Shipped projects" | Not supportable: two projects run locally and one is coursework |
 
-**One existing repo inconsistency, found while cross-checking:** the `Languages` evidence line in `data/skills.ts` says "C++ and C# carry SentinelAI and T Poker". Neither project contains C++. It will be corrected to what the data supports: C# carries both backends; TypeScript the clients; Python DeveloperOS and Job Assistant.
+**Existing repo inconsistencies, found while cross-checking. They are fixed toward the facts the repo itself states:**
+
+1. **The C++ evidence line.** `data/skills.ts`'s `Languages` evidence line says "C++ and C# carry SentinelAI and T Poker", but neither project contains C++. It is rewritten to what the data supports: C# carries both backends, TypeScript the clients, and Python DeveloperOS and Job Assistant.
+   - C and C++ stay in the language list. They are Tay's foundation, and the About copy says so.
+   - The new Stack copy therefore must not claim "everything here ships in production", as the old Toolkit intro did.
+2. **The GRAVITY FLOW iOS listing.** GRAVITY FLOW's `stores` lists iOS as "soon", while its honest note says "Android-only — there is no iOS build". The iOS entry is removed.
+3. **The "7 languages in shipped code" stat.** It counted languages that are not in shipped code. It retires with the old hero stat strip and from the social card.
 
 ---
 
@@ -105,6 +115,21 @@ The token architecture stays as August built it: semantic CSS variables on `:roo
 | `--light-warm` | `rgba(255,180,107,.10)` | Atmosphere only: the desk-lamp echo. Never text |
 | `--line` / `--line-strong` | `rgba(255,255,255,.08 / .14)` | Hairlines |
 | `--status-live` | `#4ade80` | Always with a text label |
+| `--screen` | `#05070a` in **both** themes | The laptop screen's black; the hero's background while it is inside the laptop (§1, assumption 4) |
+
+**Old tokens map to new ones:**
+
+| Old | New |
+|---|---|
+| `--surface-0` | `--bg` |
+| `--surface-1` and `--surface-2` | `--bg-raised` and one low-alpha tint |
+| `--surface-3` | Kept, for overlays |
+| `--border-*` | `--line`, `--line-strong` |
+
+- `--status-wip` and `--status-idle` stay, because `Tag` uses them.
+- The high-contrast overrides (`globals.css`, `[data-high-contrast]`) are rewritten against the new set. They currently reference the violet `--glow`.
+- `lib/tokens.ts`, the mirror read by the social card and `themeColor`, is updated in the same change.
+- **Project accents** (`projectAccent`: amber, blue, violet, teal) are retuned less saturated. The violet `#b47cff` becomes a cool periwinkle. They are used *only* as light inside each project's own world, never for UI text or buttons.
 
 **Retired:** `--glow` and `--glow-strong` (violet), the panel-fill gradients, the aurora field, `--device-*` (the CSS laptop) and `--desk-*`. The light theme gets a matching set (paper `#f5f6f8`, ink `#0b0e14`, accent `#1459d9`), checked for contrast independently.
 
@@ -159,7 +184,7 @@ The entrance is a pinned stage inside a **400svh** container, which gives 300svh
 | 0.68–0.88 | **Camera** | 28 frames: the camera dollies to the screen and the focus pulls. The desk, monitor, plant and mug drift out of focus and out of frame. The screen surface rides the projected corners the whole way. |
 | 0.88–1.00 | **Portal** | The screen *becomes* the site (see §4.3). The nav fades in over 0.96–1.00, and the pin releases at 1.00. |
 
-The percentages are your guidance. They will be tuned against the real frames in the browser, not by argument. A visible **Skip intro** control, and the skip link, jump straight to `p = 1` and move focus to the `h1`.
+The percentages are your guidance. They will be tuned against the real frames in the browser, not by argument. A visible **Skip intro** control, and the skip link, jump straight to `p = 1` and move focus to the `h1`. Keyboard focus landing anywhere inside the hero while `p < 1` does the same, instantly, so focus can never rest on a control that is still inside the laptop.
 
 ### 4.3 The portal: the screen *is* the hero
 
@@ -168,7 +193,7 @@ There is no duplicate hero and no cross-fade to a separate page:
 - **The hero section is the screen surface.** The real `<section id="hero">` with the real `<h1>` is mounted inside the pinned stage. For `p < 1` its transform is the homography that maps it onto the laptop's screen quad in the current frame. At `p = 1` that transform is exactly the identity, so when the pin releases, the thing on screen simply *is* the hero and scrolls away like any section.
 - **Aspect ratio:** the laptop screen is 16:10 and viewports are not. The surface is laid out at viewport size. The homography maps a centred 16:10 crop of it onto the screen quad, clipped to that crop. During the portal, the crop grows to the full viewport as the bezel passes the viewport edges. You see the screen *expand*, not a letterbox.
 - **Content continuity:** "TAY SHOFER" glides and shrinks into the hero's name line and "Software Developer" merges into it. "Building products that ship." gives way to the headline *I build software / people can actually use.*, which rises in with a mask reveal, followed by the supporting line and CTAs. Every step is transform or opacity.
-- **Background continuity:** the screen's black is `--bg`. The bezel and desk leave frame because they are *outside* the screen, so nothing fades to black.
+- **Background continuity:** the screen's black is `--screen`, which cross-fades to `--bg` during the portal. That is a no-op in the dark theme (§1, assumption 4). The bezel and desk leave frame because they are *outside* the screen, so nothing fades to black.
 - **Glass:** a faint reflection gradient sits over the surface while it is "inside" the laptop and fades to 0 as it reaches the viewport.
 
 ### 4.4 Mobile and portrait: its own composition
@@ -184,8 +209,16 @@ This applies whenever the viewport aspect is below 0.9, which covers phones and 
 
 The **layout is decided in CSS at first paint**, which is what keeps CLS at 0. It is the same DOM in every mode, and CSS switches the stage between *pinned* and *static*:
 
-- `prefers-reduced-motion: reduce`, the in-app toggle (`[data-reduced-motion="true"]`, already server-rendered from the cookie) or `<noscript>` all do the same thing. The container is **not pinned**: one static still (lid open, screen awake, identity on the screen), followed by the hero as a normal section. The hero surface drops out of its absolute, transformed position into normal flow. There is no frame sequence, dolly or parallax, and JS applies no transforms in this mode.
-- **Frames fail to load:** the poster stays, the DOM surface still animates, and the portal still completes. It degrades to "less motion", never to "broken".
+- `prefers-reduced-motion: reduce`, the in-app toggle (`[data-reduced-motion="true"]`, already server-rendered from the cookie) or `<noscript>` all do the same thing. The container is **not pinned**: one static **still** image, followed by the hero as a normal section.
+  - The still is its own render: lid open, screen awake, and identity baked into the screen texture, because no JavaScript places DOM on it in this mode.
+  - The hero surface drops out of its absolute, transformed position into normal flow.
+  - There is no frame sequence, dolly or parallax, and JS applies no transforms in this mode.
+  - The nav is visible from the first paint. The floating palette, chat and accessibility buttons are client-only, so without JS they don't exist; with JS they appear immediately.
+- **The poster and the still** are `<picture>` elements (AVIF plus a JPEG fallback) so that every browser can show them. **Sequence frames** are AVIF only. If a frame will not decode, the entrance drops to static mode.
+- **Frames missing or late**, whether on a cold load or after a failure, never produce a mismatch:
+  - The DOM surface always takes its quad from **the frame actually drawn**, never from the frame that "should" be there.
+  - Load order is poster → still → sparse lid frames → fill → push. So the open-lid still is available almost at once, and it stands in for any open-lid frame that hasn't arrived yet.
+  - It degrades to "less motion", never to "broken".
 - **Save-Data or 2G/3G:** only every fourth frame is fetched, and cross-fades cover the gaps.
 
 ### 4.6 Asset pipeline (committed, reproducible)
@@ -193,18 +226,22 @@ The **layout is decided in CSS at first paint**, which is what keeps CLS at 0. I
 ```
 design/render/blender/
   scene.py        procedural desk, laptop and props. No downloaded models, no licence surface
-  render.py       renders a named shot (lid | wake | push) for a framing (landscape | portrait)
-                  at a given quality (preview | final)
-  textures/       code-screen, notebook and mug textures generated from real repo content
+  render.py       renders a named shot (lid | wake | push | still) for a framing
+                  (landscape | portrait) at a given quality (preview | final)
+  textures/       generated from real repo content: the code monitor, the notebook page,
+                  and the identity screen (for the still only)
+  out/            rendered PNG masters. GITIGNORED: regenerable from the scene
 scripts/
-  encode-frames.mjs   PNG → AVIF (+ WebP fallback) tiers with sharp, and writes manifest.json
+  encode-frames.mjs   PNG masters → AVIF tiers (JPEG as well for poster and still) with sharp,
+                      and writes manifest.json
 public/entrance/
-  landscape/{1280,1920}/lid-00.avif …   portrait/900/…   manifest.json
+  landscape/{1280,1920}/lid-00.avif …   portrait/900/…   poster.*  still.*  manifest.json
 ```
 
 - `manifest.json` gives, for every frame, the four projected screen corners in 0..1 image space, generated by the renderer rather than measured by eye. It follows the same principle as August's `workspace.json`.
-- **Preview renders** (quarter resolution, ~10 s per frame) are for iterating on timing and composition. **Final renders** (1920×1080 landscape, 1080×1920 portrait) run in the background and are committed in chunks, so a lost container never loses more than one chunk.
-- Blender is a **dev-time tool only**: a `pip install bpy` into a venv, documented in the README. It is never a `package.json` dependency. `sharp` becomes an explicit devDependency, because the encoder uses it and it is currently only transitive through Next.
+- **Preview renders** are for iterating on timing and composition: 960×540 at 16 samples, ~12 s per frame (the spike measured 34 s at 48 samples). **Final renders** are 1920×1080 landscape and 1080×1920 portrait at 48 samples, measured on the first frame (~2 min each is expected). They run in the background in chunks.
+- **What goes into git per chunk:** only the encoded tiers and the updated manifest, roughly 30 KB per frame. The PNG masters (~2 MB each at 1080p, ~250 MB for the whole set) stay out of git in `out/`. Any frame can be regenerated from the committed scene.
+- Blender is a **dev-time tool only**: `pip install bpy` into a Python **3.11** venv, which the wheel requires, documented in the README. It is never a `package.json` dependency. `sharp` becomes an explicit devDependency, because the encoder uses it and it is currently only transitive through Next.
 - **Art-direction targets from the concept:** a generic silver-aluminium laptop with no logo, a dark wood desk, one warm practical light right, a cool fill left, a secondary monitor of real code out of focus, a plant, a mug, and the notebook reading "Ideas / Build / Ship / Repeat.". No RGB. I'll share key frames with you as soon as they exist. That is a courtesy, not a blocking gate.
 
 ### 4.7 Runtime architecture
@@ -223,7 +260,7 @@ components/entrance/
 lib/timeline.ts         typed scroll timeline: segment(p, start, end, ease) and beats
 ```
 
-`EntranceStage` depends only on a `SceneRenderer` interface (`drawAt(progress)`, `screenQuadAt(progress)`). A future WebGL scene could implement the same interface, which honours the brief's swap-ability requirement without building it now.
+`EntranceStage` depends only on a `SceneRenderer` interface: `drawAt(progress)` draws the best frame available and **returns that frame's screen quad** (§4.5). A future WebGL scene could implement the same interface, which honours the brief's swap-ability requirement without building it now.
 
 Work happens only while the entrance is on screen and progress is changing. There is no idle `requestAnimationFrame` loop, and nothing runs after the pin releases.
 
@@ -231,20 +268,34 @@ Work happens only while the entrance is on screen and progress is changing. Ther
 
 ## 5. The page after the entrance
 
-Order: **Hero (the screen) → Work → About → Stack → Think/Build/Ship → Contact → Footer.** The nav reads `TS · Work · About · Stack · Contact · ● Available for work`, following the concept. The command palette, accessibility panel and chat widget stay, restyled. Their floating buttons stay hidden until the entrance completes.
+Order: **Hero (the screen) → Work → About → Stack → Think/Build/Ship → Contact → Footer.**
+
+**The nav**, following the concept and keeping every control the current `Navbar` owns:
+
+- **Desktop:** `TS` (home) · Work · About · Stack · Contact · `● Available for work` (→ #contact), plus two icon buttons: **command palette** (search icon; also Ctrl/Cmd+K) and **theme toggle**.
+- **Below `lg`:** `TS`, the availability dot, and a **menu** button. It opens the existing focus-trapped sheet: links, theme toggle, palette and "Get in touch".
+- **During the entrance:** hidden, fading in over `p` 0.96–1.00. It shows at once on `:focus-within`, so it is always reachable by keyboard.
+- **In static mode:** visible from the first paint (§4.5).
+
+The command palette, accessibility panel and chat widget stay, restyled. Their floating buttons stay hidden until the entrance completes.
+
+**Where things pin.** Scenes pin only when **width ≥ 1024 px, height ≥ 600 px, and motion is allowed**. That includes iPad landscape, and excludes phones in landscape and portrait tablets. Otherwise they stack unpinned. "Pinned for N svh" always means **container height**; travel is N − 100svh.
 
 ### 5.1 Hero
 
 - A name line: "Tay Shofer · Software Developer", which is where the screen identity lands.
 - The headline *I build software / people can actually use.* The second line is muted, as in the concept.
-- The supporting line, adapted from the repo tagline: *"Computer Science graduate building polished products, real-time systems and production-ready software."*
+- The supporting line, taken from your brief and the concept: *"Computer Science graduate building polished products, real-time systems and production-ready software."*
+  - It lives in a new `siteMeta.heroLead`.
+  - `siteMeta.tagline`, the meta, OpenGraph and Twitter description, is **unchanged**. It is accurate and already indexed.
+  - `siteMeta.headline`, which the social card renders, becomes the new headline.
 - **Explore my work ↓** is the primary CTA. **GitHub ↗** is secondary.
 - One quiet atmospheric element: the dark horizon arc from the concept, rendered in CSS.
 - The `h1` is the name line plus the headline, and it is the page's only `h1`.
 
 ### 5.2 Work: "each project becomes the whole website"
 
-On desktop, every flagship scene is pinned for **200svh**:
+Where pinning applies (§5 intro), every flagship scene is pinned for **200svh** (100svh of travel):
 
 1. **0–30%:** the world assembles.
 2. **30–70%:** it holds, with slow parallax and one live detail.
@@ -257,12 +308,12 @@ The copy (number, name, one-line kicker, two sentences, three verified metrics, 
 | 01 | **T Poker** | Three generic phones in depth over a dark reflective floor. The front phone rises as the others fan behind it, with 12–40 px parallax per layer. The real App Store badge link. | `home`, `tournament-live`, `final-count` screenshots; live URLs; `stores` |
 | 02 | **SentinelAI** | A large monitor with the real dashboard. One scan pass per entry. Live-alert rows slide in from `live-alerts`. A "streaming" indicator is labelled as a local demo. | `dashboard`, `live-alerts`; honest status "Runs locally" |
 | 03 | **DeveloperOS** | Four windows start scattered in depth and converge into one organised workspace as you scroll. A floating card reads "Grounded answers · file:line citations". | `dashboard`, `ai-features`, `learning`, `career` |
-| 04 | **GRAVITY FLOW** | The gameplay capture in a phone frame. A canvas star field with orbital paths extends past the frame. Scroll sets orbit speed, and the pointer bends paths gently. It stops when offscreen. | `gameplay`, `boss`; `v1.0.0-rc`, Android-only |
+| 04 | **GRAVITY FLOW** | The gameplay capture in a phone frame. A canvas star field with orbital paths extends past the frame. Scroll sets orbit speed, and the pointer bends paths gently. It is the site's **one** time-based loop (§7): it runs only while the scene is in view and never under reduced motion. | `gameplay`, `boss`; `v1.0.0-rc`, Android-only |
 | — | **Job Assistant**, **Orders & Delivery** | "More work": two wide, unpinned rows with the real pipeline shape (collect → filter → dedup → deliver; client ⇄ TCP ⇄ server) as small SVG diagrams | Repo data, including the coursework label |
 
 The existing `CaseStudyPanel` (the full-viewport product page) is kept and restyled. It stays the deep-dive for every project.
 
-On **mobile and reduced motion**, scenes are **not pinned**. Each is a full-height section showing its world's settled composition, with a single in-view reveal.
+**Where pinning doesn't apply, and under reduced motion,** scenes are **not pinned**. Each is a full-height section showing its world's settled composition, with a single in-view reveal.
 
 ### 5.3 About
 
@@ -272,22 +323,22 @@ On **mobile and reduced motion**, scenes are **not pinned**. Each is a full-heig
 |---|---|
 | **B.Sc.** | Computer Science |
 | **Full stack** | Web · Mobile · Backend |
-| **1,742** | Tests across the work (the repo's verified sum) |
+| **Israel** | GMT+3 · works in English |
 | **∞** | Still learning |
 
-This replaces the package's "6+ shipped projects".
+This replaces the package's "6+ shipped projects". The verified 1,742-test figure appears once, in the Stack's Verification card, and is not repeated here. The August content review cut exactly this kind of duplication.
 
 ### 5.4 Stack
 
-"The tools I build with." Five spacious bento cards grouped from the real data:
+"The tools I build with." It is a spacious bento of the **six groups exactly as they are in `data/skills.ts`**. There is no regrouping, so the data model is untouched apart from the evidence-line correction in §2.
 
-- **Languages**
-- **Web & Mobile**
-- **Backend & Data** (wide)
-- **Delivery & Tools** (wide)
-- **Verification**
-
-Each card has its chips and **one** evidence line kept from August, for example "8 bounded contexts over RabbitMQ, 0 cross-context references". A pointer-follow light lives on the hovered card only; it is off on touch and under reduced motion.
+- The two groups that carry a `lead` figure get the **wide** cards, with that figure at display scale:
+  - **Services & APIs:** 8 bounded contexts.
+  - **Verification:** 1,742 tests.
+- **Languages**, **Interface**, **Data & State** and **Delivery** are standard cards.
+- Each card keeps its chips and its one evidence line.
+- A pointer-follow light lives on the hovered card only; it is off on touch and under reduced motion.
+- The intro line is "Enough range to own a product end to end." It does **not** claim everything listed runs in production (§2).
 
 ### 5.5 Think. Build. Ship.
 
@@ -297,11 +348,11 @@ A typographic sequence, not a card row. The three words sit large on one line. A
 - **Build:** "Clean, maintainable systems." with SentinelAI's compiler-enforced boundaries.
 - **Ship:** "Test. Deploy. Improve." with the mirrored settlement fixtures and one-command bring-up.
 
-It is pinned for 150svh on desktop. On mobile and reduced motion it becomes a static stacked list.
+Where pinning applies it is pinned for 200svh (100svh of travel). Otherwise, and under reduced motion, it becomes a static stacked list.
 
 ### 5.6 Contact and footer
 
-"Let's build / something great." sits over the planet-horizon light (a CSS arc with a faint grid, cool light pooling). There is one primary action, **Get in touch** (mailto), plus GitHub, LinkedIn, Email and the existing tap-to-reveal phone. "Ideas / Build / Ship / Repeat." echoes the notebook from the opening frame, which bookends the page.
+"Let's build / something great." sits over the planet-horizon light (a CSS arc with a faint grid, cool light pooling). There is one primary action, **Get in touch** (mailto), plus GitHub, LinkedIn, Email and the existing tap-to-reveal phone (`PhoneReveal`, kept as-is). "Ideas / Build / Ship / Repeat." echoes the notebook from the opening frame, which bookends the page.
 
 The footer reads `TAY SHOFER — PORTFOLIO · BUILT TO SHIP.` with minimal links and ©.
 
@@ -314,15 +365,19 @@ The footer reads `TAY SHOFER — PORTFOLIO · BUILT TO SHIP.` with minimal links
 - `app/api/chat` (security hardening intact) and `AIChatWidget`
 - `CommandPalette`, `AccessibilityPanel`, `ThemeProvider`, `AccessibilityProvider`
 - `SmoothScroll` (Lenis), `useReducedMotionPref`, `useFocusTrap`
-- `CaseStudyPanel`, `StoreBadge`, `ProjectImage`
-- All of `data/*.ts`, with the one correction above and `siteMeta.headline` updated
-- SEO: metadata, `JsonLd`, `sitemap`, `robots`, `manifest`, `opengraph-image` (restyled to the new headline and palette), `proxy.ts` security headers (the CSP already permits same-origin frame fetches), `not-found`, `error`
+- `CaseStudyPanel`, `StoreBadge`, `ProjectImage`, `PhoneReveal` (the tap-to-reveal phone, the only decoder of `socials.phoneEncoded`), and `ThemeToggle`
+- All of `data/*.ts`, with these changes only:
+  - the corrections in §2 (the evidence line and the GRAVITY FLOW iOS entry)
+  - `siteMeta.headline` updated
+  - `siteMeta.heroLead` added
+  - `heroStats` retired with the old hero
+- SEO: metadata, `JsonLd`, `sitemap`, `robots`, `manifest`, `opengraph-image` (restyled to the new headline and palette, dropping the "7 languages" stat), `proxy.ts` security headers (the CSP already permits same-origin frame fetches), `not-found`, `error`
 
 **Replaced by the new sections:** `IntroSequence`, `Hero`, `About`, `Projects`, `Skills`, `EngineeringPanel`, `Contact`, `Navbar`, `Footer`.
 
 **Removed once replaced and verified:**
 
-- Components: `Workstation`, `WorkstationGL`, `ScreenPortfolio`, `HeroVisual`, `ArchitectureBoard`, `PipelineRun`, `AmbientGlow`, `ProjectStage`, `ProjectDeck`, `ProjectRow`, `FeaturedProject`, `Stage`, `PanelReveal`, `PhoneReveal`, and any primitive left without a caller
+- Components: `Workstation`, `WorkstationGL`, `ScreenPortfolio`, `HeroVisual`, `ArchitectureBoard`, `PipelineRun`, `AmbientGlow`, `ProjectStage`, `ProjectDeck`, `ProjectRow`, `FeaturedProject`, `Stage`, `PanelReveal`, and any primitive left without a caller
 - Routes: `/gl-spike` and `/render-studio`
 - Render assets: `design/render/scene.ts` and `capture.mjs` (superseded by the Blender pipeline), and `public/arrival/*` (1.2 MB)
 - The **`three` and `@types/three` dependencies**, which would no longer be used anywhere
@@ -343,8 +398,9 @@ The footer reads `TAY SHOFER — PORTFOLIO · BUILT TO SHIP.` with minimal links
 - **Rules:**
   - Compositor-only properties (`transform`, `opacity`; `filter: blur` only on small elements).
   - One primary moving thing per viewport.
-  - Nothing loops in the reading area.
-  - Every continuous effect stops offscreen and under reduced motion.
+  - No time-based loop runs behind or beside body text.
+  - There is **one named exception**: GRAVITY FLOW's orbital field (§5.2). It sits beside the copy, runs only while its scene is in view, and never runs under reduced motion.
+  - Every other motion is scroll-driven or a one-shot reveal.
   - No layout animation.
   - Exits run at about 65% of enter duration.
 
@@ -353,8 +409,11 @@ The footer reads `TAY SHOFER — PORTFOLIO · BUILT TO SHIP.` with minimal links
 ## 8. Accessibility
 
 - Landmarks: `header`/`nav`, one `main`, `footer`. One `h1`, then `h2` per section and `h3` per project, in sequence.
-- The entrance is `aria-hidden` except the hero surface, which carries the real `h1`. A screen reader gets the page, not 400svh of theatre.
-- **Skip link** and **Skip intro** both land on the `h1`. The nav is always reachable by keyboard: it shows itself on `:focus-within` even while the entrance hides it.
+- The entrance's **decorative layers are `aria-hidden` individually**: canvas, poster, room title, chapter markers and the boot log. The hero surface is their sibling, carrying the real `h1`.
+  - `aria-hidden` is never placed on the entrance container, because a descendant cannot undo it.
+  - A screen reader gets the page, not 400svh of theatre.
+- **Skip link** and **Skip intro** both land on the `h1`. Focus entering the hero while `p < 1` jumps to `p = 1` (§4.2).
+- The nav is always reachable by keyboard: it shows itself on `:focus-within` even while the entrance hides it.
 - Focus rings are visible everywhere (2 px `--accent` ring plus offset). Targets are ≥ 44 px below `lg`. Contrast is verified per token (§3.2) in both themes.
 - Case study and overlays keep their focus traps and focus restoration.
 - Reduced motion, from the OS setting or the in-app toggle, removes pinning, sequences, parallax and loops (§4.5, §5).
@@ -369,13 +428,14 @@ These are measured, not estimated. They are verified in a production build.
 | Metric | Budget |
 |---|---|
 | CLS | **< 0.02** (layout mode is decided by CSS at first paint) |
-| LCP (desktop, production build, local) | ≤ 1.2 s. The LCP element is the poster (~40 KB) or the hero text |
-| First-load JS for `/` | ≤ today's baseline + 20 KB gzip (baseline recorded before work starts) |
+| LCP (desktop, production build, local) | ≤ 1.2 s. The LCP element is the poster (~40 KB) or the hero text. The poster is a plain `<picture>` that varies by viewport, so it gets `fetchPriority="high"`, not `preload`, which the Next 16 image docs advise against in that case |
+| First-load JS for `/` | **≤ 286 KB gzip**, today's measured baseline (12 scripts, 942 KB raw, recorded 2026-09-25). The target is lower: the removed components are among the heaviest |
+| HTML for `/` | **≤ 568 KB**, today's baseline (inlined CSS plus the RSC payload). The target is lower |
 | Entrance frames, desktop | ≤ 2.5 MB AVIF at the 1280 tier, ≤ 4 MB at the 1920 tier (DPR ≥ 1.5 and width ≥ 1280) |
 | Entrance frames, portrait | ≤ 1.2 MB |
 | Frames before `load` | **0**, except the poster |
 | Main-thread time per scroll frame in the entrance | ≤ 8 ms (Chrome performance trace) |
-| Offscreen work after the entrance | 0 active animation-frame loops (asserted in e2e) |
+| Idle work | 0 active animation-frame loops while no looping scene is in view, asserted at the Contact section in e2e |
 
 If a budget fails, the effect is simplified. The budget is not relaxed.
 
@@ -389,18 +449,20 @@ If a budget fails, the effect is simplified. The budget is not relaxed.
 - `screenSurface.ts`: the homography maps the four corners exactly, is identity at full viewport, and handles the aspect crop.
 - `FrameStore` / `FramePlayer`: frame selection and cross-fade weights; decode-window admission and release; Save-Data sparsity.
 - `manifest.json`: every file exists, quads stay within 0..1, the lid sequence is monotonic.
-- Content: every project has a repo URL and existing images; banned claims (e.g. "6+", invented counts) stay out; nav targets exist.
+- Content: every project has a repo URL and existing images; banned claims (e.g. "6+", invented counts) stay out; nav targets exist; no project lists a store for a platform its honest note excludes.
+- Store and screen-quad fallback: the quad returned always belongs to the frame drawn (§4.5).
 
 **End-to-end (Playwright, already a devDependency):**
 
-- One `h1`; no horizontal overflow at 390, 768, 1366 and 1440.
-- Reduced-motion mode (both sources) has no pinned heights.
-- Skip intro and the skip link focus the `h1`.
-- Keyboard traversal of the nav and case study, with focus restored.
+- One `h1`; no horizontal overflow at 375, 390, 768, 1366 and 1440, and in phone landscape (844×390).
+- Reduced-motion mode (both sources) and no-JS have no pinned heights, and the nav is visible.
+- Skip intro, the skip link, and tabbing into the hero while `p < 1` all focus the `h1` or the target control with `p = 1`.
+- Keyboard traversal of the nav, the mobile menu sheet (theme toggle and palette included) and the case study, with focus restored.
 - The canvas brightens across 0–12%; the hero transform equals identity at `p = 1`.
-- Zero console errors, zero loops running after the entrance.
+- Both themes: the hero's background equals `--bg` at `p = 1`.
+- Zero console errors; zero animation-frame loops while the Contact section is in view.
 
-**Visual:** screenshot sets at 1440×900, 1366×768, 768×1024 and 390×844 across entrance beats and every section. I'll inspect them myself and iterate on what I see: geometry, clipping, z-index, wrapping, pin lengths, overflow, contrast and nav timing.
+**Visual:** screenshot sets at 1440×900, 1366×768, 768×1024, 390×844 and 375×667, plus phone landscape, across entrance beats and every section, in **both themes**. I'll inspect them myself and iterate on what I see: geometry, clipping, z-index, wrapping, pin lengths, overflow, contrast and nav timing.
 
 **Gates before anything is called done:** `npm run typecheck`, `npm run lint`, `npm test`, `npm run test:e2e`, `npm run build`, all passing, plus the UI UX Pro Max pre-delivery checklist.
 
@@ -408,15 +470,14 @@ If a budget fails, the effect is simplified. The budget is not relaxed.
 
 ## 11. Delivery phases
 
-This is one spec, with the plan split so each phase is independently verifiable.
+This is one spec and one implementation plan, split into phases that can each be verified on their own:
 
-- **A. Foundation:** baseline measurements; the test runner; tokens and type; `lib/timeline.ts`; the new shell (nav, footer, hero in normal flow).
-- **B. Entrance runtime:** `FrameStore`, `FramePlayer`, `screenSurface`, `EntranceStage`, built and verified against **preview frames**, so the runtime doesn't wait for final renders.
-- **C. Render:** art direction, then final landscape and portrait sequences in background chunks, encoding, and the manifest.
+- **A. Foundation:** the test runner; tokens and type; `lib/timeline.ts`; the new shell (nav with all its controls, footer, hero in normal flow). The baselines are already recorded in §9.
+- **C1. Render pipeline (prerequisite of B):** `scene.py`, `render.py`, `encode-frames.mjs`, the manifest, and a full set of **preview** frames.
+- **B. Entrance runtime:** `FrameStore`, `FramePlayer`, `screenSurface`, `EntranceStage`, built and verified against the C1 preview frames.
+- **C2. Final render:** art direction on key frames, then final landscape and portrait sequences in background chunks. This runs **in parallel** with B and D, and it is the only work that does.
 - **D. Sections:** the four project worlds, the more-work rows, About, Stack, Think/Build/Ship, Contact.
-- **E. Cleanup and verification:** remove the superseded code and dependencies; the full gate run; the visual pass at four viewports; the performance trace; the pre-delivery checklist.
-
-B and C run in parallel: renders are background jobs.
+- **E. Cleanup and verification:** remove the superseded code and dependencies; the full gate run; the visual pass; the performance trace; the pre-delivery checklist.
 
 ---
 
@@ -424,12 +485,12 @@ B and C run in parallel: renders are background jobs.
 
 | Risk | Mitigation |
 |---|---|
-| Render time: ~2 min per final frame at 1080p on 4 cores, about 3.5 h total | Preview renders for all iteration; finals only after composition is locked; chunked and committed |
-| The container is reclaimed mid-render | Chunks committed as they finish; the scene is code, so any frame can be regenerated |
+| Render time: ~2 min per final frame at 1080p on 4 cores, about 3.5 h total | Preview renders for all iteration; finals only after composition is locked; chunked, with encoded tiers committed per chunk |
+| The container is reclaimed mid-render | Encoded chunks committed as they finish (masters stay out of git); the scene is code, so any frame can be regenerated |
 | The procedural scene falls short of the concept | Depth of field and low-key lighting carry most of it. Detail goes where the camera focuses (the laptop). Background props stay defocused by design |
 | Decode jank on low-end laptops | ImageBitmap decode window; 1280 tier by default; the fallback shows the nearest decoded frame |
 | Text crispness under `matrix3d` | Verified in screenshots. It is only transformed while small; at identity it is plain text |
-| Long page (entrance + four pinned scenes) | Pins only where the brief asks; nav jumps work at any point; mobile and reduced motion never pin |
+| Long page (entrance + four pinned scenes) | Pins only where the brief asks; nav jumps work at any point. Sections pin only at ≥ 1024×600. On phones, only the short 260svh entrance pins. Reduced motion never pins |
 
 ---
 
@@ -437,7 +498,9 @@ B and C run in parallel: renders are background jobs.
 
 Override any of these at review:
 
-1. **About facts row:** B.Sc. · Full stack · 1,742 tests · ∞ still learning (§5.3).
-2. **Nav:** Work · About · Stack · Contact, per the concept. Think/Build/Ship is reachable by scroll and the palette.
+1. **About facts row:** B.Sc. · Full stack · Israel (GMT+3) · ∞ still learning (§5.3).
+2. **Nav:** Work · About · Stack · Contact, per the concept, plus the palette and theme controls (§5). Think/Build/Ship is reachable by scroll and the palette.
 3. **Four flagship scenes** (T Poker, SentinelAI, DeveloperOS, GRAVITY FLOW), plus two "more work" rows, following the concept's 01–04 pager.
 4. **No text on the rendered mug:** the notebook carries "Ideas / Build / Ship / Repeat.", and one slogan in frame is enough.
+
+**One fact I could not verify from this session:** T Poker's `repoUrl` (`github.com/taysh123/poker-home-games`) does not show up in GitHub's public search, where the other five do. This container can't reach github.com to check directly. **If that repository is private,** the "Source" button should become "Private repository", with no link, rather than a link that 404s for visitors.
