@@ -15,8 +15,8 @@ const DST = arg("--dst", "public/entrance");
 const ONLY = arg("--only-framing", null);
 if (ONLY && !["landscape", "portrait"].includes(ONLY)) throw new Error(`--only-framing ${ONLY}`);
 const TIERS = { landscape: [1280, 1920], portrait: [720] };
-// Texture provenance always comes from the frozen screen textures (make_screens.py), whatever --src is.
-const screens = JSON.parse(await fs.readFile("design/render/blender/out/screens.json", "utf8"));
+// Texture provenance always comes from the frozen, committed screen textures, whatever --src is.
+const screens = JSON.parse(await fs.readFile("design/render/blender/frozen/screens.json", "utf8"));
 const snapshot = screens.snapshot ?? execSync("git rev-parse --short HEAD").toString().trim();
 
 const fresh = (src, dst) => existsSync(dst) && statSync(dst).mtimeMs > statSync(src).mtimeMs;

@@ -170,11 +170,26 @@ def corner_coc_px(scene, cam, screen, width_px):
     return worst
 
 
+FROZEN = os.path.join(HERE, "frozen")
+
+
+def verify_frozen():
+    """The screen textures are frozen and committed (frozen/, SHA256SUMS). Refuse to render with anything else:
+    a regenerated set differs (fresh build timings, branch label) and would visibly change mid-sequence."""
+    import hashlib
+    for line in open(os.path.join(FROZEN, "SHA256SUMS")):
+        digest, name = line.split()
+        got = hashlib.sha256(open(os.path.join(FROZEN, name), "rb").read()).hexdigest()
+        if got != digest:
+            raise SystemExit(f"frozen texture {name} does not match SHA256SUMS — refusing to render")
+
+
 def render_set(kind, quality, names=None, exr=False, out_root=None, spp_override=None):
     keys = LANDSCAPE if kind == "landscape" else PORTRAIT
     w, h = QUALITY[quality][kind]
     out = os.path.join(out_root or os.path.join(HERE, "out"), kind); os.makedirs(out, exist_ok=True)
-    tex = os.path.join(HERE, "out") + "/"                    # frozen screen textures (make_screens.py)
+    verify_frozen()
+    tex = FROZEN + "/"                                       # frozen, committed screen textures (hash-checked)
     steps = SEQUENCE[kind] + [{"shot": "still", "name": "still", "p": -1}]
     for step in steps:
         if names and step["name"] not in names:

@@ -1,0 +1,747 @@
+VERIFY
+@b89070e
+checks
+typecheck
+passed
+lint
+passed
+tests
+passed
+build
+passed
+project test suites
+counts from data/projects.ts
+T Poker
+892 tests
+DeveloperOS
+363 tests
+GRAVITY FLOW
+220 tests
+Job Assistant
+162 tests
+Aegis
+105 tests
+1,742
+tests across 5 projects
+WRITE
+feature/premium-portfolio-redesign-1mqmgf
+EXPLORER
+route.ts
+page.tsx
+error.tsx
+favicon.ico
+page.tsx
+globals.css
+layout.tsx
+manifest.ts
+not-found.tsx
+opengraph-image.tsx
+page.tsx
+Studio.tsx
+page.tsx
+robots.ts
+sitemap.ts
+AmbientGlow.tsx
+ArchitectureBoard.tsx
+HeroVisual.tsx
+PipelineRun.tsx
+ScreenPortfolio.tsx
+Workstation.tsx
+WorkstationGL.tsx
+Entrance.tsx
+EntranceStage.tsx
+entrance.css
+stageGeometry.ts
+Footer.tsx
+Navbar.tsx
+surface.ts
+  1
+import
+ 
+type
+ 
+{
+ 
+Quad
+ 
+}
+ 
+from
+ 
+"
+.
+/types"
+;
+  2
+import
+ 
+{
+ 
+solveHomography
+,
+ 
+toMatrix3d
+ 
+}
+ 
+from
+ 
+"
+.
+/homography"
+;
+  3
+  4
+export
+ 
+type
+ 
+Fit
+ 
+=
+ 
+{
+ 
+scale
+:
+ 
+number
+;
+ 
+dx
+:
+ 
+number
+;
+ 
+dy
+:
+ 
+number
+ 
+}
+;
+  5
+  6
+export
+ 
+function
+ 
+coverFit
+(
+frameW
+:
+ 
+number
+,
+ 
+frameH
+:
+ 
+number
+,
+ 
+vw
+:
+ 
+number
+,
+ 
+vh
+:
+ 
+number
+,
+ 
+zoom
+ 
+=
+ 
+1
+)
+:
+ 
+Fit
+  7
+  
+const
+ 
+scale
+ 
+=
+ 
+Math
+.
+max
+(
+vw
+ 
+/
+ 
+frameW
+,
+ 
+vh
+ 
+/
+ 
+frameH
+)
+ 
+*
+ 
+zoom
+;
+  8
+  
+return
+ 
+{
+ 
+scale
+,
+ 
+dx
+:
+ 
+(
+vw
+ 
+-
+ 
+frameW
+ 
+*
+ 
+scale
+)
+ 
+/
+ 
+2
+,
+ 
+dy
+:
+ 
+(
+vh
+ 
+-
+ 
+frameH
+ 
+*
+ 
+scale
+)
+ 
+/
+ 
+2
+ 
+}
+;
+  9
+}
+ 10
+ 11
+/**
+ 
+Quad
+ 
+in
+ 
+0
+.
+.
+1
+ 
+image
+ 
+space
+ 
+-
+>
+ 
+viewport
+ 
+px
+.
+ 
+*/
+ 12
+export
+ 
+function
+ 
+quadToViewport
+(
+q
+:
+ 
+Quad
+,
+ 
+frameW
+:
+ 
+number
+,
+ 
+frameH
+:
+ 
+number
+,
+ 
+fit
+:
+ 
+Fit
+)
+:
+ 
+Quad
+ 
+{
+ 13
+  
+return
+ 
+q
+.
+map
+(
+(
+p
+)
+ 
+=
+>
+ 
+(
+{
+ 
+x
+:
+ 
+p
+.
+x
+ 
+*
+ 
+frameW
+ 
+*
+ 
+fit
+.
+scale
+ 
++
+ 
+fit
+.
+dx
+,
+ 
+y
+:
+ 
+p
+.
+y
+ 
+*
+ 
+frameH
+ 
+*
+ 
+fit
+.
+scale
+ 
++
+ 
+fi
+ 14
+}
+ 15
+ 16
+/**
+ 
+The
+ 
+16
+:
+10
+ 
+rectangle
+ 
+that
+ 
+circumscribes
+ 
+the
+ 
+viewport
+,
+ 
+centred
+ 
+on
+ 
+it
+ 
+(
+§4
+.
+3
+)
+.
+ 
+*/
+ 17
+export
+ 
+function
+ 
+circumscribed1610
+(
+vw
+:
+ 
+number
+,
+ 
+vh
+:
+ 
+number
+)
+ 
+{
+ 18
+  
+const
+ 
+w
+ 
+=
+ 
+vw
+ 
+/
+ 
+vh
+ 
+>
+=
+ 
+1
+.
+6
+ 
+?
+ 
+vw
+ 
+:
+ 
+vh
+ 
+*
+ 
+1
+.
+6
+;
+ 19
+  
+const
+ 
+h
+ 
+=
+ 
+w
+ 
+/
+ 
+1
+.
+6
+;
+ 20
+  
+return
+ 
+{
+ 
+x
+:
+ 
+(
+vw
+ 
+-
+ 
+w
+)
+ 
+/
+ 
+2
+,
+ 
+y
+:
+ 
+(
+vh
+ 
+-
+ 
+h
+)
+ 
+/
+ 
+2
+,
+ 
+w
+,
+ 
+h
+ 
+}
+;
+ 21
+}
+ 22
+ 23
+/**
+ 
+True
+ 
+when
+ 
+the
+ 
+quad
+ 
+covers
+ 
+the
+ 
+whole
+ 
+wxh
+ 
+viewport
+ 
+(
+convex
+ 
+quad
+ 
+test
+)
+.
+ 
+*/
+ 24
+export
+ 
+function
+ 
+containsRect
+(
+q
+:
+ 
+Quad
+,
+ 
+w
+:
+ 
+number
+,
+ 
+h
+:
+ 
+number
+)
+:
+ 
+boolean
+ 
+{
+ 25
+  
+const
+ 
+pts
+ 
+=
+ 
+[
+{
+ 
+x
+:
+ 
+0
+,
+ 
+y
+:
+ 
+0
+ 
+}
+,
+ 
+{
+ 
+x
+:
+ 
+w
+,
+ 
+y
+:
+ 
+0
+ 
+}
+,
+ 
+{
+ 
+x
+:
+ 
+w
+,
+ 
+y
+:
+ 
+h
+ 
+}
+,
+ 
+{
+ 
+x
+:
+ 
+0
+,
+ 
+y
+:
+ 
+h
+ 
+}
+]
+;
+ 26
+  
+return
+ 
+pts
+.
+every
+(
+(
+p
+)
+ 
+=
+>
+feature/premium-portfolio-redesign-1mqmgf   TypeScript   UTF-8
+BUILD
+next build · git
+$ npx next build
+▲ Next.js 16.2.6 (Turbopack)
+- Experiments (use with caution):
+    inlineCss
+  Creating an optimized production build ...
+  Compiled successfully in 7.3s
+  Running TypeScript ...
+  Finished TypeScript in 8.2s ...
+  Collecting page data using 3 workers ...
+  Finalizing page optimization ...
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /api/chat
+├ ƒ /e2e-fixtures/scene
+├ ƒ /gl-spike
+├ ○ /manifest.webmanifest
+├ ○ /opengraph-image
+├ ƒ /render-studio
+├ ○ /robots.txt
+└ ○ /sitemap.xml
+ƒ Proxy (Middleware)
+○  (Static)   prerendered as static content
+$ git log --oneline
+b89070e
+make_screens: draw ASCII for glyphs Geist Mono l
+b8fa51b
+Calibrate the audit's geometric targets to the a
+15a68ed
+render.py: select Cycles before building the com
+2da63b9
+VERIFY shows project test counts as metadata, no
+c433451
+Render pipeline: light groups, EXR passes, bloom
+8c368fe
+Add ScrollScene: CSS-var scroll scenes that pin 
+9bb56ce
+Nav availability, palette Home via entrance:skip
+fcf3111
+Entrance: never stand in a far-away frame; make 
+cecdc7d
+SmoothScroll: run Lenis's frame loop only while 
+6a54e48
+Light-theme tokens, raised-label contrast floor 
+a4e49b2
+Plan 2: Aegis screenshots are temporary — data-d
+bd7d20c
+Add Plan 2 guardrails: budget and entrance-geome
+9f3310a
+Rename SentinelAI to Aegis across the portfolio
+649bd37
+Plan 2: fix the independent plan review's findin
+46f7066
+Plan 2 draft: sections, final look-dev behind th
+5e596c8
+Plan 1 verification log: fresh review and fix pa
+d91b677
+Fix the fresh review's findings on the entrance
+3ca85ad
+Keep the entrance stage dark in both themes; Pla
+d7b4679
+Fix entrance issues found in real-browser screen
+462a300
+Add the preview entrance frame set (65 landscape
+> initializing portfolio...
+> loading projects...
+> ready.
+T A Y   S H O F E R
+Software Developer
+>_
+>_
+>_

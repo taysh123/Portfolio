@@ -21,7 +21,9 @@ FG, MUTED, ICE, CYAN = (226, 232, 242), (122, 136, 158), (91, 156, 255), (95, 21
 import json, os
 os.makedirs(H, exist_ok=True)
 SNAP = subprocess.check_output(["git", "-C", R, "rev-parse", "--short", "HEAD"]).decode().strip()
-BRANCH = subprocess.check_output(["git", "-C", R, "branch", "--show-current"]).decode().strip()
+# A committed label, not `git branch --show-current`: a regeneration from a detached worktree would draw ""
+# (fresh review, Plan 2). The committed frozen/ set (SHA256SUMS) remains the source of truth for renders.
+BRANCH = "feature/premium-portfolio-redesign-1mqmgf"
 
 
 def run(name, cmd, log=None):
