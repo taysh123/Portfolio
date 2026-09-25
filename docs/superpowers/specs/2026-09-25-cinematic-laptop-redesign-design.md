@@ -507,9 +507,17 @@ The first cyber-studio prototype read as *empty*: too much inactive black desk, 
 ![K1: laptop open and powered, the full developer environment](assets/2026-09-25-preview-K1.webp)
 ![K2: hero framing on the screen normal, just before the portal](assets/2026-09-25-preview-K2.webp)
 
-**Known gaps in these previews, for look-dev:**
-- The amber lamp (the 5% warm accent) is currently just outside K0's left edge. It returns as a small practical inside the left third.
-- The fine-code text on WRITE and BUILD is still denser than ideal.
+**Preview round 2** (the refinement pass requested at review):
+- **Cameras moved closer,** so the laptop is larger and anchors every frame.
+- **Warm accent in frame:** the amber lamp sits inside K0's left third as a small counterweight.
+- **Atmosphere:** a thin haze volume sits *behind* the desk only, so the halo, the slats and the monitor light gain depth without fogging the hero.
+- **Laptop materials:** a second glossy-only card for the far chamfer edge, a faint key backlight glowing between the keys, restrained screen spill on the deck, and a darker satin trackpad.
+- **K2** pulls back slightly, so the deck and the out-of-focus studio contribute depth before the portal.
+
+The haze volume adds roughly 20–30% render time at preview quality. That is within the §4.6 A/B rule (≤ 25%), subject to measurement at final quality.
+
+**Still open for look-dev:**
+- The WRITE and BUILD code is denser than ideal.
 - The tower interior glow sits at the top of its 30% budget.
 
 #### Camera and lens
