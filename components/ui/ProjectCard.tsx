@@ -5,7 +5,8 @@ import { ProjectImage } from "@/components/ui/ProjectImage";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { GithubIcon, BookOpenIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/cn";
-import type { Project } from "@/data/projects";
+import { PrivateRepoLabel } from "@/components/ui/PrivateRepoLabel";
+import { publicRepoUrl, type Project } from "@/data/projects";
 
 /**
  * One project, as a card.
@@ -109,16 +110,20 @@ export function ProjectCard({
               {project.liveLabel ?? "Open"}
             </ButtonLink>
           )}
-          <ButtonLink
-            href={project.repoUrl}
-            external
-            variant="ghost"
-            size="sm"
-            className="ml-auto"
-            aria-label={`${project.name} source on GitHub`}
-          >
-            <GithubIcon size={15} />
-          </ButtonLink>
+          {publicRepoUrl(project) ? (
+            <ButtonLink
+              href={publicRepoUrl(project)!}
+              external
+              variant="ghost"
+              size="sm"
+              className="ml-auto"
+              aria-label={`${project.name} source on GitHub`}
+            >
+              <GithubIcon size={15} />
+            </ButtonLink>
+          ) : (
+            <PrivateRepoLabel className="ml-auto" />
+          )}
         </footer>
       </div>
     </article>

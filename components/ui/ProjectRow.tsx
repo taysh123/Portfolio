@@ -6,7 +6,8 @@ import { Tag, StatusChip } from "@/components/ui/Tag";
 import { ProjectImage } from "@/components/ui/ProjectImage";
 import { ArrowUpRightIcon, GithubIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/cn";
-import type { Project } from "@/data/projects";
+import { PrivateRepoLabel } from "@/components/ui/PrivateRepoLabel";
+import { publicRepoUrl, type Project } from "@/data/projects";
 
 /**
  * A project as a full-width ROW, not a card.
@@ -62,6 +63,7 @@ export function ProjectRow({
 
   const metrics = project.metrics.slice(0, 2);
   const numeral = String(index).padStart(2, "0");
+  const repoUrl = publicRepoUrl(project);
 
   return (
     <Panel
@@ -199,15 +201,19 @@ export function ProjectRow({
                 />
               </span>
 
-              <a
-                href={project.repoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="relative z-20 inline-flex h-11 w-11 items-center justify-center rounded-full text-fg-subtle transition-colors duration-[var(--dur-mid)] hover:bg-surface-2 hover:text-fg"
-                aria-label={`${project.name} source on GitHub`}
-              >
-                <GithubIcon size={18} />
-              </a>
+              {repoUrl ? (
+                <a
+                  href={repoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="relative z-20 inline-flex h-11 w-11 items-center justify-center rounded-full text-fg-subtle transition-colors duration-[var(--dur-mid)] hover:bg-surface-2 hover:text-fg"
+                  aria-label={`${project.name} source on GitHub`}
+                >
+                  <GithubIcon size={18} />
+                </a>
+              ) : (
+                <PrivateRepoLabel className="relative z-20" />
+              )}
             </footer>
           </div>
         </div>

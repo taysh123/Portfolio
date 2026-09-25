@@ -68,7 +68,13 @@ export type Project = {
   status: ProjectStatus;
   stack: { label: string; emphasis?: boolean }[];
   metrics: Metric[];
-  repoUrl: string;
+  /**
+   * The source repository. A private repository carries no URL here: this file is
+   * bundled into client components (the command palette), so its address would
+   * ship to every visitor. Its internal URL lives in `data/internal-repos.ts`,
+   * which no page imports. Public surfaces read links through `publicRepoUrl()`.
+   */
+  repo: { visibility: "public"; url: string } | { visibility: "private" };
   liveUrl?: string;
   liveLabel?: string;
   featured?: boolean;
@@ -100,7 +106,7 @@ export const projects: Project[] = [
     status: "live",
     accent: "amber",
     featured: true,
-    repoUrl: "https://github.com/taysh123/poker-home-games",
+    repo: { visibility: "private" }, // internal URL: data/internal-repos.ts
     liveUrl: "https://app.tpoker.app/",
     liveLabel: "Open the app",
     stores: [
@@ -187,7 +193,7 @@ export const projects: Project[] = [
     status: "local",
     accent: "blue",
     featured: true,
-    repoUrl: "https://github.com/taysh123/SentinelAI", // the repository keeps its former name — not renamed (Plan 2 decision 6)
+    repo: { url: "https://github.com/taysh123/SentinelAI", visibility: "public" }, // the repository keeps its former name — not renamed (Plan 2 decision 6)
     metrics: [
       { value: "8", label: "Bounded contexts" },
       { value: "0", label: "Cross-context references" },
@@ -268,7 +274,7 @@ export const projects: Project[] = [
     status: "released",
     accent: "violet",
     featured: true,
-    repoUrl: "https://github.com/taysh123/DeveloperOS",
+    repo: { url: "https://github.com/taysh123/DeveloperOS", visibility: "public" },
     metrics: [
       { value: "363", label: "Tests · 0.82:1 to source" },
       { value: "0", label: "Runtime dependencies" },
@@ -346,7 +352,7 @@ export const projects: Project[] = [
     context: "Solo build · 215 commits",
     status: "rc",
     accent: "teal",
-    repoUrl: "https://github.com/taysh123/Gravity-Game",
+    repo: { url: "https://github.com/taysh123/Gravity-Game", visibility: "public" },
     stores: [
       { platform: "android", status: "soon" },
     ],
@@ -426,7 +432,7 @@ export const projects: Project[] = [
     context: "Solo build · 287 jobs collected over 61 runs",
     status: "local",
     accent: "blue",
-    repoUrl: "https://github.com/taysh123/job-assistant",
+    repo: { url: "https://github.com/taysh123/job-assistant", visibility: "public" },
     metrics: [
       { value: "7", label: "Source adapters" },
       { value: "162", label: "Tests" },
@@ -493,7 +499,7 @@ export const projects: Project[] = [
     context: "University coursework · HIT",
     status: "coursework",
     accent: "violet",
-    repoUrl: "https://github.com/taysh123/orders-delivery-management-system",
+    repo: { url: "https://github.com/taysh123/orders-delivery-management-system", visibility: "public" },
     metrics: [
       { value: "16", label: "Protocol routes" },
       { value: "10", label: "Concurrent clients" },
@@ -550,3 +556,11 @@ export const orderedProjects = [
 ];
 
 export const featuredProject = projects.find((p) => p.featured) ?? projects[0];
+
+/** The label public surfaces show in place of a private repository's link. Not clickable. */
+export const PRIVATE_REPO_LABEL = "Private repository";
+
+/** The repository link a visitor may follow — undefined when the repository is private. */
+export function publicRepoUrl(p: Pick<Project, "repo">): string | undefined {
+  return p.repo.visibility === "public" ? p.repo.url : undefined;
+}

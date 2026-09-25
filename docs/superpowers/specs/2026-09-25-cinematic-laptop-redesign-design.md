@@ -1017,3 +1017,5 @@ Override any of these at review:
 12. **Payload:** the portrait entrance is re-planned to fit its 1.2 MB budget: 31 frames at a 720×1280 tier. The 1920 landscape tier may still exceed 4 MB, and the §4.7 levers close that gap. §9 never relaxes, and no studio content is cut to meet a budget.
 
 **One fact I could not verify from this session:** T Poker's `repoUrl` (`github.com/taysh123/poker-home-games`) does not show up in GitHub's public search, where the other five do. This container can't reach github.com to check directly. **If that repository is private,** the "Source" button should become "Private repository", with no link, rather than a link that 404s for visitors.
+
+**Resolved 2026-09-26:** the user confirmed the repository is private. T Poker shows a non-clickable "Private repository" label in place of every Source link. The palette, case study, JSON-LD and chat prompt no longer carry the address; the live app and App Store links stay. The internal URL is kept in `data/internal-repos.ts`, which no page imports (Plan 2 decision 3).

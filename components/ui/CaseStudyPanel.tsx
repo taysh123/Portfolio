@@ -12,7 +12,8 @@ import { GithubIcon, XIcon } from "@/components/ui/icons";
 import { DUR, easeOutExpo } from "@/lib/motion";
 import { useFocusTrap, useScrollLock } from "@/lib/useFocusTrap";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
-import type { Project } from "@/data/projects";
+import { PrivateRepoLabel } from "@/components/ui/PrivateRepoLabel";
+import { publicRepoUrl, type Project } from "@/data/projects";
 
 /**
  * The case study, as a full product presentation.
@@ -209,10 +210,14 @@ export function CaseStudyPanel({
                     {project.liveLabel ?? "Open the app"}
                   </ButtonLink>
                 )}
-                <ButtonLink href={project.repoUrl} external variant="secondary">
-                  <GithubIcon size={15} />
-                  View source
-                </ButtonLink>
+                {publicRepoUrl(project) ? (
+                  <ButtonLink href={publicRepoUrl(project)!} external variant="secondary">
+                    <GithubIcon size={15} />
+                    View source
+                  </ButtonLink>
+                ) : (
+                  <PrivateRepoLabel className="px-2" />
+                )}
               </div>
 
               {project.stores && project.stores.length > 0 && (
@@ -361,10 +366,14 @@ export function CaseStudyPanel({
                     {project.liveLabel ?? "Open the app"}
                   </ButtonLink>
                 )}
-                <ButtonLink href={project.repoUrl} external variant="secondary">
-                  <GithubIcon size={15} />
-                  View source
-                </ButtonLink>
+                {publicRepoUrl(project) ? (
+                  <ButtonLink href={publicRepoUrl(project)!} external variant="secondary">
+                    <GithubIcon size={15} />
+                    View source
+                  </ButtonLink>
+                ) : (
+                  <PrivateRepoLabel className="px-2" />
+                )}
               </div>
             </div>
           </motion.aside>

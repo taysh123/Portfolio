@@ -127,7 +127,14 @@ It does **not** merge, open a production PR or deploy.
 
    More Work, About, Stack, Think/Build/Ship and the Footer follow the site theme. Each dark-to-light or light-to-dark boundary is a designed **seam**: a 96 px gradient band, painted as the section's own background edge and not as a separate element (Task 5). In the dark theme the seams are invisible.
 2. **Flagship order and numbering:** 01 T Poker · 02 Aegis · 03 DeveloperOS · 04 GRAVITY FLOW (spec §5.2). GRAVITY FLOW is a flagship even though `featured` is false in `data/projects.ts`. `data/work.ts` owns the flagship list, and `featured` is left untouched.
-3. **T Poker "Source" button** (spec §13 open fact): `data/work.ts` carries `sourcePrivate: true` for T Poker **only if** the user confirms at plan review that `taysh123/poker-home-games` is private. In that case the button reads "Private repository", with no link. Until then the existing `repoUrl` link stays.
+3. **T Poker "Source" button — resolved 2026-09-26: the repository is PRIVATE** (user confirmation, closing the spec §13 open fact). Implemented at the data level rather than as a `data/work.ts` flag:
+   - `Project.repo` is `{ visibility: "public"; url } | { visibility: "private" }`. A private entry carries **no URL** in `data/projects.ts`, because that module is bundled into client components (the command palette), and the address would otherwise ship to every visitor.
+   - The internal URL is kept as metadata in `data/internal-repos.ts` (`INTERNAL_REPO_URLS`), which no page imports.
+   - Every public surface reads links through `publicRepoUrl(p)`. When it returns `undefined`, the surface renders `<PrivateRepoLabel />`, a non-clickable "Private repository" label with a lock icon. This covers FeaturedProject, ProjectRow, ProjectCard, and CaseStudyPanel (both action rows).
+   - The command palette drops the `repo-poker` entry. JSON-LD omits `codeRepository`. The chat prompt says the source is private.
+   - The live app and the App Store links stay.
+   - Guards: `tests/unit/private-repo.test.ts` (data shape; the address appears only in the internal module; nothing imports it) and `tests/e2e/private-repo.spec.ts` (no page HTML or client script contains the address; label is not in a link or button; palette has no source entry; case study shows the label and keeps live and App Store links).
+   - Tasks 11+ use `publicRepoUrl(p)` / `<PrivateRepoLabel />` instead of `f.sourcePrivate` / `p.repoUrl`; the `sourcePrivate` field below is dropped.
 4. **Hue lock in the room:** the preview scene's status LEDs use `led_green` (#8affc4), and the spec hue lock bans green. Look-dev (Task 8) recolours them to ice. This is a truthful hardware colour, since many devices have ice/white LEDs, and it is not a redesign.
 5. **Command-palette "Home"** now dispatches `entrance:skip`, so it lands on the hero at identity. It previously targeted `#top`, which Plan 1 removed, so it silently did nothing: a live regression, fixed in Task 4.
 
@@ -1879,7 +1886,7 @@ for kind in framings:
 export type WorldKey = "poker" | "aegis" | "developeros" | "gravity-flow";
 export type WorldAssets = { monitor: string; rows?: { src: string; centres: number[] } };
 export type Flagship = { id: WorldKey; number: "01" | "02" | "03" | "04"; kicker: string; story: [string, string];
-  metricLabels: [string, string, string]; statusNote?: string; sourcePrivate?: boolean;
+  metricLabels: [string, string, string]; statusNote?: string;
   /** Images a world composes. Data, not code: swapping screenshots is a data change (Aegis, decision 6). */
   worldAssets?: WorldAssets };
 export type MoreWorkRow = { id: "job-assistant" | "orders-delivery"; diagram: { kind: "pipeline" | "duplex"; nodes: string[] }; metricLabels: [string, string] };
@@ -1937,7 +1944,7 @@ import { projects, type Project } from "@/data/projects";
 export type WorldKey = "poker" | "aegis" | "developeros" | "gravity-flow";
 export type WorldAssets = { monitor: string; rows?: { src: string; centres: number[] } };
 export type Flagship = { id: WorldKey; number: "01" | "02" | "03" | "04"; kicker: string; story: [string, string];
-  metricLabels: [string, string, string]; statusNote?: string; sourcePrivate?: boolean;
+  metricLabels: [string, string, string]; statusNote?: string;
   /** Images a world composes. Data, not code: swapping screenshots is a data change (Aegis, decision 6). */
   worldAssets?: WorldAssets };
 export type MoreWorkRow = { id: "job-assistant" | "orders-delivery"; diagram: { kind: "pipeline" | "duplex"; nodes: string[] }; metricLabels: [string, string] };
@@ -1988,7 +1995,7 @@ export function projectOf(id: string): Project {
 
   The number check passes for "1.0.0"? It does not: the regex extracts `1.0.0`, and the `honestNote` contains `v1.0.0-rc`. Confirm when you run it. If the extraction splits differently, fix the extractor, never the copy.
 
-  If the user confirmed at plan review that the T Poker repository is private, add `sourcePrivate: true` to the poker entry, together with a test asserting it (Plan 2 decision 3).
+  T Poker's private repository is handled by `Project.repo` / `publicRepoUrl()` (Plan 2 decision 3), not by a `data/work.ts` field.
 
 - [ ] **Step 4: Run it.** Expected: PASS. Then the full unit suite.
 
@@ -2095,9 +2102,9 @@ export function FlagshipScene({ f, world }: { f: Flagship; world: React.ReactNod
             <button type="button" data-case-study={p.id} className="case-study-trigger inline-flex h-11 items-center rounded-full bg-accent-solid px-5 text-sm font-medium text-white hover:bg-accent-solid-hover">Case study</button>
             {p.liveUrl && <ButtonLink href={p.liveUrl} variant="secondary" external>{p.liveLabel ?? "Live"}</ButtonLink>}
             {store && <StoreBadge listing={store} />}
-            {f.sourcePrivate
-              ? <span className="label inline-flex h-11 items-center px-3 text-fg-subtle">Private repository</span>
-              : <ButtonLink href={p.repoUrl} variant="ghost" external>Source</ButtonLink>}
+            {publicRepoUrl(p)
+              ? <ButtonLink href={publicRepoUrl(p)!} variant="ghost" external>Source</ButtonLink>
+              : <PrivateRepoLabel className="h-11 px-3" />}
           </div>
         </div>
         <div className="flagship__world" data-world={p.id}>
@@ -2688,7 +2695,7 @@ export function MoreWork() {
                 <dl className="mt-5 flex gap-8">{ms.map((m) => <div key={m.label} className="flex flex-col-reverse"><dt className="label text-fg-subtle">{m.label}</dt><dd className="text-2xl font-semibold text-fg">{m.value}</dd></div>)}</dl>
                 <div className="mt-6 flex flex-wrap gap-3">
                   <button type="button" data-case-study={p.id} className="case-study-trigger inline-flex h-11 items-center rounded-full border border-line px-5 text-sm text-fg hover:border-line-strong">Case study</button>
-                  <ButtonLink href={p.repoUrl} variant="ghost" external>Source</ButtonLink>
+                  {publicRepoUrl(p) ? <ButtonLink href={publicRepoUrl(p)!} variant="ghost" external>Source</ButtonLink> : <PrivateRepoLabel className="h-11 px-3" />}
                 </div>
               </div>
               <PipelineDiagram uid={r.id} kind={r.diagram.kind} nodes={r.diagram.nodes} label={`${p.name}: ${r.diagram.nodes.join(r.diagram.kind === "duplex" ? " ⇄ " : " → ")}`} />

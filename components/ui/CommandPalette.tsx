@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { SearchIcon, ArrowUpRightIcon } from "@/components/ui/icons";
-import { projects } from "@/data/projects";
+import { projects, publicRepoUrl } from "@/data/projects";
 import { socials } from "@/data/socials";
 import { DUR, easeOutExpo } from "@/lib/motion";
 import { useFocusTrap, useScrollLock } from "@/lib/useFocusTrap";
@@ -100,14 +100,19 @@ export function CommandPalette() {
         run: go(s.id),
       })),
       ...projects.flatMap<Command>((p) => [
-        {
-          id: `repo-${p.id}`,
-          label: p.name,
-          category: "Projects",
-          hint: "Source on GitHub",
-          external: true,
-          run: openUrl(p.repoUrl),
-        },
+        // A private repository gets no entry: the palette must not expose its address.
+        ...(publicRepoUrl(p)
+          ? [
+              {
+                id: `repo-${p.id}`,
+                label: p.name,
+                category: "Projects",
+                hint: "Source on GitHub",
+                external: true,
+                run: openUrl(publicRepoUrl(p)!),
+              },
+            ]
+          : []),
         ...(p.liveUrl
           ? [
               {

@@ -10,7 +10,8 @@ import { projectAccent } from "@/lib/tokens";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { GithubIcon, BookOpenIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/cn";
-import type { Project } from "@/data/projects";
+import { PrivateRepoLabel } from "@/components/ui/PrivateRepoLabel";
+import { publicRepoUrl, type Project } from "@/data/projects";
 
 /**
  * The lead project, as one architectural panel — roughly 80vh on desktop.
@@ -125,10 +126,14 @@ export function FeaturedProject({
               <BookOpenIcon size={16} />
               Case study
             </Button>
-            <ButtonLink href={project.repoUrl} external variant="ghost" size="lg">
-              <GithubIcon size={16} />
-              Source
-            </ButtonLink>
+            {publicRepoUrl(project) ? (
+              <ButtonLink href={publicRepoUrl(project)!} external variant="ghost" size="lg">
+                <GithubIcon size={16} />
+                Source
+              </ButtonLink>
+            ) : (
+              <PrivateRepoLabel className="px-3" iconSize={16} />
+            )}
           </footer>
         </div>
 

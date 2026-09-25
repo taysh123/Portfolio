@@ -1,5 +1,5 @@
 import { siteMeta, socials } from "@/data/socials";
-import { projects } from "@/data/projects";
+import { projects, publicRepoUrl } from "@/data/projects";
 import { skillGroups } from "@/data/skills";
 
 /**
@@ -56,7 +56,7 @@ export function JsonLd() {
           "@type": "SoftwareSourceCode",
           name: p.name,
           description: p.summary,
-          codeRepository: p.repoUrl,
+          ...(publicRepoUrl(p) ? { codeRepository: publicRepoUrl(p) } : {}),
           programmingLanguage: p.stack.map((s) => s.label),
           ...(p.liveUrl ? { url: p.liveUrl } : {}),
         })),

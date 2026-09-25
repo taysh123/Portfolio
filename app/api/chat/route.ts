@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { projects } from "@/data/projects";
+import { projects, publicRepoUrl } from "@/data/projects";
 import { skillGroups } from "@/data/skills";
 import { siteMeta, socials } from "@/data/socials";
 
@@ -71,7 +71,7 @@ function buildSystemPrompt(): string {
     .map((p) => {
       const stack = p.stack.map((s) => s.label).join(", ");
       const link = p.liveUrl ? ` Live: ${p.liveUrl}.` : "";
-      return `- ${p.name}${p.formerly ? ` (formerly ${p.formerly})` : ""} (${p.status}): ${p.tagline}. ${p.summary} Stack: ${stack}. Repo: ${p.repoUrl}.${link}`;
+      return `- ${p.name}${p.formerly ? ` (formerly ${p.formerly})` : ""} (${p.status}): ${p.tagline}. ${p.summary} Stack: ${stack}. Repo: ${publicRepoUrl(p) ?? "private (source not public; do not share or guess a URL)"}.${link}`;
     })
     .join("\n");
 
