@@ -34,24 +34,27 @@ export function SmoothScroll() {
       anchors: { offset: -88 },
     });
 
+    // The loop runs only while Lenis is actually moving. Input restarts it; when the scroll settles
+    // it stops, so an idle page schedules no animation frames at all (spec §9 "Idle work").
     let raf = 0;
     const loop = (time: number) => {
       lenis.raf(time);
-      raf = requestAnimationFrame(loop);
+      raf = lenis.isScrolling ? requestAnimationFrame(loop) : 0;
     };
-    raf = requestAnimationFrame(loop);
+    const kick = () => { if (!raf && !document.hidden) raf = requestAnimationFrame(loop); };
+    const inputs = ["wheel", "touchstart", "touchmove", "keydown", "pointerdown"] as const;
+    for (const e of inputs) window.addEventListener(e, kick, { passive: true });
+    window.addEventListener("scroll", kick, { passive: true });   // programmatic and anchor scrolls
+    lenis.on("scroll", kick);
+    kick();
 
-    const onVisibility = () => {
-      if (document.hidden) {
-        cancelAnimationFrame(raf);
-      } else {
-        raf = requestAnimationFrame(loop);
-      }
-    };
+    const onVisibility = () => { if (document.hidden) { cancelAnimationFrame(raf); raf = 0; } else kick(); };
     document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
       document.removeEventListener("visibilitychange", onVisibility);
+      for (const e of inputs) window.removeEventListener(e, kick);
+      window.removeEventListener("scroll", kick);
       cancelAnimationFrame(raf);
       lenis.destroy();
     };
