@@ -8,7 +8,8 @@ export function Entrance({ children }: { children: React.ReactNode }) {
       <noscript>
         <style>{`.entrance{height:auto}.entrance__stage{position:static;height:auto}.entrance__canvas,.entrance__poster,.entrance__veil,.entrance__overlay,.entrance__skip{display:none}.entrance__still{display:block;position:relative;height:100svh}.entrance__surface{position:static;opacity:1}.entrance__surface>.entrance__hero{position:static;width:auto;height:auto}header[data-entrance-nav]{opacity:1!important}`}</style>
       </noscript>
-      <div className="entrance__stage">
+      {/* Dark in both themes: the stage is the studio, and the hero starts life as the laptop's screen. */}
+      <div className="entrance__stage" data-theme="dark">
         <picture className="entrance__poster">
           <source media="(max-aspect-ratio: 9/10)" srcSet="/entrance/poster-portrait.avif" type="image/avif" />
           <source srcSet="/entrance/poster-landscape.avif" type="image/avif" />

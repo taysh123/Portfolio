@@ -21,7 +21,10 @@
      2. BORDERS ARE ALWAYS rgba, never solid grey, and always theme-aware.
    ═══════════════════════════════════════════════════════════════════════ */
 
-:root {
+/* `[data-theme="dark"]` also scopes a subtree: the entrance stage is a lit room
+   in both themes, so it re-asserts the dark tokens beneath a light <html>. */
+:root,
+[data-theme="dark"] {
   color-scheme: dark;
 
   /* ── Surfaces ──────────────────────────────────────────────────────────
@@ -544,7 +547,8 @@
    resolves through a token (no more `border-white/x`), this actually
    changes what you see — the previous version could only reach 5 variables
    and left 109 hardcoded literals untouched. */
-[data-high-contrast="true"] {
+[data-high-contrast="true"],
+[data-high-contrast="true"] [data-theme="dark"] {
   --fg: #ffffff;
   --fg-muted: #dfe4f2;
   --fg-subtle: #c3cadd;

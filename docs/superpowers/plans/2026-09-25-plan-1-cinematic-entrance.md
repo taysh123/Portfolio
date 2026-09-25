@@ -1926,3 +1926,45 @@ git push origin feature/premium-portfolio-redesign-1mqmgf
 ```
 
 Then stop and report to the user. Plan 2 (sections, final look-dev behind the visual gate, final renders, cleanup) is written next and reviewed before execution.
+
+---
+
+## Verification log (2026-09-25)
+
+**Gate:** `typecheck` 0 · `lint` 0 · `vitest` 50/50 · `next build` 0 · Playwright 16/16 (incl. the no-JavaScript test).
+
+**Budgets** (`next start`, local, Chromium):
+
+| Budget | Measured | Limit |
+|---|---|---|
+| First-load JS (gzip sum of `<script src>` on `/`) | 279.3 KB | ≤ 286 KB |
+| HTML | 500 KB | ≤ 568 KB |
+| CLS while scrolling the entrance | 0.0000 (1440×900 and 390×844) | < 0.02 |
+| LCP | 420 ms (1440×900) · 316 ms (390×844) | ≤ 1.2 s |
+| Frame requests before `load` | 0 | 0 (poster/still only) |
+| Frame set | landscape 1.1 MB (960 preview tier) · portrait 404 KB | ≤ 2.5 MB · ≤ 1.2 MB |
+
+**Visual pass:** beats p = 0 … 1 at 1440×900, 1366×768, 768×1024, 390×844 and 844×390, dark and light. Found and fixed: mask reveals leaking through `overflow-clip-margin`; the skip button under the chat bubble and visible after the portal; the room title without its scrim; the hero overflowing 844×390; and, in the light theme, invisible overlays and a white laptop screen (the stage now scopes the dark tokens).
+
+**UX pre-delivery (ui-ux-pro-max, ux domain):** loading feedback (the poster is always painted, and is also the fallback frame), stacking (the stage is isolated), no continuous animation, a global `:focus-visible` ring, ≥ 44 px targets, contrast (muted 7.9:1, accent-solid white 4.6:1), reduced motion (e2e), CLS 0.
+
+**Deviations from this plan:** see the ledger. In short:
+- `render.py --names`.
+- 8-bit AVIF.
+- `EntranceStage` restructured for the React Compiler lint.
+- `setPlayhead` was missing.
+- Double boot, fixed with a generation counter.
+- An empty `segment` range.
+- The veil is near-black at 0.72.
+- The spec's chapter labels and tagline were added.
+- Light-theme `--bg`, and the dark-scoped stage.
+- `accent-solid` hover token, and `external` on ButtonLink.
+- OG stat filter.
+- The `#top` anchor.
+- The unmasked name line.
+- The height-aware hero type.
+
+**Open for Plan 2:**
+- Look-dev notes from the approval.
+- The floating accessibility button grazes the CTA row at 844×390.
+- In the light theme the hero stays a dark band under the light nav, by design of the dark screen; confirm or restyle.
