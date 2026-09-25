@@ -47,8 +47,9 @@ export default function Page() {
 
         <Work worlds={{ poker: <PokerWorld />, aegis: <AegisWorld />, developeros: <DeveloperOSWorld />, "gravity-flow": <GravityWorld /> }} />
 
+        <About />
+
         <Stage>
-          <About />
           <Skills />
           <EngineeringPanel />
           <Contact />

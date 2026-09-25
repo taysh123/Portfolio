@@ -114,3 +114,17 @@ test("more work on a phone: the pipeline is drawn down the column, labels at a l
   expect(px).toBeGreaterThanOrEqual(11);                                   // rendered glyph box, not the nominal size
   await expect(page.getByRole("img", { name: /Job Assistant: collect → filter → dedup → deliver/ })).toHaveCount(1);
 });
+
+test("about: the spec §5.3 title and the approved facts row, in order", async ({ page }) => {
+  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await expect(page.locator("#about h2")).toContainText("Builder by nature.");
+  await expect(page.locator("#about dd")).toHaveText(["B.Sc.", "Full stack", "Israel", "∞"]);
+});
+
+test("about: no horizontal overflow at 375px", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.locator("#about").scrollIntoViewIfNeeded();
+  expect(await page.locator("#about").evaluate((el) => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
+});
