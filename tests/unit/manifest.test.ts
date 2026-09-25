@@ -35,12 +35,16 @@ describe("validateManifest", () => {
     const p = set(); p.frames[3].quad = q(-0.02, 0.3, 1.02, 0.5);
     expect(validateManifest(man(set(), p))).toEqual([]);
   });
-  const real = "public/entrance/manifest.json";
-  it.skipIf(!fs.existsSync(real))("the committed manifest is valid and every file exists", () => {
+  // MANIFEST=public/entrance-final/manifest.json validates the final set before the swap (Plan 2 Task 10 Step 4).
+  const real = process.env.MANIFEST ?? "public/entrance/manifest.json";
+  const dir = real.replace(/\/manifest\.json$/, "");
+  it.skipIf(!fs.existsSync(real))(`the manifest at ${real} is valid and every file of every tier exists`, () => {
     const m = JSON.parse(fs.readFileSync(real, "utf8")) as Manifest;
     expect(validateManifest(m)).toEqual([]);
-    for (const k of ["landscape", "portrait"] as const)
-      for (const f of m[k].frames) expect(fs.existsSync(`public/entrance/${k}/${m[k].tiers[0]}/${f.file}.avif`)).toBe(true);
+    for (const k of ["landscape", "portrait"] as const) {
+      for (const t of m[k].tiers) for (const f of m[k].frames) expect(fs.existsSync(`${dir}/${k}/${t}/${f.file}.avif`), `${k}/${t}/${f.file}`).toBe(true);
+      for (const x of [m[k].poster, m[k].still]) for (const ext of ["avif", "jpg"]) expect(fs.existsSync(`${dir}/${x}.${ext}`), `${x}.${ext}`).toBe(true);
+    }
   });
   it("requires provenance on a final (1920) set", () => {
     const m = man(); m.landscape.width = 1920;
