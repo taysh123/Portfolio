@@ -132,11 +132,21 @@ It does **not** merge, open a production PR or deploy.
 5. **Command-palette "Home"** now dispatches `entrance:skip`, so it lands on the hero at identity. It previously targeted `#top`, which Plan 1 removed, so it silently did nothing: a live regression, fixed in Task 4.
 
 6. **Aegis (user decision, 2026-09-26).** The project formerly called SentinelAI is **Aegis**: the id is `aegis`, the display name is `Aegis`, and the assets live in `/projects/aegis/`. It was applied before Task 1 in commit "Rename SentinelAI to Aegis across the portfolio".
-   - **"Formerly SentinelAI" is shown once** (the case study and the flagship label), because the old name is still visible elsewhere:
+   - **"Formerly SentinelAI" appears only in the case study's context line, driven by `projects[].formerly`.** It is not designed into the flagship composition (user note, 2026-09-26). Keep it while the repository URL still carries the old name; drop the field once nothing visible does. The old name is still visible in two places:
      - The captured screenshots show the app's own wordmark. They are kept unedited: re-drawing a wordmark would misrepresent the software. Their alt text says they predate the rename.
      - The repository was **not renamed**: `taysh123/sentinelai` is public and owned by the user, but this session has no GitHub API that can rename a repository. The name `aegis` is free among the repositories visible to this session. The repository's docs plan a Vercel + Railway deployment (`docs/DEPLOYMENT.md`), so whether a live integration exists must be checked in the Vercel dashboard before renaming. GitHub redirects the old URL after a rename, and `repoUrl` should then be updated.
    - `tests/unit/rename.test.ts` fails on any `SentinelAI` in site source outside a line that explains the former name, and on display variants such as "AegisAI".
    - VERIFY: `make_screens.py` labels the row "Aegis". The **preview** frames still show the old label on the VERIFY monitor until the final frames replace them (Task 22).
+   - **The current Aegis screenshots are temporary fallback and reference assets.** The user will supply new captures of the rebranded app. Until then:
+     - do not delete them, and never edit their pixels;
+     - the file paths already moved to `/projects/aegis/`; do not rename the image content itself;
+     - keep the Aegis world light-touch (Task 14 Step 4).
+   - **When the new screenshots arrive,** at any point during or after this plan, run the Aegis asset swap:
+     1. Add the files under `public/projects/aegis/`, with new names such as `overview.webp` so both sets coexist.
+     2. Point `projects.ts` `media` (image, gallery, alt) and `data/work.ts` `worldAssets` at them. Re-measure the row centres, and rewrite the alt texts without the "captured before the rename" note.
+     3. Run `grep -rn "dashboard.webp\|live-alerts.webp\|incident-kanban.webp\|ai-analysis.webp\|architecture.webp" app components data`. For each old file, confirm by that grep and a built-page check (no request for the file on `/` or in either case study) that it is unused, then `git rm` only the unused ones.
+     4. If the app's own UI no longer shows the old name, reconsider `formerly`: keep it only while the repository URL carries the old name.
+     5. Run `rename.test.ts`, `work.test.ts` and the sections e2e, re-shoot the Aegis world in both themes, and commit "Aegis: canonical screenshots".
 
 ## Review Focus
 
@@ -1863,8 +1873,11 @@ for kind in framings:
 
 ```ts
 export type WorldKey = "poker" | "aegis" | "developeros" | "gravity-flow";
+export type WorldAssets = { monitor: string; rows?: { src: string; centres: number[] } };
 export type Flagship = { id: WorldKey; number: "01" | "02" | "03" | "04"; kicker: string; story: [string, string];
-  metricLabels: [string, string, string]; statusNote?: string; sourcePrivate?: boolean };
+  metricLabels: [string, string, string]; statusNote?: string; sourcePrivate?: boolean;
+  /** Images a world composes. Data, not code: swapping screenshots is a data change (Aegis, decision 6). */
+  worldAssets?: WorldAssets };
 export type MoreWorkRow = { id: "job-assistant" | "orders-delivery"; diagram: { kind: "pipeline" | "duplex"; nodes: string[] }; metricLabels: [string, string] };
 export const flagships: Flagship[];
 export const moreWork: MoreWorkRow[];
@@ -1894,7 +1907,7 @@ describe("flagships", () => {
     for (const r of [...flagships, ...moreWork]) for (const l of r.metricLabels) expect(projectOf(r.id).metrics.map((m) => m.label)).toContain(l);
   });
   it("every world asset exists on disk", () => {
-    for (const f of flagships) { const p = projectOf(f.id); for (const src of [p.media?.image, ...(p.media?.gallery ?? []).map((g) => g.src)].filter(Boolean)) expect(fs.existsSync(`public${src}`), src).toBe(true); }
+    for (const f of flagships) { const p = projectOf(f.id); for (const src of [p.media?.image, ...(p.media?.gallery ?? []).map((g) => g.src), f.worldAssets?.monitor, f.worldAssets?.rows?.src].filter(Boolean)) expect(fs.existsSync(`public${src}`), src).toBe(true); }
   });
   it("story lines are two sentences, each ending in a full stop", () => {
     for (const f of flagships) for (const s of f.story) expect(s).toMatch(/^[A-Z].*[.]$/);
@@ -1918,8 +1931,11 @@ describe("more work", () => {
 import { projects, type Project } from "@/data/projects";
 
 export type WorldKey = "poker" | "aegis" | "developeros" | "gravity-flow";
+export type WorldAssets = { monitor: string; rows?: { src: string; centres: number[] } };
 export type Flagship = { id: WorldKey; number: "01" | "02" | "03" | "04"; kicker: string; story: [string, string];
-  metricLabels: [string, string, string]; statusNote?: string; sourcePrivate?: boolean };
+  metricLabels: [string, string, string]; statusNote?: string; sourcePrivate?: boolean;
+  /** Images a world composes. Data, not code: swapping screenshots is a data change (Aegis, decision 6). */
+  worldAssets?: WorldAssets };
 export type MoreWorkRow = { id: "job-assistant" | "orders-delivery"; diagram: { kind: "pipeline" | "duplex"; nodes: string[] }; metricLabels: [string, string] };
 
 /**
@@ -1936,7 +1952,9 @@ export const flagships: Flagship[] = [
     story: ["Security events flow from ingestion through detection and threat scoring to alerts over MassTransit and RabbitMQ, and reach the dashboard live over SignalR.",
             "The whole stack comes up from one Docker command that mints its own RS256 keys."],
     metricLabels: ["Bounded contexts", "Cross-context references", "Tests, incl. Testcontainers"],
-    statusNote: "Runs locally — the live stream shown is a local demo" },
+    statusNote: "Runs locally — the live stream shown is a local demo",
+    // TEMPORARY: pre-rename captures (in-app wordmark reads SentinelAI) until the user supplies Aegis screenshots.
+    worldAssets: { monitor: "/projects/aegis/dashboard.webp", rows: { src: "/projects/aegis/live-alerts.webp", centres: [0.34, 0.46, 0.58] } } },
   { id: "developeros", number: "03", kicker: "A local-first code workspace that refuses to answer without evidence",
     story: ["It indexes your own projects into a private SQLite FTS5 index and answers with real file and line citations, declining when the index can't support an answer.",
             "It ships as one Python package with no runtime dependencies: a CLI, a browser dashboard, an installable PWA or a Windows desktop window."],
@@ -2058,7 +2076,7 @@ export function FlagshipScene({ f, world }: { f: Flagship; world: React.ReactNod
     <ScrollScene id={`work-${p.id}`} labelledBy={`work-${p.id}-title`} className={`flagship flagship--${p.id}`}>
       <div className="shell flagship__grid">
         <div className="flagship__copy">
-          <p className="label flex items-center gap-3 text-fg-subtle"><span aria-hidden="true" className="flagship__num">{f.number}</span><StatusChip status={p.status} />{p.formerly && <span>Formerly {p.formerly}</span>}</p>
+          <p className="label flex items-center gap-3 text-fg-subtle"><span aria-hidden="true" className="flagship__num">{f.number}</span><StatusChip status={p.status} /></p>
           <h3 id={`work-${p.id}-title`} className="mt-4 text-[clamp(2rem,4vw,3.25rem)] font-semibold tracking-[-0.03em] text-fg">{p.name}</h3>
           <p className="mt-3 text-fg-muted" style={{ fontSize: "var(--text-lead)" }}>{f.kicker}</p>
           <p className="mt-5 max-w-[62ch] text-fg-muted">{f.story[0]} {f.story[1]}</p>
@@ -2316,23 +2334,27 @@ test("aegis world: dashboard monitor, three alert rows, one scan pass per entry 
 ```tsx
 import Image from "next/image";
 
-const ROWS = [0.34, 0.46, 0.58];   // vertical centres (fraction of live-alerts.webp) of three real alert rows — measured in Step 4
+import { flagships, projectOf } from "@/data/work";
 
-/** Spec §5.2 world 02: the real dashboard on a large monitor; alert rows slide in from the real live-alerts capture. */
+/** Spec §5.2 world 02: the real dashboard on a large monitor; alert rows slide in from the real live-alerts capture.
+ *  Every image and alt comes from data (flagships[].worldAssets + projects media), so replacing the screenshots
+ *  is a data-only change — no edit here (decision 6). */
 export function AegisWorld() {
+  const a = flagships.find((f) => f.id === "aegis")!.worldAssets!, p = projectOf("aegis");
+  const alt = (src: string) => (p.media?.image === src ? p.media.alt : p.media?.gallery?.find((g) => g.src === src)?.alt) ?? "";
   return (
     <div className="world-aegis">
       <div className="world-aegis__monitor">
-        <Image src="/projects/aegis/dashboard.webp" alt="Aegis SOC dashboard with alert queue and threat scores (captured before the rename, so the app still reads SentinelAI)" width={3840} height={2160} sizes="(min-width:1024px) 55vw, 100vw" />
+        <Image src={a.monitor} alt={alt(a.monitor)} width={3840} height={2160} sizes="(min-width:1024px) 55vw, 100vw" />
         <span className="world-aegis__scan" aria-hidden="true" />
       </div>
-      <div className="world-aegis__rows" aria-hidden="true">
-        {ROWS.map((y, i) => (
+      {a.rows && <div className="world-aegis__rows" aria-hidden="true">
+        {a.rows.centres.map((y, i) => (
           <div key={y} className="world-aegis__row" style={{ ["--i" as string]: i }}>
-            <Image src="/projects/aegis/live-alerts.webp" alt="" width={3840} height={2160} sizes="30vw" style={{ objectPosition: `50% ${y * 100}%` }} />
+            <Image src={a.rows!.src} alt="" width={3840} height={2160} sizes="30vw" style={{ objectPosition: `50% ${y * 100}%` }} />
           </div>
         ))}
-      </div>
+      </div>}
       <p className="world-aegis__badge label"><span aria-hidden="true" className="world-aegis__dot" /> Streaming — local demo</p>
     </div>
   );
@@ -2361,7 +2383,9 @@ export function AegisWorld() {
 .world-aegis__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 ```
 
-- [ ] **Step 4: Measure the three row centres** on the real image: open `public/projects/aegis/live-alerts.webp`, find three distinct alert rows, and set `ROWS` to their vertical centres. The test does not check this, so review the crop visually on the screenshot. Each row must show a real alert, not a header or empty space.
+- [ ] **Step 4: Keep this world light-touch** while it uses the temporary pre-rename captures (decision 6). Do not polish the composition around them; the geometry, motion and tests are what count now.
+
+  Then measure the three row centres on the current image, and write them into `worldAssets.rows.centres` in `data/work.ts`. Repeat this when the Aegis screenshots replace the current ones. The current image is open `public/projects/aegis/live-alerts.webp`: find three distinct alert rows and record their vertical centres. The test does not check this, so review the crop visually on the screenshot. Each row must show a real alert, not a header or empty space.
 
 - [ ] **Step 5: Run** the tests and the gate, then `npm run measure`, and screenshot both themes. Commit: "World 02: Aegis dashboard, one scan pass, real live-alert rows".
 
