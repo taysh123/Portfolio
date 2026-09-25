@@ -352,11 +352,18 @@ Units are metres. The laptop sits at the origin, +y points away from the camera,
 
 Even out of focus, the arc of displays reads as engineering: code in the centre, build and ship on the right, verification on the left.
 
+**Screens are designed compositionally, not filled with small text** (visual pass, 2026-09-25):
+- Each display carries its role as a **large heading bar** (VERIFY / WRITE / BUILD, Geist Sans at ~7% of the screen height, with an ice rule beneath). The role still reads when the fine text is blurred into bokeh.
+- Structure (panels, rows, bars, check marks) carries the meaning at a distance. The text is detail for anyone who pauses the frame.
+- The first version of VERIFY (anonymous numbers with sparklines) was not self-explanatory, and it is replaced:
+
+![VERIFY, redesigned: CI checks from real exit codes, then labelled test suites](assets/2026-09-25-screen-verify.webp)
+
 | Display | Content (all real, generated when the textures are built) |
 |---|---|
 | **Centre: WRITE** | An IDE layout:<br>• **Explorer:** the real tree, from `git ls-files`.<br>• **Editor 1:** `components/entrance/screenSurface.ts`, the solver that places this very screen. `lib/useFocusTrap.ts` is used if that file is not committed at snapshot time.<br>• **Editor 2:** `design/render/blender/scene.py`.<br>• **Bottom terminal:** the real tail of the typecheck and lint output.<br>• **Status bar:** the real branch name and "TypeScript". |
-| **Right: BUILD / SHIP** | tmux with three panes, session "portfolio", no hostname, no clock:<br>• the real `next build` route table;<br>• the real `git log --oneline --graph --decorate` (hash and subject only);<br>• the real Cycles stdout from a preview render of this scene. |
-| **Left: VERIFY** | **"1,742 tests · 5 projects"**, with five bars exactly proportional to `data/projects.ts`: T Poker 892, DeveloperOS 363, GRAVITY FLOW 220, Job Assistant 162, SentinelAI 105.<br>Beneath the bars:<br>• a commit-activity grid from the real `git log --date=short` (empty weeks stay empty; left out if the history is under 8 weeks);<br>• a labels-only pipeline strip: `scene.py → render.py → encode-frames.mjs → manifest.json → FramePlayer`.<br>Numbers are off-white or ice, never violet. |
+| **Right: BUILD** | Header `BUILD`, then panes; no hostname, no clock:<br>• the real `next build` route table;<br>• the real `git log --oneline --graph --decorate` (hash and subject only);<br>• the real Cycles stdout from a preview render of this scene. |
+| **Left: VERIFY** (portrait) | Reads as *testing / CI* within a second:<br>• **Header:** `VERIFY`, plus the snapshot commit (e.g. `@894ec73`).<br>• **checks:** ✓ typecheck · ✓ lint · ✓ build, each shown **only if that command exited 0 at the frozen snapshot**. The preview's three checks come from real runs at `894ec73`. **tests** is added only once this repo has a test runner that passes; until then it is absent, never faked.<br>• **test suites:** one labelled row per project, with check mark, name, "N tests" and a horizontal bar proportional to its count: T Poker 892, DeveloperOS 363, GRAVITY FLOW 220, Job Assistant 162, SentinelAI 105. The counts are read from `data/projects.ts`, and the generator asserts each one.<br>• **Footer:** `1,742 tests across 5 projects`.<br>• It looks like an engineering dashboard (check rows, suites, one total), not an analytics chart: no sparklines, no trend lines, no axes.<br>Numbers are off-white or ice, never violet. |
 | **Laptop** | • **During the lid move:** black glass reflecting the monitor arc and the light bar.<br>• **After power-on:** a boot/identity proxy texture laid out like the DOM, so the light spill matches, and the DOM covers it exactly.<br>• **Reduced-motion still:** identity baked in. |
 | **Macro pad** | A 5×3 atlas of line icons at low emission |
 
@@ -484,6 +491,27 @@ Key frames are also checked on a laptop panel at 50% brightness and on a phone, 
 
 **No large object except the laptop exceeds 20% albedo value.**
 
+#### Composition (visual pass, 2026-09-25)
+
+The first cyber-studio prototype read as *empty*: too much inactive black desk, a small laptop, and monitors floating far behind it. The preview key frames below fix that:
+
+- **The workstation is brought forward.** The monitors sit on articulated arms from the wall rail, their bottoms close behind the laptop, so the arc *frames* it rather than floating in the distance. The tower and headphones stand on the desk itself.
+- **A stronger three-quarter establishing angle,** from front-left at about 24 mm. The laptop is at the visual centre. The monitor arc frames it. The glass-panel tower (visible GPU, cooler, RAM and cyan fan rings) and the homelab shelves (NAS drive bays, switch port LEDs, mini-PC) give the cool right side depth and weight.
+- **Depth progression:** foreground mat and macro pad → laptop → keyboard, mouse and dock → monitors → tower and headphones → slat wall and homelab.
+- **Leading lines:** the mat edge, the desk's satin reflections and the cables lead the eye to the laptop. There is no large empty foreground.
+- **Everything shown is technology,** except the notebook (optional), the mug (optional) and the amber lamp.
+
+**Preview key frames** (960×540, 32–48 samples, throwaway preview scene). They are **not** final quality:
+
+![K0: wide establishing shot, laptop closed](assets/2026-09-25-preview-K0.webp)
+![K1: laptop open and powered, the full developer environment](assets/2026-09-25-preview-K1.webp)
+![K2: hero framing on the screen normal, just before the portal](assets/2026-09-25-preview-K2.webp)
+
+**Known gaps in these previews, for look-dev:**
+- The amber lamp (the 5% warm accent) is currently just outside K0's left edge. It returns as a small practical inside the left third.
+- The fine-code text on WRITE and BUILD is still denser than ideal.
+- The tower interior glow sits at the top of its 30% budget.
+
 #### Camera and lens
 
 - Blender's perspective (rectilinear, thin-lens) camera on a 36 mm sensor: no lens distortion or chromatic aberration, which keeps the homography exact.
@@ -586,6 +614,13 @@ Props that are out of frame are made **camera-invisible, but keep casting light 
 
 #### Key frames: look-dev before any batch
 
+**Blocking visual gate, at your request:** before any multi-hour final render, and before production implementation, **you approve the preview key frames K0, K1 and K2**:
+- K0: wide establishing shot, laptop closed;
+- K1: laptop open and powered, with the developer environment;
+- K2: hero framing on the screen normal, just before the portal.
+
+The final key frames must clearly beat the original lifestyle-desk render (spike 1) and the `v3_wide` / `v3_hero` prototype.
+
 These are rendered at **final quality, 1920×1080** (portrait 1080×1920). Every pixel target in §4.6 is stated at that reference resolution. Each must pass the assertions, the light-balance audit and the recruiter test (or its stand-in) before the batch starts:
 
 - K0, the poster;
@@ -606,7 +641,7 @@ The full preview sequence is also scrubbed to check for noise boil and continuit
 - A frame that is not clearly better gets another look-dev pass.
 - The batch does not start until every key frame passes.
 
-Look-dev continues on each frame until it passes. If a key frame has not converged after three passes, I bring it to you with options rather than lowering the bar. You see the key frames before the batch (§13).
+Look-dev continues on each frame until it passes. If a key frame has not converged after three passes, I bring it to you with options rather than lowering the bar. No final batch starts without your approval of the key frames (§13).
 
 ### 4.7 Asset pipeline (committed, reproducible)
 
@@ -658,7 +693,7 @@ public/entrance/
 
   10-bit AVIF is preferred over dither for banding. Dither is a banding fix with a byte cost, not a payload lever.
 - **Blender is a dev-time tool only:** `pip install bpy` into a Python **3.11** venv, which the wheel requires, documented in the README. It is never a `package.json` dependency. `sharp` becomes an explicit devDependency, because the encoder uses it and it is currently only transitive through Next.
-- **Art direction:** see §4.6. Key frames are shared with you before the final batch (§13).
+- **Art direction:** see §4.6. No final batch starts without your approval of the key frames (§4.6, §13).
 
 ### 4.8 Runtime architecture
 
@@ -952,7 +987,7 @@ Override any of these at review:
 7. **The laptop is a 16-inch class machine at 1.15 scale.** It dominates through the lens (≈ 27% → 46% → 100% of the frame width), not through a toy-scale model.
 8. **Keyboard RGB:** only a faint, static ice perimeter halo. It is your brief's "very restrained" desk RGB, and it is first on the cut list. Two of the three judges called visible underglow a gaming tell.
 9. **Screen content comes from this repository only** (TypeScript, the Python render scripts, real build, lint and git output, and real test counts), until you grant read access to other project repositories.
-10. **Key frames are shared with you before the ~6 h final batch.** This is a courtesy, not a blocking gate, unless you ask for one.
+10. **Visual approval is a blocking gate.** You approve the preview key frames K0, K1 and K2 before any final render batch or production implementation. You also see the final-quality key frames before the batch.
 11. **Recruiter test stand-in:** unless you run the 5-second test with 3–5 outside people, the stand-in is the light-balance audit plus my side-by-side review against prototype 2 and the concept.
 12. **Payload:** the portrait entrance is re-planned to fit its 1.2 MB budget: 31 frames at a 720×1280 tier. The 1920 landscape tier may still exceed 4 MB, and the §4.7 levers close that gap. §9 never relaxes, and no studio content is cut to meet a budget.
 
