@@ -124,7 +124,7 @@ export function About() {
             <div className="mb-7 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
               <Eyebrow rule>How a request moves</Eyebrow>
               <p className="label text-fg-subtle">
-                SentinelAI · T Poker — the shape both of them share
+                Aegis · T Poker — the shape both of them share
               </p>
             </div>
             <ArchitectureBoard />

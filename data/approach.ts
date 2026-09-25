@@ -34,7 +34,7 @@ export const approachSteps: ApproachStep[] = [
       "Pick boundaries that a machine can check. A rule enforced by convention is a rule that decays.",
     evidence:
       "Eight bounded contexts across 27 projects, structured so a cross-module reference fails to compile — verified by a script, not by code review.",
-    project: "SentinelAI",
+    project: "Aegis",
   },
   {
     id: "build",
@@ -68,7 +68,7 @@ export const approachSteps: ApproachStep[] = [
     summary:
       "Reviewable in one command, and honest about what isn't finished. A README that hides the gaps costs you the reader's trust.",
     evidence:
-      "SentinelAI comes up from a single Docker command that mints its own keys and gates on health. Its repo also carries an audit document where I list my own unfinished work.",
-    project: "SentinelAI · DeveloperOS",
+      "Aegis comes up from a single Docker command that mints its own keys and gates on health. Its repo also carries an audit document where I list my own unfinished work.",
+    project: "Aegis · DeveloperOS",
   },
 ];

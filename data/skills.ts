@@ -64,7 +64,7 @@ export const skillGroups: SkillGroup[] = [
       { label: "SQL" },
     ],
     evidence:
-      "C# carries SentinelAI's and T Poker's backends, TypeScript their clients, and Python carries DeveloperOS and Job Assistant."
+      "C# carries Aegis's and T Poker's backends, TypeScript their clients, and Python carries DeveloperOS and Job Assistant."
   },
   {
     id: "interface",
@@ -98,7 +98,7 @@ export const skillGroups: SkillGroup[] = [
       { label: "JWT / RS256" },
     ],
     evidence:
-      "SentinelAI moves events across 8 bounded contexts over RabbitMQ, with 0 cross-context references and a retry ladder per endpoint.",
+      "Aegis moves events across 8 bounded contexts over RabbitMQ, with 0 cross-context references and a retry ladder per endpoint.",
     // The "0 cross-context references" half of this claim lives in the
     // evidence line beside it — repeating it here wrapped the label to three
     // cramped lines under the figure.
@@ -118,7 +118,7 @@ export const skillGroups: SkillGroup[] = [
       { label: "Firebase" },
     ],
     evidence:
-      "SQLite FTS5 powers DeveloperOS’s grounded retrieval; PostgreSQL and Redis back SentinelAI’s partitioned events and sliding windows."
+      "SQLite FTS5 powers DeveloperOS’s grounded retrieval; PostgreSQL and Redis back Aegis’s partitioned events and sliding windows."
   },
   {
     id: "delivery",
@@ -138,7 +138,7 @@ export const skillGroups: SkillGroup[] = [
     evidence:
       // The Docker-command line lives in the Approach section's "Ship" stage;
       // this one leads with CI instead so the two are not the same sentence.
-      "T Poker runs 5 CI jobs on every push across two languages, and SentinelAI's whole stack — API, workers, Postgres, Redis, RabbitMQ — comes up under one compose file."
+      "T Poker runs 5 CI jobs on every push across two languages, and Aegis's whole stack — API, workers, Postgres, Redis, RabbitMQ — comes up under one compose file."
   },
   {
     id: "verify",

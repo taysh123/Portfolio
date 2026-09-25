@@ -126,10 +126,17 @@ It does **not** merge, open a production PR or deploy.
    - **Contact**, which is the planet-horizon bookend that echoes the opening frame.
 
    More Work, About, Stack, Think/Build/Ship and the Footer follow the site theme. Each dark-to-light or light-to-dark boundary is a designed **seam**: a 96 px gradient band, painted as the section's own background edge and not as a separate element (Task 5). In the dark theme the seams are invisible.
-2. **Flagship order and numbering:** 01 T Poker · 02 SentinelAI · 03 DeveloperOS · 04 GRAVITY FLOW (spec §5.2). GRAVITY FLOW is a flagship even though `featured` is false in `data/projects.ts`. `data/work.ts` owns the flagship list, and `featured` is left untouched.
+2. **Flagship order and numbering:** 01 T Poker · 02 Aegis · 03 DeveloperOS · 04 GRAVITY FLOW (spec §5.2). GRAVITY FLOW is a flagship even though `featured` is false in `data/projects.ts`. `data/work.ts` owns the flagship list, and `featured` is left untouched.
 3. **T Poker "Source" button** (spec §13 open fact): `data/work.ts` carries `sourcePrivate: true` for T Poker **only if** the user confirms at plan review that `taysh123/poker-home-games` is private. In that case the button reads "Private repository", with no link. Until then the existing `repoUrl` link stays.
 4. **Hue lock in the room:** the preview scene's status LEDs use `led_green` (#8affc4), and the spec hue lock bans green. Look-dev (Task 8) recolours them to ice. This is a truthful hardware colour, since many devices have ice/white LEDs, and it is not a redesign.
 5. **Command-palette "Home"** now dispatches `entrance:skip`, so it lands on the hero at identity. It previously targeted `#top`, which Plan 1 removed, so it silently did nothing: a live regression, fixed in Task 4.
+
+6. **Aegis (user decision, 2026-09-26).** The project formerly called SentinelAI is **Aegis**: the id is `aegis`, the display name is `Aegis`, and the assets live in `/projects/aegis/`. It was applied before Task 1 in commit "Rename SentinelAI to Aegis across the portfolio".
+   - **"Formerly SentinelAI" is shown once** (the case study and the flagship label), because the old name is still visible elsewhere:
+     - The captured screenshots show the app's own wordmark. They are kept unedited: re-drawing a wordmark would misrepresent the software. Their alt text says they predate the rename.
+     - The repository was **not renamed**: `taysh123/sentinelai` is public and owned by the user, but this session has no GitHub API that can rename a repository. The name `aegis` is free among the repositories visible to this session. The repository's docs plan a Vercel + Railway deployment (`docs/DEPLOYMENT.md`), so whether a live integration exists must be checked in the Vercel dashboard before renaming. GitHub redirects the old URL after a rename, and `repoUrl` should then be updated.
+   - `tests/unit/rename.test.ts` fails on any `SentinelAI` in site source outside a line that explains the former name, and on display variants such as "AegisAI".
+   - VERIFY: `make_screens.py` labels the row "Aegis". The **preview** frames still show the old label on the VERIFY monitor until the final frames replace them (Task 22).
 
 ## Review Focus
 
@@ -172,7 +179,7 @@ The five input classes or conditions most likely to bite a real visitor that no 
 | `components/work/FlagshipScene.tsx` | One flagship: an always-legible copy column plus the world slot. |
 | `components/work/CaseStudyHost.tsx` | Client. Delegated "Case study" buttons; `next/dynamic` loads `CaseStudyPanel` on demand. |
 | `components/work/worlds/PokerWorld.tsx` | The T Poker world. Server; CSS vars only. |
-| `components/work/worlds/SentinelWorld.tsx` | The SentinelAI world. Server; CSS vars plus a one-shot scan. |
+| `components/work/worlds/AegisWorld.tsx` | The Aegis world. Server; CSS vars plus a one-shot scan. |
 | `components/work/worlds/DeveloperOSWorld.tsx` | The DeveloperOS world. Server; CSS vars only. |
 | `components/work/worlds/GravityWorld.tsx` | The GRAVITY FLOW world. Server shell. |
 | `components/work/worlds/GravityField.tsx` | Client canvas star field: the site's one time-based loop, in view only. |
@@ -1524,7 +1531,7 @@ describe.runIf(Boolean(m.verifyCounts))("VERIFY counts drawn in the frames", () 
   Note that `runIf` makes this a no-op until the final manifest carries `verifyCounts` (Task 22). Task 22's checklist requires it to *run* and pass there.
 
   - T Poker's metric reads "892" under "Tests across both stacks".
-  - SentinelAI's reads "105" under "Tests, incl. Testcontainers".
+  - Aegis's reads "105" under "Tests, incl. Testcontainers".
   - DeveloperOS's metric value is "363", with the label "Tests · 0.82:1 to source".
   - GRAVITY FLOW's is "220" under "Tests over 28 files".
   - Job Assistant's is "162" under "Tests".
@@ -1855,7 +1862,7 @@ for kind in framings:
 - Produces:
 
 ```ts
-export type WorldKey = "poker" | "sentinelai" | "developeros" | "gravity-flow";
+export type WorldKey = "poker" | "aegis" | "developeros" | "gravity-flow";
 export type Flagship = { id: WorldKey; number: "01" | "02" | "03" | "04"; kicker: string; story: [string, string];
   metricLabels: [string, string, string]; statusNote?: string; sourcePrivate?: boolean };
 export type MoreWorkRow = { id: "job-assistant" | "orders-delivery"; diagram: { kind: "pipeline" | "duplex"; nodes: string[] }; metricLabels: [string, string] };
@@ -1877,7 +1884,7 @@ const source = (id: string) => { const p = projectOf(id); return [p.tagline, p.s
 
 describe("flagships", () => {
   it("are the four spec §5.2 projects in order 01–04", () => {
-    expect(flagships.map((f) => [f.number, f.id])).toEqual([["01", "poker"], ["02", "sentinelai"], ["03", "developeros"], ["04", "gravity-flow"]]);
+    expect(flagships.map((f) => [f.number, f.id])).toEqual([["01", "poker"], ["02", "aegis"], ["03", "developeros"], ["04", "gravity-flow"]]);
   });
   it("every number in a kicker or story line appears in that project's data", () => {
     for (const f of [...flagships]) for (const line of [f.kicker, ...f.story, f.statusNote ?? ""])
@@ -1910,7 +1917,7 @@ describe("more work", () => {
 ```ts
 import { projects, type Project } from "@/data/projects";
 
-export type WorldKey = "poker" | "sentinelai" | "developeros" | "gravity-flow";
+export type WorldKey = "poker" | "aegis" | "developeros" | "gravity-flow";
 export type Flagship = { id: WorldKey; number: "01" | "02" | "03" | "04"; kicker: string; story: [string, string];
   metricLabels: [string, string, string]; statusNote?: string; sourcePrivate?: boolean };
 export type MoreWorkRow = { id: "job-assistant" | "orders-delivery"; diagram: { kind: "pipeline" | "duplex"; nodes: string[] }; metricLabels: [string, string] };
@@ -1925,7 +1932,7 @@ export const flagships: Flagship[] = [
     story: ["One Expo codebase renders iOS, Android and the live web app, backed by an ASP.NET Core CQRS service over PostgreSQL.",
             "The financial core runs in integer cents and is covered by 892 tests across both languages."],
     metricLabels: ["Tests across both stacks", "Targets from one codebase", "CI jobs per push"] },
-  { id: "sentinelai", number: "02", kicker: "A Security Operations Centre where module isolation is enforced by the compiler",
+  { id: "aegis", number: "02", kicker: "A Security Operations Centre where module isolation is enforced by the compiler",
     story: ["Security events flow from ingestion through detection and threat scoring to alerts over MassTransit and RabbitMQ, and reach the dashboard live over SignalR.",
             "The whole stack comes up from one Docker command that mints its own RS256 keys."],
     metricLabels: ["Bounded contexts", "Cross-context references", "Tests, incl. Testcontainers"],
@@ -1955,7 +1962,7 @@ export function projectOf(id: string): Project {
 
   The status notes must trace to the data:
   - GRAVITY FLOW's comes from its `honestNote`: "v1.0.0-rc", "not shipped to a store", "Android-only".
-  - SentinelAI's "Runs locally" is its `status` label (`Tag.tsx`). The "local demo" wording is spec §5.2's required label for the streaming indicator.
+  - Aegis's "Runs locally" is its `status` label (`Tag.tsx`). The "local demo" wording is spec §5.2's required label for the streaming indicator.
 
   The number check passes for "1.0.0"? It does not: the regex extracts `1.0.0`, and the `honestNote` contains `v1.0.0-rc`. Confirm when you run it. If the extraction splits differently, fix the extractor, never the copy.
 
@@ -1992,19 +1999,19 @@ const skip = async (page: Page) => { await page.goto("/"); await page.locator("[
 test("Work: one h2, four flagship h3s in order, then two more-work h3s", async ({ page }) => {
   await skip(page);
   await expect(page.locator("#work h2")).toHaveCount(1);
-  await expect(page.locator("#work h3")).toHaveText(["T Poker", "SentinelAI", "DeveloperOS", "GRAVITY FLOW", "Job Assistant", "Orders & Delivery"]);
+  await expect(page.locator("#work h3")).toHaveText(["T Poker", "Aegis", "DeveloperOS", "GRAVITY FLOW", "Job Assistant", "Orders & Delivery"]);
 });
 
 test("restored scroll inside a pinned flagship shows a legible composition (Review Focus 1)", async ({ page }) => {
   await skip(page);
-  await page.evaluate(() => { const s = document.getElementById("work-sentinelai")!; window.scrollTo({ top: s.getBoundingClientRect().top + scrollY + s.offsetHeight * 0.4, behavior: "instant" as ScrollBehavior }); });
+  await page.evaluate(() => { const s = document.getElementById("work-aegis")!; window.scrollTo({ top: s.getBoundingClientRect().top + scrollY + s.offsetHeight * 0.4, behavior: "instant" as ScrollBehavior }); });
   await page.reload(); await page.waitForTimeout(600);
   // Scroll targets are always document-relative (getBoundingClientRect().top + scrollY): #work-* sits inside
   // the positioned .work__stage, so offsetTop would be off by the whole entrance height.
-  const copy = page.locator("#work-sentinelai .flagship__copy");
+  const copy = page.locator("#work-aegis .flagship__copy");
   await expect(copy).toBeInViewport();
   expect(await copy.evaluate((el) => getComputedStyle(el).opacity)).toBe("1");
-  await expect(page.locator("#work-sentinelai h3")).toBeVisible();
+  await expect(page.locator("#work-aegis h3")).toBeVisible();
 });
 
 test("case study: Enter opens, Escape closes, focus returns to the opener — loaded on demand (Review Focus 4)", async ({ page }) => {
@@ -2022,7 +2029,7 @@ test("case study: Enter opens, Escape closes, focus returns to the opener — lo
 
 test("copy never depends on scroll position: every flagship's copy is opaque at scene p = 0, .5 and 1", async ({ page }) => {
   await skip(page);
-  for (const id of ["poker", "sentinelai", "developeros", "gravity-flow"]) for (const f of [0.02, 0.5, 0.98]) {
+  for (const id of ["poker", "aegis", "developeros", "gravity-flow"]) for (const f of [0.02, 0.5, 0.98]) {
     await page.evaluate(({ id, f }) => { const s = document.getElementById(`work-${id}`)!; window.scrollTo({ top: s.getBoundingClientRect().top + scrollY + (s.offsetHeight - innerHeight) * f, behavior: "instant" as ScrollBehavior }); }, { id, f });
     await page.waitForTimeout(150);
     expect(await page.locator(`#work-${id} .flagship__copy`).evaluate((el) => getComputedStyle(el).opacity), `${id}@${f}`).toBe("1");
@@ -2051,7 +2058,7 @@ export function FlagshipScene({ f, world }: { f: Flagship; world: React.ReactNod
     <ScrollScene id={`work-${p.id}`} labelledBy={`work-${p.id}-title`} className={`flagship flagship--${p.id}`}>
       <div className="shell flagship__grid">
         <div className="flagship__copy">
-          <p className="label flex items-center gap-3 text-fg-subtle"><span aria-hidden="true" className="flagship__num">{f.number}</span><StatusChip status={p.status} /></p>
+          <p className="label flex items-center gap-3 text-fg-subtle"><span aria-hidden="true" className="flagship__num">{f.number}</span><StatusChip status={p.status} />{p.formerly && <span>Formerly {p.formerly}</span>}</p>
           <h3 id={`work-${p.id}-title`} className="mt-4 text-[clamp(2rem,4vw,3.25rem)] font-semibold tracking-[-0.03em] text-fg">{p.name}</h3>
           <p className="mt-3 text-fg-muted" style={{ fontSize: "var(--text-lead)" }}>{f.kicker}</p>
           <p className="mt-5 max-w-[62ch] text-fg-muted">{f.story[0]} {f.story[1]}</p>
@@ -2187,7 +2194,7 @@ export function Work({ worlds = {} }: { worlds?: Partial<Record<string, React.Re
 - [ ] **Step 6: Run** `sections.spec.ts` (PASS, except the documented `fixme`), `budget.spec.ts` (now 2 active tests, PASS), both entrance suites, and the full gate, then `npm run measure`. Moving the panel out of first-load should *reduce* JS: record the delta.
 
 - [ ] **Step 7: Screenshot**
-  - Run `npm run shoot -- --out shots/t12 --theme dark --sections work,work-poker,work-sentinelai --sizes 1440x900,390x844`, and the same for `--theme light`.
+  - Run `npm run shoot -- --out shots/t12 --theme dark --sections work,work-poker,work-aegis --sizes 1440x900,390x844`, and the same for `--theme light`.
   - Review the sheets: the copy is legible, the stage is dark in both themes, the seams are soft, and nothing overflows.
 
 - [ ] **Step 8: Commit:** "Work section shell: flagship scenes with always-legible copy, case study loaded on demand".
@@ -2281,24 +2288,24 @@ export function PokerWorld() {
 
 ---
 
-### Task 14: SentinelAI world — the dashboard monitor, one scan pass, live-alert rows
+### Task 14: Aegis world — the dashboard monitor, one scan pass, live-alert rows
 
 **Files:**
-- Create: `components/work/worlds/SentinelWorld.tsx`
+- Create: `components/work/worlds/AegisWorld.tsx`
 - Modify: `worlds.css`, `app/page.tsx`
 - Test: `sections.spec.ts` (append)
 
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-test("sentinel world: dashboard monitor, three alert rows, one scan pass per entry (not a loop)", async ({ page }) => {
+test("aegis world: dashboard monitor, three alert rows, one scan pass per entry (not a loop)", async ({ page }) => {
   await page.goto("/"); await page.locator("[data-skip-intro]").click();
-  await page.evaluate(() => document.getElementById("work-sentinelai")!.scrollIntoView());
-  await expect(page.locator(".world-sentinel__row")).toHaveCount(3);
-  const scan = page.locator(".world-sentinel__scan");
-  await expect(scan).toHaveCSS("animation-name", "sentinel-scan");      // the animation actually resolved (valid tokens)
+  await page.evaluate(() => document.getElementById("work-aegis")!.scrollIntoView());
+  await expect(page.locator(".world-aegis__row")).toHaveCount(3);
+  const scan = page.locator(".world-aegis__scan");
+  await expect(scan).toHaveCSS("animation-name", "aegis-scan");      // the animation actually resolved (valid tokens)
   await expect(scan).toHaveCSS("animation-iteration-count", "1");
-  await expect(page.locator(".world-sentinel")).toContainText(/local demo/i);
+  await expect(page.locator(".world-aegis")).toContainText(/local demo/i);
 });
 ```
 
@@ -2312,51 +2319,51 @@ import Image from "next/image";
 const ROWS = [0.34, 0.46, 0.58];   // vertical centres (fraction of live-alerts.webp) of three real alert rows — measured in Step 4
 
 /** Spec §5.2 world 02: the real dashboard on a large monitor; alert rows slide in from the real live-alerts capture. */
-export function SentinelWorld() {
+export function AegisWorld() {
   return (
-    <div className="world-sentinel">
-      <div className="world-sentinel__monitor">
-        <Image src="/projects/sentinelai/dashboard.webp" alt="SentinelAI SOC dashboard with alert queue and threat scores" width={3840} height={2160} sizes="(min-width:1024px) 55vw, 100vw" />
-        <span className="world-sentinel__scan" aria-hidden="true" />
+    <div className="world-aegis">
+      <div className="world-aegis__monitor">
+        <Image src="/projects/aegis/dashboard.webp" alt="Aegis SOC dashboard with alert queue and threat scores (captured before the rename, so the app still reads SentinelAI)" width={3840} height={2160} sizes="(min-width:1024px) 55vw, 100vw" />
+        <span className="world-aegis__scan" aria-hidden="true" />
       </div>
-      <div className="world-sentinel__rows" aria-hidden="true">
+      <div className="world-aegis__rows" aria-hidden="true">
         {ROWS.map((y, i) => (
-          <div key={y} className="world-sentinel__row" style={{ ["--i" as string]: i }}>
-            <Image src="/projects/sentinelai/live-alerts.webp" alt="" width={3840} height={2160} sizes="30vw" style={{ objectPosition: `50% ${y * 100}%` }} />
+          <div key={y} className="world-aegis__row" style={{ ["--i" as string]: i }}>
+            <Image src="/projects/aegis/live-alerts.webp" alt="" width={3840} height={2160} sizes="30vw" style={{ objectPosition: `50% ${y * 100}%` }} />
           </div>
         ))}
       </div>
-      <p className="world-sentinel__badge label"><span aria-hidden="true" className="world-sentinel__dot" /> Streaming — local demo</p>
+      <p className="world-aegis__badge label"><span aria-hidden="true" className="world-aegis__dot" /> Streaming — local demo</p>
     </div>
   );
 }
 ```
 
 ```css
-/* ── World 02 — SentinelAI ───────────────────────────────────────────── */
-.world-sentinel { position: relative; }
-.world-sentinel__monitor { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--line-strong); box-shadow: var(--shadow-float);
+/* ── World 02 — Aegis ───────────────────────────────────────────── */
+.world-aegis { position: relative; }
+.world-aegis__monitor { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--line-strong); box-shadow: var(--shadow-float);
   transform: translateY(calc((1 - var(--assemble)) * 60px - var(--recede) * 40px)) scale(calc(0.96 + var(--assemble) * 0.04)); opacity: calc(0.4 + var(--assemble) * 0.6 - var(--recede) * 0.5); }
-.world-sentinel__monitor img { display: block; width: 100%; height: auto; }
-.world-sentinel__scan { position: absolute; inset: 0 auto 0 -30%; width: 30%; pointer-events: none;
+.world-aegis__monitor img { display: block; width: 100%; height: auto; }
+.world-aegis__scan { position: absolute; inset: 0 auto 0 -30%; width: 30%; pointer-events: none;
   background: linear-gradient(90deg, transparent, rgba(91,156,255,0.16), transparent); opacity: 0; }
 /* One pass per entry: re-armed only when data-inview flips back to true (one-shot, never a loop). */
-.scene[data-inview="true"] .world-sentinel__scan { animation: sentinel-scan 1.4s var(--ease-out) 0.2s 1 both; }
-@keyframes sentinel-scan { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(460%); } }
-@media (prefers-reduced-motion: reduce) { .world-sentinel__scan { animation: none !important; } }
-[data-reduced-motion="true"] .world-sentinel__scan { animation: none !important; }
-.world-sentinel__rows { position: absolute; right: -4%; bottom: -8%; width: 46%; display: grid; gap: 8px; }
-.world-sentinel__row { height: 54px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: #0a0e14;
+.scene[data-inview="true"] .world-aegis__scan { animation: aegis-scan 1.4s var(--ease-out) 0.2s 1 both; }
+@keyframes aegis-scan { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(460%); } }
+@media (prefers-reduced-motion: reduce) { .world-aegis__scan { animation: none !important; } }
+[data-reduced-motion="true"] .world-aegis__scan { animation: none !important; }
+.world-aegis__rows { position: absolute; right: -4%; bottom: -8%; width: 46%; display: grid; gap: 8px; }
+.world-aegis__row { height: 54px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: #0a0e14;
   transform: translateX(calc((1 - clamp(0, var(--assemble) * 3 - var(--i) * 0.6, 1)) * 60px)); opacity: clamp(0, var(--assemble) * 3 - var(--i) * 0.6, 1); }
-.world-sentinel__row img { width: 100%; height: 100%; object-fit: cover; }
-.world-sentinel__badge { position: absolute; left: 16px; top: 16px; display: inline-flex; gap: 8px; align-items: center; color: var(--fg-muted);
+.world-aegis__row img { width: 100%; height: 100%; object-fit: cover; }
+.world-aegis__badge { position: absolute; left: 16px; top: 16px; display: inline-flex; gap: 8px; align-items: center; color: var(--fg-muted);
   background: rgba(5,7,10,0.72); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; }
-.world-sentinel__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.world-aegis__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 ```
 
-- [ ] **Step 4: Measure the three row centres** on the real image: open `public/projects/sentinelai/live-alerts.webp`, find three distinct alert rows, and set `ROWS` to their vertical centres. The test does not check this, so review the crop visually on the screenshot. Each row must show a real alert, not a header or empty space.
+- [ ] **Step 4: Measure the three row centres** on the real image: open `public/projects/aegis/live-alerts.webp`, find three distinct alert rows, and set `ROWS` to their vertical centres. The test does not check this, so review the crop visually on the screenshot. Each row must show a real alert, not a header or empty space.
 
-- [ ] **Step 5: Run** the tests and the gate, then `npm run measure`, and screenshot both themes. Commit: "World 02: SentinelAI dashboard, one scan pass, real live-alert rows".
+- [ ] **Step 5: Run** the tests and the gate, then `npm run measure`, and screenshot both themes. Commit: "World 02: Aegis dashboard, one scan pass, real live-alert rows".
 
 ---
 
@@ -2901,10 +2908,10 @@ it("each example shares ≥ 60% of its content words with the evidence it cites,
 export const pillars = [
   { word: "Think", line: "Architecture before implementation.", from: ["understand"], project: "T Poker",
     example: "The hard part of T Poker wasn't the poker UI: it was guaranteeing the money is exact on a phone with no signal, and still correct when the server reconnects." },
-  { word: "Build", line: "Clean, maintainable systems.", from: ["design"], project: "SentinelAI",
+  { word: "Build", line: "Clean, maintainable systems.", from: ["design"], project: "Aegis",
     example: "Eight bounded contexts, structured so a cross-module reference fails to compile — verified by a script, not by code review." },
-  { word: "Ship", line: "Test. Deploy. Improve.", from: ["verify", "ship"], project: "T Poker · SentinelAI",
-    example: "The TypeScript settlement fixtures mirror the C# service case for case, and SentinelAI comes up from a single Docker command that gates on health." },
+  { word: "Ship", line: "Test. Deploy. Improve.", from: ["verify", "ship"], project: "T Poker · Aegis",
+    example: "The TypeScript settlement fixtures mirror the C# service case for case, and Aegis comes up from a single Docker command that gates on health." },
 ] as const;
 ```
 
@@ -3124,7 +3131,7 @@ export default function Page() {
       <Navbar />
       <main id="main" className="relative">
         <Entrance><Hero /></Entrance>
-        <Work worlds={{ poker: <PokerWorld />, sentinelai: <SentinelWorld />, developeros: <DeveloperOSWorld />, "gravity-flow": <GravityWorld /> }} />
+        <Work worlds={{ poker: <PokerWorld />, aegis: <AegisWorld />, developeros: <DeveloperOSWorld />, "gravity-flow": <GravityWorld /> }} />
         <About />
         <Stack />
         <ThinkBuildShip />
@@ -3141,7 +3148,7 @@ export default function Page() {
 - [ ] **Step 5: Run everything.**
   - All e2e specs: entrance, geometry, chrome, scene, sections, theme, a11y, idle, budget.
   - The gate, then `npm run measure`. JS should now be clearly **below** Plan 1's 279.6 KB, because the August client sections are gone. Record it.
-  - A visual pass: `npm run shoot` across all six sizes and both themes, with the sections `hero,work,work-poker,work-sentinelai,work-developeros,work-gravity-flow,about,skills,approach,contact`. Review every sheet for geometry, clipping, z-index, wrapping, pin lengths, overflow, contrast and nav timing, and fix what you see.
+  - A visual pass: `npm run shoot` across all six sizes and both themes, with the sections `hero,work,work-poker,work-aegis,work-developeros,work-gravity-flow,about,skills,approach,contact`. Review every sheet for geometry, clipping, z-index, wrapping, pin lengths, overflow, contrast and nav timing, and fix what you see.
   - Commit: "Contact, Footer and the final page composition".
 
 ---

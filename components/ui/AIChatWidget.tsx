@@ -201,7 +201,7 @@ export function AIChatWidget() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && send()}
-                  placeholder="What's SentinelAI?"
+                  placeholder="What's Aegis?"
                   aria-label="Ask a question"
                   disabled={busy}
                   className="h-9 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-fg-subtle disabled:opacity-50"

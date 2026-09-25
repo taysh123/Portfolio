@@ -16,7 +16,7 @@ Evidence referenced below lives in `docs/superpowers/specs/assets/` and `design/
 - A cinematic, product-launch-quality portfolio for **Tay Shofer — Software Developer** that is itself evidence of frontend and engineering ability.
 - An opening scene in which **you cause** a premium laptop on a real-looking desk to wake up. The screen then becomes the website, with no fade to black.
 - Scroll story, as guidance: darkness lifts (0–12%) → lid opens (12–38%) → screen powers on and boots (38–53%) → identity (53–68%) → camera moves to the screen (68–88%) → the screen becomes the site (88–100%).
-- After that, product storytelling: each important project gets its own visual world for several seconds of scroll. T Poker as a mobile product presentation, SentinelAI as a real-time security product, DeveloperOS as a workspace that assembles, and GRAVITY FLOW as playful and physical. Job Assistant and Orders & Delivery stay.
+- After that, product storytelling: each important project gets its own visual world for several seconds of scroll. T Poker as a mobile product presentation, Aegis as a real-time security product, DeveloperOS as a workspace that assembles, and GRAVITY FLOW as playful and physical. Job Assistant and Orders & Delivery stay.
 - Approved copy: *"I build software / people can actually use."*, *"Engineer by training. / Builder by nature."*, *"Think. Build. Ship."*, *"Let's build / something great."*
 - Dark and restrained: obsidian, soft off-white, controlled ice-blue, a hint of warm desk light. No purple gradients, no neon, no glass everywhere, no card farms. This applies to the site UI; the rendered entrance follows §4.6's hue lock.
 - **Entrance art direction, revised 2026-09-25: a Premium Cyber Developer Studio.**
@@ -71,7 +71,7 @@ I fetched it read-only (`git archive`, no checkout or merge), ran it locally, an
 | T Poker live URL `poker-home-games-three.vercel.app` | `https://app.tpoker.app/`, plus the live App Store listing |
 | GRAVITY FLOW "Live product" → `taysh123.github.io/Gravity-Game` | Removed in August: the link served a privacy policy. The game is `v1.0.0-rc` and Android-only |
 | Orders & Delivery: "Node.js, REST, SQL, React", "state transitions" | 100% Java, JavaFX, raw TCP, a flat-file DAO. It is university coursework and says so |
-| SentinelAI "AI-assisted" | The analysis mode is a deterministic template provider; no model is called |
+| Aegis (formerly SentinelAI) "AI-assisted" | The analysis mode is a deterministic template provider; no model is called |
 | Job Assistant terminal: "1,077 roles collected / 103 matched" | 287 jobs collected over 61 runs. Crons are disabled; it runs as a Docker service |
 | About: "6+ Shipped projects" | Not supportable: two projects run locally and one is coursework |
 
@@ -363,7 +363,7 @@ Even out of focus, the arc of displays reads as engineering: code in the centre,
 |---|---|
 | **Centre: WRITE** | An IDE layout:<br>• **Explorer:** the real tree, from `git ls-files`.<br>• **Editor 1:** `components/entrance/screenSurface.ts`, the solver that places this very screen. `lib/useFocusTrap.ts` is used if that file is not committed at snapshot time.<br>• **Editor 2:** `design/render/blender/scene.py`.<br>• **Bottom terminal:** the real tail of the typecheck and lint output.<br>• **Status bar:** the real branch name and "TypeScript". |
 | **Right: BUILD** | Header `BUILD`, then panes; no hostname, no clock:<br>• the real `next build` route table;<br>• the real `git log --oneline --graph --decorate` (hash and subject only);<br>• the real Cycles stdout from a preview render of this scene. |
-| **Left: VERIFY** (portrait) | Reads as *testing / CI* within a second:<br>• **Header:** `VERIFY`, plus the snapshot commit (e.g. `@894ec73`).<br>• **checks:** ✓ typecheck · ✓ lint · ✓ build, each shown **only if that command exited 0 at the frozen snapshot**. The preview's three checks come from real runs at `894ec73`. **tests** is added only once this repo has a test runner that passes; until then it is absent, never faked.<br>• **test suites:** one labelled row per project, with check mark, name, "N tests" and a horizontal bar proportional to its count: T Poker 892, DeveloperOS 363, GRAVITY FLOW 220, Job Assistant 162, SentinelAI 105. The counts are read from `data/projects.ts`, and the generator asserts each one.<br>• **Footer:** `1,742 tests across 5 projects`.<br>• It looks like an engineering dashboard (check rows, suites, one total), not an analytics chart: no sparklines, no trend lines, no axes.<br>Numbers are off-white or ice, never violet. |
+| **Left: VERIFY** (portrait) | Reads as *testing / CI* within a second:<br>• **Header:** `VERIFY`, plus the snapshot commit (e.g. `@894ec73`).<br>• **checks:** ✓ typecheck · ✓ lint · ✓ build, each shown **only if that command exited 0 at the frozen snapshot**. The preview's three checks come from real runs at `894ec73`. **tests** is added only once this repo has a test runner that passes; until then it is absent, never faked.<br>• **test suites:** one labelled row per project, with check mark, name, "N tests" and a horizontal bar proportional to its count: T Poker 892, DeveloperOS 363, GRAVITY FLOW 220, Job Assistant 162, Aegis 105. The counts are read from `data/projects.ts`, and the generator asserts each one.<br>• **Footer:** `1,742 tests across 5 projects`.<br>• It looks like an engineering dashboard (check rows, suites, one total), not an analytics chart: no sparklines, no trend lines, no axes.<br>Numbers are off-white or ice, never violet. |
 | **Laptop** | • **During the lid move:** black glass reflecting the monitor arc and the light bar.<br>• **After power-on:** a boot/identity proxy texture laid out like the DOM, so the light spill matches, and the DOM covers it exactly.<br>• **Reduced-motion still:** identity baked in. |
 | **Macro pad** | A 5×3 atlas of line icons at low emission |
 
@@ -769,6 +769,8 @@ The command palette, accessibility panel and chat widget stay, restyled. Their f
 
 ### 5.2 Work: "each project becomes the whole website"
 
+> **Naming (user decision, 2026-09-26):** the project formerly called SentinelAI is now **Aegis**, its canonical name everywhere in the portfolio. It is shown once as "Formerly SentinelAI" wherever the old name is still visible: the repository URL (`taysh123/sentinelai`, not renamed; see Plan 2 decision 6) and the captured screenshots, whose in-app wordmark predates the rename. The architecture, the world concept and the visual direction are unchanged.
+
 Where pinning applies (§5 intro), every flagship scene is pinned for **200svh** (100svh of travel):
 
 1. **0–30%:** the world assembles.
@@ -780,7 +782,7 @@ The copy (number, name, one-line kicker, two sentences, three verified metrics, 
 | # | Project | World | Uses |
 |---|---|---|---|
 | 01 | **T Poker** | Three generic phones in depth over a dark reflective floor. The front phone rises as the others fan behind it, with 12–40 px parallax per layer. The real App Store badge link. | `home`, `tournament-live`, `final-count` screenshots; live URLs; `stores` |
-| 02 | **SentinelAI** | A large monitor with the real dashboard. One scan pass per entry. Live-alert rows slide in from `live-alerts`. A "streaming" indicator is labelled as a local demo. | `dashboard`, `live-alerts`; honest status "Runs locally" |
+| 02 | **Aegis** | A large monitor with the real dashboard. One scan pass per entry. Live-alert rows slide in from `live-alerts`. A "streaming" indicator is labelled as a local demo. | `dashboard`, `live-alerts`; honest status "Runs locally" |
 | 03 | **DeveloperOS** | Four windows start scattered in depth and converge into one organised workspace as you scroll. A floating card reads "Grounded answers · file:line citations". | `dashboard`, `ai-features`, `learning`, `career` |
 | 04 | **GRAVITY FLOW** | The gameplay capture in a phone frame. A canvas star field with orbital paths extends past the frame. Scroll sets orbit speed, and the pointer bends paths gently. It is the site's **one** time-based loop (§7): it runs only while the scene is in view and never under reduced motion. | `gameplay`, `boss`; `v1.0.0-rc`, Android-only |
 | — | **Job Assistant**, **Orders & Delivery** | "More work": two wide, unpinned rows with the real pipeline shape (collect → filter → dedup → deliver; client ⇄ TCP ⇄ server) as small SVG diagrams | Repo data, including the coursework label |
@@ -819,7 +821,7 @@ This replaces the package's "6+ shipped projects". The verified 1,742-test figur
 A typographic sequence, not a card row. The three words sit large on one line. As you scroll, a hairline travels beneath them and each word brightens from `--fg-subtle` to `--fg` in turn. Under the lit word, one slot shows its line and one real example from `data/approach.ts`, condensed:
 
 - **Think:** "Architecture before implementation." with T Poker's money-exactness constraint.
-- **Build:** "Clean, maintainable systems." with SentinelAI's compiler-enforced boundaries.
+- **Build:** "Clean, maintainable systems." with Aegis's compiler-enforced boundaries.
 - **Ship:** "Test. Deploy. Improve." with the mirrored settlement fixtures and one-command bring-up.
 
 Where pinning applies it is pinned for 200svh (100svh of travel). Otherwise, and under reduced motion, it becomes a static stacked list.
@@ -1003,7 +1005,7 @@ Override any of these at review:
 
 1. **About facts row:** B.Sc. · Full stack · Israel (GMT+3) · ∞ still learning (§5.3).
 2. **Nav:** Work · About · Stack · Contact, per the concept, plus the palette and theme controls (§5). Think/Build/Ship is reachable by scroll and the palette.
-3. **Four flagship scenes** (T Poker, SentinelAI, DeveloperOS, GRAVITY FLOW), plus two "more work" rows, following the concept's 01–04 pager.
+3. **Four flagship scenes** (T Poker, Aegis, DeveloperOS, GRAVITY FLOW), plus two "more work" rows, following the concept's 01–04 pager.
 4. **Lifestyle props:** the notebook ("Ideas / Build / Ship / Repeat.") stays. The mug is optional: matte black, no text, and only inside the lamp's pool. The plant is removed.
 5. **The warm lamp moves to the left.** The concept had warm light on the right. On the left it opposes the cyan rim at the back right, and makes the left side human and the right side machine.
 6. **The centre display is a flat 32-inch 16:9,** not a curved ultrawide, which is the most gaming-coded object on a desk.

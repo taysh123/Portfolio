@@ -17,7 +17,7 @@ What it fixes:
   "Ideas / Build / Ship / Repeat.". There is warm light right, cool light
   left, and depth of field.
 - **The page:** the hero *I build software people can actually use.*;
-  full-viewport project scenes (T Poker phones, the SentinelAI monitor); About
+  full-viewport project scenes (T Poker phones, the Aegis monitor); About
   *Engineer by training. Builder by nature.*; a bento tech stack;
   *Think. Build. Ship.*; and the contact *Let's build something great.* over a
   planet horizon.

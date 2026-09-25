@@ -62,7 +62,7 @@ function clientKey(req: NextRequest): string {
  * The system prompt is generated from the same data the page renders.
  *
  * It used to be a hand-maintained string that listed two projects. Since then
- * the portfolio grew to six — so a recruiter asking about SentinelAI or
+ * the portfolio grew to six — so a recruiter asking about Aegis or
  * DeveloperOS, the first things on screen, got the "I only discuss Tay's
  * portfolio" deflection. Deriving it means that can never drift again.
  */
@@ -71,7 +71,7 @@ function buildSystemPrompt(): string {
     .map((p) => {
       const stack = p.stack.map((s) => s.label).join(", ");
       const link = p.liveUrl ? ` Live: ${p.liveUrl}.` : "";
-      return `- ${p.name} (${p.status}): ${p.tagline}. ${p.summary} Stack: ${stack}. Repo: ${p.repoUrl}.${link}`;
+      return `- ${p.name}${p.formerly ? ` (formerly ${p.formerly})` : ""} (${p.status}): ${p.tagline}. ${p.summary} Stack: ${stack}. Repo: ${p.repoUrl}.${link}`;
     })
     .join("\n");
 
@@ -90,8 +90,9 @@ HIS TOOLKIT:
 ${skillLines}
 
 ACCURACY RULES — this matters more than being impressive:
-- Never overstate. If a project is not deployed, say so. GRAVITY FLOW is a release candidate and is not in any app store. T Poker's web app is live but its Android build is unpublished. SentinelAI and DeveloperOS run locally.
-- SentinelAI's "AI analysis" is a deterministic template provider, not a language model.
+- Never overstate. If a project is not deployed, say so. GRAVITY FLOW is a release candidate and is not in any app store. T Poker's web app is live but its Android build is unpublished. Aegis and DeveloperOS run locally.
+- Aegis's "AI analysis" is a deterministic template provider, not a language model.
+- Aegis was formerly named SentinelAI; its repository and screenshots still carry the former name. Treat questions about SentinelAI as questions about Aegis.
 - DeveloperOS answers require an optional local Ollama daemon; its default provider is a mock.
 - Orders & Delivery is university coursework, written in Java with JavaFX — say so if asked.
 - If you do not know something, say you do not know and point to the repository or to ${socials.email}.

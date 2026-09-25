@@ -79,7 +79,7 @@ for i, name in enumerate(CHECKS):
     d.text((W - 110 - d.textlength("passed", font=F(MONO, 34)), y + 36), "passed", font=F(MONO, 34), fill=CYAN)
 # test suites per project — data/projects.ts
 src = open(R + "data/projects.ts").read()
-counts = [("T Poker", 892), ("DeveloperOS", 363), ("GRAVITY FLOW", 220), ("Job Assistant", 162), ("SentinelAI", 105)]
+counts = [("T Poker", 892), ("DeveloperOS", 363), ("GRAVITY FLOW", 220), ("Job Assistant", 162), ("Aegis", 105)]
 for name, n in counts:
     assert re.search(rf"(?<![\d,]){n}(?![\d,])", src), name  # provenance: every number appears in data/projects.ts as a whole number
 y0 = 290 + len(CHECKS) * 130 + 40

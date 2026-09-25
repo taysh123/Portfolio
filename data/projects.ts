@@ -72,6 +72,11 @@ export type Project = {
   liveUrl?: string;
   liveLabel?: string;
   featured?: boolean;
+  /**
+   * A previous name, shown once as "Formerly …" — needed while the repository URL and the
+   * captured screenshots still carry it (Aegis was formerly SentinelAI, renamed 2026-09-26).
+   */
+  formerly?: string;
   accent: ProjectAccent;
   media?: ProjectMedia;
   stores?: StoreListing[];
@@ -170,8 +175,9 @@ export const projects: Project[] = [
     },
   },
   {
-    id: "sentinelai",
-    name: "SentinelAI",
+    id: "aegis",
+    name: "Aegis",
+    formerly: "SentinelAI",
     tagline: "A Security Operations Centre where module isolation is enforced by the compiler",
     summary:
       "Eight bounded contexts across 27 .NET projects with zero cross-context references — events flow ingestion → detection → scoring → alert over RabbitMQ and stream live to the dashboard.",
@@ -181,7 +187,7 @@ export const projects: Project[] = [
     status: "local",
     accent: "blue",
     featured: true,
-    repoUrl: "https://github.com/taysh123/SentinelAI",
+    repoUrl: "https://github.com/taysh123/SentinelAI", // the repository keeps its former name — not renamed (Plan 2 decision 6)
     metrics: [
       { value: "8", label: "Bounded contexts" },
       { value: "0", label: "Cross-context references" },
@@ -200,14 +206,15 @@ export const projects: Project[] = [
       { label: "Docker Compose" },
     ],
     media: {
-      image: "/projects/sentinelai/dashboard.webp",
-      alt: "SentinelAI real-time SOC overview dashboard",
+      image: "/projects/aegis/dashboard.webp",
+      // The captures predate the rename, so the app's own wordmark in them still reads the former name.
+      alt: "Aegis real-time SOC overview dashboard (captured before the rename, so the app still reads SentinelAI)",
       fit: "cover",
       gallery: [
-        { src: "/projects/sentinelai/live-alerts.webp", alt: "Live alert stream over SignalR" },
-        { src: "/projects/sentinelai/incident-kanban.webp", alt: "Incident workflow board with audit timeline" },
-        { src: "/projects/sentinelai/ai-analysis.webp", alt: "Generated alert analysis panel" },
-        { src: "/projects/sentinelai/architecture.webp", alt: "System architecture diagram" },
+        { src: "/projects/aegis/live-alerts.webp", alt: "Live alert stream over SignalR" },
+        { src: "/projects/aegis/incident-kanban.webp", alt: "Incident workflow board with audit timeline" },
+        { src: "/projects/aegis/ai-analysis.webp", alt: "Generated alert analysis panel" },
+        { src: "/projects/aegis/architecture.webp", alt: "System architecture diagram" },
       ],
     },
     caseStudy: {

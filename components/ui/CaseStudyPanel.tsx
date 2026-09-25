@@ -182,7 +182,7 @@ export function CaseStudyPanel({
               {/* ── The pitch ────────────────────────────────────────── */}
               <div className="flex flex-wrap items-center gap-2.5">
                 <StatusChip status={project.status} />
-                <span className="label text-fg-subtle">{project.context}</span>
+                <span className="label text-fg-subtle">{project.context}{project.formerly ? ` · Formerly ${project.formerly}` : ""}</span>
               </div>
 
               <h2

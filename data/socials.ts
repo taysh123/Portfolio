@@ -55,7 +55,7 @@ export const siteMeta = {
  *
  * The test count is the sum across the five self-directed projects:
  * T Poker 677 + 215, DeveloperOS 363, GRAVITY FLOW 220, Job Assistant 162,
- * SentinelAI 103 + 2.
+ * Aegis 103 + 2.
  */
 export const heroStats = [
   /*
