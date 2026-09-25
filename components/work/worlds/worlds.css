@@ -87,3 +87,14 @@
 .world-aegis__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 /* Single column: the rows stay inside the world rather than bleeding off the screen edge. */
 @media (max-width: 1023px) { .world-aegis__rows { right: 8px; width: 58%; } }
+
+/* ── World 03 — DeveloperOS ──────────────────────────────────────────── */
+.world-dos { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; perspective: 1600px; }
+.world-dos__win { margin: 0; border-radius: 12px; overflow: hidden; border: 1px solid var(--line-strong); box-shadow: var(--shadow-float); background: #0a0e14;
+  transform: translate3d(calc((1 - var(--assemble)) * var(--dx)), calc((1 - var(--assemble)) * var(--dy) - (var(--hold) - 0.5) * 16px), calc((1 - var(--assemble)) * var(--dz)))
+             rotate(calc((1 - var(--assemble)) * var(--r)));
+  opacity: calc(0.3 + var(--assemble) * 0.7 - var(--recede) * 0.5); }
+.world-dos__win img { display: block; width: 100%; height: auto; }
+.world-dos__card { position: absolute; left: 50%; bottom: -18px; translate: -50% 0; white-space: nowrap; padding: 10px 16px; border-radius: 999px;
+  background: rgba(10,14,20,0.92); border: 1px solid var(--line-strong); color: var(--fg); font: 500 0.8125rem/1 var(--font-mono);
+  transform: translateY(calc((1 - var(--assemble)) * 24px)); opacity: var(--assemble); }

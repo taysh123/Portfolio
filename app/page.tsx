@@ -8,6 +8,7 @@ import { About } from "@/components/sections/About";
 import { Work } from "@/components/work/Work";
 import { PokerWorld } from "@/components/work/worlds/PokerWorld";
 import { AegisWorld } from "@/components/work/worlds/AegisWorld";
+import { DeveloperOSWorld } from "@/components/work/worlds/DeveloperOSWorld";
 import { Skills } from "@/components/sections/Skills";
 import { EngineeringPanel } from "@/components/sections/EngineeringPanel";
 import { Contact } from "@/components/sections/Contact";
@@ -43,7 +44,7 @@ export default function Page() {
           <Hero />
         </Entrance>
 
-        <Work worlds={{ poker: <PokerWorld />, aegis: <AegisWorld /> }} />
+        <Work worlds={{ poker: <PokerWorld />, aegis: <AegisWorld />, developeros: <DeveloperOSWorld /> }} />
 
         <Stage>
           <About />

@@ -66,3 +66,15 @@ test("aegis world: dashboard monitor, three alert rows, one scan pass per entry 
   await expect(scan).toHaveCSS("animation-iteration-count", "1");
   await expect(page.locator(".world-aegis")).toContainText(/local demo/i);
 });
+
+test("developeros world: four windows converge as the scene assembles; the citation card is present", async ({ page }) => {
+  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  const spread = async (f: number) => {
+    await page.evaluate((f) => { const s = document.getElementById("work-developeros")!; window.scrollTo({ top: s.getBoundingClientRect().top + scrollY + (s.offsetHeight - innerHeight) * f, behavior: "instant" as ScrollBehavior }); }, f);
+    await page.waitForTimeout(200);
+    return page.locator(".world-dos__win").evaluateAll((els) => els.reduce((a, el) => a + Math.hypot(new DOMMatrix(getComputedStyle(el).transform).m41, new DOMMatrix(getComputedStyle(el).transform).m42), 0));
+  };
+  await expect(page.locator(".world-dos__win")).toHaveCount(4);
+  expect(await spread(0.5)).toBeLessThan(await spread(0.02));    // converged
+  await expect(page.locator(".world-dos__card")).toHaveText(/Grounded answers · file:line citations/);
+});
