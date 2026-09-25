@@ -56,3 +56,13 @@ test("poker world: three phones, the front one rises as the others fan (transfor
   expect(Math.abs(held[0].m41)).toBeGreaterThan(Math.abs(early[0].m41)); // side phones fanned out
   await expect(page.locator(".world-poker img").first()).toHaveAttribute("alt", /.+/);
 });
+
+test("aegis world: dashboard monitor, three alert rows, one scan pass per entry (not a loop)", async ({ page }) => {
+  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.evaluate(() => document.getElementById("work-aegis")!.scrollIntoView());
+  await expect(page.locator(".world-aegis__row")).toHaveCount(3);
+  const scan = page.locator(".world-aegis__scan");
+  await expect(scan).toHaveCSS("animation-name", "aegis-scan");      // the animation actually resolved (valid tokens)
+  await expect(scan).toHaveCSS("animation-iteration-count", "1");
+  await expect(page.locator(".world-aegis")).toContainText(/local demo/i);
+});

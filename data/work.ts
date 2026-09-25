@@ -1,7 +1,9 @@
 import { projects, type Project } from "@/data/projects";
 
 export type WorldKey = "poker" | "aegis" | "developeros" | "gravity-flow";
-export type WorldAssets = { monitor: string; rows?: { src: string; centres: number[] } };
+/** `rows` crops single alert rows out of one capture. All fractions are of the capture: `centres` are row
+ *  centres (y), `left` is where rows start (x), `height` is one row's height (y), `aspect` is height / width. */
+export type WorldAssets = { monitor: string; rows?: { src: string; centres: number[]; left: number; height: number; aspect: number } };
 export type Flagship = { id: WorldKey; number: "01" | "02" | "03" | "04"; kicker: string; story: [string, string];
   metricLabels: [string, string, string]; statusNote?: string;
   /** Images a world composes. Data, not code: swapping screenshots is a data change (Aegis, decision 6). */
@@ -24,7 +26,7 @@ export const flagships: Flagship[] = [
     metricLabels: ["Bounded contexts", "Cross-context references", "Tests, incl. Testcontainers"],
     statusNote: "Runs locally — the live stream shown is a local demo",
     // TEMPORARY: captured before the rename (the in-app wordmark still reads SentinelAI) until the user supplies Aegis screenshots.
-    worldAssets: { monitor: "/projects/aegis/dashboard.webp", rows: { src: "/projects/aegis/live-alerts.webp", centres: [0.34, 0.46, 0.58] } } },
+    worldAssets: { monitor: "/projects/aegis/dashboard.webp", rows: { src: "/projects/aegis/live-alerts.webp", centres: [0.261, 0.328, 0.394], left: 0.135, height: 0.064, aspect: 2160 / 3840 } } },
   { id: "developeros", number: "03", kicker: "A local-first code workspace that refuses to answer without evidence",
     story: ["It indexes your own projects into a private SQLite FTS5 index and answers with real file and line citations, declining when the index can't support an answer.",
             "It ships as one Python package with no runtime dependencies: a CLI, a browser dashboard, an installable PWA or a Windows desktop window."],

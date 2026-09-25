@@ -60,3 +60,30 @@
 .world-poker__phone--right { z-index: 1;
   transform: translateX(calc(var(--assemble) * 64%)) translateY(calc(24px - (var(--hold) - 0.5) * 12px)) rotate(calc(var(--assemble) * 7deg)) scale(0.9);
   opacity: calc(var(--assemble) * 0.85 - var(--recede) * 0.6); }
+
+/* ── World 02 — Aegis ───────────────────────────────────────────── */
+.world-aegis { position: relative; }
+.world-aegis__monitor { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--line-strong); box-shadow: var(--shadow-float);
+  transform: translateY(calc((1 - var(--assemble)) * 60px - var(--recede) * 40px)) scale(calc(0.96 + var(--assemble) * 0.04)); opacity: calc(0.4 + var(--assemble) * 0.6 - var(--recede) * 0.5); }
+.world-aegis__monitor img { display: block; width: 100%; height: auto; }
+.world-aegis__scan { position: absolute; inset: 0 auto 0 -30%; width: 30%; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(91,156,255,0.16), transparent); opacity: 0; }
+/* One pass per entry: re-armed only when data-inview flips back to true (one-shot, never a loop). */
+.scene[data-inview="true"] .world-aegis__scan { animation: aegis-scan 1.4s var(--ease-out) 0.2s 1 both; }
+@keyframes aegis-scan { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(460%); } }
+@media (prefers-reduced-motion: reduce) { .world-aegis__scan { animation: none !important; } }
+[data-reduced-motion="true"] .world-aegis__scan { animation: none !important; }
+.world-aegis__rows { position: absolute; right: -4%; bottom: -8%; width: 46%; display: grid; gap: 8px; }
+/* Each strip shows exactly one real alert row: the capture is scaled to --scale row-widths, shifted left to the
+   rows' left edge (--crop-x) and centred on the row (--y); the strip's height is one row (--crop-h of the image
+   height, via padding-% of the width). All geometry except --scale comes from data (worldAssets.rows). */
+.world-aegis__row { --scale: 3.67; position: relative; height: 0; padding-bottom: calc(var(--scale) * var(--img-hw) * var(--crop-h) * 100%);
+  border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: #0a0e14;
+  transform: translateX(calc((1 - clamp(0, var(--assemble) * 3 - var(--i) * 0.6, 1)) * 60px)); opacity: clamp(0, var(--assemble) * 3 - var(--i) * 0.6, 1); }
+.world-aegis__row img { position: absolute; max-width: none; height: auto; width: calc(var(--scale) * 100%);
+  left: calc(-1 * var(--crop-x) * var(--scale) * 100%); top: 50%; transform: translateY(calc(-1 * var(--y) * 100%)); }
+.world-aegis__badge { position: absolute; left: 16px; top: 16px; display: inline-flex; gap: 8px; align-items: center; color: var(--fg-muted);
+  background: rgba(5,7,10,0.72); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; }
+.world-aegis__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+/* Single column: the rows stay inside the world rather than bleeding off the screen edge. */
+@media (max-width: 1023px) { .world-aegis__rows { right: 8px; width: 58%; } }
