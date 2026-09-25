@@ -7,7 +7,10 @@
 .entrance__surface { position: absolute; left: 0; top: 0; transform-origin: 0 0; background: var(--screen); opacity: 0; will-change: transform, opacity; }
 .entrance__surface > .entrance__hero { position: absolute; width: 100vw; height: 100svh; background: var(--bg); }
 .entrance__still { display: none; }
-.entrance__skip { position: absolute; right: 24px; bottom: 24px; z-index: 5; }
+/* Bottom centre: the corners belong to the chat and accessibility buttons. */
+.entrance__skip { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 5; white-space: nowrap; }
+/* Spec §4.6 fallback: a faint scrim keeps the room title legible wherever the frame is busy. */
+.entrance__title { background: radial-gradient(ellipse 34% 90% at 50% 50%, rgba(5, 7, 10, 0.55), transparent 72%); }
 
 @media (prefers-reduced-motion: reduce) {
   .entrance { height: auto; }
@@ -36,3 +39,5 @@
 .hero-boot, .hero-tagline { opacity: 0; }
 [data-hero-name] { transform-origin: 50% 50%; }
 .entrance__chapter { position: absolute; left: clamp(20px, 4vw, 40px); top: 24px; z-index: 4; }
+/* Nothing left to skip once the portal completes. */
+html[data-entrance-done="true"] .entrance__skip { opacity: 0; pointer-events: none; }

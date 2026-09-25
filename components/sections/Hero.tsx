@@ -2,7 +2,8 @@ import { siteMeta, socials } from "@/data/socials";
 import { ButtonLink } from "@/components/ui/Button";
 import { ArrowDownIcon } from "@/components/ui/icons";
 
-const lineStyle = { fontSize: "clamp(3rem, 7.2vw, 6.75rem)", lineHeight: 0.98 } as const;
+// Height-aware as well as width-aware: on a landscape phone (844×390) the width alone would overflow the screen.
+const lineStyle = { fontSize: "clamp(2.25rem, min(7.2vw, 10.5svh), 6.75rem)", lineHeight: 0.98 } as const;
 
 /**
  * The site's first real content — and, while the entrance runs, the laptop's screen.
@@ -14,7 +15,7 @@ const lineStyle = { fontSize: "clamp(3rem, 7.2vw, 6.75rem)", lineHeight: 0.98 } 
  */
 export function Hero() {
   return (
-    <section id="hero" aria-labelledby="hero-title" className="hero-surface-content relative flex min-h-[100svh] flex-col justify-center px-[clamp(20px,4vw,40px)]">
+    <section id="hero" aria-labelledby="hero-title" className="hero-surface-content relative flex min-h-[100svh] flex-col justify-center px-[clamp(20px,4vw,40px)] pt-[var(--nav-h)] pb-6">
       {/* The screen's boot log and identity card. Decorative: the same words
           are in the h1 and the name line below. */}
       <div data-hero-boot aria-hidden="true" className="hero-boot pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
@@ -31,7 +32,7 @@ export function Hero() {
       <div className="mx-auto w-full max-w-[1240px]">
         <h1 id="hero-title" tabIndex={-1} className="outline-none">
           {/* Not masked: this line travels (the screen's identity card lands here). */}
-          <span className="mb-8 block">
+          <span className="mb-8 block [@media(max-height:500px)]:mb-3">
             <span data-hero-name className="label inline-block text-fg-muted">{siteMeta.name} · {siteMeta.role}</span>
           </span>
           <span className="hero-mask block">
@@ -41,10 +42,10 @@ export function Hero() {
             <span data-hero-line="2" className="block font-semibold tracking-[-0.045em] text-fg-muted" style={lineStyle}>people can actually use.</span>
           </span>
         </h1>
-        <div className="hero-mask mt-8">
+        <div className="hero-mask mt-8 [@media(max-height:500px)]:mt-3">
           <p data-hero-lead className="max-w-[62ch] text-fg-muted" style={{ fontSize: "clamp(1.125rem, 1.5vw, 1.3125rem)" }}>{siteMeta.heroLead}</p>
         </div>
-        <div className="hero-mask mt-10">
+        <div className="hero-mask mt-10 [@media(max-height:500px)]:mt-4">
           <div data-hero-ctas className="flex flex-col gap-3 sm:flex-row">
             <ButtonLink href="#work" size="lg">Explore my work <ArrowDownIcon size={16} /></ButtonLink>
             <ButtonLink href={socials.github.url} variant="secondary" size="lg" external>GitHub ↗</ButtonLink>

@@ -159,7 +159,8 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       }
       for (const [el, at] of h.reveals) {
         const t = segment(p, at, at + 0.04, easeOut);
-        el.style.transform = t < 1 ? `translateY(${(1 - t) * 105}%)` : "";
+        // clear the mask's overflow-clip-margin too, or the top of the line peeks out
+        el.style.transform = t < 1 ? `translateY(calc(${(1 - t) * 100}% + ${(1 - t) * 14}px))` : "";
       }
     };
 
@@ -204,7 +205,7 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
     <>
       <canvas ref={canvasRef} className="entrance__canvas" aria-hidden="true" />
       <div ref={veilRef} className="entrance__veil entrance__overlay" aria-hidden="true" />
-      <div ref={titleRef} className="entrance__overlay pointer-events-none absolute inset-x-0 top-[40%] text-center" aria-hidden="true" style={{ opacity: 0 }}>
+      <div ref={titleRef} className="entrance__overlay entrance__title pointer-events-none absolute inset-x-0 top-[40%] flex h-[14%] flex-col items-center justify-center text-center" aria-hidden="true" style={{ opacity: 0 }}>
         <p className="text-[clamp(1.5rem,3vw,2.5rem)] font-light tracking-[0.5em] text-fg">TAY SHOFER</p>
         <p className="label mt-3 text-fg-muted">Software Developer</p>
       </div>
@@ -212,7 +213,7 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       <div ref={surfaceRef} className="entrance__surface">
         <div ref={heroRef} className="entrance__hero">{children}</div>
       </div>
-      <button type="button" data-skip-intro onClick={skipIntro} className="entrance__skip label rounded-full border border-line px-4 py-3 text-fg-muted hover:text-fg">Skip intro ↓</button>
+      <button type="button" data-skip-intro onClick={skipIntro} className="entrance__skip label inline-flex min-h-11 items-center rounded-full border border-line bg-surface-3 px-4 text-fg-muted hover:text-fg">Skip intro ↓</button>
     </>
   );
 }
