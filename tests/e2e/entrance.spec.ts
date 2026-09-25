@@ -112,6 +112,9 @@ test("no frames are requested before load except the poster", async ({ page }) =
   // Observed through to the load event and beyond, then compared against loadEventStart —
   // stopping at domcontentloaded would pass trivially.
   await page.goto("/", { waitUntil: "networkidle" });
+  // networkidle can land between the manifest/poster fetches and the first frame fetch: wait for the
+  // sequence to actually start (it must, after load), then compare every frame's start with loadEventStart.
+  await expect.poll(() => page.evaluate(() => performance.getEntriesByType("resource").filter((e) => /\/entrance\/(landscape|portrait)\//.test(e.name)).length), { timeout: 15000 }).toBeGreaterThan(0);
   const r = await page.evaluate(() => {
     const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming;
     const frames = performance.getEntriesByType("resource").filter((e) => /\/entrance\/(landscape|portrait)\//.test(e.name));

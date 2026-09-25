@@ -27,4 +27,12 @@ describe("drawFrame", () => {
     const r = drawFrame({ ...base, ctx: ctx as never, frames, p: 0.3, store: { nearestDecoded: () => null, get: () => undefined } });
     expect(ctx.calls).toEqual(["poster@1.00"]); expect(r.quad).toBeNull();
   });
+  it("never falls back to a far-away frame: beyond maxJump it draws the fallback with no quad", () => {
+    // 40 frames; only the last is decoded. At p pointing near frame 10, frame 39 is 29 away: a different beat.
+    const many = Array.from({ length: 40 }, (_, i) => ({ file: `f${i}`, p: i / 39, quad: quad(0.1) }));
+    const ctx = fakeCtx();
+    const r = drawFrame({ ...base, ctx: ctx as never, frames: many, p: 10 / 39, store: { nearestDecoded: () => 39, get: (i: number) => (i === 39 ? img("far") : undefined) } });
+    expect(ctx.calls).toEqual(["poster@1.00"]); expect(r.quad).toBeNull();
+  });
 });
+
