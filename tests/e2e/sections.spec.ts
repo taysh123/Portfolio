@@ -128,3 +128,21 @@ test("about: no horizontal overflow at 375px", async ({ page }) => {
   expect(await page.locator("#about").evaluate((el) => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
 });
+
+test("stack: six groups in data order, the two lead groups are wide with their figures", async ({ page }) => {
+  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await expect(page.locator("#skills h2")).toHaveText("The tools I build with.");
+  await expect(page.locator("#skills")).toContainText("Enough range to own a product end to end.");
+  await expect(page.locator("#skills [data-card] h3")).toHaveText(["Languages", "Interface", "Services & APIs", "Data & State", "Delivery", "Verification"]);
+  await expect(page.locator("#skills [data-card][data-wide]")).toHaveCount(2);
+  await expect(page.locator("#skills [data-card][data-wide]").nth(1)).toContainText("1,742");
+});
+
+test("pointer light follows the hovered card only, and not under reduced motion", async ({ page }) => {
+  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  const card = page.locator("#skills [data-card]").first(); await card.scrollIntoViewIfNeeded();
+  const box = (await card.boundingBox())!; await page.mouse.move(box.x + 40, box.y + 30);
+  await expect.poll(() => card.evaluate((el) => el.style.getPropertyValue("--mx"))).toMatch(/px$/);
+  await page.emulateMedia({ reducedMotion: "reduce" }); await page.mouse.move(box.x + 90, box.y + 60);
+  await expect.poll(() => card.evaluate((el) => el.style.getPropertyValue("--mx"))).toBe("");
+});

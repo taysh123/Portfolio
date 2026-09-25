@@ -10,7 +10,7 @@ import { PokerWorld } from "@/components/work/worlds/PokerWorld";
 import { AegisWorld } from "@/components/work/worlds/AegisWorld";
 import { DeveloperOSWorld } from "@/components/work/worlds/DeveloperOSWorld";
 import { GravityWorld } from "@/components/work/worlds/GravityWorld";
-import { Skills } from "@/components/sections/Skills";
+import { Stack } from "@/components/sections/Stack";
 import { EngineeringPanel } from "@/components/sections/EngineeringPanel";
 import { Contact } from "@/components/sections/Contact";
 
@@ -49,8 +49,9 @@ export default function Page() {
 
         <About />
 
+        <Stack />
+
         <Stage>
-          <Skills />
           <EngineeringPanel />
           <Contact />
         </Stage>

@@ -1,0 +1,6 @@
+/* Stack (spec §5.4). */
+.stack-card > * { position: relative; z-index: 1; }
+/* Pointer light (spec §5.4): drawn only while --mx is set, i.e. on the hovered card, with a fine pointer. */
+.stack-card::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity var(--dur-mid, 320ms);
+  background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), var(--light-cool), transparent 70%); }
+@media (hover: hover) and (pointer: fine) { .stack-card:hover::before { opacity: 1; } }
