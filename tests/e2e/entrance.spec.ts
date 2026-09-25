@@ -109,8 +109,98 @@ test("no JavaScript: static entrance, hero in flow, nav usable, content without 
 });
 
 test("no frames are requested before load except the poster", async ({ page }) => {
-  const early: string[] = [];
-  page.on("request", (r) => { if (/\/entrance\/(landscape|portrait)\//.test(r.url())) early.push(r.url()); });
-  await page.goto("/", { waitUntil: "domcontentloaded" });
-  expect(early).toEqual([]);
+  // Observed through to the load event and beyond, then compared against loadEventStart —
+  // stopping at domcontentloaded would pass trivially.
+  await page.goto("/", { waitUntil: "networkidle" });
+  const r = await page.evaluate(() => {
+    const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming;
+    const frames = performance.getEntriesByType("resource").filter((e) => /\/entrance\/(landscape|portrait)\//.test(e.name));
+    return { loadStart: nav.loadEventStart, frames: frames.length, early: frames.filter((e) => e.startTime < nav.loadEventStart).map((e) => e.name) };
+  });
+  expect(r.loadStart).toBeGreaterThan(0);
+  expect(r.frames).toBeGreaterThan(0); // the sequence does load — after the load event
+  expect(r.early).toEqual([]);
+});
+
+const heroAtRest = (page: import("playwright/test").Page) => page.evaluate(() => {
+  const els = [...document.querySelectorAll<HTMLElement>("[data-hero-line], [data-hero-lead], [data-hero-ctas], [data-hero-name]")];
+  return els.every((el) => getComputedStyle(el).transform === "none" && getComputedStyle(el).opacity === "1");
+});
+
+test("switching reduced motion on in the Accessibility panel hands back a hero at rest (review #1)", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1024 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Accessibility settings" }).click();
+  await page.getByRole("switch", { name: /Reduced motion/ }).click();
+  await expect(page.locator(".entrance__stage")).toHaveCSS("position", "static");
+  await expect.poll(() => heroAtRest(page)).toBe(true);
+  await expect(page.locator("[data-hero-line='1']")).toBeVisible();
+  expect(await page.locator(".entrance__surface").evaluate((el) => el.getAttribute("style") ?? "")).toBe("");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+});
+
+test("the OS reduced-motion setting changing mid-session is followed (review #1)", async ({ page }) => {
+  await page.goto("/");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(page.locator(".entrance__stage")).toHaveCSS("position", "static");
+  await expect.poll(() => heroAtRest(page)).toBe(true);
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await expect(page.locator(".entrance__stage")).toHaveCSS("position", "sticky");
+  await page.locator("[data-skip-intro]").click();
+  await expect(page.locator("#hero-title")).toBeInViewport();
+  await expect.poll(() => heroAtRest(page)).toBe(true);
+});
+
+test("Tab into the hero lands at identity and keeps focus on the control reached (review #4)", async ({ page }) => {
+  await page.goto("/");
+  for (let i = 0; i < 20; i++) {
+    await page.keyboard.press("Tab");
+    if (await page.evaluate(() => !!document.activeElement?.closest("#hero"))) break;
+  }
+  const label = await page.evaluate(() => document.activeElement?.textContent?.trim());
+  expect(label).toMatch(/Explore my work/);
+  await expect(page.locator("html")).toHaveAttribute("data-entrance-done", "true");
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(() => document.activeElement?.textContent?.trim())).toBe(label);
+});
+
+test("skip intro leaves the Tab order once the portal completes (review #4)", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("[data-skip-intro]").click();
+  await expect(page.locator("[data-skip-intro]")).toBeHidden();
+});
+
+test("a deep link to /#hero arrives at the hero at identity (review #5)", async ({ page }) => {
+  await page.goto("/#hero");
+  await expect(page.locator("html")).toHaveAttribute("data-entrance-done", "true");
+  await expect(page.locator("#hero-title")).toBeInViewport();
+  await expect(page.locator(".entrance__surface")).toHaveCSS("opacity", "1");
+});
+
+test("the skip link lands on the h1 every time, not only the first (review #5)", async ({ page }) => {
+  await page.goto("/");
+  for (let round = 0; round < 2; round++) {
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }));
+    await page.locator("a[href='#main']").first().focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#hero-title")).toBeFocused();
+    await expect(page.locator("html")).toHaveAttribute("data-entrance-done", "true");
+  }
+});
+
+test("jumping mid-sequence never flashes the hero full-screen before its quad exists (review #2)", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  const samples = await page.evaluate(async () => {
+    const c = document.getElementById("entrance")!, surf = document.querySelector<HTMLElement>(".entrance__surface")!;
+    window.scrollTo({ top: c.offsetTop + 0.6 * (c.offsetHeight - innerHeight), behavior: "instant" as ScrollBehavior });
+    const out: { opacity: string; w: number }[] = [];
+    for (let i = 0; i < 12; i++) {
+      await new Promise((r) => requestAnimationFrame(r));
+      const b = surf.getBoundingClientRect();
+      out.push({ opacity: getComputedStyle(surf).opacity, w: b.width / innerWidth });
+    }
+    return out;
+  });
+  // Visible and full-width at p = 0.6 would be the flash: on the laptop, the screen is well under the viewport width.
+  expect(samples.filter((s) => s.opacity !== "0" && s.w > 0.95)).toEqual([]);
 });

@@ -37,4 +37,13 @@ describe("FrameStore", () => {
     for (let k = 0; k < 10; k++) await flush();
     expect(store.failed).toBe(true); expect(store.nearestDecoded(0)).toBeNull();
   });
+  it("keeps keyframes decoded wherever the playhead goes", async () => {
+    const { store, closed } = mk(20, { keep: [0, 19] }); store.start(); store.setPlayhead(10);
+    for (let k = 0; k < 10; k++) await flush();
+    expect(store.get(0)).toBeDefined(); expect(store.get(19)).toBeDefined();
+    store.setPlayhead(4);
+    for (let k = 0; k < 10; k++) await flush();
+    expect(store.get(19)).toBeDefined(); expect(closed).not.toContain(19);
+    expect(store.nearestDecoded(17)).toBe(19);
+  });
 });

@@ -10,7 +10,7 @@ import { siteMeta } from "@/data/socials";
  */
 export function Logo({
   className,
-  href = "#top",
+  href = "#hero",
   label,
 }: {
   className?: string;

@@ -15,6 +15,8 @@ for (const kind of ["landscape", "portrait"]) {
   const names = (await fs.readdir(dir)).filter((f) => f.endsWith(".json")).map((f) => f.slice(0, -5));
   const meta = await Promise.all(names.map(async (n) => ({ n, ...JSON.parse(await fs.readFile(`${dir}/${n}.json`, "utf8")) })));
   const seq = meta.filter((m) => m.n !== "still").sort((a, b) => a.p - b.p);
+  // pushEndIndex is written as the last frame: K2 / P2 must end the sequence.
+  if (!seq.at(-1).n.startsWith("push-")) throw new Error(`${kind}: the last frame is ${seq.at(-1).n}, not the push end`);
   const { width, height } = await sharp(`${dir}/${seq[0].n}.png`).metadata();
   const tiers = TIERS[kind].filter((t) => t <= width);
   if (!tiers.length) tiers.push(width); // preview masters are smaller than every tier; never upscale

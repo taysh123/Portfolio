@@ -69,7 +69,6 @@ export const heroStats = [
   */
   { value: "Live", label: "In production today" },
   { value: "1,742", label: "Tests across the work" },
-  { value: "7", label: "Languages in shipped code" },
   { value: "B.Sc.", label: "Computer Science" },
 ] as const;
 

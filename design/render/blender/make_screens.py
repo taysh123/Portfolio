@@ -4,7 +4,8 @@ Runs typecheck, lint, tests and build at HEAD; a ✓ row is drawn ONLY for a com
 that exited 0. Writes out/strings.txt (every drawn string) and out/screens.json.
 Run with the system Python 3 + Pillow: `npm run render:screens`.
 
-Snapshot 894ec73: tsc exit 0, eslint exit 0, next build exit 0 (logs beside this file).
+The snapshot hash drawn on the screens is HEAD; the script refuses a tree with tracked changes,
+so every exit code it draws belongs to that commit.
 Per-project test counts come from data/projects.ts.
 """
 import re
@@ -30,6 +31,8 @@ def run(name, cmd, log=None):
     return p.returncode
 
 
+if subprocess.run("git status --porcelain --untracked-files=no", cwd=R, shell=True, capture_output=True, text=True).stdout.strip():
+    raise SystemExit("make_screens: tracked changes present; commit first so the drawn checks belong to HEAD")
 EXIT = {"typecheck": run("typecheck", "npx tsc --noEmit"), "lint": run("lint", "npx eslint"),
         "tests": run("tests", "npx vitest run"), "build": run("build", "npx next build", "build.txt")}
 HAS_TESTS = bool(subprocess.run("git ls-files 'tests/unit/*.test.ts'", cwd=R, shell=True, capture_output=True, text=True).stdout.strip())
@@ -78,7 +81,7 @@ for i, name in enumerate(CHECKS):
 src = open(R + "data/projects.ts").read()
 counts = [("T Poker", 892), ("DeveloperOS", 363), ("GRAVITY FLOW", 220), ("Job Assistant", 162), ("SentinelAI", 105)]
 for name, n in counts:
-    assert f'"{n}"' in src or f"{n}" in src, name  # provenance: every number read from data/projects.ts
+    assert re.search(rf"(?<![\d,]){n}(?![\d,])", src), name  # provenance: every number appears in data/projects.ts as a whole number
 y0 = 290 + len(CHECKS) * 130 + 40
 d.text((60, y0), "test suites", font=F(MONO, 34), fill=MUTED)
 mx = max(n for _, n in counts)
@@ -152,7 +155,7 @@ gl = subprocess.check_output(["git", "-C", R, "log", "--oneline", "-26"]).decode
 for i, l in enumerate(gl):
     y = 280 + i * 42
     d.ellipse((1335, y + 12, 1351, y + 28), fill=ICE if i == 0 else (60, 80, 110))
-    d.text((1370, y), l[:7], font=fm, fill=(255, 184, 108) if False else CYAN)
+    d.text((1370, y), l[:7], font=fm, fill=CYAN)
     d.text((1370 + 150, y), l[8:62], font=fm, fill=(180, 192, 210))
 im.save(H + "screen_build.png")
 

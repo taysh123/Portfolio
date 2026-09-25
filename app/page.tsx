@@ -37,7 +37,6 @@ export default function Page() {
         {/* The front door sits outside the Stage: it is full-bleed by design,
             and the stage's gutters would frame a sequence that is supposed to
             have no frame until you are through it. */}
-        <span id="top" aria-hidden="true" />
         <Entrance>
           <Hero />
         </Entrance>

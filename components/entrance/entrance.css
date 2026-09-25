@@ -18,7 +18,7 @@
   .entrance__canvas, .entrance__poster, .entrance__veil, .entrance__overlay, .entrance__skip { display: none; }
   .entrance__still { display: block; position: relative; height: 100svh; }
   .entrance__surface { position: static; transform: none !important; opacity: 1 !important; clip-path: none !important; }
-  .entrance__surface > .entrance__hero { position: static; width: auto; height: auto; }
+  .entrance__surface, .entrance__surface > .entrance__hero { position: static; left: auto !important; top: auto !important; width: auto !important; height: auto !important; pointer-events: auto !important; }
 }
 [data-reduced-motion="true"] .entrance { height: auto; }
 [data-reduced-motion="true"] .entrance__stage { position: static; height: auto; overflow: visible; }
@@ -27,11 +27,12 @@
 [data-reduced-motion="true"] .entrance__skip { display: none; }
 [data-reduced-motion="true"] .entrance__still { display: block; position: relative; height: 100svh; }
 [data-reduced-motion="true"] .entrance__surface { position: static; transform: none !important; opacity: 1 !important; clip-path: none !important; }
-[data-reduced-motion="true"] .entrance__surface > .entrance__hero { position: static; width: auto; height: auto; }
+/* !important on geometry too: the stage writes inline px sizes, and static mode must win the moment it applies. */
+[data-reduced-motion="true"] .entrance__surface, [data-reduced-motion="true"] .entrance__surface > .entrance__hero { position: static; left: auto !important; top: auto !important; width: auto !important; height: auto !important; pointer-events: auto !important; }
 
 /* Nav: hidden until the portal completes; shown at first paint in static mode. */
-[data-reduced-motion="true"] header[data-entrance-nav] { opacity: 1; }
-@media (prefers-reduced-motion: reduce) { header[data-entrance-nav] { opacity: 1; } }
+[data-reduced-motion="true"] header[data-entrance-nav] { opacity: 1; pointer-events: auto; }
+@media (prefers-reduced-motion: reduce) { header[data-entrance-nav] { opacity: 1; pointer-events: auto; } }
 
 /* Screen choreography hooks. Everything the stage animates is transform or
    opacity; with no script running none of it is applied and the hero is at rest. */
@@ -40,4 +41,4 @@
 [data-hero-name] { transform-origin: 50% 50%; }
 .entrance__chapter { position: absolute; left: clamp(20px, 4vw, 40px); top: 24px; z-index: 4; }
 /* Nothing left to skip once the portal completes. */
-html[data-entrance-done="true"] .entrance__skip { opacity: 0; pointer-events: none; }
+html[data-entrance-done="true"] .entrance__skip { visibility: hidden; } /* not just transparent: out of the Tab order */

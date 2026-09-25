@@ -5,7 +5,7 @@ const LINKS = [
   { href: `mailto:${socials.email}`, label: "Email", external: false },
   { href: socials.github.url, label: "GitHub", external: true },
   { href: socials.linkedin.url, label: "LinkedIn", external: true },
-  { href: "#top", label: "Back to top", external: false },
+  { href: "#hero", label: "Back to top", external: false },
 ];
 
 /**

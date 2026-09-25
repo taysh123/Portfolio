@@ -10,7 +10,9 @@ export class FrameStore<T extends Decoded> {
   failed = false;
 
   constructor(private o: { count: number; order: number[]; fetchBlob: (i: number) => Promise<Blob>;
-    decode: (b: Blob) => Promise<T>; window?: number; concurrency?: number }) {}
+    decode: (b: Blob) => Promise<T>; window?: number; concurrency?: number;
+    /** Keyframes decoded as soon as they arrive and never released, so a jump always has a near frame to show. */
+    keep?: number[] }) {}
 
   private get win() { return this.o.window ?? 6; }
   private emit() { this.listeners.forEach((l) => l()); }
@@ -26,7 +28,7 @@ export class FrameStore<T extends Decoded> {
     for (let k = 0; k < (this.o.concurrency ?? 4); k++) void worker();
   }
 
-  private wanted(i: number) { return Math.abs(i - this.playhead) <= this.win; }
+  private wanted(i: number) { return Math.abs(i - this.playhead) <= this.win || (this.o.keep?.includes(i) ?? false); }
 
   private decodeIfWanted(i: number) {
     const blob = this.blobs.get(i);

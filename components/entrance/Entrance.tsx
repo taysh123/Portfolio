@@ -6,7 +6,7 @@ export function Entrance({ children }: { children: React.ReactNode }) {
   return (
     <div id="entrance" className="entrance" data-framing="landscape">
       <noscript>
-        <style>{`.entrance{height:auto}.entrance__stage{position:static;height:auto}.entrance__canvas,.entrance__poster,.entrance__veil,.entrance__overlay,.entrance__skip{display:none}.entrance__still{display:block;position:relative;height:100svh}.entrance__surface{position:static;opacity:1}.entrance__surface>.entrance__hero{position:static;width:auto;height:auto}header[data-entrance-nav]{opacity:1!important}`}</style>
+        <style>{`.entrance{height:auto}.entrance__stage{position:static;height:auto}.entrance__canvas,.entrance__poster,.entrance__veil,.entrance__overlay,.entrance__skip{display:none}.entrance__still{display:block;position:relative;height:100svh}.entrance__surface{position:static;opacity:1}.entrance__surface>.entrance__hero{position:static;width:auto;height:auto}header[data-entrance-nav]{opacity:1!important;pointer-events:auto!important}`}</style>
       </noscript>
       {/* Dark in both themes: the stage is the studio, and the hero starts life as the laptop's screen. */}
       <div className="entrance__stage" data-theme="dark">

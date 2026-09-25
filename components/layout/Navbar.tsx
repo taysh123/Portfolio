@@ -83,7 +83,7 @@ export function Navbar() {
         data-entrance-nav
         className={cn(
           // Hidden while the entrance runs; the stage sets data-entrance-done at the portal (or at once in static mode).
-          "fixed inset-x-0 top-0 z-50 opacity-0 [html[data-entrance-done=true]_&]:opacity-100 focus-within:opacity-100 transition-[background-color,border-color,backdrop-filter,opacity] duration-[var(--dur-slow)] ease-[var(--ease-out-expo)]",
+          "fixed inset-x-0 top-0 z-50 pointer-events-none opacity-0 [html[data-entrance-done=true]_&]:pointer-events-auto [html[data-entrance-done=true]_&]:opacity-100 focus-within:pointer-events-auto focus-within:opacity-100 transition-[background-color,border-color,backdrop-filter,opacity] duration-[var(--dur-slow)] ease-[var(--ease-out-expo)]",
           scrolled
             ? "glass border-b border-line-subtle"
             : "border-b border-transparent bg-transparent",

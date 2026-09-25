@@ -38,11 +38,22 @@ type StageState = { set?: FrameSet; store?: FrameStore<ImageBitmap>; kind: "land
 
 const container = () => document.getElementById("entrance")!;
 
-/** Jump to p = 1 (the hero at identity) and put focus on the h1. Instant: no scroll-driven replay. */
-function skipIntro() {
+/** Jump to p = 1 (the hero at identity). Instant: no scroll-driven replay. Focuses the h1 unless told not to. */
+function skipIntro(focusTitle = true) {
   const c = container(), end = c.offsetTop + c.offsetHeight - window.innerHeight;
   window.scrollTo({ top: end, behavior: "instant" as ScrollBehavior });
-  document.getElementById("hero-title")?.focus();
+  if (focusTitle) document.getElementById("hero-title")?.focus();
+}
+
+/** Anchors that mean "the start of the content": the skip link, Back to top, the logo. */
+const HERO_HASHES = new Set(["#main", "#hero"]);
+
+/** Decoded ImageBitmaps cost w·h·4 bytes each: narrow the decode window as the tier grows. */
+const windowFor = (tier: number) => (tier >= 1920 ? 3 : tier >= 1280 ? 5 : 8);
+
+/** Every inline property the stage writes, so static mode can hand the hero back untouched. */
+function resetInline(els: (HTMLElement | null | undefined)[]) {
+  for (const el of els) if (el) for (const k of ["left", "top", "width", "height", "transform", "clip-path", "opacity", "pointer-events"]) el.style.removeProperty(k);
 }
 
 export function EntranceStage({ children }: { children: React.ReactNode }) {
@@ -65,18 +76,22 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (reduced) { document.documentElement.dataset.entranceDone = "true"; return; }
+    const stage = canvasRef.current!.parentElement!;
     const s: StageState = { kind: stageGeometry(window.innerWidth, window.innerHeight).kind, gen: 0, tier: 0, vw: 0, vh: 0, pContain: BEATS.push[1], raf: 0, p: progressRef.current };
     const canvas = canvasRef.current!, surface = surfaceRef.current!, hero = heroRef.current!;
     const veil = veilRef.current!, title = titleRef.current!, chapter = chapterRef.current!;
 
-    // Geometry: framing, container height, canvas backing size — on mount and on every resize.
+    // Geometry: framing, container height, canvas backing size — on mount and whenever the stage box changes.
+    // Measured from the stage itself (100svh × client width), never the window: iOS toolbars and classic
+    // scrollbars make innerWidth/innerHeight disagree with the box the canvas and the surface live in.
     const apply = () => {
-      const vw = window.innerWidth, vh = window.innerHeight, g = stageGeometry(vw, vh);
+      const vw = stage.clientWidth, vh = stage.clientHeight, g = stageGeometry(window.innerWidth, window.innerHeight);
       const c = container(); c.dataset.framing = g.kind; c.style.setProperty("--entrance-h", `${g.containerSvh}svh`);
       s.vw = vw; s.vh = vh;
       if (s.kind !== g.kind) { s.kind = g.kind; void boot(); }
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.round(vw * dpr); canvas.height = Math.round(vh * dpr); canvas.getContext("2d")!.setTransform(dpr, 0, 0, dpr, 0, 0);
+      hero.style.width = `${vw}px`; hero.style.height = `${vh}px`;
       measureHooks(); computeContain(); render(s.p);
     };
 
@@ -87,16 +102,19 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       let m: Manifest;
       try { m = await (await fetch("/entrance/manifest.json")).json(); } catch { return; } // the poster stays
       if (gen !== s.gen) return;
-      const kind = s.kind, set = m[kind], tier = pickTier(set.tiers, s.vw, window.devicePixelRatio || 1, saveData());
+      const kind = s.kind, set = m?.[kind];
+      if (!set?.frames?.length || !set.tiers?.length) return; // malformed manifest: the poster stays
+      const tier = pickTier(set.tiers, s.vw, window.devicePixelRatio || 1, saveData());
       const posterImg = new Image(); posterImg.src = `/entrance/${set.poster}.avif`; await posterImg.decode().catch(() => {});
       if (gen !== s.gen) return;
       s.set = set; s.tier = tier; s.poster = posterImg;
       const stillIndex = set.frames.findIndex((f) => f.file === "k1-on");
+      const keep = [0, stillIndex, set.pushEndIndex].filter((i) => i >= 0);
       const store = new FrameStore<ImageBitmap>({
         count: set.frames.length,
         order: loadOrder(set.frames.length, { stillIndex, pushEndIndex: set.pushEndIndex, lidEnd: stillIndex - 1, saveData: saveData() }),
         fetchBlob: async (i) => (await fetch(`/entrance/${kind}/${tier}/${set.frames[i].file}.avif`)).blob(),
-        decode: (b) => createImageBitmap(b), window: 8, concurrency: 4,
+        decode: (b) => createImageBitmap(b), window: windowFor(tier), concurrency: 4, keep,
       });
       s.store = store;
       store.onChange(() => render(s.p));
@@ -133,7 +151,10 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
     const placeSurface = (p: number, quad: Quad | null) => {
       const portrait = s.kind === "portrait";
       const identityAt = portrait ? BEATS.portraitOpen[1] : BEATS.push[1];
-      surface.style.opacity = p >= BEATS.wake[0] ? String(segment(p, BEATS.wake[0], BEATS.wake[0] + 0.04)) : "0";
+      // Before identity the surface needs a real quad: with none (frames not decoded yet, a manifest failure)
+      // it stays hidden rather than flashing full-screen over the rendered room.
+      const shown = p >= BEATS.wake[0] && (quad !== null || p >= identityAt);
+      surface.style.opacity = shown ? String(segment(p, BEATS.wake[0], BEATS.wake[0] + 0.04)) : "0";
       // pContain can equal the push end (no push frame covers the viewport): then it is a step, not a ramp.
       let toIdentity = portrait ? segment(p, ...BEATS.portraitOpen)
         : s.pContain < BEATS.push[1] ? segment(p, s.pContain, BEATS.push[1], easeOut) : Number(p >= BEATS.push[1]);
@@ -185,19 +206,36 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       });
     };
 
-    // Focus arriving inside the hero before the portal (Tab, a skip link, #main / #hero) jumps to identity.
-    const onFocus = (e: FocusEvent) => { if (s.p < 1 && hero.contains(e.target as Node)) skipIntro(); };
-    const onHash = () => { if (location.hash === "#main" || location.hash === "#hero") skipIntro(); };
+    // Focus arriving inside the hero before the portal (Tab) jumps to identity and stays on the control it reached.
+    const onFocus = (e: FocusEvent) => { if (s.p < 1 && hero.contains(e.target as Node)) skipIntro(false); };
+    // #main / #hero links (skip link, Back to top, logo) land on the h1 at identity — also when the hash is
+    // already set, which never fires hashchange. Deep links to /#hero are honoured on arrival.
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as Element | null)?.closest?.("a[href^='#']");
+      if (!a || !HERO_HASHES.has(a.getAttribute("href")!)) return;
+      e.preventDefault(); history.replaceState(null, "", a.getAttribute("href")); skipIntro();
+    };
+    const onHash = () => { if (HERO_HASHES.has(location.hash)) skipIntro(); };
 
+    const ro = new ResizeObserver(() => apply());
     renderRef.current = render;
     apply(); void boot();
+    ro.observe(stage);
     window.addEventListener("resize", apply);
-    document.addEventListener("focusin", onFocus); window.addEventListener("hashchange", onHash);
+    document.addEventListener("focusin", onFocus); document.addEventListener("click", onClick);
+    window.addEventListener("hashchange", onHash);
+    if (HERO_HASHES.has(location.hash)) requestAnimationFrame(() => skipIntro());
+    void document.fonts?.ready.then(() => { if (renderRef.current === render) { measureHooks(); render(s.p); } });
     return () => {
       renderRef.current = null; s.gen++;
-      window.removeEventListener("resize", apply);
-      document.removeEventListener("focusin", onFocus); window.removeEventListener("hashchange", onHash);
+      ro.disconnect(); window.removeEventListener("resize", apply);
+      document.removeEventListener("focusin", onFocus); document.removeEventListener("click", onClick);
+      window.removeEventListener("hashchange", onHash);
       s.store?.dispose(); cancelAnimationFrame(s.raf);
+      // Static mode takes over (reduced motion switched on): hand every element back with no inline geometry.
+      const h = s.hooks;
+      resetInline([surface, hero, veil, title, chapter, h?.boot, h?.tagline, h?.name, ...(h?.bootLines ?? []), ...(h?.reveals.map(([el]) => el) ?? [])]);
+      canvas.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
     };
   }, [reduced]);
 
@@ -210,10 +248,11 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
         <p className="label mt-3 text-fg-muted">Software Developer</p>
       </div>
       <p ref={chapterRef} className="entrance__chapter entrance__overlay label pointer-events-none text-fg-muted" aria-hidden="true">01 — Scroll to begin</p>
+      {/* Before the surface in the DOM, so it is the first Tab stop inside the entrance. */}
+      <button type="button" data-skip-intro onClick={() => skipIntro()} className="entrance__skip label inline-flex min-h-11 items-center rounded-full border border-line bg-surface-3 px-4 text-fg-muted hover:text-fg">Skip intro ↓</button>
       <div ref={surfaceRef} className="entrance__surface">
         <div ref={heroRef} className="entrance__hero">{children}</div>
       </div>
-      <button type="button" data-skip-intro onClick={skipIntro} className="entrance__skip label inline-flex min-h-11 items-center rounded-full border border-line bg-surface-3 px-4 text-fg-muted hover:text-fg">Skip intro ↓</button>
     </>
   );
 }
