@@ -49,12 +49,12 @@
     linear-gradient(168deg,
       rgba(255, 255, 255, 0.055) 0%,
       rgba(255, 255, 255, 0.018) 34%,
-      rgba(180, 124, 255, 0.030) 100%);
+      rgba(91, 156, 255, 0.022) 100%);
   --panel-fill-deep:
     linear-gradient(168deg,
       rgba(255, 255, 255, 0.075) 0%,
       rgba(255, 255, 255, 0.022) 38%,
-      rgba(180, 124, 255, 0.045) 100%);
+      rgba(91, 156, 255, 0.032) 100%);
 
   /* ── Text ──────────────────────────────────────────────────────────────
      Contrast vs --bg (#05070a), computed:
@@ -64,6 +64,8 @@
   --fg: #f2f4f8;
   --fg-muted: #9aa3b2;
   --fg-subtle: #7b8597;
+  /* On --bg-raised an 11px label at --fg-subtle would drop to 5.2:1; .raised cards rebind to this (5.5:1). */
+  --fg-subtle-raised: #8089a0;
 
   /* ── Borders ─────────────────────────────────────────────────────────── */
   --border-subtle: rgba(255, 255, 255, 0.06);
@@ -83,6 +85,11 @@
 
   /* ── Glow (atmosphere only) ──────────────────────────────────────────── */
   --light-cool: rgba(91, 156, 255, 0.14);
+  /* Shared names used by the Plan 2 sections (tokens.test.ts asserts they exist). */
+  --line: var(--border);
+  --line-strong: var(--border-strong);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --light-warm: rgba(255, 180, 107, 0.10);
   --glow: rgba(91, 156, 255, 0.10);        /* violet retired; aliased until Plan 2 removes its callers */
   --glow-strong: rgba(91, 156, 255, 0.16);
@@ -208,7 +215,8 @@
 [data-theme="light"] {
   color-scheme: light;
 
-  --bg: #eef0f7;
+  --bg: #f5f6f8;            /* paper */
+  --bg-raised: #ffffff;
   --screen: #05070a;
   --surface-0: var(--bg);
   --surface-1: rgba(255, 255, 255, 0.78);
@@ -220,34 +228,36 @@
     linear-gradient(168deg,
       rgba(255, 255, 255, 0.96) 0%,
       rgba(255, 255, 255, 0.86) 40%,
-      rgba(139, 92, 246, 0.05) 100%);
+      rgba(20, 89, 217, 0.04) 100%);
   --panel-fill-deep:
     linear-gradient(168deg,
       rgba(255, 255, 255, 0.99) 0%,
       rgba(255, 255, 255, 0.92) 44%,
-      rgba(139, 92, 246, 0.07) 100%);
+      rgba(20, 89, 217, 0.05) 100%);
 
-  /* Contrast vs --surface-0: fg 17.6:1 · muted 8.9:1 · subtle 5.5:1 */
-  --fg: #0b0e1a;
+  /* Contrast vs --bg #f5f6f8: fg 17.9:1 · muted 8.1:1 · subtle 5.8:1 (floor 5.4, tokens.test.ts) */
+  --fg: #0b0e14;            /* ink */
   --fg-muted: #414a63;
-  --fg-subtle: #5a6480;
+  --fg-subtle: #566079;
+  --fg-subtle-raised: #566079;  /* 6.3:1 on white */
 
   --border-subtle: rgba(11, 14, 26, 0.07);
   --border: rgba(11, 14, 26, 0.11);
   --border-strong: rgba(11, 14, 26, 0.18);
 
-  /* Darker accent so it still clears AA as text — 5.9:1 on --surface-0.
-     The dark-mode #5b8def measures only 3.0:1 here, which is why the old
-     single-value accent made light mode fail outright. */
-  --accent: #1d4ed8;
-  --accent-hover: #1a3fae;
+  /* Darker accent so it still clears AA as text — 5.6:1 on --bg. The dark-mode
+     ice measures far below that here, so the light theme carries its own. */
+  --accent: #1459d9;
+  --accent-hover: #0f4bbd;
+  --accent-solid: #1459d9;        /* white 6.1:1 */
+  --accent-solid-hover: #0f4bbd;
   --accent-soft: rgba(37, 99, 235, 0.10);
   --accent-line: rgba(37, 99, 235, 0.28);
   --accent-ring: rgba(37, 99, 235, 0.55);
   --accent-contrast: #ffffff;
 
-  --glow: rgba(139, 92, 246, 0.16);
-  --glow-strong: rgba(139, 92, 246, 0.24);
+  --glow: rgba(20, 89, 217, 0.10);        /* violet retired (spec §3.2) */
+  --glow-strong: rgba(20, 89, 217, 0.14);
   --glow-blue: rgba(37, 99, 235, 0.14);
 
   --status-live: #059669;
@@ -306,6 +316,8 @@
 
   --color-accent: var(--accent);
   --color-accent-solid: var(--accent-solid);
+  --color-fg-subtle-raised: var(--fg-subtle-raised);
+  --color-raised: var(--bg-raised);
   --color-accent-solid-hover: var(--accent-solid-hover);
   --color-accent-hover: var(--accent-hover);
   --color-accent-soft: var(--accent-soft);
@@ -558,7 +570,7 @@
   --surface-1: rgba(255, 255, 255, 0.07);
   --surface-2: rgba(255, 255, 255, 0.11);
   --accent: #9dbcff;
-  --glow: rgba(180, 124, 255, 0.10);
+  --glow: rgba(91, 156, 255, 0.10);
   --glow-blue: rgba(91, 141, 239, 0.10);
 }
 
@@ -682,3 +694,14 @@
   animation: none !important;
 }
 [data-reduced-motion="true"] .anim-sweep { opacity: 0; }
+
+/* A raised card. Rebinds the label colour so 11px text on it keeps ≥ 5.4:1 (tokens.test.ts). */
+.raised { background: var(--bg-raised); --fg-subtle: var(--fg-subtle-raised); }
+
+/* Seams between the light theme and a dark stage (Plan 2 decision 1). Pseudo-elements, so they add no DOM
+   and a section can carry both; invisible in the dark theme, where --seam-edge is transparent. */
+.seam-top-dark, .seam-bottom-dark { position: relative; }
+.seam-top-dark::before, .seam-bottom-dark::after { content: ""; position: absolute; inset-inline: 0; height: 96px; pointer-events: none; z-index: 0; }
+.seam-top-dark::before { top: 0; background: linear-gradient(to bottom, var(--seam-edge, transparent), transparent); }
+.seam-bottom-dark::after { bottom: 0; background: linear-gradient(to top, var(--seam-edge, transparent), transparent); }
+[data-theme="light"] .seam-top-dark, [data-theme="light"] .seam-bottom-dark { --seam-edge: #f5f6f8; }

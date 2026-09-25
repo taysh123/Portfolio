@@ -14,7 +14,9 @@ export const brand = {
   bg: "#05070a",
   bgRaised: "#0a0e14",
   screen: "#05070a",
-  bgLight: "#f6f7fb",
+  bgLight: "#f5f6f8",
+  fgLight: "#0b0e14",
+  fgSubtleRaised: "#8089a0",
 
   fg: "#f2f4f8",
   fgMuted: "#9aa3b2",
@@ -25,7 +27,7 @@ export const brand = {
   /** Filled-button accent; white text clears 4.5:1. */
   accentSolid: "#1d6ef5",
   /** Interaction accent, light theme — darker so it still clears AA as text. */
-  accentLight: "#2563eb",
+  accentLight: "#1459d9",
 
   /** Atmospheric only: bloom behind solid objects. Never text, never a border. */
   glow: "#5b9cff",
