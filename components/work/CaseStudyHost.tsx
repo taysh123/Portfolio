@@ -5,7 +5,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { projects, type Project } from "@/data/projects";
 
 // Not in first-load JS: the panel's chunk is requested on the first "Case study" activation (budget.spec.ts).
-const CaseStudyPanel = dynamic(() => import("@/components/ui/CaseStudyPanel").then((m) => m.CaseStudyPanel), { ssr: false });
+// While the chunk loads (first open, slow network) the click still gets immediate, announced feedback.
+const CaseStudyPanel = dynamic(() => import("@/components/ui/CaseStudyPanel").then((m) => m.CaseStudyPanel), {
+  ssr: false,
+  loading: () => (
+    <div className="fixed inset-0 z-[60] grid place-items-center bg-[color-mix(in_oklab,var(--bg)_70%,transparent)]" data-case-study-loading>
+      <p role="status" className="label text-fg-muted">Loading case study…</p>
+    </div>
+  ),
+});
 
 /** One delegated listener for every server-rendered [data-case-study] button on the page. */
 export function CaseStudyHost() {

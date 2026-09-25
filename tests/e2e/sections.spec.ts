@@ -175,3 +175,16 @@ for (const [name, setup] of [
     expect(tops[0][0]).toBeLessThan(tops[1][0]); expect(tops[1][0]).toBeLessThan(tops[2][0]);
   });
 }
+
+test("case study: a slow first load shows an announced loading state, then the panel (UX review)", async ({ page }) => {
+  await page.route(/\/_next\/static\/chunks\/.*\.js$/, async (route) => {
+    const res = await route.fetch(); const body = await res.text();
+    if (body.includes("Close case study")) await new Promise((r) => setTimeout(r, 1500));
+    await route.fulfill({ response: res, body });
+  });
+  await skip(page);
+  const opener = page.locator("button[data-case-study='aegis']"); await opener.scrollIntoViewIfNeeded(); await opener.click();
+  await expect(page.getByRole("status").filter({ hasText: "Loading case study" })).toBeVisible();
+  await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator("[data-case-study-loading]")).toHaveCount(0);
+});
