@@ -10,6 +10,7 @@ export function AegisWorld() {
   const alt = (src: string) => (p.media?.image === src ? p.media.alt : p.media?.gallery?.find((g) => g.src === src)?.alt) ?? "";
   return (
     <div className="world-aegis">
+      <p className="world-aegis__badge label"><span aria-hidden="true" className="world-aegis__dot" /> Streaming — local demo</p>
       <div className="world-aegis__monitor">
         <Image src={a.monitor} alt={alt(a.monitor)} width={3840} height={2160} sizes="(min-width:1024px) 55vw, 100vw" />
         <span className="world-aegis__scan" aria-hidden="true" />
@@ -22,7 +23,6 @@ export function AegisWorld() {
           </div>
         ))}
       </div>}
-      <p className="world-aegis__badge label"><span aria-hidden="true" className="world-aegis__dot" /> Streaming — local demo</p>
     </div>
   );
 }

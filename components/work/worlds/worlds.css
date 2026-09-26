@@ -87,7 +87,8 @@
   transform: translateX(calc((1 - clamp(0, var(--assemble) * 3 - var(--i) * 0.6, 1)) * 60px)); opacity: clamp(0, var(--assemble) * 3 - var(--i) * 0.6, 1); }
 .world-aegis__row img { position: absolute; max-width: none; height: auto; width: calc(var(--scale) * 100%);
   left: calc(-1 * var(--crop-x) * var(--scale) * 100%); top: 50%; transform: translateY(calc(-1 * var(--y) * 100%)); }
-.world-aegis__badge { position: absolute; left: 16px; top: 16px; display: inline-flex; gap: 8px; align-items: center; color: var(--fg-muted);
+/* A caption above the monitor, not on it: over the capture it covered the dashboard's own "SOC Overview" heading. */
+.world-aegis__badge { position: relative; width: fit-content; margin: 0 0 12px; display: flex; gap: 8px; align-items: center; color: var(--fg-muted);
   background: rgba(5,7,10,0.72); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; }
 .world-aegis__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 /* Single column: the rows stay inside the world rather than bleeding off the screen edge. */
