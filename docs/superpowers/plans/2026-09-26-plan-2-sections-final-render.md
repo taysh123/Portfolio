@@ -3364,3 +3364,54 @@ await b.close(); process.exit(p95 > 8 ? 1 : 0);
   6. anything left open.
 
   Follow the truth rule: report failures plainly.
+
+---
+
+## Verification log (Task 24, recorded 2026-09-26)
+
+Measurements taken on a fresh production build with the final frames in `public/entrance`. Every e2e/measure run that overlapped the final render was taken with the render paused (SIGSTOP); the final runs below had no render running.
+
+### Gate
+- `tsc --noEmit` clean · ESLint clean · Vitest **86/86** (0 skipped — `verify-provenance` now runs) · `next build` OK.
+- Playwright **83/83**, then `--repeat-each=3`: **249/249**, no flakes.
+- Render pipeline unit tests (`test_audit`, `test_groups`): 12/12.
+
+### Budgets (spec §9)
+| Budget | Limit | Measured | |
+|---|---|---|---|
+| First-load JS (gzip) | ≤ 286 KB | **258.6 KB** (Plan 1 baseline 279.6) | pass |
+| HTML | ≤ 568 KB | **389.2 KB** | pass |
+| LCP desktop 1440×900 | ≤ 1.2 s | **332 ms** | pass |
+| LCP mobile 390×844 | ≤ 1.2 s | **212 ms** | pass |
+| CLS (whole page) | < 0.02 | **0** | pass |
+| Landscape 1280 tier | ≤ 2.5 MB | **1.52 MB** | pass |
+| Landscape 1920 tier | ≤ 4 MB | **2.17 MB** | pass |
+| Portrait 720 tier | ≤ 1.2 MB | **0.48 MB** | pass |
+| Poster AVIF | 60–90 KB target | **34 KB / 20 KB** | under target; inspected at 100%, no visible degradation — accepted |
+| Frames before `load` | 0 | 0 (entrance.spec) | pass |
+| Idle rAF at Contact / page bottom | 0 | 0 (idle.spec) | pass |
+| Entrance main-thread p95 | ≤ 8 ms | **5.52–5.66 ms** (3 runs; max single task 34–91 ms) | pass |
+
+### Visual pass
+- Entrance beats 0, .1, .25, .45, .6, .78, .9, 1 at 1440×900, 1366×768, 768×1024, 390×844, 375×667, 844×390, both themes, final frames: poster fills with no letterbox; the surface sits on the screen 0.45–0.68; push fills; the hero equals the page at 1.0 with the nav; no horizontal overflow.
+- Every section, incl. pinned mid-points, at all six sizes and both themes (Task 21 pass + a regression re-shoot after the review fixes at 1440, 1280×720, 390): no clipping or overflow; the dark spine (entrance, flagship run, Contact) holds in the light theme; seams soft.
+- Fixed from the visual pass: Think·Build·Ship had no vertical padding unpinned; at 844×390 the floating a11y control covered the hero CTA (Plan 1 open item) → it stacks above the chat button on ≤500px-tall screens; the a11y panel overflowed a 390px-tall viewport → bounded and scrollable.
+- Overlays (palette, a11y panel, chat, flagship + More Work case studies, mobile sheet) at 1440 and 390, both themes: all on the new tokens; violet grep clean. **Fixed**: the command palette was never a real overlay (`.edge-lit` beat `.fixed`), and it scrolled the page on open and close.
+
+### Accessibility and UX review (UI UX Pro Max pre-delivery)
+| Item | Result |
+|---|---|
+| Focus rings | pass (global `:focus-visible`; every keyboard stop showed a ring) |
+| 44 px targets below lg | pass (a11y.spec) |
+| Contrast, both themes | pass (tokens.test floors; visual pass) |
+| Reduced motion (OS + in-app) | pass (scene, sections, entrance tests); **fixed**: `glideTo` animated without Lenis |
+| No hover-only content | pass (the pointer light is decoration only) |
+| Zoom | pass (no `maximum-scale`) |
+| CLS | pass (0) |
+| Loading feedback | **fixed**: announced loading state for the on-demand case study |
+| Stacking contexts | **fixed** (the palette `position` override) |
+| One primary motion per viewport; no decorative infinite loop | pass (GRAVITY FLOW's loop is the spec's one sanctioned loop, in view only) |
+| Keyboard walk | pass: 37 stops in order (skip link → nav → hero → each flagship's CTAs → More Work → Contact incl. PhoneReveal → footer → floating controls); both case studies open/close by keyboard with focus returned |
+
+### Bugs found and fixed during verification
+The palette request lost before its chunk loaded; the Lenis/native scroll races (Home, skip link, anchors); the palette's window scroll during close; focus restore scrolling the page; the entrance redrawing off-screen (idle budget); the focus-trap Escape race; the fit guard (pinned scenes clipping their buttons, then measuring the wrong layout). Each has a test that failed before its fix.
