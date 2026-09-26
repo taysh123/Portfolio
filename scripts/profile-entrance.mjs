@@ -27,14 +27,16 @@ const SCENARIOS = [
 const PATTERNS = ["slow", "fast", "reversal", "cold-fast"];
 
 const INIT = () => {
-  const P = (window.__prof = { fetch: {}, decodes: [], renders: [], playheads: [], evicts: 0, frames: [], long: [], scrolls: [], rec: false });
+  const P = (window.__prof = { fetch: {}, decodes: [], renders: [], playheads: [], evicts: 0, frames: [], long: [], scrolls: [], adapts: [], cfg: null, rec: false });
   window.__ENTRANCE_PROF__ = {
+    config: (c) => { P.cfg = c; },
+    adapt: (a) => { P.adapts.push(a); },
     fetchStart: (i, t) => { (P.fetch[i] ||= {}).start = t; },
     fetchEnd: (i, t, bytes) => { Object.assign((P.fetch[i] ||= {}), { end: t, bytes }); },
     decode: (i, ms, w, h) => { P.decodes.push({ i, ms, w, h, t: performance.now() }); },
     evict: () => { P.evicts++; },
     playhead: (i, decoded, near, bytes) => { if (P.rec) P.playheads.push({ i, decoded, near, bytes }); },
-    render: (r) => { if (P.rec) P.renders.push({ ...r, y: scrollY }); },
+    render: (r) => { if (!P.rec) return; if (r.skipped) P.skips = (P.skips || 0) + 1; else P.renders.push({ ...r, y: scrollY }); },
   };
   const loop = (t) => { if (P.rec) P.frames.push(t); requestAnimationFrame(loop); };
   requestAnimationFrame(loop);
@@ -125,6 +127,13 @@ async function run(browser, sc, pattern) {
     rendersWantingUnfetched: lateFetch, framesReachedBeforeFetched: reachedUnfetched,
     decodedNearPlayhead: { p50: pct(P.playheads.map((x) => x.near), 0.5), min: P.playheads.length ? Math.min(...P.playheads.map((x) => x.near)) : null },
     bitmapMB: { max: P.playheads.length ? +(Math.max(...P.playheads.map((x) => x.bytes)) / 1e6).toFixed(1) : 0 },
+    // Interval between visual updates while moving (rAF timestamps of renders that ran): regularity of what the
+    // viewer sees, including a deliberate half-rate cadence (skipped ticks draw nothing).
+    updateMs: (() => { const t = R.filter((r) => r.moving && r.ts !== undefined).map((r) => r.ts); const d = t.slice(1).map((x, i) => x - t[i]).filter((x) => x < 250);
+      const m = d.reduce((a, b) => a + b, 0) / Math.max(1, d.length), sd = Math.sqrt(d.reduce((a, b) => a + (b - m) ** 2, 0) / Math.max(1, d.length));
+      return { p50: pct(d, 0.5), p95: pct(d, 0.95), cv: d.length ? +(sd / m).toFixed(3) : null }; })(),
+    skips: P.skips || 0, adapts: P.adapts.map((a) => `${a.mode}/${a.cadence}@${a.dropRate.toFixed(2)}`), format: P.cfg?.format, tier: P.cfg?.tier,
+    allFetchedMs: (() => { const f = Object.values(P.fetch).filter((x) => x.end); return f.length ? Math.round(Math.max(...f.map((x) => x.end)) - Math.min(...f.map((x) => x.start))) : null; })(),
     fetched: Object.values(P.fetch).filter((f) => f.end).length, fetchKB: Math.round(Object.values(P.fetch).reduce((a, f) => a + (f.bytes || 0), 0) / 1024),
     endP: +endY.toFixed(3), overflow, errors,
   };
@@ -149,7 +158,7 @@ for (const sc of SCENARIOS.filter((s) => !ONLY.length || ONLY.includes(s.name)))
     const rs = []; for (let k = 0; k < RUNS; k++) rs.push(await run(browser, sc, pattern).catch(() => run(browser, sc, pattern)));
     results[`${sc.name}/${pattern}`] = merge(rs);
     const m = results[`${sc.name}/${pattern}`];
-    console.log(`${sc.name.padEnd(18)} ${pattern.padEnd(9)} drop ${String(m.dropRate).padEnd(5)} missedFr ${String(m.missedFrames).padEnd(4)} render p95 ${String(m.renderMs.p95).padEnd(6)} draw p95 ${String(m.drawMs.p95).padEnd(6)} runway ${m.runwayPx}px swipe Δp ${m.swipeP} fr/frame p50/95 ${m.framesPerFrame.p50}/${m.framesPerFrame.p95} misses ${String(m.misses).padEnd(4)} (${m.missRate}) dist≤${m.missDist.max} unfetched ${m.framesReachedBeforeFetched} decode p95 ${m.decode.p95} long>50 ${m.longTasks.over50} max ${m.longTasks.max} bmp ${m.bitmapMB.max}MB endP ${m.endP}`);
+    console.log(`${sc.name.padEnd(18)} ${pattern.padEnd(9)} drop ${String(m.dropRate).padEnd(5)} missedFr ${String(m.missedFrames).padEnd(4)} render p95 ${String(m.renderMs.p95).padEnd(6)} draw p95 ${String(m.drawMs.p95).padEnd(6)} runway ${m.runwayPx}px swipe Δp ${m.swipeP} fr/frame p50/95 ${m.framesPerFrame.p50}/${m.framesPerFrame.p95} upd p50/95/cv ${m.updateMs.p50}/${m.updateMs.p95}/${m.updateMs.cv} skips ${m.skips} ${m.format}@${m.tier} allFetched ${m.allFetchedMs}ms ${m.fetchKB}KB misses ${String(m.misses).padEnd(4)} (${m.missRate}) dist≤${m.missDist.max} unfetched ${m.framesReachedBeforeFetched} decode p95 ${m.decode.p95} long>50 ${m.longTasks.over50} max ${m.longTasks.max} bmp ${m.bitmapMB.max}MB endP ${m.endP}`);
   }
 }
 await browser.close();

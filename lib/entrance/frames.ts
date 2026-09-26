@@ -48,3 +48,13 @@ export function lerpQuad(a: Quad | null, b: Quad | null, w: number): Quad | null
   if (!a || !b) return null;
   return a.map((p, i) => ({ x: p.x + (b[i].x - p.x) * w, y: p.y + (b[i].y - p.y) * w })) as Quad;
 }
+
+/**
+ * Frame format. Phone portrait (narrower than 480 CSS px) plays the WebP copy of its tier when the manifest
+ * has one: on a phone-class CPU WebP decodes in about two thirds of AVIF's time (scripts/bench-frame-formats.mjs),
+ * and decoding is what a phone's scroll waits on once the ~0.9 MB set is fetched. Landscape, tablets and the
+ * posters stay AVIF.
+ */
+export function pickFormat(set: { webp?: number[] }, kind: "landscape" | "portrait", tier: number, vw: number): "avif" | "webp" {
+  return kind === "portrait" && vw < 480 && (set.webp?.includes(tier) ?? false) ? "webp" : "avif";
+}

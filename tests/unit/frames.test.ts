@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { resolveFrame, loadOrder, pickFramingKind, pickTier, lerpQuad } from "@/lib/entrance/frames";
+import { resolveFrame, loadOrder, pickFramingKind, pickTier, pickFormat, lerpQuad } from "@/lib/entrance/frames";
 
 const frames = [{ p: 0.12 }, { p: 0.2 }, { p: 0.38 }, { p: 0.53 }, { p: 0.68 }, { p: 0.88 }];
 
@@ -56,5 +56,16 @@ describe("lerpQuad", () => {
     const q = [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 1 }] as const;
     expect(lerpQuad(null, [...q] as never, 0.5)).toBeNull();
     expect(lerpQuad([...q] as never, [...q] as never, 0.5)?.[2]).toEqual({ x: 1, y: 1 });
+  });
+});
+
+describe("pickFormat", () => {
+  const set = { webp: [600] };
+  it("plays WebP only on phone portrait, and only for a tier that has it", () => {
+    expect(pickFormat(set, "portrait", 600, 390)).toBe("webp");
+    expect(pickFormat(set, "portrait", 720, 390)).toBe("avif");      // no WebP copy of that tier
+    expect(pickFormat(set, "portrait", 600, 768)).toBe("avif");      // tablets keep AVIF
+    expect(pickFormat(set, "landscape", 600, 390)).toBe("avif");     // landscape keeps AVIF
+    expect(pickFormat({}, "portrait", 600, 390)).toBe("avif");       // a manifest without WebP
   });
 });

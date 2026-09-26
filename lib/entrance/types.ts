@@ -6,7 +6,8 @@ export type ManifestFrame = { file: string; p: number; quad: Quad | null };
 export type FrameSet = {
   width: number;               // master width
   height: number;
-  tiers: number[];             // encoded widths available, ascending
+  tiers: number[];             // encoded widths available, ascending (AVIF)
+  webp?: number[];             // tiers that also ship WebP frames (phone portrait)
   frames: ManifestFrame[];     // sorted by p; quads in 0..1 image space
   poster: string;              // base name; .avif and .jpg exist
   still: string;

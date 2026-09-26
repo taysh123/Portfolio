@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { BEATS, segment, easeOut, easeInOut } from "@/lib/timeline";
 import { FrameStore } from "@/lib/entrance/FrameStore";
 import { drawFrame } from "@/lib/entrance/FramePlayer";
-import { loadOrder, pickTier, resolveFrame } from "@/lib/entrance/frames";
+import { loadOrder, pickTier, pickFormat, resolveFrame } from "@/lib/entrance/frames";
 import { surfaceTransform, containsRect, coverFit, quadToViewport } from "@/lib/entrance/surface";
 import { stageGeometry } from "./stageGeometry";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
@@ -34,16 +34,39 @@ const saveData = () => {
   return Boolean(c?.saveData || (c?.effectiveType && /(^|-)2g|3g/.test(c.effectiveType)));
 };
 
-type StageState = { set?: FrameSet; store?: FrameStore<ImageBitmap>; kind: "landscape" | "portrait"; gen: number;
+type StageState = { set?: FrameSet; store?: FrameStore<ImageBitmap>; kind: "landscape" | "portrait"; gen: number; format: "avif" | "webp"; fetchConcurrency: number;
   tier: number; vw: number; vh: number; pContain: number; raf: number; p: number; poster?: HTMLImageElement; hooks?: Hooks;
   /** Scroll geometry, measured on resize only: progress is then pure arithmetic on scrollY, no layout reads. */
   top: number; range: number; drawnKey: string;
   /** Adaptive cross-fade: the playhead's last position in frame units, and whether blending is on. */
   lastF: number; blend: boolean;
   /** Quad (image space → viewport) of the last painted frame, for a hold. */
-  heldQuad?: Quad | null };
+  heldQuad?: Quad | null;
+  /** Adaptive rendering (see `adapt`): what is drawn while moving, and the display cadence. */
+  mode: "blend" | "single"; cadence: "full" | "30"; still: number; cad: Cadence };
+
+/** Recent display-frame intervals while the entrance moves, for the adaptive renderer. */
+type Cadence = { auto: boolean; autoCadence: boolean; lastTs: number; lastPaintTs: number; movedAt: number; chained: boolean; base: number; dts: number[]; draws: number[] };
+const CAD_WINDOW = 20;   // display frames: a third of a second of scrolling at 60 Hz
 
 const container = () => document.getElementById("entrance")!;
+
+/**
+ * Adaptive rendering, for touch devices only (desktop wheel scrolling is unchanged). The approved cross-fade
+ * draws two full-canvas layers per display frame, and the canvas is then re-uploaded to the compositor every
+ * frame the playhead moves. When a device cannot keep that up — a fifth or more of the recent display frames
+ * dropped while moving, or draws taking half a frame — it switches, for the rest of the visit, to drawing the
+ * nearest frame alone while moving (its own quad, so the surface never detaches from the image; the canvas is
+ * untouched until the frame index changes) and restores the exact blend once the scroll has settled. Decided
+ * from measured cadence, never from the device's name.
+ */
+const initialMode = (): Pick<StageState, "mode" | "cadence" | "cad"> => {
+  const x = experiment(), touch = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+  return {
+    mode: x.mode === "single" ? "single" : "blend", cadence: x.cadence === "30" ? "30" : "full",
+    cad: { auto: (x.mode ?? "auto") === "auto" && touch, autoCadence: x.cadence === "auto" && touch, lastTs: 0, lastPaintTs: 0, movedAt: -1e9, chained: false, base: 1000 / 60, dts: [], draws: [] },
+  };
+};
 
 /** Jump to p = 1 (the hero at identity). Instant: no scroll-driven replay. Focuses the h1 unless told not to. */
 function skipIntro(focusTitle = true) {
@@ -56,8 +79,10 @@ function skipIntro(focusTitle = true) {
 const HERO_HASHES = new Set(["#main", "#hero"]);
 
 /** Decoded ImageBitmaps cost w·h·4 bytes each: narrow the decode window as the tier grows. Ahead of the
- *  playhead (in the direction of travel) outweighs behind; peak memory stays near the old symmetric window's. */
-const windowFor = (tier: number) => (tier >= 1920 ? { ahead: 5, behind: 2 } : tier >= 1280 ? { ahead: 8, behind: 3 } : { ahead: 10, behind: 3 });
+ *  playhead (in the direction of travel) outweighs behind; peak memory stays near the old symmetric window's.
+ *  The phone tier (600) keeps 6 ahead / 2 behind: its whole set is fetched up front, so a decode never waits
+ *  on the network, and the narrower window measured no more misses while holding ~31 MB of bitmaps, not ~44. */
+const windowFor = (tier: number) => (tier >= 1920 ? { ahead: 5, behind: 2 } : tier >= 1280 ? { ahead: 8, behind: 3 } : tier > 600 ? { ahead: 10, behind: 3 } : { ahead: 6, behind: 2 });
 
 /**
  * Canvas backing scale: never more pixels than the frames themselves carry. The canvas's backing store is
@@ -102,7 +127,10 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (reduced) { document.documentElement.dataset.entranceDone = "true"; return; }
     const stage = canvasRef.current!.parentElement!;
-    const s: StageState = { kind: stageGeometry(window.innerWidth, window.innerHeight).kind, gen: 0, tier: 0, vw: 0, vh: 0, pContain: BEATS.push[1], raf: 0, p: 0, top: 0, range: 1, drawnKey: "", lastF: 0, blend: true };
+    const s: StageState = { kind: stageGeometry(window.innerWidth, window.innerHeight).kind, gen: 0, tier: 0, vw: 0, vh: 0, pContain: BEATS.push[1], raf: 0, p: 0, top: 0, range: 1, drawnKey: "", lastF: 0, blend: true, still: 0, format: "avif", fetchConcurrency: 6, ...initialMode() };
+    // `?entrancePerf=1`: a temporary, opt-in diagnostics panel (performance numbers only), loaded as its own
+    // chunk. Without the parameter nothing is imported and nothing below changes.
+    const perf = /[?&]entrancePerf=1(&|$)/.test(location.search) ? import("@/lib/entrance/perfPanel").then((m) => m.install()).catch(() => {}) : undefined;
     const canvas = canvasRef.current!, surface = surfaceRef.current!, hero = heroRef.current!;
     // One context for the life of the stage. Opaque: every draw covers the whole canvas (cover fit), so the
     // compositor never blends it and no clear is needed. It stays hidden (CSS) until its first draw, so an
@@ -114,6 +142,8 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       const k = backingScale(s.set, s.tier, s.vw, s.vh), w = Math.round(s.vw * k), h = Math.round(s.vh * k);
       if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; s.drawnKey = ""; }
       ctx.setTransform(k, 0, 0, k, 0, 0);
+      if (s.set) profiler()?.config?.({ framing: s.kind, tier: s.tier, format: s.format, count: s.set.frames.length, vw: s.vw, vh: s.vh, dpr: window.devicePixelRatio || 1,
+        canvasW: w, canvasH: h, mode: `${s.cad.auto ? "auto:" : ""}${s.mode}`, cadence: `${s.cad.autoCadence ? "auto:" : ""}${s.cadence}`, fetchConcurrency: s.fetchConcurrency });
     };
     const veil = veilRef.current!, title = titleRef.current!, chapter = chapterRef.current!;
 
@@ -138,15 +168,23 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
     const boot = async () => {
       const gen = ++s.gen;
       s.store?.dispose(); s.store = undefined; s.set = undefined; s.poster = undefined;
+      await perf;
+      if (gen !== s.gen) return;
+      Object.assign(s, initialMode(), { still: 0 });
       let m: Manifest;
       try { m = await (await fetch("/entrance/manifest.json")).json(); } catch { return; } // the poster stays
       if (gen !== s.gen) return;
       const kind = s.kind, set = m?.[kind];
       if (!set?.frames?.length || !set.tiers?.length) return; // malformed manifest: the poster stays
       const tier = experiment().tier ?? pickTier(set.tiers, s.vw, window.devicePixelRatio || 1, saveData());
+      const x = experiment(), format = x.format === "avif" || (x.format === "webp" && set.webp?.includes(tier)) ? x.format : pickFormat(set, kind, tier, s.vw);
+      // The phone WebP set is small (~0.9 MB): every frame is requested as soon as loading starts (current and
+      // upcoming frames at high priority), so a scroll waits on decoding only, never on the network. Decoded
+      // bitmaps stay bounded to the window around the playhead; only the compressed blobs are all kept.
+      const fetchConcurrency = x.fetchConcurrency ?? (format === "webp" ? set.frames.length : 6);
       const posterImg = new Image(); posterImg.src = `/entrance/${set.poster}.avif`; await posterImg.decode().catch(() => {});
       if (gen !== s.gen) return;
-      s.set = set; s.tier = tier; s.poster = posterImg; s.drawnKey = ""; sizeCanvas();
+      s.set = set; s.tier = tier; s.format = format; s.fetchConcurrency = fetchConcurrency; s.poster = posterImg; s.drawnKey = ""; sizeCanvas();
       const stillIndex = set.frames.findIndex((f) => f.file === "k1-on");
       const keep = [0, stillIndex, set.pushEndIndex].filter((i) => i >= 0);
       const store = new FrameStore<ImageBitmap>({
@@ -154,10 +192,10 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
         order: loadOrder(set.frames.length, { stillIndex, pushEndIndex: set.pushEndIndex, lidEnd: stillIndex - 1, saveData: saveData() }),
         // A 404 must fail the fetch, not hand an HTML error page to the decoder (review M9).
         fetchBlob: async (i, urgent) => {
-          const r = await fetch(`/entrance/${kind}/${tier}/${set.frames[i].file}.avif`, { priority: urgent ? "high" : "low" } as RequestInit);
+          const r = await fetch(`/entrance/${kind}/${tier}/${set.frames[i].file}.${format}`, { priority: urgent ? "high" : "low" } as RequestInit);
           if (!r.ok) throw new Error(`frame ${i}: ${r.status}`); return r.blob();
         },
-        decode: (b) => createImageBitmap(b), ...windowFor(tier), concurrency: 6, keep,
+        decode: (b) => createImageBitmap(b), ...(x.window ?? windowFor(tier)), concurrency: fetchConcurrency, keep,
         decodeConcurrency: (navigator.hardwareConcurrency || 4) >= 8 ? 4 : 3,
       });
       s.store = store;
@@ -244,9 +282,27 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
 
     // One frame of work, at most once per display frame, reading the scroll position when it runs: in the
     // same animation frame as Lenis's scroll write (or the native scroll), so the room never trails the page.
-    const frame = () => {
+    const frame = (ts?: number) => {
       cancelAnimationFrame(s.raf); s.raf = 0;
-      const t0 = performance.now(), p = progressNow();
+      const t0 = performance.now(), p = progressNow(), moving = p !== s.p;
+      // Display cadence while scrolling, for the adaptive renderer (touch only): consecutive rAF timestamps
+      // (vsync-aligned) during and for 100 ms after movement, when frames are requested every display frame —
+      // not the scroll events' own rhythm. A gap over 250 ms is a pause between gestures, not a dropped frame.
+      // Tracked only while a step remains to take: once reduced (or with no adaptation) nothing extra runs.
+      const c = s.cad, tracking = (c.auto && s.mode === "blend") || (c.autoCadence && s.cadence === "full");
+      if (ts !== undefined && moving) c.movedAt = ts;
+      const recent = ts !== undefined && ts - c.movedAt < 100, dt = ts !== undefined && c.lastTs ? ts - c.lastTs : 0;
+      if (ts !== undefined) c.lastTs = ts;
+      // Only an interval between two frames of one continuous chain counts (the previous frame asked for this one).
+      if (tracking && recent && c.chained && dt > 0 && dt < 250) { c.dts.push(dt); if (c.dts.length > CAD_WINDOW) c.dts.shift(); }
+      c.chained = tracking && recent;
+      // Steady half-rate cadence while moving: the frame after a drawn one draws nothing — canvas, surface and
+      // overlays all hold together, so the image and the surface still move as one.
+      if (s.cadence === "30" && moving && ts !== undefined && ts - c.lastPaintTs < 1.5 * c.base) {
+        profiler()?.render?.({ p, queuedAt: t0, start: t0, ms: performance.now() - t0, drawMs: 0, path: "skip", want: -1, drawn: null, ts, painted: false, skipped: true, moving });
+        request(); return;
+      }
+      if (ts !== undefined) c.lastPaintTs = ts;
       s.p = p;
       const zoom = 1 + 0.03 * segment(p, ...BEATS.lift, easeOut);
       // Frames crossed since the last draw. Blending stops at ≥ 1.25 frames per display frame and resumes
@@ -256,7 +312,12 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
         const r = resolveFrame(p, s.set.frames), f = r.a + r.w;
         speed = Math.abs(f - s.lastF);
         s.lastF = f;
-        if (s.blend && speed >= 1.25) s.blend = false; else if (!s.blend && speed <= 0.75) s.blend = true;
+        s.still = speed === 0 ? s.still + 1 : 0;
+        // Single-frame mode: the nearest frame alone while moving; the exact blend once the playhead has held
+        // still for three display frames (not one, so an irregular stream of scroll events cannot flicker
+        // between a snapped and a blended image mid-gesture).
+        if (s.mode === "single") s.blend = s.still >= 3;
+        else if (s.blend && speed >= 1.25) s.blend = false; else if (!s.blend && speed <= 0.75) s.blend = true;
       }
       const drawn = s.set && s.store
         ? drawFrame({ ctx, frames: s.set.frames, p, store: s.store as never, fallback: (s.poster ?? null) as never, fallbackQuad: null, frameW: s.set.width, frameH: s.set.height, vw: s.vw, vh: s.vh, zoom, skipKey: s.drawnKey, blend: s.blend, held: s.drawnKey.startsWith("pair:") || s.drawnKey.startsWith("near:") ? s.heldQuad ?? null : undefined })
@@ -266,6 +327,8 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
         if (drawn.path !== "hold") s.heldQuad = drawn.quad;
       }
       const quad: Quad | null = drawn?.quad ?? null, drawMs = performance.now() - t0;
+      if (tracking && moving && ts !== undefined) { c.draws.push(drawMs); if (c.draws.length > CAD_WINDOW) c.draws.shift(); }
+      if (tracking && recent) adapt();
       s.store?.setPlayhead(frameIndexAt(s.set, p));
       put(veil, "opacity", String(VEIL * (1 - segment(p, ...BEATS.lift, easeOut))));
       put(chapter, "text", CHAPTERS.filter(([at]) => p >= at).pop()?.[1] ?? "");
@@ -275,13 +338,30 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       choreograph(p);
       const done = String(p >= BEATS.navIn[0]);
       if (document.documentElement.dataset.entranceDone !== done) document.documentElement.dataset.entranceDone = done;
-      profiler()?.render?.({ p, queuedAt: t0, start: t0, ms: performance.now() - t0, drawMs, path: drawn?.path ?? "none", want: drawn?.want ?? -1, drawn: drawn?.drawnA ?? null });
+      profiler()?.render?.({ p, queuedAt: t0, start: t0, ms: performance.now() - t0, drawMs, path: drawn?.path ?? "none", want: drawn?.want ?? -1, drawn: drawn?.drawnA ?? null, ts, painted: drawn?.painted ?? false, moving });
       // Snapped to the nearest frame for speed: look again next frame. If the scroll has stopped, the speed is
       // then 0, blending resumes and the exact approved state for p is drawn — nothing is left mid-snap at rest.
       // Once blending is back on, no further frame is requested (no idle loop).
-      if (!s.blend) request();
+      if (!s.blend || (tracking && recent)) request();
     };
     const request = () => { if (!s.raf) s.raf = requestAnimationFrame(frame); };
+
+    // The adaptive step (touch devices, see `initialMode`): judged over a full window of moving frames, then
+    // the window restarts so the next step is judged on the new mode's own cadence. One-way for the visit.
+    const adapt = () => {
+      const c = s.cad;
+      if (c.dts.length < CAD_WINDOW) return;
+      const sorted = [...c.dts].sort((a, b) => a - b);
+      c.base = Math.min(c.base, Math.max(6, sorted[Math.floor(sorted.length * 0.1)]));   // the display's own interval
+      const dropRate = c.dts.filter((d) => d > 1.5 * c.base).length / c.dts.length;
+      const drawMean = c.draws.reduce((a, b) => a + b, 0) / Math.max(1, c.draws.length);
+      const strained = dropRate >= 0.2 || drawMean >= 0.5 * c.base;
+      let reason = "";
+      if (strained && c.auto && s.mode === "blend") { s.mode = "single"; reason = "blend strained"; }
+      else if (strained && c.autoCadence && s.cadence === "full" && (s.mode === "single" || !c.auto)) { s.cadence = "30"; reason = "single strained"; }
+      c.dts = []; c.draws = [];
+      if (reason) { profiler()?.adapt?.({ mode: s.mode, cadence: s.cadence, reason, dropRate, baseMs: c.base }); sizeCanvas(); }
+    };
 
     // Focus arriving inside the hero before the portal (Tab) jumps to identity and stays on the control it reached.
     const onFocus = (e: FocusEvent) => { if (s.p < 1 && hero.contains(e.target as Node)) skipIntro(false); };

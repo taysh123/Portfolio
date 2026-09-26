@@ -18,6 +18,10 @@ if (ONLY && !["landscape", "portrait"].includes(ONLY)) throw new Error(`--only-f
 // difference at device resolution (scripts/profile-entrance.mjs). Posters keep their own tier (POSTER_TIER).
 const TIERS = { landscape: [1280, 1920], portrait: [600, 720] };
 const POSTER_TIER = { landscape: 1280, portrait: 720 };
+// Phone portrait also ships a WebP copy of its 600 tier: decoded faster than AVIF on a phone CPU
+// (scripts/bench-frame-formats.mjs: 6.7 vs 9.8 ms/frame in Chromium), at the lowest quality whose SSIM
+// matches the AVIF's. Everything else — landscape, tablets, posters — stays AVIF only.
+const WEBP = { portrait: { 600: 85 } };
 // Texture provenance always comes from the frozen, committed screen textures, whatever --src is.
 const screens = JSON.parse(await fs.readFile("design/render/blender/frozen/screens.json", "utf8"));
 const snapshot = screens.snapshot ?? execSync("git rev-parse --short HEAD").toString().trim();
@@ -42,9 +46,14 @@ async function encodeFraming(kind, partial) {
       const src = `${dir}/${m.n}.png`, out = `${DST}/${kind}/${t}/${m.n}.avif`;
       if (!fresh(src, out)) await sharp(src).resize(t).avif({ quality: 52, effort: 6 }).toFile(out);
     }
+    const wq = WEBP[kind]?.[t];
+    if (wq) for (const m of seq) {
+      const src = `${dir}/${m.n}.png`, out = `${DST}/${kind}/${t}/${m.n}.webp`;
+      if (!fresh(src, out)) await sharp(src).resize(t).webp({ quality: wq, effort: 5 }).toFile(out);
+    }
     // Prune frames no longer in the set: they would still ship and still count toward the budget (review M1).
-    const keep = new Set(seq.map((m) => `${m.n}.avif`));
-    for (const f of await fs.readdir(`${DST}/${kind}/${t}`)) if (f.endsWith(".avif") && !keep.has(f)) await fs.rm(`${DST}/${kind}/${t}/${f}`);
+    const keep = new Set(seq.flatMap((m) => [`${m.n}.avif`, ...(wq ? [`${m.n}.webp`] : [])]));
+    for (const f of await fs.readdir(`${DST}/${kind}/${t}`)) if (/\.(avif|webp)$/.test(f) && !keep.has(f)) await fs.rm(`${DST}/${kind}/${t}/${f}`);
   }
   for (const [name, src] of [["poster", seq[0].n], ["still", "still"]]) {
     if (!existsSync(`${dir}/${src}.png`)) continue; // a partial chunk may not have the still yet
@@ -52,8 +61,9 @@ async function encodeFraming(kind, partial) {
     await sharp(`${dir}/${src}.png`).resize(pt).avif({ quality: 55 }).toFile(`${DST}/${name}-${kind}.avif`);
     await sharp(`${dir}/${src}.png`).resize(pt).jpeg({ quality: 80, mozjpeg: true }).toFile(`${DST}/${name}-${kind}.jpg`);
   }
+  const webp = tiers.filter((t) => WEBP[kind]?.[t]);
   return {
-    width, height, tiers, poster: `poster-${kind}`, still: `still-${kind}`,
+    width, height, tiers, ...(webp.length && { webp }), poster: `poster-${kind}`, still: `still-${kind}`,
     frames: seq.map((m) => ({ file: m.n, p: Math.max(m.p, 0.0001), quad: m.quad })),
     pushEndIndex: seq.length - 1,
   };
@@ -77,12 +87,15 @@ if (process.argv.includes("--check-budget")) {
   // Budgets per named tier (spec §9); only the framings this run encoded, only the tiers they actually have
   // (a preview set's tiers are its master width and are reported, not budgeted).
   const BUDGET = { landscape: { 1280: 2.5e6, 1920: 4e6 }, portrait: { 600: 1.2e6, 720: 1.2e6 } };
-  const size = async (d) => (await Promise.all((await fs.readdir(d)).map(async (f) => (await fs.stat(`${d}/${f}`)).size))).reduce((a, b) => a + b, 0);
+  const size = async (d, ext) => (await Promise.all((await fs.readdir(d)).filter((f) => f.endsWith(`.${ext}`)).map(async (f) => (await fs.stat(`${d}/${f}`)).size))).reduce((a, b) => a + b, 0);
   const b = {}, over = [];
   for (const [kind, set] of Object.entries(encoded)) {
     for (const t of set.tiers) {
-      const n = await size(`${DST}/${kind}/${t}`); b[`${kind}_${t}`] = n;
-      if (BUDGET[kind][t] !== undefined && n > BUDGET[kind][t]) over.push(`${kind} ${t}: ${n} > ${BUDGET[kind][t]}`);
+      // Per format: a client downloads one of a tier's formats, never both.
+      for (const ext of ["avif", ...(set.webp?.includes(t) ? ["webp"] : [])]) {
+        const n = await size(`${DST}/${kind}/${t}`, ext), name = `${kind}_${t}${ext === "avif" ? "" : `_${ext}`}`; b[name] = n;
+        if (BUDGET[kind][t] !== undefined && n > BUDGET[kind][t]) over.push(`${kind} ${t} ${ext}: ${n} > ${BUDGET[kind][t]}`);
+      }
     }
     if (existsSync(`${DST}/poster-${kind}.avif`)) {
       const n = (await fs.stat(`${DST}/poster-${kind}.avif`)).size; b[`poster_${kind}`] = n;

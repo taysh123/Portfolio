@@ -218,12 +218,15 @@ test("jumping mid-sequence never flashes the hero full-screen before its quad ex
   expect(samples.filter((s) => s.opacity !== "0" && s.w > 0.95)).toEqual([]);
 });
 
-test("a fast jump settles on the picture a slow approach gives (adaptive cross-fade resolves at rest)", async ({ browser }) => {
+// Default, and the adaptive renderer's reduced modes (single frame while moving, at a half-rate cadence).
+for (const [label, exp] of [["", null], [" — single-frame mode at 30 fps", { mode: "single", cadence: "30" }]] as const)
+test(`a fast jump settles on the picture a slow approach gives (adaptive cross-fade resolves at rest)${label}`, async ({ browser }) => {
   // A jump of > 1.25 frames draws the nearest frame alone (speed mode); once the scroll stops, the stage must
   // resolve to the exact blend for p. A phone: native scrolling, so each jump is one scroll event.
   const shoot = async (jump: boolean) => {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
     const page = await ctx.newPage();
+    if (exp) await page.addInitScript((x) => { (window as unknown as { __ENTRANCE_EXP__: unknown }).__ENTRANCE_EXP__ = x; }, exp);
     const to = (p: number) => page.evaluate((p) => { const c = document.getElementById("entrance")!; window.scrollTo({ top: c.offsetTop + p * (c.offsetHeight - innerHeight), behavior: "instant" as ScrollBehavior }); }, p);
     await page.goto("/", { waitUntil: "load" }); await page.waitForTimeout(2500);
     await to(0.75); await page.waitForTimeout(1800);
@@ -236,4 +239,61 @@ test("a fast jump settles on the picture a slow approach gives (adaptive cross-f
   let se = 0; for (let i = 0; i < a.length; i++) se += (a[i] - b[i]) ** 2;
   const psnr = 10 * Math.log10(65025 / Math.max(se / a.length, 1e-9));
   expect(psnr).toBeGreaterThan(40);                 // measured ~53 dB; a frame left mid-snap measured ~26 dB
+});
+
+// Phone portrait plays the WebP copy of its 600 tier; everything else stays AVIF (desktop, Retina, tablets).
+for (const [label, viewport, dpr, mobile, want] of [
+  ["phone portrait", { width: 390, height: 844 }, 3, true, /\/entrance\/portrait\/600\/[\w-]+\.webp$/],
+  ["phone landscape", { width: 844, height: 390 }, 3, true, /\/entrance\/landscape\/\d+\/[\w-]+\.avif$/],
+  ["tablet portrait", { width: 768, height: 1024 }, 2, true, /\/entrance\/portrait\/720\/[\w-]+\.avif$/],
+  ["retina desktop", { width: 1440, height: 900 }, 2, false, /\/entrance\/landscape\/1920\/[\w-]+\.avif$/],
+] as const) {
+  test(`entrance frame format — ${label}`, async ({ browser }) => {
+    const ctx = await browser.newContext({ viewport, deviceScaleFactor: dpr, isMobile: mobile, hasTouch: mobile });
+    const page = await ctx.newPage();
+    const frames: string[] = []; page.on("request", (r) => { if (/\/entrance\/(landscape|portrait)\//.test(r.url())) frames.push(r.url()); });
+    await page.goto("/", { waitUntil: "load" });
+    await expect.poll(() => frames.length, { timeout: 15000 }).toBeGreaterThan(3);
+    expect(frames.filter((u) => !want.test(u))).toEqual([]);
+    await expect(page.locator("[data-entrance-perf]")).toHaveCount(0);   // diagnostics only on request
+    await ctx.close();
+  });
+}
+
+test("phone portrait fetches the whole WebP set while decoding only around the playhead", async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+  const page = await ctx.newPage();
+  await page.addInitScript(() => {
+    const w = window as unknown as { __ENTRANCE_PROF__: object; __d: { fetched: Set<number>; peak: number } };
+    w.__d = { fetched: new Set(), peak: 0 };
+    w.__ENTRANCE_PROF__ = { fetchEnd: (i: number) => w.__d.fetched.add(i), playhead: (_i: number, decoded: number) => { w.__d.peak = Math.max(w.__d.peak, decoded); } };
+  });
+  await page.goto("/", { waitUntil: "load" });
+  const count = await page.evaluate(async () => (await (await fetch("/entrance/manifest.json")).json()).portrait.frames.length);
+  // Every frame arrives without any scrolling…
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __d: { fetched: Set<number> } }).__d.fetched.size), { timeout: 20000 }).toBe(count);
+  // …while decoded bitmaps stay a bounded window (plus keyframes), even after a pass through the whole sequence.
+  for (let k = 1; k <= 20; k++) { await page.evaluate((p) => { const c = document.getElementById("entrance")!; scrollTo({ top: c.offsetTop + p * (c.offsetHeight - innerHeight), behavior: "instant" as ScrollBehavior }); }, k / 20); await page.waitForTimeout(80); }
+  const peak = await page.evaluate(() => (window as unknown as { __d: { peak: number } }).__d.peak);
+  expect(peak).toBeGreaterThan(0);
+  expect(peak).toBeLessThan(count);
+  await ctx.close();
+});
+
+test("?entrancePerf=1 shows the diagnostics panel with performance numbers only", async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+  const page = await ctx.newPage();
+  await page.goto("/?entrancePerf=1", { waitUntil: "load" });
+  const panel = page.locator("[data-entrance-perf]");
+  await expect(panel).toBeVisible();
+  await expect(panel).toContainText("portrait · tier 600 · webp", { timeout: 15000 });
+  for (const p of [0.2, 0.4, 0.6]) { await page.evaluate((p) => { const c = document.getElementById("entrance")!; scrollTo({ top: c.offsetTop + p * (c.offsetHeight - innerHeight), behavior: "instant" as ScrollBehavior }); }, p); await page.waitForTimeout(300); }
+  await expect(panel.getByRole("button", { name: "Copy" })).toBeVisible();
+  const json = await page.evaluate(() => (window as unknown as { __entrancePerf: () => { json: Record<string, unknown> } }).__entrancePerf().json);
+  expect(Object.keys(json).sort()).toEqual(["adapts", "cfg", "decodeMs", "decoded", "dist", "drawMs", "fetch", "misses", "paths", "raf", "renders", "skips"]);
+  expect(JSON.stringify(json)).not.toMatch(/Mozilla|AppleWebKit|http/);   // no user agent, no URLs
+  // Experiment parameters are honoured only with the panel: the AVIF path on the same phone.
+  await page.goto("/?entrancePerf=1&entranceFormat=avif", { waitUntil: "load" });
+  await expect(panel).toContainText("portrait · tier 600 · avif", { timeout: 15000 });
+  await ctx.close();
 });

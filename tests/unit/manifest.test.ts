@@ -41,8 +41,13 @@ describe("validateManifest", () => {
   it.skipIf(!fs.existsSync(real))(`the manifest at ${real} is valid and every file of every tier exists`, () => {
     const m = JSON.parse(fs.readFileSync(real, "utf8")) as Manifest;
     expect(validateManifest(m)).toEqual([]);
+    expect(m.landscape.webp, "landscape (desktop, Retina) stays AVIF").toBeUndefined();
     for (const k of ["landscape", "portrait"] as const) {
       for (const t of m[k].tiers) for (const f of m[k].frames) expect(fs.existsSync(`${dir}/${k}/${t}/${f.file}.avif`), `${k}/${t}/${f.file}`).toBe(true);
+      for (const t of m[k].webp ?? []) {
+        expect(m[k].tiers, `${k} webp ${t} must be an AVIF tier too`).toContain(t);
+        for (const f of m[k].frames) expect(fs.existsSync(`${dir}/${k}/${t}/${f.file}.webp`), `${k}/${t}/${f.file}.webp`).toBe(true);
+      }
       for (const x of [m[k].poster, m[k].still]) for (const ext of ["avif", "jpg"]) expect(fs.existsSync(`${dir}/${x}.${ext}`), `${x}.${ext}`).toBe(true);
     }
   });

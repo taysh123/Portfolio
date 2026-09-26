@@ -3579,3 +3579,53 @@ optimiser.
 
 Gate: tsc clean · ESLint 0 warnings · Vitest 103/103 · Playwright 104/104 · entrance + geometry + images ×3: 96/96 ·
 JS 260.7 KB · HTML 391.3 KB · LCP 308 / 184 ms · CLS 0 · entrance p95 3.2 ms.
+
+## iPhone follow-up: phone WebP, full phone prefetch, adaptive rendering, `?entrancePerf=1` (recorded 2026-09-26)
+
+Runways unchanged (portrait 340svh, short landscape 360svh). Measured with `scripts/profile-entrance.mjs`
+(headless Chromium, 4× CPU throttle, 12 Mbit/s · 60 ms, raw CDP touch swipes, 3 runs, medians). Safari/WebKit is
+not available in this environment: these numbers compare builds; the on-device verdict comes from `?entrancePerf=1`.
+
+**Phone WebP (portrait 600 only).** 29 frames encoded from the final masters (`out-final/portrait`, no rerender)
+at WebP q85, the SSIM match for the AVIF tier: 882 KB vs AVIF 405 KB (budget 1.2 MB per format). Landscape, tablets
+and posters stay AVIF. In Chromium the formats measured the same while scrolling (decode runs off the main thread):
+AVIF vs WebP, same adaptive build, dropped frames slow 4.1 / 4.8%, fast 27 / 33%, reversal 12 / 14%, cold 34 / 32%;
+no stand-ins either way except cold (2 vs 4 renders). Its expected gain is Safari's decode cost, which only the
+device can show — `entranceFormat=avif` switches the same phone back for an A/B.
+
+**Whole phone set up front.** From load (or the first touch/scroll/key) every portrait frame is requested at once
+(current and upcoming at high priority): all 29 arrive in ~0.85 s at 12 Mbit/s (AVIF at 6 in flight: ~0.52 s).
+Decoded bitmaps stay a window around the playhead: 6 ahead / 2 behind plus 3 keyframes for the 600 tier —
+30.7 MB peak instead of 43.5 MB (≈ 2.56 MB per 600×1067 bitmap), with no additional stand-ins.
+
+**Adaptive rendering (touch devices only).** While the entrance scrolls, frames are requested every vsync and
+the rAF intervals judged over 20 frames; ≥ 20% dropped (or draws ≥ half a frame) switches the rest of the visit to
+the nearest frame alone while moving — with its own quad, so surface and image stay locked — and the exact blend
+once the playhead has held still for three frames. A half-rate (~30 fps) cadence is implemented but not automatic:
+forced single vs single + 30 fps measured fewer update-interval swings on fast/cold swipes (CV 0.51 → 0.38,
+0.61 → 0.41) but more dropped display frames (26 → 32%, 29 → 32%); `entranceCadence=30` exposes it for the device A/B.
+
+| Phone 390×844 (8c4f367 → this) | Dropped frames | Stand-ins | Bitmaps | Long tasks > 50 ms |
+|---|---|---|---|---|
+| slow | 26.7% → 7.3% | 0 → 0 | 43.5 → 30.7 MB | 5 → 0 |
+| fast | 43.7% → 35.9% | 0 → 0 | 43.5 → 30.7 MB | 1 → 0 |
+| reversal | 30.6% → 17.8% | 0 → 0 | 43.5 → 30.7 MB | 3 → 0 |
+| cold reload + swipe | 45.5% → 38.0% | 1/53 → 3/76 | 41 → 30.7 MB | 2 → 1 |
+
+Short landscape 844×390 (AVIF, adaptive only): slow 35.5 → 24.0%, reversal 44.2 → 36.3%, fast 38.4 → 40.0%,
+cold 27.7 → 36.6% (run-to-run spread here is about ±6 points; the same build's forced-blend control measured
+33 / 42 / 42 / 40%). Stand-ins unchanged within noise. Desktop (fine pointer: no adaptation) against the previous
+profile: dpr 1 and 2 dropped frames, misses, render p95 and long tasks all within noise.
+
+**`?entrancePerf=1`.** A separate chunk loaded only with the parameter: a small panel (framing, tier, format,
+viewport/DPR, canvas size, rAF avg/p95/dropped while scrolling, draw paths, misses and frame distance, decode
+times, decoded count and MB, fetch progress, adaptive switches) with Copy / Share / Reset / Hide. No user agent,
+no URLs, nothing sent. Tests: phone portrait requests only `portrait/600/*.webp`; phone landscape, tablet and
+Retina desktop only AVIF; the whole WebP set arrives without scrolling while decoded bitmaps stay under the frame
+count; the panel appears only with the parameter; settling after a fast jump matches a slow approach (PSNR > 40)
+in the default and the single + 30 fps modes.
+
+Gate: tsc clean · ESLint 0 warnings · Vitest 104/104 · Playwright 111/111 (an earlier run lost one to the
+gravity-world rAF count in `sections.spec.ts`, which is intermittent and reproduces on 8c4f367: 2/20 there, 1/20 here) · entrance + geometry
++ images + budget + idle ×3: 135/135 · JS 261.6 KB gzip (≤ 286) · HTML 391.3 KB · LCP 284 / 200 ms · CLS 0 ·
+entrance main-thread p95 4.2–5.4 ms over four runs (≤ 8).
