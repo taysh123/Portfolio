@@ -3629,3 +3629,65 @@ Gate: tsc clean · ESLint 0 warnings · Vitest 104/104 · Playwright 111/111 (an
 gravity-world rAF count in `sections.spec.ts`, which is intermittent and reproduces on 8c4f367: 2/20 there, 1/20 here) · entrance + geometry
 + images + budget + idle ×3: 135/135 · JS 261.6 KB gzip (≤ 286) · HTML 391.3 KB · LCP 284 / 200 ms · CLS 0 ·
 entrance main-thread p95 4.2–5.4 ms over four runs (≤ 8).
+
+## Final blockers: desktop pacing and iPhone playback architecture (recorded 2026-09-26)
+
+Workflow: Superpowers brainstorming (classified architectural; the owner pre-authorised proceeding without an
+approval stop), systematic-debugging (root cause before fixes), writing-plans (plan in session), verification-
+before-completion; ui-ux-pro-max interaction rules (gesture feedback, interruptible motion, no scroll-jacking,
+reduced motion).
+
+### Desktop pacing
+Cause (confirmed by measurement, `scripts/pacing-entrance.mjs`, real wheel events through Lenis): the 400svh
+entrance gave 2,700 px at 900 px tall, beats 324–702 px each, while a trackpad swipe travels ~1,000 px and a flick
+~2,500 px (modelled gestures; `?entrancePerf=1` reports real ones). Lenis (`lerp` 0.1) shapes timing, never distance.
+Fix: desktop only (landscape ≥ 500 px tall), 700svh with per-beat allocation (`lib/entrance/pacing.ts`: lift 450,
+lid 1,500, wake 900, identity 800, push 1,300, portal 450 px at 900 px tall); Lenis, the rest of the page and phones
+unchanged.
+
+| From the lid's start (1440×900) | 400svh: Δp · beat edges | 700svh paced: Δp · beat edges |
+|---|---|---|
+| mouse, 3 notches | 0.111 · 0 | 0.052 · 0 |
+| mouse, 6 notches | 0.222 · 0 | 0.104 · 0 |
+| trackpad ~1,000 px | 0.379 · 1 | 0.177 · 0 |
+| trackpad ~2,500 px | 0.880 · 4 | 0.438 · 2 |
+
+### iPhone Safari
+Strongest evidence-backed explanation (not reproducible here: no WebKit): the canvas path decodes each frame with
+`createImageBitmap`, which only Chrome moves off the main thread (Safari's recommended path is HTMLImageElement),
+and every newly decoded frame is uploaded to the GPU when drawn — twice while cross-fading. Headless Chromium
+decodes off-thread, which is why synthetic gains did not reach the phone. iOS Low Power Mode also caps rAF at 30.
+Compared: A canvas sequence (kept for tablets, desktop and as the phone A/B); **B scrub video (chosen for phones)**
+— hardware decode, composited as its own layer, no main-thread decode or canvas upload; C hybrid (rejected: a
+visible hand-off, double payload); D stacked `<img>` layers (rejected: WebKit decode timing on reveal is uncertain,
+~74 MB of resident layers).
+Video (`scripts/encode-video.mjs`, from the final masters): 240 samples uniform in p, each the canvas's exact
+cross-fade; H.264 High (MP4) + VP9 (WebM, for browsers without H.264), keyframe every 8, no B-frames; SSIM 0.989
+vs the exact blends (AVIF 0.9915); 2.9 MB portrait 608×1080, 3.1 MB landscape 960×540 (WebM 1.8 / 2.3 MB).
+Runtime (`lib/entrance/VideoPlayer.ts`): one seek in flight, always to the newest target; the surface is placed
+from the frame on screen (requestVideoFrameCallback, `seeked` fallback), so image and quad cannot separate; canvas
+fallback on error or no frame within 6 s.
+
+Phones, same build, headless Chromium stand-in (4× CPU, 12 Mbit/s, software VP9 decode), dropped display frames:
+
+| | slow | fast | reversal | cold + swipe |
+|---|---|---|---|---|
+| 390×844 canvas → video | 5.8 → 6.8% | 34.9 → 16.2% | 12.7 → 14.4% | 34.7 → 25.0% |
+| 844×390 canvas → video | 26.4 → 8.1% | 38.2 → 21.3% | 32.2 → 14.3% | 34.2 → 17.7% |
+
+Canvas stand-ins (844×390 fast / cold): 13 / 31 → video 0 / 3 (before the first frame). Video seek p95 ≈ 40 ms
+warm (picture 2–4 samples behind the finger, surface locked to it); cold start waits on the network (seek p95
+240–440 ms until ~3 MB arrive). Decoded memory: a few video frames vs 30.7–55 MB of canvas bitmaps.
+
+### Budgets
+JS 263.6 KB gzip (≤ 286) · HTML 391.7 KB · LCP 268 / 172 ms · CLS 0 · frames and video payloads within budget.
+**Entrance main-thread trace: p95 12.3–13.2 ms — over the 8 ms budget (not weakened).** Cause, measured: the
+check sends a fixed 7,200 px of wheel input. At the old 2,700 px entrance most of its tasks came after the entrance
+(1,204 of 2,137, p95 4.4 ms); the entrance's own beats were already 9–14 ms per redraw in this software-GL
+environment. At 5,400 px nearly all of that input is inside the entrance, so the check now measures the canvas
+redraw itself (compositor Commit, ∝ canvas pixels: 12 ms at full backing, 8.9 at 0.8, 5.2 at 0.5). The same
+build with the old pacing traces 4.7 ms. Meeting it needs either a cheaper desktop redraw here (e.g. lower canvas
+backing — a visible softening) or the owner's decision on the check; left open, not hidden.
+
+Gate: tsc clean · ESLint 0 warnings · Vitest 109/109 · Playwright 116/116 · entrance + geometry + images + budget +
+idle ×3: 150/150 · quad-lock test verified red (53 px spread with the surface placed from the scroll) then green.

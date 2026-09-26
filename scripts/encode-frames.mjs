@@ -77,7 +77,12 @@ if (ONLY) {
   console.log("encoded", set.frames.length, ONLY, "(partial manifest)");
 } else {
   const manifest = { version: 1, snapshot, ...(screens.sources && { sources: screens.sources }), ...(screens.verify_counts && { verifyCounts: screens.verify_counts }) };
-  for (const kind of ["landscape", "portrait"]) encoded[kind] = manifest[kind] = await encodeFraming(kind, false);
+  // The phone scrub videos (scripts/encode-video.mjs) are encoded separately: keep their entries.
+  const prev = existsSync(`${DST}/manifest.json`) ? JSON.parse(await fs.readFile(`${DST}/manifest.json`, "utf8")) : {};
+  for (const kind of ["landscape", "portrait"]) {
+    encoded[kind] = manifest[kind] = await encodeFraming(kind, false);
+    if (prev[kind]?.video) manifest[kind].video = prev[kind].video;
+  }
   await fs.writeFile(`${DST}/manifest.json`, JSON.stringify(manifest));
   for (const kind of ["landscape", "portrait"]) await fs.rm(`${DST}/manifest.${kind}.json`, { force: true });
   console.log("encoded", manifest.landscape.frames.length, "landscape,", manifest.portrait.frames.length, "portrait");

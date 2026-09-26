@@ -31,10 +31,10 @@ describe("loadOrder", () => {
 
 describe("pickFramingKind", () => {
   it.each([
-    [1440, 900, "landscape", 400], [390, 844, "portrait", 340], [768, 1024, "portrait", 340],
-    [844, 390, "landscape", 360], [1024, 768, "landscape", 400],
-  ])("%ix%i → %s %i", (w, h, kind, svh) => {
-    expect(pickFramingKind(w, h)).toEqual({ kind, containerSvh: svh });
+    [1440, 900, "landscape", 700, "desktop"], [390, 844, "portrait", 340, "linear"], [768, 1024, "portrait", 340, "linear"],
+    [844, 390, "landscape", 360, "linear"], [1024, 768, "landscape", 700, "desktop"],
+  ])("%ix%i → %s %i %s", (w, h, kind, svh, pacing) => {
+    expect(pickFramingKind(w, h)).toEqual({ kind, containerSvh: svh, pacing });
   });
 });
 

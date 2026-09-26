@@ -27,11 +27,13 @@ export function loadOrder(n: number, o: { stillIndex: number; pushEndIndex: numb
  * three beats — while a short landscape screen played all 65 landscape frames over 624 px. Measured runways
  * (scripts/profile-entrance.mjs --variant '{"runway":…}'): portrait 340svh brings a swipe to ~0.25 (about one
  * beat) and 2–3 frames per display frame on a fast swipe; short landscape needs 360svh to stop outrunning its
- * frames. Desktop keeps 400svh: its choreography and wheel pacing are unchanged.
+ * frames. Both pace linearly. Desktop (wheel and trackpad) has 700svh with per-beat pacing: lib/entrance/pacing.ts.
  */
 export function pickFramingKind(vw: number, vh: number) {
-  if (vw / vh < 0.9) return { kind: "portrait" as const, containerSvh: 340 as const };
-  return { kind: "landscape" as const, containerSvh: (vh < 500 ? 360 : 400) as 360 | 400 };
+  if (vw / vh < 0.9) return { kind: "portrait" as const, containerSvh: 340 as const, pacing: "linear" as const };
+  return vh < 500
+    ? { kind: "landscape" as const, containerSvh: 360 as const, pacing: "linear" as const }
+    : { kind: "landscape" as const, containerSvh: 700 as const, pacing: "desktop" as const };
 }
 
 export function pickTier(tiers: number[], vw: number, dpr: number, saveData: boolean): number {

@@ -15,6 +15,7 @@
     "encode:frames": "node scripts/encode-frames.mjs",
     "measure": "node scripts/measure.mjs",
     "trace:entrance": "node scripts/trace-entrance.mjs",
+    "pacing:entrance": "node scripts/pacing-entrance.mjs",
     "profile:entrance": "node scripts/profile-entrance.mjs",
     "bench:frame-formats": "node scripts/bench-frame-formats.mjs",
     "scan:controls": "node scripts/fab-scan.mjs",

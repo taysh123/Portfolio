@@ -9,6 +9,11 @@
  *   entranceFormat=avif|webp     force the frame format (webp exists for the phone portrait tier only)
  *   entranceMode=auto|blend|single      what is drawn while moving (auto: adaptive, the default on touch)
  *   entranceCadence=full|30|auto        display cadence while moving
+ *   entrancePlayer=canvas|video         the image sequence on a canvas, or the scrub video (phones' default)
+ *
+ * What it separates: pacing (scroll px, progress and beats per gesture), rAF cadence (interval avg/p95, a 30 fps
+ * cap as in Low Power Mode), drawing (draw ms), decoding (decode ms, stand-in frames), video seeking (seek
+ * latency, frames behind) and network (fetched / buffered).
  */
 import type { EntranceConfig, EntranceExperiment, EntranceProfiler } from "./profile";
 
@@ -18,10 +23,15 @@ type Stats = {
   distNow: number; distMax: number; distSum: number; distN: number;
   decodes: number[]; decodedNow: number; bytesNow: number; decodedPeak: number; bytesPeak: number;
   fetched: number; fetchBytes: number; fetchFirst: number; fetchLast: number; draws: number[];
+  seeks: number[]; late: number; updates: number; gestures: Gesture[];
 };
+/** One scroll gesture (a burst of scrolling with no pause over 250 ms): how far it went and what it covered. */
+type Gesture = { ms: number; scrollPx: number; wheelPx: number; dp: number; beats: number; frames: number };
+const BEAT_EDGES = [0.12, 0.38, 0.53, 0.68, 0.88];
 
 const fresh = (): Stats => ({ adapts: [], rafDts: [], paths: {}, misses: 0, renders: 0, skips: 0, distNow: 0, distMax: 0, distSum: 0, distN: 0,
-  decodes: [], decodedNow: 0, bytesNow: 0, decodedPeak: 0, bytesPeak: 0, fetched: 0, fetchBytes: 0, fetchFirst: 0, fetchLast: 0, draws: [] });
+  decodes: [], decodedNow: 0, bytesNow: 0, decodedPeak: 0, bytesPeak: 0, fetched: 0, fetchBytes: 0, fetchFirst: 0, fetchLast: 0, draws: [],
+  seeks: [], late: 0, updates: 0, gestures: [] });
 
 const pct = (a: number[], q: number) => { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.floor(q * s.length))]; };
 const avg = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
@@ -30,13 +40,30 @@ const f1 = (n: number) => n.toFixed(1);
 export function install() {
   const w = window as unknown as { __ENTRANCE_PROF__?: EntranceProfiler; __ENTRANCE_EXP__?: EntranceExperiment };
   const q = new URLSearchParams(location.search), x: EntranceExperiment = { ...w.__ENTRANCE_EXP__ };
-  const fmt = q.get("entranceFormat"), mode = q.get("entranceMode"), cad = q.get("entranceCadence");
+  const fmt = q.get("entranceFormat"), mode = q.get("entranceMode"), cad = q.get("entranceCadence"), player = q.get("entrancePlayer");
+  if (player === "canvas" || player === "video") x.player = player;
   if (fmt === "avif" || fmt === "webp") x.format = fmt;
   if (mode === "auto" || mode === "blend" || mode === "single") x.mode = mode;
   if (cad === "auto" || cad === "full" || cad === "30") x.cadence = cad;
   w.__ENTRANCE_EXP__ = x;
 
-  let S = fresh(), fetchStart0 = 0, lastScroll = -1e9, lastRaf = 0;
+  let S = fresh(), fetchStart0 = 0, lastScroll = -1e9, lastRaf = 0, lastP = 0, lastDrawn: number | null = null;
+  let g: { t0: number; y0: number; p0: number; wheel: number; frames: number; t1: number } | null = null;
+  const endGesture = () => {
+    if (!g) return;
+    const dp = lastP - g.p0, lo = Math.min(g.p0, lastP), hi = Math.max(g.p0, lastP);
+    S.gestures.push({ ms: Math.round(g.t1 - g.t0), scrollPx: Math.round(scrollY - g.y0), wheelPx: Math.round(g.wheel), dp: +dp.toFixed(3),
+      beats: BEAT_EDGES.filter((e) => e > lo && e <= hi).length, frames: g.frames });
+    if (S.gestures.length > 12) S.gestures.shift();
+    g = null;
+  };
+  const touchGesture = (t: number) => {
+    if (g && t - g.t1 > 250) endGesture();
+    if (!g) g = { t0: t, y0: scrollY, p0: lastP, wheel: 0, frames: 0, t1: t };
+    g.t1 = t;
+  };
+  addEventListener("wheel", (e) => { touchGesture(performance.now()); g!.wheel += e.deltaMode === 1 ? e.deltaY * 40 : e.deltaMode === 2 ? e.deltaY * innerHeight : e.deltaY; }, { passive: true });
+  setInterval(() => { if (g && performance.now() - g.t1 > 250) endGesture(); }, 100);
   const fetchBytes = new Map<number, number>();
   w.__ENTRANCE_PROF__ = {
     config: (c) => { S.cfg = c; },
@@ -48,9 +75,13 @@ export function install() {
       S.decodedNow = decoded; S.bytesNow = bytes;
       if (bytes > S.bytesPeak) { S.bytesPeak = bytes; } if (decoded > S.decodedPeak) S.decodedPeak = decoded;
     },
+    seek: (ms) => { S.seeks.push(ms); if (S.seeks.length > 500) S.seeks.shift(); },
     render: (r) => {
+      lastP = r.p;
       if (r.skipped) { S.skips++; return; }
+      if (r.drawn !== null && r.drawn !== lastDrawn) { if (g) g.frames += Math.abs(r.drawn - (lastDrawn ?? r.drawn)); lastDrawn = r.drawn; if (r.moving || performance.now() - lastScroll < 150) S.updates++; }
       if (!r.moving) return;
+      if (r.path === "video-late") S.late++;
       S.renders++; S.paths[r.path] = (S.paths[r.path] ?? 0) + 1; S.draws.push(r.drawMs);
       if (r.path === "near" || r.path === "hold" || r.path === "fallback") S.misses++;
       if (r.want >= 0) {
@@ -61,7 +92,7 @@ export function install() {
   };
 
   // Cadence: every display frame while the page is scrolling (a scroll event within the last 150 ms).
-  addEventListener("scroll", () => { lastScroll = performance.now(); }, { passive: true });
+  addEventListener("scroll", () => { lastScroll = performance.now(); touchGesture(lastScroll); }, { passive: true });
   const loop = (t: number) => {
     if (lastRaf && t - lastScroll < 150 && t - lastRaf < 250) S.rafDts.push(t - lastRaf);
     lastRaf = t; requestAnimationFrame(loop);
@@ -72,11 +103,30 @@ export function install() {
     const c = S.cfg, dts = S.rafDts, base = Math.max(6, pct(dts, 0.1) || 16.7);
     const dropped = dts.reduce((a, d) => a + Math.max(0, Math.round(d / base) - 1), 0);
     const mb = (b: number) => f1(b / 1048576);
+    const scrollingS = dts.reduce((a, b) => a + b, 0) / 1000, fps = scrollingS ? S.updates / scrollingS : 0;
+    const vid = document.querySelector<HTMLVideoElement>(".entrance__video");
+    const buffered = vid && vid.duration ? Array.from({ length: vid.buffered.length }, (_, i) => vid.buffered.end(i) - vid.buffered.start(i)).reduce((a, b) => a + b, 0) / vid.duration : null;
+    const lg = S.gestures.at(-1), gs = S.gestures;
+    const dropPct = dts.length ? (100 * dropped) / (dts.length + dropped) : 0;
+    // A first reading of where the time goes; the raw numbers above it are what matters.
+    const hints = [
+      base > 25 && dts.length > 30 ? "rAF runs at ~30 fps (Low Power Mode, or a throttled page)" : "",
+      dropPct > 15 && pct(S.draws, 0.95) > base * 0.5 ? "drawing takes over half a frame" : "",
+      dropPct > 15 && pct(S.draws, 0.95) <= base * 0.5 ? "frames dropped with cheap draws: main thread busy elsewhere (decode, GC) or compositor-bound" : "",
+      S.misses && pct(S.decodes, 0.95) > base ? "decode slower than a frame: stand-ins while scrolling" : "",
+      c && c.player === "canvas" && S.fetched < c.count ? "frames still downloading" : "",
+      buffered !== null && buffered < 0.99 ? "video still downloading" : "",
+      c?.player === "video" && pct(S.seeks, 0.95) > 2 * base ? "video seeks slower than two frames" : "",
+      gs.length && avg(gs.map((x) => x.beats)) > 1.2 ? "pacing: an average gesture crosses more than one beat" : "",
+    ].filter(Boolean);
     return {
       text: [
-        `entrancePerf · ${c ? `${c.framing} · tier ${c.tier} · ${c.format} · ${c.count} frames` : "loading"}`,
+        `entrancePerf · ${c ? `${c.player} · ${c.framing} · ${c.player === "video" ? `${c.format} ${c.tier}px · ${c.count} samples` : `tier ${c.tier} · ${c.format} · ${c.count} frames`} · pacing ${c.pacing}, runway ${Math.round(c.runwayPx)} px` : "loading"}`,
         c ? `viewport ${c.vw}×${c.vh} @${c.dpr} · canvas ${c.canvasW}×${c.canvasH} · mode ${c.mode} · cadence ${c.cadence}` : "",
-        `rAF while scrolling: n ${dts.length} · avg ${f1(avg(dts))} · p95 ${f1(pct(dts, 0.95))} ms · dropped ${dts.length ? f1((100 * dropped) / (dts.length + dropped)) : 0}%`,
+        `rAF while scrolling: n ${dts.length} · avg ${f1(avg(dts))} · p95 ${f1(pct(dts, 0.95))} ms · dropped ${f1(dropPct)}% · picture updates ${f1(fps)}/s`,
+        lg ? `last gesture: ${lg.scrollPx} px scroll${lg.wheelPx ? ` (wheel ${lg.wheelPx})` : ""} in ${lg.ms} ms → Δp ${lg.dp} · ${lg.beats} beat edges · ${lg.frames} frames` : "gestures: —",
+        gs.length ? `gestures (${gs.length}): avg |Δp| ${(avg(gs.map((x) => Math.abs(x.dp)))).toFixed(3)} · avg beat edges ${f1(avg(gs.map((x) => x.beats)))}` : "",
+        c?.player === "video" ? `video seeks n ${S.seeks.length} · avg ${f1(avg(S.seeks))} · p95 ${f1(pct(S.seeks, 0.95))} ms · late renders ${S.late} · buffered ${buffered === null ? "—" : Math.round(buffered * 100) + "%"} · readyState ${vid?.readyState ?? "—"}` : "",
         `paths ${Object.entries(S.paths).map(([k, v]) => `${k} ${v}`).join(" · ") || "—"}${S.skips ? ` · cadence skips ${S.skips}` : ""}`,
         `misses ${S.misses}/${S.renders} (${S.renders ? f1((100 * S.misses) / S.renders) : 0}%) · frame distance now ${S.distNow} · max ${S.distMax} · avg ${S.distN ? (S.distSum / S.distN).toFixed(2) : 0}`,
         `draw ms avg ${f1(avg(S.draws))} · p95 ${f1(pct(S.draws, 0.95))}`,
@@ -84,13 +134,16 @@ export function install() {
         `decoded now ${S.decodedNow} (${mb(S.bytesNow)} MB) · peak ${S.decodedPeak} (${mb(S.bytesPeak)} MB)`,
         `fetched ${S.fetched}${c ? `/${c.count}` : ""} · ${Math.round(S.fetchBytes / 1024)} KB · first ${Math.round(S.fetchFirst)} ms · last ${Math.round(S.fetchLast)} ms after start`,
         ...S.adapts.map((a) => `adapt: ${a}`),
+        hints.length ? `hints: ${hints.join("; ")}` : "",
       ].filter(Boolean).join("\n"),
       json: { cfg: c, raf: { n: dts.length, avg: +f1(avg(dts)), p95: +f1(pct(dts, 0.95)), base: +f1(base), dropped },
         paths: S.paths, skips: S.skips, misses: S.misses, renders: S.renders, dist: { max: S.distMax, avg: S.distN ? +(S.distSum / S.distN).toFixed(3) : 0 },
         drawMs: { avg: +f1(avg(S.draws)), p95: +f1(pct(S.draws, 0.95)) },
         decodeMs: { n: S.decodes.length, avg: +f1(avg(S.decodes)), p95: +f1(pct(S.decodes, 0.95)), max: +f1(Math.max(0, ...S.decodes)) },
         decoded: { now: S.decodedNow, nowMB: +mb(S.bytesNow), peak: S.decodedPeak, peakMB: +mb(S.bytesPeak) },
-        fetch: { n: S.fetched, kb: Math.round(S.fetchBytes / 1024), firstMs: Math.round(S.fetchFirst), lastMs: Math.round(S.fetchLast) }, adapts: S.adapts },
+        fetch: { n: S.fetched, kb: Math.round(S.fetchBytes / 1024), firstMs: Math.round(S.fetchFirst), lastMs: Math.round(S.fetchLast) }, adapts: S.adapts,
+        fps: +f1(fps), seekMs: { n: S.seeks.length, avg: +f1(avg(S.seeks)), p95: +f1(pct(S.seeks, 0.95)) }, late: S.late,
+        video: vid ? { buffered: buffered === null ? null : +buffered.toFixed(3), readyState: vid.readyState } : null, gestures: S.gestures, hints },
     };
   };
   (window as unknown as { __entrancePerf?: () => ReturnType<typeof report> }).__entrancePerf = report;

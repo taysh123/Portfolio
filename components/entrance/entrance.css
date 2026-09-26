@@ -1,5 +1,8 @@
 /* Pinned by default; static under reduced motion (OS or in-app) — decided at first paint. */
-.entrance { position: relative; height: var(--entrance-h, 400svh); }
+.entrance { position: relative; height: var(--entrance-h, 700svh); }
+/* The same runways as lib/entrance/frames.ts pickFramingKind, so the first paint already has the right length. */
+@media (max-aspect-ratio: 9/10) { .entrance { height: var(--entrance-h, 340svh); } }
+@media (min-aspect-ratio: 9/10) and (max-height: 499px) { .entrance { height: var(--entrance-h, 360svh); } }
 .entrance__stage { position: sticky; top: 0; height: 100svh; overflow: hidden; background: var(--bg); isolation: isolate; }
 .entrance__canvas, .entrance__poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 /* Near-black, not black: the studio reads through it at p = 0 (spec §4.1 Arrival). */
@@ -45,3 +48,6 @@ html[data-entrance-done="true"] .entrance__skip { visibility: hidden; } /* not j
 
 /* The canvas is opaque (alpha: false): until its first draw it would be black, so the poster below shows through. */
 .entrance__canvas:not([data-drawn]) { visibility: hidden; }
+/* The video instead stays rendered but transparent until its first frame: a hidden video might not present
+   frames (nor report them), so it would never be marked drawn. */
+.entrance__video:not([data-drawn]) { visibility: visible; opacity: 0; }

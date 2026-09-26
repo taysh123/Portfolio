@@ -218,8 +218,9 @@ test("jumping mid-sequence never flashes the hero full-screen before its quad ex
   expect(samples.filter((s) => s.opacity !== "0" && s.w > 0.95)).toEqual([]);
 });
 
-// Default, and the adaptive renderer's reduced modes (single frame while moving, at a half-rate cadence).
-for (const [label, exp] of [["", null], [" — single-frame mode at 30 fps", { mode: "single", cadence: "30" }]] as const)
+// The phone's default (the scrub video), the canvas, and the canvas's reduced modes (single frame while
+// moving, at a half-rate cadence).
+for (const [label, exp] of [["", null], [" — canvas", { player: "canvas" }], [" — canvas, single-frame mode at 30 fps", { player: "canvas", mode: "single", cadence: "30" }]] as const)
 test(`a fast jump settles on the picture a slow approach gives (adaptive cross-fade resolves at rest)${label}`, async ({ browser }) => {
   // A jump of > 1.25 frames draws the nearest frame alone (speed mode); once the scroll stops, the stage must
   // resolve to the exact blend for p. A phone: native scrolling, so each jump is one scroll event.
@@ -241,10 +242,11 @@ test(`a fast jump settles on the picture a slow approach gives (adaptive cross-f
   expect(psnr).toBeGreaterThan(40);                 // measured ~53 dB; a frame left mid-snap measured ~26 dB
 });
 
-// Phone portrait plays the WebP copy of its 600 tier; everything else stays AVIF (desktop, Retina, tablets).
+// Phones scrub a video (MP4 where H.264 plays, else WebM — this open-source Chromium has no H.264); tablets and
+// desktop keep the AVIF image sequence.
 for (const [label, viewport, dpr, mobile, want] of [
-  ["phone portrait", { width: 390, height: 844 }, 3, true, /\/entrance\/portrait\/600\/[\w-]+\.webp$/],
-  ["phone landscape", { width: 844, height: 390 }, 3, true, /\/entrance\/landscape\/\d+\/[\w-]+\.avif$/],
+  ["phone portrait", { width: 390, height: 844 }, 3, true, /\/entrance\/portrait\/scrub\.webm$/],
+  ["phone landscape", { width: 844, height: 390 }, 3, true, /\/entrance\/landscape\/scrub\.webm$/],
   ["tablet portrait", { width: 768, height: 1024 }, 2, true, /\/entrance\/portrait\/720\/[\w-]+\.avif$/],
   ["retina desktop", { width: 1440, height: 900 }, 2, false, /\/entrance\/landscape\/1920\/[\w-]+\.avif$/],
 ] as const) {
@@ -253,18 +255,19 @@ for (const [label, viewport, dpr, mobile, want] of [
     const page = await ctx.newPage();
     const frames: string[] = []; page.on("request", (r) => { if (/\/entrance\/(landscape|portrait)\//.test(r.url())) frames.push(r.url()); });
     await page.goto("/", { waitUntil: "load" });
-    await expect.poll(() => frames.length, { timeout: 15000 }).toBeGreaterThan(3);
+    await expect.poll(() => frames.length, { timeout: 15000 }).toBeGreaterThan(label.startsWith("phone") ? 0 : 3);
     expect(frames.filter((u) => !want.test(u))).toEqual([]);
     await expect(page.locator("[data-entrance-perf]")).toHaveCount(0);   // diagnostics only on request
     await ctx.close();
   });
 }
 
-test("phone portrait fetches the whole WebP set while decoding only around the playhead", async ({ browser }) => {
+test("phone portrait on the canvas (A/B) fetches the whole WebP set while decoding only around the playhead", async ({ browser }) => {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
   const page = await ctx.newPage();
   await page.addInitScript(() => {
-    const w = window as unknown as { __ENTRANCE_PROF__: object; __d: { fetched: Set<number>; peak: number } };
+    const w = window as unknown as { __ENTRANCE_PROF__: object; __ENTRANCE_EXP__: object; __d: { fetched: Set<number>; peak: number } };
+    w.__ENTRANCE_EXP__ = { player: "canvas" };
     w.__d = { fetched: new Set(), peak: 0 };
     w.__ENTRANCE_PROF__ = { fetchEnd: (i: number) => w.__d.fetched.add(i), playhead: (_i: number, decoded: number) => { w.__d.peak = Math.max(w.__d.peak, decoded); } };
   });
@@ -286,14 +289,90 @@ test("?entrancePerf=1 shows the diagnostics panel with performance numbers only"
   await page.goto("/?entrancePerf=1", { waitUntil: "load" });
   const panel = page.locator("[data-entrance-perf]");
   await expect(panel).toBeVisible();
-  await expect(panel).toContainText("portrait · tier 600 · webp", { timeout: 15000 });
+  await expect(panel).toContainText("video · portrait · webm 608px", { timeout: 15000 });
   for (const p of [0.2, 0.4, 0.6]) { await page.evaluate((p) => { const c = document.getElementById("entrance")!; scrollTo({ top: c.offsetTop + p * (c.offsetHeight - innerHeight), behavior: "instant" as ScrollBehavior }); }, p); await page.waitForTimeout(300); }
   await expect(panel.getByRole("button", { name: "Copy" })).toBeVisible();
   const json = await page.evaluate(() => (window as unknown as { __entrancePerf: () => { json: Record<string, unknown> } }).__entrancePerf().json);
-  expect(Object.keys(json).sort()).toEqual(["adapts", "cfg", "decodeMs", "decoded", "dist", "drawMs", "fetch", "misses", "paths", "raf", "renders", "skips"]);
+  expect(Object.keys(json).sort()).toEqual(["adapts", "cfg", "decodeMs", "decoded", "dist", "drawMs", "fetch", "fps", "gestures", "hints", "late", "misses", "paths", "raf", "renders", "seekMs", "skips", "video"]);
   expect(JSON.stringify(json)).not.toMatch(/Mozilla|AppleWebKit|http/);   // no user agent, no URLs
-  // Experiment parameters are honoured only with the panel: the AVIF path on the same phone.
-  await page.goto("/?entrancePerf=1&entranceFormat=avif", { waitUntil: "load" });
-  await expect(panel).toContainText("portrait · tier 600 · avif", { timeout: 15000 });
+  // Experiment parameters are honoured only with the panel: the canvas, WebP and AVIF paths on the same phone.
+  await page.goto("/?entrancePerf=1&entrancePlayer=canvas", { waitUntil: "load" });
+  await expect(panel).toContainText("canvas · portrait · tier 600 · webp", { timeout: 15000 });
+  await page.goto("/?entrancePerf=1&entrancePlayer=canvas&entranceFormat=avif", { waitUntil: "load" });
+  await expect(panel).toContainText("canvas · portrait · tier 600 · avif", { timeout: 15000 });
+  await ctx.close();
+});
+
+// The video's surface follows the frame on screen: at rest, wherever the scroll stops, the hero surface sits
+// where the canvas (exact blend) puts it, within the video's sampling (≤ half a sample of progress).
+test("phone video: the screen quad stays on the picture — surface matches the canvas at every stop", async ({ browser }) => {
+  const rects: Record<string, number[][]> = {};
+  for (const player of ["video", "canvas"]) {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+    const page = await ctx.newPage();
+    await page.addInitScript((pl) => { (window as unknown as { __ENTRANCE_EXP__: unknown }).__ENTRANCE_EXP__ = { player: pl }; }, player);
+    await page.goto("/", { waitUntil: "load" }); await page.waitForTimeout(2000);
+    rects[player] = [];
+    for (const p of [0.25, 0.3, 0.5, 0.7, 0.78, 0.83, 0.86, 0.87]) {
+      await page.evaluate((p) => { const c = document.getElementById("entrance")!; scrollTo({ top: c.offsetTop + p * (c.offsetHeight - innerHeight), behavior: "instant" as ScrollBehavior }); }, p);
+      await page.waitForTimeout(900);
+      rects[player].push(await page.locator(".entrance__surface").evaluate((el) => { const r = el.getBoundingClientRect(); return [r.x, r.y, r.width, r.height]; }));
+    }
+    if (player === "video") await expect(page.locator(".entrance__video[data-drawn]")).toHaveCount(1);
+    await ctx.close();
+  }
+  rects.video.forEach((r, i) => r.forEach((v, k) => expect(Math.abs(v - rects.canvas[i][k]), `stop ${i} coord ${k}`).toBeLessThan(8)));
+});
+
+test("phone video: a failing video hands over to the canvas", async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+  const page = await ctx.newPage();
+  await page.route(/\/entrance\/(portrait|landscape)\/scrub\./, (r) => r.fulfill({ status: 404, body: "" }));
+  await page.goto("/", { waitUntil: "load" });
+  await page.evaluate(() => { const c = document.getElementById("entrance")!; scrollTo({ top: c.offsetTop + 0.3 * (c.offsetHeight - innerHeight), behavior: "instant" as ScrollBehavior }); });
+  await expect(page.locator(".entrance__canvas[data-drawn]:not(video)")).toHaveCount(1, { timeout: 15000 });
+  await expect(page.locator(".entrance__video")).toHaveCount(0);
+  await ctx.close();
+});
+
+// While scrolling, a seek can lag the finger by a few frames. The surface must then follow the frame on screen,
+// not the scroll: every render showing the same video frame places the surface identically, however far the
+// scroll has run ahead. (Placing it from the scroll position measured a spread of tens of px here.)
+test("phone video: while seeks lag, the surface follows the frame on screen, not the scroll", async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+  const page = await ctx.newPage();
+  await page.addInitScript(() => {
+    const w = window as unknown as { __ENTRANCE_PROF__: object; __rec: { s: number; late: boolean; r: number[] }[] };
+    w.__rec = [];
+    w.__ENTRANCE_PROF__ = { render: (r: { path: string; drawn: number | null }) => {
+      if (!r.path.startsWith("video") || r.drawn === null) return;
+      const b = document.querySelector(".entrance__surface")!.getBoundingClientRect();
+      w.__rec.push({ s: r.drawn, late: r.path === "video-late", r: [b.x, b.y, b.width, b.height] });
+    } };
+  });
+  await page.goto("/", { waitUntil: "load" }); await page.waitForTimeout(2500);
+  const cdp = await ctx.newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 6 });           // slow seeks: the picture falls behind
+  await page.evaluate(async () => {
+    const c = document.getElementById("entrance")!, L = c.offsetHeight - innerHeight;
+    for (let k = 0; k <= 60; k++) { scrollTo({ top: c.offsetTop + (0.68 + (0.2 * k) / 60) * L, behavior: "instant" as ScrollBehavior }); await new Promise((r) => requestAnimationFrame(r)); }
+  });
+  await page.waitForTimeout(1500);
+  const rec = await page.evaluate(() => (window as unknown as { __rec: { s: number; late: boolean; r: number[] }[] }).__rec);
+  expect(rec.filter((x) => x.late).length, "the scroll must have outrun the video at least once").toBeGreaterThan(0);
+  const bySample = new Map<number, number[][]>();
+  for (const x of rec) (bySample.get(x.s) ?? bySample.set(x.s, []).get(x.s)!).push(x.r);
+  for (const [s, rs] of bySample) for (const r of rs) r.forEach((v, k) => expect(Math.abs(v - rs[0][k]), `sample ${s}`).toBeLessThan(1.5));
+  await ctx.close();
+});
+
+test("phone with reduced motion: static hero, no video and no frames requested", async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
+  const page = await ctx.newPage();
+  const media: string[] = []; page.on("request", (r) => { if (/\/entrance\/(landscape|portrait)\//.test(r.url())) media.push(r.url()); });
+  await page.goto("/", { waitUntil: "load" }); await page.waitForTimeout(1500);
+  await expect(page.locator(".entrance__video")).toHaveCount(0);
+  expect(media).toEqual([]);
+  await expect(page.locator("#hero-title")).toBeVisible();
   await ctx.close();
 });

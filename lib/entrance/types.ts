@@ -12,7 +12,10 @@ export type FrameSet = {
   poster: string;              // base name; .avif and .jpg exist
   still: string;
   pushEndIndex: number;        // index of K2 / P2 in frames
+  /** Scrub video for phones (scripts/encode-video.mjs): `samples` frames uniform in p over [p0, p1]. */
+  video?: VideoMeta;
 };
+export type VideoMeta = { width: number; height: number; samples: number; fps: number; p0: number; p1: number; keyint: number };
 /** `sources` (sha256 by repo path) and `verifyCounts` record what the VERIFY/WRITE screens drew (spec §4.6 provenance). */
 export type Manifest = { version: 1; snapshot: string; sources?: Record<string, string>; verifyCounts?: Record<string, number>;
   landscape: FrameSet; portrait: FrameSet };

@@ -44,6 +44,7 @@ describe("validateManifest", () => {
     expect(m.landscape.webp, "landscape (desktop, Retina) stays AVIF").toBeUndefined();
     for (const k of ["landscape", "portrait"] as const) {
       for (const t of m[k].tiers) for (const f of m[k].frames) expect(fs.existsSync(`${dir}/${k}/${t}/${f.file}.avif`), `${k}/${t}/${f.file}`).toBe(true);
+      if (m[k].video) for (const ext of ["mp4", "webm"]) expect(fs.existsSync(`${dir}/${k}/scrub.${ext}`), `${k}/scrub.${ext}`).toBe(true);
       for (const t of m[k].webp ?? []) {
         expect(m[k].tiers, `${k} webp ${t} must be an AVIF tier too`).toContain(t);
         for (const f of m[k].frames) expect(fs.existsSync(`${dir}/${k}/${t}/${f.file}.webp`), `${k}/${t}/${f.file}.webp`).toBe(true);

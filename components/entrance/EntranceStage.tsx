@@ -4,13 +4,15 @@ import { useEffect, useRef } from "react";
 import { BEATS, segment, easeOut, easeInOut } from "@/lib/timeline";
 import { FrameStore } from "@/lib/entrance/FrameStore";
 import { drawFrame } from "@/lib/entrance/FramePlayer";
-import { loadOrder, pickTier, pickFormat, resolveFrame } from "@/lib/entrance/frames";
+import { loadOrder, pickTier, pickFormat, resolveFrame, lerpQuad } from "@/lib/entrance/frames";
 import { surfaceTransform, containsRect, coverFit, quadToViewport } from "@/lib/entrance/surface";
 import { stageGeometry } from "./stageGeometry";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
 import type { Manifest, FrameSet, Quad } from "@/lib/entrance/types";
 import { jumpTo } from "@/lib/scroll";
 import { profiler, experiment } from "@/lib/entrance/profile";
+import { VideoPlayer } from "@/lib/entrance/VideoPlayer";
+import { progressAt, type Pacing } from "@/lib/entrance/pacing";
 
 const VEIL = 0.72; // near-black over the studio at p = 0; matches the CSS first paint
 const CHAPTERS: [number, string][] = [[BEATS.lift[0], "01 — Scroll to begin"], [BEATS.lid[0], "02 — Scroll to open"], [BEATS.identity[0], "03 — Welcome"]];
@@ -34,7 +36,9 @@ const saveData = () => {
   return Boolean(c?.saveData || (c?.effectiveType && /(^|-)2g|3g/.test(c.effectiveType)));
 };
 
-type StageState = { set?: FrameSet; store?: FrameStore<ImageBitmap>; kind: "landscape" | "portrait"; gen: number; format: "avif" | "webp"; fetchConcurrency: number;
+type StageState = { set?: FrameSet; store?: FrameStore<ImageBitmap>; kind: "landscape" | "portrait"; gen: number; format: "avif" | "webp" | "mp4" | "webm"; fetchConcurrency: number;
+  /** Phones scrub a video (lib/entrance/VideoPlayer); tablets and desktop draw the image sequence on the canvas. */
+  player: "canvas" | "video"; video?: VideoPlayer; forceCanvas: boolean; pacing: Pacing;
   tier: number; vw: number; vh: number; pContain: number; raf: number; p: number; poster?: HTMLImageElement; hooks?: Hooks;
   /** Scroll geometry, measured on resize only: progress is then pure arithmetic on scrollY, no layout reads. */
   top: number; range: number; drawnKey: string;
@@ -51,6 +55,21 @@ const CAD_WINDOW = 20;   // display frames: a third of a second of scrolling at 
 
 const container = () => document.getElementById("entrance")!;
 
+const VIDEO_TYPES = [{ ext: "mp4", type: 'video/mp4; codecs="avc1.640028"' }, { ext: "webm", type: 'video/webm; codecs="vp9"' }] as const;
+
+/**
+ * Which player: the scrub video on phones — portrait narrower than 480 CSS px, or a phone held sideways (under
+ * 500 px tall) — when the manifest has one and the browser plays one of its formats; the canvas elsewhere.
+ * Decided from the viewport, never from the device's name. `?entrancePerf=1&entrancePlayer=canvas|video`
+ * overrides it for A/B comparison.
+ */
+const pickPlayer = (set: FrameSet, kind: "landscape" | "portrait", vw: number, vh: number, forceCanvas: boolean): "canvas" | "video" => {
+  const want = experiment().player ?? "auto";
+  if (forceCanvas || want === "canvas" || !set.video || typeof document === "undefined") return "canvas";
+  if (!VideoPlayer.canPlay(VIDEO_TYPES.map((t) => t.type))) return "canvas";
+  if (want === "video") return "video";
+  return (kind === "portrait" && vw < 480) || (kind === "landscape" && vh < 500) ? "video" : "canvas";
+};
 /**
  * Adaptive rendering, for touch devices only (desktop wheel scrolling is unchanged). The approved cross-fade
  * draws two full-canvas layers per display frame, and the canvas is then re-uploaded to the compositor every
@@ -127,7 +146,7 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (reduced) { document.documentElement.dataset.entranceDone = "true"; return; }
     const stage = canvasRef.current!.parentElement!;
-    const s: StageState = { kind: stageGeometry(window.innerWidth, window.innerHeight).kind, gen: 0, tier: 0, vw: 0, vh: 0, pContain: BEATS.push[1], raf: 0, p: 0, top: 0, range: 1, drawnKey: "", lastF: 0, blend: true, still: 0, format: "avif", fetchConcurrency: 6, ...initialMode() };
+    const s: StageState = { kind: stageGeometry(window.innerWidth, window.innerHeight).kind, gen: 0, tier: 0, vw: 0, vh: 0, pContain: BEATS.push[1], raf: 0, p: 0, top: 0, range: 1, drawnKey: "", lastF: 0, blend: true, still: 0, format: "avif", fetchConcurrency: 6, player: "canvas", forceCanvas: false, pacing: stageGeometry(window.innerWidth, window.innerHeight).pacing, ...initialMode() };
     // `?entrancePerf=1`: a temporary, opt-in diagnostics panel (performance numbers only), loaded as its own
     // chunk. Without the parameter nothing is imported and nothing below changes.
     const perf = /[?&]entrancePerf=1(&|$)/.test(location.search) ? import("@/lib/entrance/perfPanel").then((m) => m.install()).catch(() => {}) : undefined;
@@ -137,13 +156,14 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
     // opaque, still-empty canvas never hides the poster underneath.
     const ctx = canvas.getContext("2d", { alpha: false })!;
     // Progress through the entrance, as Framer's useScroll computed it ("start start" → "end end").
-    const progressNow = () => Math.min(1, Math.max(0, (window.scrollY - s.top) / s.range));
+    // Desktop paces the beats unevenly over its longer runway (lib/entrance/pacing.ts); phones map 1:1.
+    const progressNow = () => progressAt((window.scrollY - s.top) / s.range, s.pacing);
     const sizeCanvas = () => {
       const k = backingScale(s.set, s.tier, s.vw, s.vh), w = Math.round(s.vw * k), h = Math.round(s.vh * k);
       if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; s.drawnKey = ""; }
       ctx.setTransform(k, 0, 0, k, 0, 0);
-      if (s.set) profiler()?.config?.({ framing: s.kind, tier: s.tier, format: s.format, count: s.set.frames.length, vw: s.vw, vh: s.vh, dpr: window.devicePixelRatio || 1,
-        canvasW: w, canvasH: h, mode: `${s.cad.auto ? "auto:" : ""}${s.mode}`, cadence: `${s.cad.autoCadence ? "auto:" : ""}${s.cadence}`, fetchConcurrency: s.fetchConcurrency });
+      if (s.set) profiler()?.config?.({ framing: s.kind, tier: s.tier, format: s.format, count: s.player === "video" ? s.set.video?.samples ?? 0 : s.set.frames.length, vw: s.vw, vh: s.vh, dpr: window.devicePixelRatio || 1,
+        player: s.player, pacing: s.pacing, runwayPx: s.range, canvasW: w, canvasH: h, mode: `${s.cad.auto ? "auto:" : ""}${s.mode}`, cadence: `${s.cad.autoCadence ? "auto:" : ""}${s.cadence}`, fetchConcurrency: s.fetchConcurrency });
     };
     const veil = veilRef.current!, title = titleRef.current!, chapter = chapterRef.current!;
 
@@ -152,7 +172,8 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
     // scrollbars make innerWidth/innerHeight disagree with the box the canvas and the surface live in.
     const apply = () => {
       const vw = stage.clientWidth, vh = stage.clientHeight, g = stageGeometry(window.innerWidth, window.innerHeight);
-      const x = experiment().runway, svh = (g.kind === "portrait" ? x?.portrait : g.containerSvh !== 400 ? x?.short : undefined) ?? g.containerSvh;
+      const x = experiment().runway, svh = (g.kind === "portrait" ? x?.portrait : g.pacing === "linear" ? x?.short : x?.desktop) ?? g.containerSvh;
+      s.pacing = experiment().pacing ?? g.pacing;
       const c = container(); c.dataset.framing = g.kind; c.style.setProperty("--entrance-h", `${svh}svh`);
       s.vw = vw; s.vh = vh;
       s.top = c.getBoundingClientRect().top + window.scrollY;
@@ -168,6 +189,7 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
     const boot = async () => {
       const gen = ++s.gen;
       s.store?.dispose(); s.store = undefined; s.set = undefined; s.poster = undefined;
+      s.video?.dispose(); s.video = undefined;
       await perf;
       if (gen !== s.gen) return;
       Object.assign(s, initialMode(), { still: 0 });
@@ -184,6 +206,8 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       const fetchConcurrency = x.fetchConcurrency ?? (format === "webp" ? set.frames.length : 6);
       const posterImg = new Image(); posterImg.src = `/entrance/${set.poster}.avif`; await posterImg.decode().catch(() => {});
       if (gen !== s.gen) return;
+      s.player = pickPlayer(set, kind, s.vw, s.vh, s.forceCanvas);
+      if (s.player === "video") return bootVideo(gen, set, kind, posterImg);
       s.set = set; s.tier = tier; s.format = format; s.fetchConcurrency = fetchConcurrency; s.poster = posterImg; s.drawnKey = ""; sizeCanvas();
       const stillIndex = set.frames.findIndex((f) => f.file === "k1-on");
       const keep = [0, stillIndex, set.pushEndIndex].filter((i) => i >= 0);
@@ -211,6 +235,44 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       const off = () => { window.removeEventListener("load", go); for (const e of early) window.removeEventListener(e, go); };
       if (document.readyState === "complete") go();
       else { window.addEventListener("load", go, { once: true }); for (const e of early) window.addEventListener(e, go, { once: true, passive: true }); }
+      computeContain(); request();
+    };
+
+    // The video player's boot (phones). The canvas stays hidden; the video fades in over the poster on its first
+    // presented frame. Loading is gated exactly like the canvas frames: the load event or the first input.
+    const bootVideo = (gen: number, set: FrameSet, kind: "landscape" | "portrait", posterImg: HTMLImageElement) => {
+      const meta = set.video!;
+      const v = new VideoPlayer({
+        meta,
+        sources: VIDEO_TYPES.map((t) => ({ src: `/entrance/${kind}/scrub.${t.ext}`, type: t.type })),
+        // A newly presented frame: place the surface for it (and keep going while a seek is still chasing).
+        onFrame: () => { if (s.video === v) { s.video.el.dataset.drawn = ""; request(); } },
+        // The video cannot play here after all: the canvas takes over for the rest of the visit.
+        onError: () => { if (s.video === v && gen === s.gen) { s.forceCanvas = true; void boot(); } },
+      });
+      v.el.className = "entrance__canvas entrance__video";
+      delete canvas.dataset.drawn; s.drawnKey = "";             // the canvas stays hidden under the video
+      s.cad.auto = false; s.cad.autoCadence = false;           // the canvas's adaptive modes do not apply
+      canvas.after(v.el);
+      s.video = v; s.set = set; s.tier = meta.width; s.poster = posterImg; s.fetchConcurrency = 1;
+      s.format = VIDEO_TYPES.find((t) => v.el.canPlayType(t.type) !== "")?.ext ?? "mp4";
+      sizeCanvas();
+      const go = () => {
+        if (s.video === v) {
+          v.start(); v.seekTo(progressNow());
+          // A video that has shown nothing 6 s after loading began (a stalled fetch, a policy that never lets
+          // it load) is not coming: the canvas takes over, like on an error.
+          window.setTimeout(() => { if (s.video === v && gen === s.gen && v.shown < 0) { s.forceCanvas = true; void boot(); } }, 6000);
+        }
+        off();
+      };
+      const early = ["wheel", "touchstart", "keydown", "pointerdown"] as const;
+      const off = () => { window.removeEventListener("load", go); for (const e of early) window.removeEventListener(e, go); };
+      if (document.readyState === "complete") go();
+      else { window.addEventListener("load", go, { once: true }); for (const e of early) window.addEventListener(e, go, { once: true, passive: true }); }
+      // iOS starts fetching a paused, never-played video only once it has been played: a muted play/pause on
+      // the first touch (muted inline playback needs no permission, and a touch satisfies any policy).
+      window.addEventListener("touchstart", () => { if (s.video === v) v.prime(); }, { once: true, passive: true });
       computeContain(); request();
     };
 
@@ -319,6 +381,7 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
         if (s.mode === "single") s.blend = s.still >= 3;
         else if (s.blend && speed >= 1.25) s.blend = false; else if (!s.blend && speed <= 0.75) s.blend = true;
       }
+      if (s.video && s.set) { videoFrame(p, zoom, t0, ts, moving); return; }
       const drawn = s.set && s.store
         ? drawFrame({ ctx, frames: s.set.frames, p, store: s.store as never, fallback: (s.poster ?? null) as never, fallbackQuad: null, frameW: s.set.width, frameH: s.set.height, vw: s.vw, vh: s.vh, zoom, skipKey: s.drawnKey, blend: s.blend, held: s.drawnKey.startsWith("pair:") || s.drawnKey.startsWith("near:") ? s.heldQuad ?? null : undefined })
         : null;
@@ -330,14 +393,9 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       if (tracking && moving && ts !== undefined) { c.draws.push(drawMs); if (c.draws.length > CAD_WINDOW) c.draws.shift(); }
       if (tracking && recent) adapt();
       s.store?.setPlayhead(frameIndexAt(s.set, p));
-      put(veil, "opacity", String(VEIL * (1 - segment(p, ...BEATS.lift, easeOut))));
-      put(chapter, "text", CHAPTERS.filter(([at]) => p >= at).pop()?.[1] ?? "");
-      put(chapter, "opacity", String(1 - segment(p, BEATS.push[0], BEATS.push[0] + 0.04)));
-      put(title, "opacity", String(segment(p, 0.02, 0.1) * (1 - segment(p, ...BEATS.titleOut))));
+      overlays(p);
       placeSurface(p, quad);
       choreograph(p);
-      const done = String(p >= BEATS.navIn[0]);
-      if (document.documentElement.dataset.entranceDone !== done) document.documentElement.dataset.entranceDone = done;
       profiler()?.render?.({ p, queuedAt: t0, start: t0, ms: performance.now() - t0, drawMs, path: drawn?.path ?? "none", want: drawn?.want ?? -1, drawn: drawn?.drawnA ?? null, ts, painted: drawn?.painted ?? false, moving });
       // Snapped to the nearest frame for speed: look again next frame. If the scroll has stopped, the speed is
       // then 0, blending resumes and the exact approved state for p is drawn — nothing is left mid-snap at rest.
@@ -345,6 +403,38 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       if (!s.blend || (tracking && recent)) request();
     };
     const request = () => { if (!s.raf) s.raf = requestAnimationFrame(frame); };
+
+    // The room's overlays and the done flag: scroll-driven, not attached to the picture.
+    const overlays = (p: number) => {
+      put(veil, "opacity", String(VEIL * (1 - segment(p, ...BEATS.lift, easeOut))));
+      put(chapter, "text", CHAPTERS.filter(([at]) => p >= at).pop()?.[1] ?? "");
+      put(chapter, "opacity", String(1 - segment(p, BEATS.push[0], BEATS.push[0] + 0.04)));
+      put(title, "opacity", String(segment(p, 0.02, 0.1) * (1 - segment(p, ...BEATS.titleOut))));
+      const done = String(p >= BEATS.navIn[0]);
+      if (document.documentElement.dataset.entranceDone !== done) document.documentElement.dataset.entranceDone = done;
+    };
+
+    // One frame of the video player. The seek goes to the scroll position; everything spatially tied to the
+    // picture — the surface's quad, its identity ramp — follows the frame actually on screen (`shown`), so a
+    // late seek delays the pair together instead of separating them. Overlays that are not attached to the
+    // picture (veil, title, chapter, the screen's own choreography) follow the scroll as before.
+    const videoFrame = (p: number, zoom: number, t0: number, ts: number | undefined, moving: boolean) => {
+      const v = s.video!, set = s.set!, meta = set.video!;
+      v.seekTo(p);
+      put(v.el, "transform", zoom === 1 ? "" : `scale(${zoom})`);
+      const shown = v.shown, last = meta.samples - 1;
+      // Progress of the picture on screen: the scroll's own below the first frame (a still, zoomed by the lift)
+      // and past the last once the video has reached it; the shown sample's in between.
+      const pv = shown < 0 ? Math.min(p, meta.p0) : p <= meta.p0 && shown === 0 ? p : p >= meta.p1 && shown === last ? p : v.progressOf(shown);
+      const r = resolveFrame(pv, set.frames), fit = coverFit(meta.width, meta.height, s.vw, s.vh, zoom);
+      const q = lerpQuad(set.frames[r.a].quad, set.frames[r.b].quad, r.w);
+      const quad = shown < 0 || !q ? null : quadToViewport(q, meta.width, meta.height, fit);
+      overlays(p);
+      placeSurface(pv, quad);
+      choreograph(p);
+      profiler()?.render?.({ p, queuedAt: t0, start: t0, ms: performance.now() - t0, drawMs: 0, path: shown < 0 ? "fallback" : shown === v.wanted ? "video" : "video-late", want: v.wanted, drawn: shown < 0 ? null : shown, ts, painted: true, moving });
+      // No polling while a seek runs: the player's onFrame asks for the next frame when the picture changes.
+    };
 
     // The adaptive step (touch devices, see `initialMode`): judged over a full window of moving frames, then
     // the window restarts so the next step is judged on the new mode's own cadence. One-way for the visit.
@@ -390,7 +480,7 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       ro.disconnect(); window.removeEventListener("resize", apply); window.removeEventListener("scroll", request);
       document.removeEventListener("focusin", onFocus); document.removeEventListener("click", onClick);
       window.removeEventListener("hashchange", onHash); window.removeEventListener("entrance:skip", onSkip);
-      s.store?.dispose(); cancelAnimationFrame(s.raf);
+      s.store?.dispose(); s.video?.dispose(); cancelAnimationFrame(s.raf);
       // Static mode takes over (reduced motion switched on): hand every element back with no inline geometry.
       const h = s.hooks;
       resetInline([surface, hero, veil, title, chapter, h?.boot, h?.tagline, h?.name, ...(h?.bootLines ?? []), ...(h?.reveals.map(([el]) => el) ?? [])]);
