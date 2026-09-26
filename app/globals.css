@@ -541,9 +541,14 @@
 /* Seams between the light theme and a dark stage (Plan 2 decision 1). Pseudo-elements, so they add no DOM
    and a section can carry both; invisible in the dark theme, where --seam-edge is transparent. */
 .seam-top-dark, .seam-bottom-dark { position: relative; }
-.seam-top-dark::before, .seam-bottom-dark::after { content: ""; position: absolute; inset-inline: 0; height: 96px; pointer-events: none; z-index: 0; }
-.seam-top-dark::before { top: 0; background: linear-gradient(to bottom, var(--seam-edge, transparent), transparent); }
-.seam-bottom-dark::after { bottom: 0; background: linear-gradient(to top, var(--seam-edge, transparent), transparent); }
+/* An EASED fade (smoothstep-like stops), not a linear one: a linear light→dark ramp leaves a muddy grey
+   band at its midpoint (final polish pass). --seam-mix holds the edge colour for the intermediate stops. */
+.seam-top-dark::before, .seam-bottom-dark::after { content: ""; position: absolute; inset-inline: 0; height: 72px; pointer-events: none; z-index: 0;
+  --seam-mix: var(--seam-edge, transparent);
+  --seam-ramp: var(--seam-mix) 0%, color-mix(in oklab, var(--seam-mix) 74%, transparent) 16%, color-mix(in oklab, var(--seam-mix) 46%, transparent) 33%,
+    color-mix(in oklab, var(--seam-mix) 22%, transparent) 52%, color-mix(in oklab, var(--seam-mix) 7%, transparent) 74%, transparent 100%; }
+.seam-top-dark::before { top: 0; background: linear-gradient(to bottom, var(--seam-ramp)); }
+.seam-bottom-dark::after { bottom: 0; background: linear-gradient(to top, var(--seam-ramp)); }
 [data-theme="light"] .seam-top-dark, [data-theme="light"] .seam-bottom-dark { --seam-edge: #f5f6f8; }
 
 /* The content shell for Plan 2 sections: one measure, gutters from the token. */

@@ -1,5 +1,10 @@
 .flagship__grid { display: grid; gap: clamp(2rem, 4vw, 4rem); align-items: center; padding-block: clamp(2rem, 8vh, 7rem); }
 @media (min-width: 1024px) { .flagship__grid { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); } }
+/* 1024–1279: a 5/7 copy column is ~390px, which wraps T Poker's actions and store badges onto two rows each and
+   pushes its copy past a 768px viewport (the scene then loses its pin). Even columns keep both rows single. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .flagship__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
 .flagship__copy { position: relative; z-index: 2; }                /* never transformed: always legible */
 .flagship__copy dl > div { display: flex; flex-direction: column-reverse; }
 .flagship__world { position: relative; min-height: min(62svh, 640px); }
@@ -87,6 +92,8 @@
 .world-aegis__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 /* Single column: the rows stay inside the world rather than bleeding off the screen edge. */
 @media (max-width: 1023px) { .world-aegis__rows { right: 8px; width: 58%; } }
+/* 1024–1279 (even flagship columns): the -4% overhang would put the cards on the viewport edge. */
+@media (min-width: 1024px) and (max-width: 1279px) { .world-aegis__rows { right: 0; } }
 
 /* ── World 03 — DeveloperOS ──────────────────────────────────────────── */
 .world-dos { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; perspective: 1600px; }

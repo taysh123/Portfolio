@@ -213,3 +213,17 @@ test("T Poker: both store badges link their live listings — flagship, case stu
   await page.getByRole("combobox", { name: "Search commands" }).fill("Google Play");
   await expect(page.getByRole("option", { name: /T Poker — Google Play/ })).toBeVisible();
 });
+
+test("every flagship keeps its pinned stage down to 1024×768 — T Poker's store row included (final polish pass)", async ({ page }) => {
+  for (const [width, height] of [[1024, 768], [1280, 720], [1440, 900]]) {
+    await page.setViewportSize({ width, height });
+    await skip(page);
+    for (const id of ["poker", "aegis", "developeros", "gravity-flow"]) {
+      await expect(page.locator(`#work-${id}`), `${id} at ${width}×${height}`).toHaveAttribute("data-fit", "true");
+      await expect(page.locator(`#work-${id}`), `${id} at ${width}×${height}`).toHaveAttribute("data-pinned", "true");
+    }
+    // Both store badges sit on one row inside the copy column.
+    const tops = await page.locator("#work-poker ul[aria-label='Get T Poker'] a").evaluateAll((as) => as.map((a) => Math.round(a.getBoundingClientRect().top)));
+    expect(new Set(tops).size, `store row at ${width}×${height}`).toBe(1);
+  }
+});
