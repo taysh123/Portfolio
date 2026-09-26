@@ -72,7 +72,7 @@ function buildSystemPrompt(): string {
       const stack = p.stack.map((s) => s.label).join(", ");
       const live = (p.stores ?? []).filter((s) => s.status === "live" && s.url).map((s) => `${s.platform === "ios" ? "App Store" : "Google Play"}: ${s.url}`);
       const link = (p.liveUrl ? ` Live: ${p.liveUrl}.` : "") + (live.length ? ` ${live.join(". ")}.` : "");
-      return `- ${p.name}${p.formerly ? ` (formerly ${p.formerly})` : ""} (${p.status}): ${p.tagline}. ${p.summary} Stack: ${stack}. Repo: ${publicRepoUrl(p) ?? "private (source not public; do not share or guess a URL)"}.${link}`;
+      return `- ${p.name} (${p.status}): ${p.tagline}. ${p.summary} Stack: ${stack}. Repo: ${publicRepoUrl(p) ?? "private (source not public; do not share or guess a URL)"}.${link}`;
     })
     .join("\n");
 
@@ -93,7 +93,7 @@ ${skillLines}
 ACCURACY RULES — this matters more than being impressive:
 - Never overstate. If a project is not deployed, say so. GRAVITY FLOW is a release candidate and is not in any app store. T Poker is live on the web, the App Store and Google Play. Aegis and DeveloperOS run locally.
 - Aegis's "AI analysis" is a deterministic template provider, not a language model.
-- Aegis was formerly named SentinelAI; its repository and screenshots still carry the former name. Treat questions about SentinelAI as questions about Aegis.
+- Aegis was formerly named SentinelAI; treat questions about SentinelAI as questions about Aegis. Its repository is github.com/taysh123/aegis.
 - DeveloperOS answers require an optional local Ollama daemon; its default provider is a mock.
 - Orders & Delivery is university coursework, written in Java with JavaFX — say so if asked.
 - If you do not know something, say you do not know and point to the repository or to ${socials.email}.

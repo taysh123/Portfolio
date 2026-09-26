@@ -91,7 +91,7 @@ It does **not** merge, open a production PR or deploy.
 - **Truth:**
   - Every number, status and claim comes from `data/*.ts`, the repositories, or real command output.
   - No invented metrics. No check mark or pass status for anything that was not executed and passed at the frozen snapshot.
-  - Banned claims stay out: "6+ Shipped", "1,077 roles", `poker-home-games-three`, and any "7 languages" stat.
+  - Banned claims stay out: "6+ Shipped", "1,077 roles", the retired preview URL (redacted: it named the private repository), and any "7 languages" stat.
 - **The Plan 1 entrance is a stable baseline.** Do not redesign or destabilise it to make later sections easier.
   - Any task that touches shared tokens, the nav, the Hero, the accessibility controls, `EntranceStage`, `SmoothScroll` or `lib/entrance/*` must run `tests/e2e/entrance.spec.ts` **and** `tests/e2e/entrance-geometry.spec.ts` (Task 1) and keep them green.
   - Tests are never weakened.
@@ -3467,3 +3467,12 @@ Fresh production build of the branch head, no render running. Nothing below weak
 | 12 | Minor | Private address in a committed doc | redacted; tests derive it. The portfolio repository is **public**, so `data/internal-repos.ts` (kept by the owner's decision) and earlier history still carry the address — owner to decide |
 
 All #2–#8 regressions were observed failing against the pre-fix build, except the palette-over-case-study Escape test, which passed on the old code too and stays as a guard. Turbopack still places framer-motion's shared modules in the overlay chunk group as well as the main one; with on-demand mounting that copy downloads only when a visitor opens an overlay — accepted.
+
+## Verification log — Aegis integration and T Poker privacy (recorded 2026-09-26)
+
+- **Aegis captures:** the canonical set from `taysh123/aegis@31a75aa` (`portfolio-screenshots/aegis`, byte-identical to the owner's upload). Used: 04 dashboard (world monitor, case-study hero), 05 live alerts (world row crops, gallery), 06 AI analysis, 08 incident kanban, 09 incident detail, 11 architecture (gallery; trimmed to its content, 3840×1440). Not used: 01 login (prints the demo credentials), 02/03 (auth-card callouts; 03 is byte-identical to 02), 07 (the AI-mode toggle's label reads "Claude-powered", while the shipped provider is the built-in mock), 10 (byte-identical to 04). Files carry the repository's numbering, so no cache can serve the old captures under the new names.
+- Row crops re-measured on the new live-alerts capture: card borders y 500–631 / 644–775 / 788–919, x 528 → centres 0.2618 / 0.3285 / 0.3951.
+- Repository link is `https://github.com/taysh123/aegis` on every surface (flagship, case study, palette, chat). "Formerly SentinelAI" is gone from the project experience; SentinelAI remains only in the chat's rule mapping the old name to Aegis. The entrance render's WRITE screen shows this repo's own git log, whose history includes the subject "Rename SentinelAI to Aegis across the portfolio" (historical, not re-rendered).
+- Facts re-checked against the Aegis repository: AI analysis is the built-in mock provider (honest note unchanged); no CI workflow (unchanged); tests unchanged since the counted snapshot (105 incl. Testcontainers); 9 tags now (was 7 — updated).
+- **T Poker:** `data/internal-repos.ts` deleted; the private address is in no tracked file (unit test over `git ls-files`, digest-based — the name is not stored in tests either), no production file (270 build files incl. 78 source maps), and no served HTML, chunk, sitemap, robots or manifest (e2e). Earlier commits still contain it (published history is not rewritten).
+- Gate: tsc clean · ESLint 0 warnings · Vitest 94/94 · clean `next build` · Playwright 99/99 · entrance ×3 81/81 · JS 259.5 KB gzip · HTML 394.1 KB · LCP 356 / 180 ms · CLS 0 · entrance p95 4.85 ms · 0 control collisions at five sizes · keyboard walk 48/38 stops, 0 issues, both themes · Aegis world settled under OS and in-app reduced motion.

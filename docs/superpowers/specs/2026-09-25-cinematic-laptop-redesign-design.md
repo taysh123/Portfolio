@@ -68,7 +68,7 @@ I fetched it read-only (`git archive`, no checkout or merge), ran it locally, an
 
 | Package says | Repository truth |
 |---|---|
-| T Poker live URL `poker-home-games-three.vercel.app` | `https://app.tpoker.app/`, plus the live App Store listing |
+| T Poker live URL (a retired Vercel preview, redacted — it named the private repository) | `https://app.tpoker.app/`, plus the live App Store listing |
 | GRAVITY FLOW "Live product" → `taysh123.github.io/Gravity-Game` | Removed in August: the link served a privacy policy. The game is `v1.0.0-rc` and Android-only |
 | Orders & Delivery: "Node.js, REST, SQL, React", "state transitions" | 100% Java, JavaFX, raw TCP, a flat-file DAO. It is university coursework and says so |
 | Aegis (formerly SentinelAI) "AI-assisted" | The analysis mode is a deterministic template provider; no model is called |

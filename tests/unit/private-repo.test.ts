@@ -1,37 +1,30 @@
-// T Poker's repository is private (user decision, 2026-09-26): no public link, no exposed address.
+// T Poker's repository is private (user decision, 2026-09-26): no public link, and no address anywhere in this
+// public repository. Leak checks use a digest of the slug (tests/support/private-repo.ts), never the name.
 import { it, expect } from "vitest";
 import fs from "node:fs";
-import path from "node:path";
+import { execSync } from "node:child_process";
 import { projects, publicRepoUrl, PRIVATE_REPO_LABEL } from "@/data/projects";
-import { INTERNAL_REPO_URLS } from "@/data/internal-repos";
+import { privateRepoLeaks } from "../support/private-repo";
 
-const PRIVATE = new RegExp(`${new URL(INTERNAL_REPO_URLS.poker).pathname.split("/").pop()}(?!-three)`);
-const files = (d: string): string[] => fs.readdirSync(d, { withFileTypes: true })
-  .flatMap((e) => (e.isDirectory() ? files(path.join(d, e.name)) : [path.join(d, e.name)]));
-const src = ["app", "components", "data", "lib"].flatMap(files).filter((f) => /\.(tsx?|css)$/.test(f));
-
-it("T Poker's repository is private: no public link, internal URL kept separately", () => {
+it("T Poker's repository is private: no URL in its data, and the public label", () => {
   const poker = projects.find((p) => p.id === "poker")!;
-  expect(poker.repo.visibility).toBe("private");
+  expect(poker.repo).toEqual({ visibility: "private" });
   expect(publicRepoUrl(poker)).toBeUndefined();
-  expect(INTERNAL_REPO_URLS.poker).toMatch(/^https:\/\/github\.com\/taysh123\/[\w.-]+$/);
   expect(PRIVATE_REPO_LABEL).toBe("Private repository");
 });
 
 it("every other project keeps its public source link", () => {
-  for (const p of projects.filter((x) => x.id !== "poker")) expect(publicRepoUrl(p), p.id).toMatch(/^https:\/\/github\.com\/taysh123\//);
+  for (const p of projects.filter((x) => x.id !== "poker")) expect(publicRepoUrl(p), p.id).toMatch(/^https:\/\/github\.com\/taysh123\/[\w.-]+$/);
 });
 
-it("every private project has an internal URL, and only private projects do", () => {
-  const priv = projects.filter((p) => p.repo.visibility === "private").map((p) => p.id).sort();
-  expect(Object.keys(INTERNAL_REPO_URLS).sort()).toEqual(priv);
+it("the internal-repos module is gone and nothing imports it", () => {
+  expect(fs.existsSync("data/internal-repos.ts")).toBe(false);
+  expect(execSync("git grep -l internal-repos -- app components data lib || true").toString().trim()).toBe("");
 });
 
-it("the private address appears only in the internal module, which no site code imports", () => {
-  const leaks = src.filter((f) => !f.endsWith(path.join("data", "internal-repos.ts")) && PRIVATE.test(fs.readFileSync(f, "utf8")));
+it("no tracked text file carries the private repository's name", () => {
+  const tracked = execSync("git ls-files -z").toString().split("\0").filter(Boolean)
+    .filter((f) => !/\.(png|jpe?g|webp|avif|gif|ico|woff2?|ttf|otf|exr|blend|zip|pdf|mp4|webm)$/i.test(f) && fs.existsSync(f));
+  const leaks = tracked.flatMap((f) => privateRepoLeaks(fs.readFileSync(f, "utf8")).map((h) => `${f}: ${h}`));
   expect(leaks).toEqual([]);
-  const importers = src.filter((f) => /internal-repos/.test(fs.readFileSync(f, "utf8")) && !f.endsWith("internal-repos.ts") && !f.endsWith(path.join("data", "projects.ts")));
-  expect(importers).toEqual([]);
-  // projects.ts may mention the module in a comment, never import it.
-  expect(fs.readFileSync("data/projects.ts", "utf8")).not.toMatch(/from\s+["'][^"']*internal-repos/);
 });

@@ -3,6 +3,7 @@ import fs from "node:fs";
 import { projects } from "@/data/projects";
 import { skillGroups } from "@/data/skills";
 import { siteMeta } from "@/data/socials";
+import { privateRepoLeaks } from "../support/private-repo";
 
 describe("content truth", () => {
   it("no project lists a store for a platform its honest note excludes", () => {
@@ -21,7 +22,8 @@ describe("content truth", () => {
   it("no banned claims appear in site source", () => {
     for (const d of ["components", "data", "app"]) for (const f of (fs.readdirSync(d, { recursive: true }) as string[]).filter((f) => /\.tsx?$/.test(f))) {
       const t = fs.readFileSync(`${d}/${f}`, "utf8");
-      expect(t, `${d}/${f}`).not.toMatch(/6\+ Shipped|1,077 roles|poker-home-games-three/);
+      expect(t, `${d}/${f}`).not.toMatch(/6\+ Shipped|1,077 roles/);
+      expect(privateRepoLeaks(t), `${d}/${f}`).toEqual([]);   // the retired preview URL embedded the private slug
     }
   });
 });

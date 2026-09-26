@@ -1432,7 +1432,7 @@ describe("content truth", () => {
   it("no banned claims appear in site source", () => {
     for (const d of ["components", "data", "app"]) for (const f of (fs.readdirSync(d, { recursive: true }) as string[]).filter((f) => /\.tsx?$/.test(f))) {
       const t = fs.readFileSync(`${d}/${f}`, "utf8");
-      expect(t, `${d}/${f}`).not.toMatch(/6\+ Shipped|1,077 roles|poker-home-games-three/);
+      expect(t, `${d}/${f}`).not.toMatch(/6\+ Shipped|1,077 roles|<retired preview URL, redacted>/);
     }
   });
 });

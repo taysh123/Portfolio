@@ -68,20 +68,14 @@ export type Project = {
   stack: { label: string; emphasis?: boolean }[];
   metrics: Metric[];
   /**
-   * The source repository. A private repository carries no URL here: this file is
-   * bundled into client components (the command palette), so its address would
-   * ship to every visitor. Its internal URL lives in `data/internal-repos.ts`,
-   * which no page imports. Public surfaces read links through `publicRepoUrl()`.
+   * The source repository. A private repository carries no URL at all — not here, and not anywhere else in
+   * this public repository. Public surfaces read links through `publicRepoUrl()` and show
+   * `PRIVATE_REPO_LABEL` in place of a private one.
    */
   repo: { visibility: "public"; url: string } | { visibility: "private" };
   liveUrl?: string;
   liveLabel?: string;
   featured?: boolean;
-  /**
-   * A previous name, shown once as "Formerly …" — needed while the repository URL and the
-   * captured screenshots still carry it (Aegis was formerly SentinelAI, renamed 2026-09-26).
-   */
-  formerly?: string;
   media?: ProjectMedia;
   stores?: StoreListing[];
   caseStudy: CaseStudy;
@@ -104,7 +98,7 @@ export const projects: Project[] = [
     context: "Solo build · 714 commits",
     status: "live",
     featured: true,
-    repo: { visibility: "private" }, // internal URL: data/internal-repos.ts
+    repo: { visibility: "private" },
     liveUrl: "https://app.tpoker.app/",
     liveLabel: "Open the app",
     stores: [
@@ -181,16 +175,15 @@ export const projects: Project[] = [
   {
     id: "aegis",
     name: "Aegis",
-    formerly: "SentinelAI",
     tagline: "A Security Operations Centre where module isolation is enforced by the compiler",
     summary:
       "Eight bounded contexts across 27 .NET projects with zero cross-context references — events flow ingestion → detection → scoring → alert over RabbitMQ and stream live to the dashboard.",
     description:
       "A self-hosted SOC platform modelled on the tools it imitates. Security events move through an ingestion → normalisation → detection → threat-scoring → alerting pipeline carried by MassTransit over RabbitMQ, backed by a range-partitioned PostgreSQL and a Redis layer that holds sliding detection windows. Alerts and incident updates reach the Next.js dashboard over SignalR. The whole stack comes up from one Docker command that mints its own RS256 keys.",
-    context: "Solo build · 7 tagged releases",
+    context: "Solo build · 9 tagged releases",
     status: "local",
     featured: true,
-    repo: { url: "https://github.com/taysh123/SentinelAI", visibility: "public" }, // the repository keeps its former name — not renamed (Plan 2 decision 6)
+    repo: { url: "https://github.com/taysh123/aegis", visibility: "public" },
     metrics: [
       { value: "8", label: "Bounded contexts" },
       { value: "0", label: "Cross-context references" },
@@ -209,15 +202,18 @@ export const projects: Project[] = [
       { label: "Docker Compose" },
     ],
     media: {
-      image: "/projects/aegis/dashboard.webp",
-      // The captures predate the rename, so the app's own wordmark in them still reads the former name.
-      alt: "Aegis real-time SOC overview dashboard (captured before the rename, so the app still reads SentinelAI)",
+      // Captured from the live application (Aegis v0.8.1, synthetic demo data): the repository's portfolio set,
+      // keeping its file numbering. New names, not new bytes under old ones, so no image cache serves the old captures.
+      // The architecture diagram is trimmed to its content (3840×1440, the empty canvas below it removed).
+      image: "/projects/aegis/04-dashboard.webp",
+      alt: "Aegis SOC Overview: live metrics, incidents by status and the live alert feed",
       fit: "cover",
       gallery: [
-        { src: "/projects/aegis/live-alerts.webp", alt: "Live alert stream over SignalR" },
-        { src: "/projects/aegis/incident-kanban.webp", alt: "Incident workflow board with audit timeline" },
-        { src: "/projects/aegis/ai-analysis.webp", alt: "Generated alert analysis panel" },
-        { src: "/projects/aegis/architecture.webp", alt: "System architecture diagram" },
+        { src: "/projects/aegis/05-live-alerts.webp", alt: "Live alerts streamed from the detection engine, with severity badges and MITRE context" },
+        { src: "/projects/aegis/06-ai-analysis.webp", alt: "An expanded alert's five-section analysis — summary, risk, MITRE mapping, actions, investigation steps — from the built-in mock provider" },
+        { src: "/projects/aegis/08-incident-kanban.webp", alt: "Incident board with Open, Investigating and Resolved columns" },
+        { src: "/projects/aegis/09-incident-detail.webp", alt: "Incident detail: status workflow, assignment, linked alerts, notes and the activity timeline" },
+        { src: "/projects/aegis/11-architecture-overview.webp", alt: "Aegis architecture: the detection pipeline, the messaging backbone, the modules and the dashboard" },
       ],
     },
     caseStudy: {

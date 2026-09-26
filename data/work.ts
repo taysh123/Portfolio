@@ -25,8 +25,9 @@ export const flagships: Flagship[] = [
             "The whole stack comes up from one Docker command that mints its own RS256 keys."],
     metricLabels: ["Bounded contexts", "Cross-context references", "Tests, incl. Testcontainers"],
     statusNote: "Runs locally — the live stream shown is a local demo",
-    // TEMPORARY: captured before the rename (the in-app wordmark still reads SentinelAI) until the user supplies Aegis screenshots.
-    worldAssets: { monitor: "/projects/aegis/dashboard.webp", rows: { src: "/projects/aegis/live-alerts.webp", centres: [0.261, 0.328, 0.394], left: 0.135, height: 0.064, aspect: 2160 / 3840 } } },
+    // Rows measured on the 3840×2160 live-alerts capture: card borders at y 500–631, 644–775, 788–919 and x 528,
+    // so centres 565.5 / 709.5 / 853.5 ÷ 2160; `left` and `height` keep a 10 px margin of page around each card.
+    worldAssets: { monitor: "/projects/aegis/04-dashboard.webp", rows: { src: "/projects/aegis/05-live-alerts.webp", centres: [0.2618, 0.3285, 0.3951], left: 0.135, height: 0.064, aspect: 2160 / 3840 } } },
   { id: "developeros", number: "03", kicker: "A local-first code workspace that refuses to answer without evidence",
     story: ["It indexes your own projects into a private SQLite FTS5 index and answers with real file and line citations, declining when the index can't support an answer.",
             "It ships as one Python package with no runtime dependencies: a CLI, a browser dashboard, an installable PWA or a Windows desktop window."],

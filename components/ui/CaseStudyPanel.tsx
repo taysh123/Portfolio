@@ -186,7 +186,7 @@ export function CaseStudyPanel({
               {/* ── The pitch ────────────────────────────────────────── */}
               <div className="flex flex-wrap items-center gap-2.5">
                 <StatusChip status={project.status} />
-                <span className="label text-fg-subtle">{project.context}{project.formerly ? ` · Formerly ${project.formerly}` : ""}</span>
+                <span className="label text-fg-subtle">{project.context}</span>
               </div>
 
               <h2
@@ -257,8 +257,11 @@ export function CaseStudyPanel({
                       decoration. `<figure>`/`<figcaption>` so the caption is
                       bound to its image for assistive tech too. */}
                   <ul className="mt-6 grid gap-5 sm:grid-cols-2">
-                    {project.media.gallery.map((shot) => (
-                      <li key={shot.src}>
+                    {project.media.gallery.map((shot, i, all) => {
+                      // An odd last shot spans both columns rather than sitting alone beside a gap.
+                      const wide = all.length % 2 === 1 && i === all.length - 1;
+                      return (
+                      <li key={shot.src} className={wide ? "sm:col-span-2" : undefined}>
                         <figure>
                           <div
                             className={
@@ -266,9 +269,10 @@ export function CaseStudyPanel({
                               // Same reasoning as the hero: a portrait capture
                               // needs a taller frame or it sits in a pool of
                               // dead space.
+                              // A wide (spanning) shot is a banner: 8:3, the ratio of Aegis's architecture diagram.
                               (project.media?.fit === "contain"
-                                ? "aspect-[4/3]"
-                                : "aspect-[16/10]")
+                                ? wide ? "aspect-[2/1]" : "aspect-[4/3]"
+                                : wide ? "aspect-[8/3]" : "aspect-[16/10]")
                             }
                             style={{ background: "var(--panel-solid)" }}
                           >
@@ -287,7 +291,7 @@ export function CaseStudyPanel({
                               alt={shot.alt}
                               fill
                               loading="lazy"
-                              sizes="(max-width: 640px) 100vw, 33rem"
+                              sizes={wide ? "(max-width: 1100px) 100vw, 68rem" : "(max-width: 640px) 100vw, 33rem"}
                               className={
                                 project.media?.fit === "contain"
                                   ? "object-contain p-3"
@@ -300,7 +304,8 @@ export function CaseStudyPanel({
                           </figcaption>
                         </figure>
                       </li>
-                    ))}
+                      );
+                    })}
                   </ul>
                 </section>
               )}
