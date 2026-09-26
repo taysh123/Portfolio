@@ -43,7 +43,3 @@
 /* Nothing left to skip once the portal completes. */
 html[data-entrance-done="true"] .entrance__skip { visibility: hidden; } /* not just transparent: out of the Tab order */
 
-/* Spec §5: the floating buttons stay hidden until the entrance completes; static mode shows them at once. */
-html:not([data-entrance-done="true"]) [data-floating-control] { visibility: hidden; }
-@media (prefers-reduced-motion: reduce) { html [data-floating-control] { visibility: visible !important; } }
-[data-reduced-motion="true"] [data-floating-control] { visibility: visible !important; }

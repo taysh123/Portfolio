@@ -1,15 +1,15 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAccessibility } from "@/components/providers/AccessibilityProvider";
 import { IconButton } from "@/components/ui/IconButton";
 import { Eyebrow } from "@/components/ui/Eyebrow";
-import { AccessibilityIcon, XIcon } from "@/components/ui/icons";
+import { XIcon } from "@/components/ui/icons";
 import { DUR, easeOutExpo } from "@/lib/motion";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
-import { useScrollIdle } from "@/lib/useScrollIdle";
+import { useOverlayState } from "@/lib/overlays";
 import { cn } from "@/lib/cn";
 
 const OPTIONS = [
@@ -43,31 +43,18 @@ const OPTIONS = [
  * animation through `useReducedMotionPref`, both switches change what you see.
  */
 export function AccessibilityPanel() {
-  const [open, setOpen] = useState(false);
+  // Opened from the chrome (nav on desktop, menu sheet on phones) — no floating corner button (lib/overlays.ts).
+  const [open, setOpen] = useOverlayState("a11y");
   const prefs = useAccessibility();
   const reduced = useReducedMotionPref();
   const panelRef = useRef<HTMLDivElement>(null);
-  const retract = useScrollIdle() && !open;
 
-  const close = useCallback(() => setOpen(false), []);
+  const close = useCallback(() => setOpen(false), [setOpen]);
   useFocusTrap(panelRef, open, close);
 
   return (
-    <div
-      data-floating-control
-      className={cn(
-        "fixed left-6 z-50 flex flex-col items-start gap-3",
-        "bottom-[max(1.5rem,env(safe-area-inset-bottom))]",
-        // Short landscape screens (≤ 500px tall): the left corner lands on the hero's left-aligned CTAs, which
-        // cannot move higher, so this control stacks above the chat button on the right instead.
-        "[@media(max-height:500px)]:left-auto [@media(max-height:500px)]:right-6 [@media(max-height:500px)]:items-end",
-        "[@media(max-height:500px)]:bottom-[calc(max(1.5rem,env(safe-area-inset-bottom))+4rem)]",
-        // See the note in AIChatWidget: two fixed controls in the bottom
-        // corners of a phone cover exactly the actions a reader is aiming for.
-        "transition-[transform,opacity] duration-[var(--dur-slow)] ease-[var(--ease-out-expo)] lg:translate-y-0 lg:opacity-100",
-        retract && "translate-y-[160%] opacity-0",
-      )}
-    >
+    // Anchored under the nav's right edge, where its button lives; bounded to the viewport and scrollable.
+    <div className="fixed right-3 top-[calc(var(--nav-h)+0.5rem)] z-[70] lg:right-6">
       <AnimatePresence>
         {open && (
           <motion.div
@@ -76,11 +63,13 @@ export function AccessibilityPanel() {
             aria-modal="true"
             aria-label="Accessibility settings"
             tabIndex={-1}
-            initial={reduced ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.98 }}
+            initial={reduced ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={reduced ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.98 }}
+            exit={reduced ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: DUR.mid, ease: easeOutExpo }}
-            className="glass edge-lit w-[19rem] max-h-[calc(100svh-7rem)] overflow-y-auto overscroll-contain rounded-2xl border border-line p-5 shadow-float [@media(max-height:500px)]:max-h-[calc(100svh-11rem)]"
+            data-lenis-prevent
+            className="glass edge-lit w-[min(19rem,calc(100vw-1.5rem))] max-h-[calc(100svh-var(--nav-h)-1.5rem)] overflow-y-auto overscroll-contain rounded-2xl border border-line p-5 shadow-float"
+            style={{ background: "var(--bg-raised)" }}   /* solid: settings text must not show the page behind it */
           >
             <div className="flex items-center justify-between gap-3">
               <Eyebrow as="span">Accessibility</Eyebrow>
@@ -110,14 +99,6 @@ export function AccessibilityPanel() {
         )}
       </AnimatePresence>
 
-      <IconButton
-        label="Accessibility settings"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        className="glass shadow-float"
-      >
-        <AccessibilityIcon size={18} />
-      </IconButton>
     </div>
   );
 }

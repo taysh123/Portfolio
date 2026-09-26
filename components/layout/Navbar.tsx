@@ -8,11 +8,12 @@ import { IconButton } from "@/components/ui/IconButton";
 import { ButtonLink } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { availability } from "@/data/socials";
-import { MenuIcon, CloseIcon, SearchIcon } from "@/components/ui/icons";
+import { MenuIcon, CloseIcon, SearchIcon, ChatIcon, AccessibilityIcon } from "@/components/ui/icons";
 import { DUR, easeOutExpo } from "@/lib/motion";
 import { useFocusTrap, useScrollLock } from "@/lib/useFocusTrap";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
 import { requestPaletteOpen } from "@/lib/palette";
+import { toggleOverlay, useOverlayOpen } from "@/lib/overlays";
 
 const LINKS = [
   { href: "#work", label: "Work" },
@@ -76,6 +77,9 @@ export function Navbar() {
   }, []);
 
   const openPalette = () => requestPaletteOpen();
+  // Chat and accessibility live in the chrome, not in floating corner buttons (lib/overlays.ts).
+  const chatOpen = useOverlayOpen("chat");
+  const a11yOpen = useOverlayOpen("a11y");
 
   return (
     <>
@@ -134,6 +138,12 @@ export function Navbar() {
               <SearchIcon size={15} />
             </IconButton>
             <ThemeToggle />
+            <IconButton label="Accessibility settings" size="sm" aria-expanded={a11yOpen} onClick={() => toggleOverlay("a11y")}>
+              <AccessibilityIcon size={16} />
+            </IconButton>
+            <IconButton label="Ask Tay AI" size="sm" aria-expanded={chatOpen} onClick={() => toggleOverlay("chat")}>
+              <ChatIcon size={15} />
+            </IconButton>
             {availability.open && (
               <a href="#contact" className="label ml-1 inline-flex h-9 items-center gap-2 rounded-full border border-line px-3.5 text-fg-muted transition-colors hover:border-line-strong hover:text-fg">
                 <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--status-live)]" />
@@ -148,7 +158,10 @@ export function Navbar() {
                 <span aria-hidden="true" className="h-2 w-2 rounded-full bg-[var(--status-live)]" />
               </a>
             )}
-            <ThemeToggle />
+            {/* Phones: chat stays one tap away in the header; theme and accessibility are in the menu sheet. */}
+            <IconButton label="Ask Tay AI" aria-expanded={chatOpen} onClick={() => toggleOverlay("chat")}>
+              <ChatIcon size={18} />
+            </IconButton>
             <IconButton
               label="Open menu"
               aria-expanded={open}
@@ -190,7 +203,10 @@ export function Navbar() {
               aria-modal="true"
               aria-label="Navigation"
               tabIndex={-1}
-              className="glass absolute inset-x-3 bottom-3 top-[calc(var(--nav-h)+0.75rem)] flex flex-col overflow-hidden rounded-2xl border border-line p-6"
+              // Scrolls when the viewport is short (a landscape phone): overflow-hidden clipped Contact, the
+              // theme/palette/accessibility row and "Get in touch" out of reach at 844×390.
+              data-lenis-prevent
+              className="glass absolute inset-x-3 bottom-3 top-[calc(var(--nav-h)+0.75rem)] flex flex-col overflow-y-auto overscroll-contain rounded-2xl border border-line p-6"
               initial={reduced ? { opacity: 0 } : { y: 16, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={reduced ? { opacity: 0 } : { y: 16, opacity: 0 }}
@@ -225,6 +241,10 @@ export function Navbar() {
                 <ThemeToggle />
                 <IconButton label="Open command palette" onClick={() => { closeMenu(); openPalette(); }}>
                   <SearchIcon size={18} />
+                </IconButton>
+                {/* After the sheet's own focus restore, so the panel returns focus to the menu button on close. */}
+                <IconButton label="Accessibility settings" onClick={() => { closeMenu(); setTimeout(() => toggleOverlay("a11y"), 0); }}>
+                  <AccessibilityIcon size={18} />
                 </IconButton>
               </div>
 

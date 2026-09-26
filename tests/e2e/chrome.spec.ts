@@ -33,18 +33,43 @@ test("mobile sheet: keyboard reaches the theme toggle and palette, Escape restor
   await page.keyboard.press("Escape"); await expect(sheet).toBeHidden(); await expect(menu).toBeFocused();
 });
 
-test("floating controls hide during the entrance and appear at the portal", async ({ page }) => {
+// Chat and accessibility live in the site chrome, not in floating corner buttons (final polish pass).
+test("chat and accessibility are in the nav: hidden with it during the entrance, working at the portal", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("[data-floating-control]").first()).toBeHidden();
+  await expect(page.locator("header[data-entrance-nav]")).toHaveCSS("opacity", "0");
   await page.locator("[data-skip-intro]").click();
-  await expect(page.locator("[data-floating-control]").first()).toBeVisible();
+  const nav = page.locator("header[data-entrance-nav] nav");
+  for (const [name, dialog] of [["Ask Tay AI", "Ask Tay AI"], ["Accessibility settings", "Accessibility settings"]] as const) {
+    const b = nav.getByRole("button", { name, exact: true }); await expect(b).toBeVisible();
+    await expect(b).toHaveAttribute("aria-expanded", "false");
+    await b.click(); await expect(page.getByRole("dialog", { name: dialog })).toBeVisible();
+    await expect(b).toHaveAttribute("aria-expanded", "true");
+    await page.keyboard.press("Escape"); await expect(page.getByRole("dialog", { name: dialog })).toBeHidden();
+    await expect(b).toBeFocused();                                                  // focus returns to its opener
+  }
+  await expect(page.locator("[data-floating-control]")).toHaveCount(0);
 });
 
-test("static mode shows the floating controls from first paint", async ({ browser }) => {
+test("static mode: chat and accessibility are reachable from first paint", async ({ browser }) => {
   const ctx = await browser.newContext({ reducedMotion: "reduce" }); const page = await ctx.newPage();
   await page.goto("/");
-  await expect(page.locator("[data-floating-control]").first()).toBeVisible();
+  await expect(page.locator("header[data-entrance-nav]")).toHaveCSS("opacity", "1");
+  await expect(page.locator("header[data-entrance-nav] nav").getByRole("button", { name: "Ask Tay AI", exact: true })).toBeVisible();
   await ctx.close();
+});
+
+test("phones: chat in the header, accessibility in the menu sheet — focus returns to the menu button", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.locator("header[data-entrance-nav]").getByRole("button", { name: "Ask Tay AI", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "Ask Tay AI" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  const menu = page.getByRole("button", { name: "Open menu" }); await menu.click();
+  await page.getByRole("dialog", { name: "Navigation" }).getByRole("button", { name: "Accessibility settings" }).click();
+  await expect(page.getByRole("dialog", { name: "Accessibility settings" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog", { name: "Accessibility settings" })).toBeHidden();
+  await expect(menu).toBeFocused();
 });
 
 test("palette 'Home' lands on the hero at identity with the h1 focused (the removed #top regression)", async ({ page }) => {
@@ -72,17 +97,22 @@ test("nav anchors glide the section to just under the fixed header (Lenis-aware,
   await expect(page).toHaveURL(/#about$/);
 });
 
-for (const [w, h] of [[844, 390], [667, 375]] as const) {
-  test(`floating controls never cover the hero CTAs at ${w}x${h} (Plan 1 open item)`, async ({ page }) => {
+// Nothing but the header is fixed over the page at rest — no control can sit on copy or tap targets
+// (scripts/fab-scan.mjs found 24–46 collisions per viewport with the old corner buttons).
+for (const [w, h] of [[375, 667], [390, 844], [844, 390], [1280, 720]] as const) {
+  test(`no fixed control overlaps the page at rest at ${w}x${h} (floating-control regression)`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await page.goto("/"); await page.locator("[data-skip-intro]").click();
-    await expect(page.locator("[data-floating-control]").first()).toBeVisible();
-    const hits = await page.evaluate(() => {
-      const fab = [...document.querySelectorAll("[data-floating-control] button")].map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0);
-      const ctas = [...document.querySelectorAll<HTMLElement>("#hero a, #hero button")].filter((e) => e.offsetParent).map((e) => ({ t: e.textContent?.trim(), r: e.getBoundingClientRect() }));
-      return ctas.filter((c) => fab.some((f) => f.left < c.r.right && f.right > c.r.left && f.top < c.r.bottom && f.bottom > c.r.top)).map((c) => c.t);
-    });
-    expect(hits).toEqual([]);
+    for (const f of [0, 0.35, 0.7, 1]) {
+      await page.evaluate((f) => scrollTo({ top: (document.documentElement.scrollHeight - innerHeight) * f, behavior: "instant" as ScrollBehavior }), f);
+      await page.waitForTimeout(900);
+      const fixed = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>("body *")].filter((e) => {
+        const cs = getComputedStyle(e); if (cs.position !== "fixed" || cs.visibility === "hidden" || +cs.opacity === 0) return false;
+        if (e.closest("header[data-entrance-nav]") || e.closest("[role=dialog]")) return false;
+        const r = e.getBoundingClientRect(); return r.width > 1 && r.height > 1 && r.bottom > 0 && r.top < innerHeight && cs.clip !== "rect(0px, 0px, 0px, 0px)";
+      }).map((e) => e.tagName + "." + String(e.className).slice(0, 40)));
+      expect(fixed, `at ${f}`).toEqual([]);
+    }
   });
 }
 
@@ -90,8 +120,9 @@ for (const [w, h] of [[844, 390], [390, 844]] as const) {
   test(`the accessibility panel fits the viewport at ${w}x${h} (every control reachable)`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await page.goto("/"); await page.locator("[data-skip-intro]").click();
-    await page.getByRole("button", { name: /accessibility/i }).first().click();
-    const box = (await page.getByRole("dialog").boundingBox())!;
+    await page.getByRole("button", { name: "Open menu" }).click();
+    await page.getByRole("dialog", { name: "Navigation" }).getByRole("button", { name: "Accessibility settings" }).click();
+    const box = (await page.getByRole("dialog", { name: "Accessibility settings" }).boundingBox())!;
     expect(box.y).toBeGreaterThanOrEqual(0); expect(box.y + box.height).toBeLessThanOrEqual(h);
   });
 }
@@ -122,4 +153,26 @@ test("the palette is a real overlay: fixed in the viewport, and opening/closing 
   expect(await page.evaluate(() => Math.round(scrollY))).toBe(y0);
   await page.keyboard.press("Escape"); await expect(dialog).toBeHidden();
   expect(await page.evaluate(() => Math.round(scrollY))).toBe(y0);
+});
+
+test("844×390: the menu sheet scrolls, so its last control is reachable by a real wheel scroll", async ({ page }) => {
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.getByRole("button", { name: "Open menu" }).click();
+  const sheet = page.getByRole("dialog", { name: "Navigation" }); await expect(sheet).toBeVisible();
+  const box = (await sheet.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  for (let i = 0; i < 8; i++) { await page.mouse.wheel(0, 200); await page.waitForTimeout(60); }
+  await expect(sheet.getByRole("link", { name: "Get in touch" })).toBeInViewport();
+});
+
+test("the chat and accessibility panels are opaque (the page never shows through their text)", async ({ page }) => {
+  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  const nav = page.locator("header[data-entrance-nav] nav");
+  for (const name of ["Ask Tay AI", "Accessibility settings"]) {
+    await nav.getByRole("button", { name, exact: true }).click();
+    const bg = await page.getByRole("dialog", { name }).evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(bg, name).toMatch(/^rgb\(/);                                       // rgb(), not rgba(…, <1)
+    await page.keyboard.press("Escape");
+  }
 });

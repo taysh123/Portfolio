@@ -7,7 +7,7 @@ import { ChatIcon, SendIcon, XIcon } from "@/components/ui/icons";
 import { DUR, easeOutExpo } from "@/lib/motion";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
-import { useScrollIdle } from "@/lib/useScrollIdle";
+import { useOverlayState } from "@/lib/overlays";
 import { cn } from "@/lib/cn";
 
 type Message = { id: string; role: "user" | "assistant"; text: string };
@@ -33,10 +33,8 @@ const GREETING =
  *    announced, once.
  */
 export function AIChatWidget() {
-  const [open, setOpen] = useState(false);
-  // Never retract an OPEN panel — the reader is using it, and scrolling the
-  // page behind a dialog should not throw the dialog off the screen.
-  const retract = useScrollIdle() && !open;
+  // Opened from the chrome (nav on desktop, header on phones) — no floating corner button (lib/overlays.ts).
+  const [open, setOpen] = useOverlayState("chat");
   const [messages, setMessages] = useState<Message[]>([
     { id: nextId(), role: "assistant", text: GREETING },
   ]);
@@ -50,7 +48,7 @@ export function AIChatWidget() {
   const panelRef = useRef<HTMLDivElement>(null);
   const history = useRef<{ role: "user" | "assistant"; content: string }[]>([]);
 
-  const close = useCallback(() => setOpen(false), []);
+  const close = useCallback(() => setOpen(false), [setOpen]);
   useFocusTrap(panelRef, open, close);
 
   useEffect(() => {
@@ -115,19 +113,9 @@ export function AIChatWidget() {
   }
 
   return (
-    <div
-      data-floating-control
-      className={cn(
-        "fixed right-6 z-50 flex flex-col items-end gap-3",
-        // Clears the home indicator on a notched phone; 1.5rem everywhere else.
-        "bottom-[max(1.5rem,env(safe-area-inset-bottom))]",
-        // Retracts while the reader is scrolling. Below lg this control sits
-        // exactly where a card's actions are; on a desktop it sits in dead
-        // space, so the behaviour is scoped to the size where it is a problem.
-        "transition-[transform,opacity] duration-[var(--dur-slow)] ease-[var(--ease-out-expo)] lg:translate-y-0 lg:opacity-100",
-        retract && "translate-y-[160%] opacity-0",
-      )}
-    >
+    // Anchored under the nav's right edge, where its button lives. Top-anchored also keeps the input clear of
+    // a phone's on-screen keyboard.
+    <div className="fixed right-3 top-[calc(var(--nav-h)+0.5rem)] z-[70] lg:right-6">
       <AnimatePresence>
         {open && (
           <motion.div
@@ -136,12 +124,13 @@ export function AIChatWidget() {
             aria-modal="true"
             aria-label="Ask Tay AI"
             tabIndex={-1}
-            initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: 12 }}
+            initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: -10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: 12 }}
+            exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: -10 }}
             transition={{ duration: DUR.mid, ease: easeOutExpo }}
-            className="glass edge-lit flex w-[min(23rem,calc(100vw-3rem))] flex-col overflow-hidden rounded-2xl border border-line shadow-float"
-            style={{ height: "min(30rem, calc(100dvh - 8rem))" }}
+            className="glass edge-lit flex w-[min(23rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl border border-line shadow-float"
+            // Solid, not see-through glass: a panel you read and type in must not show the page behind it.
+            style={{ height: "min(30rem, calc(100dvh - var(--nav-h) - 1.5rem))", background: "var(--bg-raised)" }}
           >
             {/*
               A <header> here would create a second `banner` landmark, since
@@ -223,15 +212,6 @@ export function AIChatWidget() {
         )}
       </AnimatePresence>
 
-      <IconButton
-        label={open ? "Close chat" : "Open Ask Tay AI"}
-        aria-expanded={open}
-        tone="solid"
-        onClick={() => setOpen((v) => !v)}
-        className="h-13 w-13 shadow-float"
-      >
-        {open ? <XIcon size={19} /> : <ChatIcon size={19} />}
-      </IconButton>
     </div>
   );
 }
