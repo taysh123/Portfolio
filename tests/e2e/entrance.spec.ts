@@ -1,6 +1,7 @@
 import { test, expect } from "playwright/test";
 
-const identity = "matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)";
+// At rest the surface is untransformed: no transform, the 2D identity, or the 3D identity the stage writes.
+const identity = /^(none|matrix\(1, 0, 0, 1, 0, 0\)|matrix3d\(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1\))$/;
 const surfaceTransform = (page: import("playwright/test").Page) =>
   page.locator(".entrance__surface").evaluate((el) => getComputedStyle(el).transform);
 
@@ -8,7 +9,7 @@ test("skip intro lands on the hero at identity, focuses the h1, shows the nav", 
   await page.goto("/");
   await page.locator("[data-skip-intro]").click();
   await expect(page.locator("#hero-title")).toBeFocused();
-  await expect.poll(() => surfaceTransform(page)).toMatch(/^(none|matrix\(1, 0, 0, 1, 0, 0\)|matrix3d\(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1\))$/);
+  await expect.poll(() => surfaceTransform(page)).toMatch(identity);
   await expect(page.locator("html")).toHaveAttribute("data-entrance-done", "true");
 });
 
@@ -17,6 +18,7 @@ test("jumping to #work from the top leaves the hero at identity (Review Focus 1)
   await page.goto("/");
   await page.evaluate(() => document.getElementById("work")!.scrollIntoView({ behavior: "instant" as ScrollBehavior }));
   await expect(page.locator("html")).toHaveAttribute("data-entrance-done", "true");
+  await expect.poll(() => surfaceTransform(page)).toMatch(identity);
   expect(errors).toEqual([]);
 });
 
@@ -170,6 +172,7 @@ test("Tab into the hero lands at identity and keeps focus on the control reached
   await expect(page.locator("html")).toHaveAttribute("data-entrance-done", "true");
   await page.waitForTimeout(300);
   expect(await page.evaluate(() => document.activeElement?.textContent?.trim())).toBe(label);
+  await expect.poll(() => surfaceTransform(page)).toMatch(identity);
 });
 
 test("skip intro leaves the Tab order once the portal completes (review #4)", async ({ page }) => {
@@ -183,6 +186,7 @@ test("a deep link to /#hero arrives at the hero at identity (review #5)", async 
   await expect(page.locator("html")).toHaveAttribute("data-entrance-done", "true");
   await expect(page.locator("#hero-title")).toBeInViewport();
   await expect(page.locator(".entrance__surface")).toHaveCSS("opacity", "1");
+  await expect.poll(() => surfaceTransform(page)).toMatch(identity);
 });
 
 test("the skip link lands on the h1 every time, not only the first (review #5)", async ({ page }) => {
