@@ -3415,3 +3415,55 @@ Measurements taken on a fresh production build with the final frames in `public/
 
 ### Bugs found and fixed during verification
 The palette request lost before its chunk loaded; the Lenis/native scroll races (Home, skip link, anchors); the palette's window scroll during close; focus restore scrolling the page; the entrance redrawing off-screen (idle budget); the focus-trap Escape race; the fit guard (pinned scenes clipping their buttons, then measuring the wrong layout). Each has a regression test. All were observed failing before their fix except the Think·Build·Ship pin test (review I1), which was written together with its fix and not run against the old code.
+
+## Verification log — final pre-PR pass (recorded 2026-09-26)
+
+Fresh production build of the branch head, no render running. Nothing below weakens a threshold or a test.
+
+### Final render
+- `public/entrance/manifest.json` is the full set (snapshot `b89070e`, `sources` + `verifyCounts` recorded); no partial `manifest.<framing>.json` remains.
+- Landscape 1280 and 1920: 65 frames each, portrait 720: 29 — every file named by the manifest exists, and nothing else ships. Posters and stills are the final render's.
+- Entrance beats p = 0 → 1 at 1440×900 and 390×844 (contact sheets): final frames throughout, surface on the screen, hero at identity at 1.
+
+### Gate
+- `tsc --noEmit` clean · ESLint clean, **0 warnings** · Vitest **92/92** · `next build` OK.
+- Playwright **97/97**; entrance + geometry specs `--repeat-each=3`: **81/81**.
+
+### Budgets (spec §9)
+| Budget | Limit | Measured |
+|---|---|---|
+| First-load JS (gzip) | ≤ 286 KB | **259.5 KB** |
+| HTML | ≤ 568 KB | **393.7 KB** |
+| LCP 1440×900 / 390×844 | ≤ 1.2 s | **304 ms / 172 ms** |
+| CLS (whole page) | < 0.02 | **0** |
+| Landscape 1280 / 1920 tier | ≤ 2.5 / 4 MB | **1.52 / 2.17 MB** |
+| Portrait 720 tier | ≤ 1.2 MB | **0.48 MB** |
+| Poster AVIF landscape / portrait | 60–90 KB target | 34 / 20 KB (accepted earlier: no visible degradation) |
+| Entrance main-thread p95 | ≤ 8 ms | **3.99–4.50 ms** (3 runs) |
+| Floating-control collisions (`npm run scan:controls`) | 0 | **0** at 375×667, 390×844, 844×390, 1280×720 |
+
+### Visual and accessibility pass
+- Every section at 1440×900, 1280×720, 1024×768, 768×1024, 390×844, 375×667 and 844×390, both themes; every case study, the palette, chat, accessibility panel and menu sheet at 1440 and 390, both themes; Tab walk in both themes (48 stops desktop, 38 phone: every stop has a ring, is in view, and is not covered).
+- Fixed: chat and accessibility moved from floating corner buttons into the nav (they covered copy and tap targets below ~1400 px); panels got an opaque surface; the phone menu sheet scrolls at 844×390; eased section seams (a grey band in light); footer row from lg; T Poker lost its pinned stage at 1024×768 once its store row existed (even columns 1024–1279); the case-study hero loads eagerly.
+
+### Dead code and truthfulness
+- Removed after verifying no references: `lib/textures.ts`, `design/render/blender/preview/`, 13 icons, unused project helpers and motion presets. The portrait poster/still JPEGs were not dead — they were a missing fallback and are now offered.
+- The private T Poker address is absent from HTML, every JS chunk, robots, sitemap, OG image, JSON-LD and the chat prompt. SentinelAI appears only as the former name. VERIFY draws exactly the four commands recorded with exit 0.
+
+### Independent review (fresh reviewer, whole branch)
+| # | Severity | Finding | Disposition |
+|---|---|---|---|
+| 1 | Critical | Chat prompt said T Poker's Android build was unpublished | fixed + unit test |
+| 2 | Important | Overlays stacked; one Escape closed all | fixed (trap stack; chat/a11y exclusive) + e2e |
+| 3 | Important | First wheel notch after idle snapped (stale Lenis clock) | fixed + e2e |
+| 4 | Important | Wheel scrolled the page behind the palette | fixed (locks stop Lenis) + e2e |
+| 5 | Important | "Lazy" overlays fetched on every visit | fixed (mount on request, warm on intent) + e2e |
+| 6 | Important | Phone reveal dropped focus to body | fixed + e2e |
+| 7 | Minor | Flagship metrics label-first | fixed + e2e |
+| 8 | Minor | Case-study `dd` before `dt` | fixed + e2e |
+| 9 | Minor | Chat: no body cap; client-supplied assistant turn | body capped at 8 KB; the prior assistant turn is kept for follow-up context (bounded by 500-char turns and the prompt's rules) — accepted |
+| 10 | Minor | Chat/a11y `aria-modal` without modality | now non-modal popovers |
+| 11 | Minor | Stale sitemap date | bumped |
+| 12 | Minor | Private address in a committed doc | redacted; tests derive it. The portfolio repository is **public**, so `data/internal-repos.ts` (kept by the owner's decision) and earlier history still carry the address — owner to decide |
+
+All #2–#8 regressions were observed failing against the pre-fix build, except the palette-over-case-study Escape test, which passed on the old code too and stays as a guard. Turbopack still places framer-motion's shared modules in the overlay chunk group as well as the main one; with on-demand mounting that copy downloads only when a visitor opens an overlay — accepted.
