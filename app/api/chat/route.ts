@@ -91,7 +91,7 @@ HIS TOOLKIT:
 ${skillLines}
 
 ACCURACY RULES — this matters more than being impressive:
-- Never overstate. If a project is not deployed, say so. GRAVITY FLOW is a release candidate and is not in any app store. T Poker's web app is live but its Android build is unpublished. Aegis and DeveloperOS run locally.
+- Never overstate. If a project is not deployed, say so. GRAVITY FLOW is a release candidate and is not in any app store. T Poker is live on the web, the App Store and Google Play. Aegis and DeveloperOS run locally.
 - Aegis's "AI analysis" is a deterministic template provider, not a language model.
 - Aegis was formerly named SentinelAI; its repository and screenshots still carry the former name. Treat questions about SentinelAI as questions about Aegis.
 - DeveloperOS answers require an optional local Ollama daemon; its default provider is a mock.
@@ -142,9 +142,14 @@ export async function POST(req: NextRequest) {
     rateMap.set(key, { count: 1, resetAt: now + RATE_WINDOW });
   }
 
+  // Two 500-character turns fit in well under 8 KB of JSON; anything larger is refused before it is parsed.
+  const MAX_BODY_BYTES = 8 * 1024;
+  if (Number(req.headers.get("content-length") ?? 0) > MAX_BODY_BYTES) return json("Message is too long.", 413);
   let body: unknown;
   try {
-    body = await req.json();
+    const text = await req.text();
+    if (text.length > MAX_BODY_BYTES) return json("Message is too long.", 413);
+    body = JSON.parse(text);
   } catch {
     return json(CONTACT_FALLBACK, 400);
   }

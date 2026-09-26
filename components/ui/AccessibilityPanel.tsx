@@ -50,7 +50,7 @@ export function AccessibilityPanel() {
   const panelRef = useRef<HTMLDivElement>(null);
 
   const close = useCallback(() => setOpen(false), [setOpen]);
-  useFocusTrap(panelRef, open, close);
+  useFocusTrap(panelRef, open, close, false);   // a non-modal popover: the page stays usable
 
   return (
     // Anchored under the nav's right edge, where its button lives; bounded to the viewport and scrollable.
@@ -60,7 +60,6 @@ export function AccessibilityPanel() {
           <motion.div
             ref={panelRef}
             role="dialog"
-            aria-modal="true"
             aria-label="Accessibility settings"
             tabIndex={-1}
             initial={reduced ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.98 }}

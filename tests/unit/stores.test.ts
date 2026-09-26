@@ -19,3 +19,9 @@ it("the case study no longer claims the Android build is unpublished", () => {
 it("every live listing has a URL; a listing without one is never marked live", () => {
   for (const p of projects) for (const s of p.stores ?? []) if (s.status === "live") expect(s.url, `${p.id} ${s.platform}`).toMatch(/^https:\/\//);
 });
+
+it("the chat assistant's rules agree: T Poker is never described as unpublished (review #1)", async () => {
+  const src = (await import("node:fs")).readFileSync("app/api/chat/route.ts", "utf8");
+  expect(src).not.toMatch(/T Poker[^\n]*(unpublished|not published|not in any (app )?store)/i);
+  expect(src).toMatch(/T Poker is live on the web, the App Store and Google Play/);
+});

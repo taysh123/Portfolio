@@ -49,7 +49,7 @@ export function AIChatWidget() {
   const history = useRef<{ role: "user" | "assistant"; content: string }[]>([]);
 
   const close = useCallback(() => setOpen(false), [setOpen]);
-  useFocusTrap(panelRef, open, close);
+  useFocusTrap(panelRef, open, close, false);   // a non-modal popover: the page stays usable
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -121,7 +121,6 @@ export function AIChatWidget() {
           <motion.div
             ref={panelRef}
             role="dialog"
-            aria-modal="true"
             aria-label="Ask Tay AI"
             tabIndex={-1}
             initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: -10 }}

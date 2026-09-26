@@ -22,7 +22,7 @@ export function FlagshipScene({ f, world }: { f: Flagship; world: React.ReactNod
           <p className="mt-5 max-w-[62ch] text-fg-muted">{f.story[0]} {f.story[1]}</p>
           {f.statusNote && <p className="label mt-4 text-fg-subtle">{f.statusNote}</p>}
           <dl className="mt-7 grid grid-cols-3 gap-4 border-t border-line pt-5">
-            {metrics.map((m) => (<div key={m.label}><dt className="label order-2 mt-1 text-fg-subtle">{m.label}</dt><dd className="text-[clamp(1.5rem,2.4vw,2rem)] font-semibold text-fg">{m.value}</dd></div>))}
+            {metrics.map((m) => (<div key={m.label}><dt className="label mt-1 text-fg-subtle">{m.label}</dt><dd className="text-[clamp(1.5rem,2.4vw,2rem)] font-semibold text-fg">{m.value}</dd></div>))}
           </dl>
           <ul className="mt-5 flex flex-wrap gap-2" aria-label={`${p.name} stack`}>
             {p.stack.slice(0, 5).map((s) => <li key={s.label} className="label rounded-full border border-line px-2.5 py-1 text-fg-muted">{s.label}</li>)}

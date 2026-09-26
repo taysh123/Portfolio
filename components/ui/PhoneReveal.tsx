@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { socials } from "@/data/socials";
 import { decodePhone } from "@/lib/obfuscate";
 import { ArrowUpRightIcon, PhoneIcon } from "@/components/ui/icons";
@@ -18,6 +18,10 @@ import { ArrowUpRightIcon, PhoneIcon } from "@/components/ui/icons";
  */
 export function PhoneReveal({ className }: { className?: string }) {
   const [phone, setPhone] = useState<string | null>(null);
+  const link = useRef<HTMLAnchorElement>(null);
+  // The button is replaced by the link, so focus follows it: left alone it fell to <body> and a keyboard or
+  // screen-reader user heard nothing (review #6). Focusing the link reads out the revealed number.
+  useEffect(() => { if (phone) link.current?.focus({ preventScroll: true }); }, [phone]);
 
   const body = (
     <>
@@ -40,7 +44,7 @@ export function PhoneReveal({ className }: { className?: string }) {
 
   if (phone) {
     return (
-      <a href={`tel:${phone.replace(/[^0-9+]/g, "")}`} className={className}>
+      <a ref={link} href={`tel:${phone.replace(/[^0-9+]/g, "")}`} className={className}>
         {body}
       </a>
     );

@@ -5,6 +5,7 @@ import path from "node:path";
 import { projects, publicRepoUrl, PRIVATE_REPO_LABEL } from "@/data/projects";
 import { INTERNAL_REPO_URLS } from "@/data/internal-repos";
 
+const PRIVATE = new RegExp(`${new URL(INTERNAL_REPO_URLS.poker).pathname.split("/").pop()}(?!-three)`);
 const files = (d: string): string[] => fs.readdirSync(d, { withFileTypes: true })
   .flatMap((e) => (e.isDirectory() ? files(path.join(d, e.name)) : [path.join(d, e.name)]));
 const src = ["app", "components", "data", "lib"].flatMap(files).filter((f) => /\.(tsx?|css)$/.test(f));
@@ -13,7 +14,7 @@ it("T Poker's repository is private: no public link, internal URL kept separatel
   const poker = projects.find((p) => p.id === "poker")!;
   expect(poker.repo.visibility).toBe("private");
   expect(publicRepoUrl(poker)).toBeUndefined();
-  expect(INTERNAL_REPO_URLS.poker).toBe("https://github.com/taysh123/poker-home-games");
+  expect(INTERNAL_REPO_URLS.poker).toMatch(/^https:\/\/github\.com\/taysh123\/[\w.-]+$/);
   expect(PRIVATE_REPO_LABEL).toBe("Private repository");
 });
 
@@ -27,7 +28,7 @@ it("every private project has an internal URL, and only private projects do", ()
 });
 
 it("the private address appears only in the internal module, which no site code imports", () => {
-  const leaks = src.filter((f) => !f.endsWith(path.join("data", "internal-repos.ts")) && /poker-home-games(?!-three)/.test(fs.readFileSync(f, "utf8")));
+  const leaks = src.filter((f) => !f.endsWith(path.join("data", "internal-repos.ts")) && PRIVATE.test(fs.readFileSync(f, "utf8")));
   expect(leaks).toEqual([]);
   const importers = src.filter((f) => /internal-repos/.test(fs.readFileSync(f, "utf8")) && !f.endsWith("internal-repos.ts") && !f.endsWith(path.join("data", "projects.ts")));
   expect(importers).toEqual([]);

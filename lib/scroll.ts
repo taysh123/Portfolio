@@ -10,7 +10,17 @@ import type Lenis from "lenis";
 let active: Lenis | null = null;
 
 /** SmoothScroll registers its instance on mount and clears it on unmount (reduced motion: none). */
-export function registerLenis(lenis: Lenis | null) { active = lenis; }
+export function registerLenis(lenis: Lenis | null) { active = lenis; if (lenis && locks > 0) lenis.stop(); }
+
+/**
+ * Page scroll lock for overlays. `overflow: hidden` on <body> does not stop Lenis — it writes the scroll
+ * position itself — so the wheel scrolled the page behind an open palette (review #4). Stopped, Lenis cancels
+ * wheel input except inside `data-lenis-prevent` regions (the overlays' own scrollers). Counted, so closing
+ * one of two stacked overlays keeps the page locked.
+ */
+let locks = 0;
+export function lockScroll() { if (locks++ === 0) active?.stop(); }
+export function unlockScroll() { if (locks > 0 && --locks === 0) active?.start(); }
 
 /**
  * An instant jump — no animation, and any animation in flight is cancelled. The native scroll always runs

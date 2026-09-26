@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, type RefObject } from "react";
+import { lockScroll, unlockScroll } from "@/lib/scroll";
 
 const FOCUSABLE = [
   "a[href]",
@@ -10,6 +11,10 @@ const FOCUSABLE = [
   "textarea:not([disabled])",
   '[tabindex]:not([tabindex="-1"])',
 ].join(",");
+
+/** Active traps, oldest first. Only the top one handles keys: every trap listens on `document` in the capture
+ *  phase, where stopPropagation cannot silence the others — so one Escape closed every stacked overlay (review #2). */
+const stack: object[] = [];
 
 /**
  * Traps Tab focus inside `ref` while `active`, then restores focus to whatever
@@ -24,6 +29,9 @@ export function useFocusTrap(
   ref: RefObject<HTMLElement | null>,
   active: boolean,
   onEscape?: () => void,
+  /** false for a non-modal popover (chat, accessibility): the page stays usable, so Tab is not held inside —
+   *  focus still moves in on open, Escape still closes, and focus still returns (review #10). */
+  modal = true,
 ) {
   const focusables = () =>
     Array.from(ref.current?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []).filter(
@@ -36,15 +44,18 @@ export function useFocusTrap(
   // the mobile sheet's return to its menu button.
   useLayoutEffect(() => {
     if (!active) return;
+    const token = {};
+    stack.push(token);
 
     const onKeyDown = (e: KeyboardEvent) => {
+      if (stack[stack.length - 1] !== token) return;   // an overlay opened above this one owns the keys
       const root = ref.current;
       if (e.key === "Escape") {
         e.stopPropagation();
         onEscape?.();
         return;
       }
-      if (e.key !== "Tab" || !root) return;
+      if (e.key !== "Tab" || !root || !modal) return;
 
       const items = focusables();
       if (items.length === 0) {
@@ -73,9 +84,12 @@ export function useFocusTrap(
     };
 
     document.addEventListener("keydown", onKeyDown, true);
-    return () => document.removeEventListener("keydown", onKeyDown, true);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown, true);
+      stack.splice(stack.indexOf(token), 1);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, ref, onEscape]);
+  }, [active, ref, onEscape, modal]);
 
   useEffect(() => {
     if (!active) return;
@@ -105,8 +119,10 @@ export function useScrollLock(active: boolean) {
     if (!active) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    lockScroll();
     return () => {
       document.body.style.overflow = previous;
+      unlockScroll();
     };
   }, [active]);
 }

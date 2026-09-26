@@ -21,12 +21,15 @@ const emit = () => listeners.forEach((l) => l());
 /** Open (or, if already open, close) a panel. */
 export function toggleOverlay(name: Overlay) {
   if (open[name]) { window.dispatchEvent(new CustomEvent("overlay:close", { detail: name })); return; }
+  // The two panels share one anchor under the nav: opening one closes the other rather than stacking them.
+  const other: Overlay = name === "chat" ? "a11y" : "chat";
+  if (open[other]) window.dispatchEvent(new CustomEvent("overlay:close", { detail: other }));
   pending[name] = true;
   window.dispatchEvent(new CustomEvent("overlay:open", { detail: name }));
 }
 
 /** Whether an open was requested and not yet handled (a panel's initial state reads this). */
-function overlayRequested(name: Overlay): boolean { return pending[name]; }
+export function overlayRequested(name: Overlay): boolean { return pending[name]; }
 function clearOverlayRequest(name: Overlay) { pending[name] = false; }
 
 /** Panels report their state; chrome buttons read it. */

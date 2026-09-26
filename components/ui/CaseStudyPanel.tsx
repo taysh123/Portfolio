@@ -238,12 +238,13 @@ export function CaseStudyPanel({
                 {project.metrics.map((m) => (
                   <div
                     key={m.label}
-                    className="raised rounded-xl border border-line px-4 py-3.5"
+                    className="raised flex flex-col-reverse rounded-xl border border-line px-4 py-3.5"
                   >
+                    {/* dt before dd (a valid group, read label-then-value); column-reverse shows the value on top. */}
+                    <dt className="label mt-2 text-fg-subtle">{m.label}</dt>
                     <dd className="tnum text-2xl font-semibold leading-none text-fg">
                       {m.value}
                     </dd>
-                    <dt className="label mt-2 text-fg-subtle">{m.label}</dt>
                   </div>
                 ))}
               </dl>

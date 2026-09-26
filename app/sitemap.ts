@@ -6,7 +6,7 @@ import { siteMeta } from "@/data/socials";
  * whether anything changed, which search engines learn to discount. This is a
  * real content date — bump it when the page content actually changes.
  */
-const CONTENT_LAST_MODIFIED = "2026-08-04";
+const CONTENT_LAST_MODIFIED = "2026-09-26";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [

@@ -1,12 +1,15 @@
 // tests/e2e/private-repo.spec.ts — T Poker's repository is private (user decision, 2026-09-26).
 import { test, expect } from "playwright/test";
+import { INTERNAL_REPO_URLS } from "../../data/internal-repos";
 
-const PRIVATE = /poker-home-games(?!-three)/;
+// The address comes from the internal module rather than being spelled out again here.
+const slug = new URL(INTERNAL_REPO_URLS.poker).pathname.split("/").pop()!;
+const PRIVATE = new RegExp(`${slug}(?!-three)`);
 
 test("no page HTML or client script carries the private repository address", async ({ page }) => {
   await page.goto("/"); await page.locator("[data-skip-intro]").click();
   expect(await page.content()).not.toMatch(PRIVATE);
-  await expect(page.locator('a[href*="poker-home-games"]')).toHaveCount(0);
+  await expect(page.locator(`a[href*="${slug}"]`)).toHaveCount(0);
   const scripts = await page.locator("script[src]").evaluateAll((els) => els.map((e) => (e as HTMLScriptElement).src));
   expect(scripts.length).toBeGreaterThan(0);
   for (const s of scripts) expect(await (await page.request.get(s)).text(), s).not.toMatch(PRIVATE);

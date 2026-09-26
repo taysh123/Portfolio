@@ -133,15 +133,16 @@ export function Navbar() {
               // hydration-safe fallback, for a string most users never hear.
               label="Open command palette (Ctrl or Cmd + K)"
               size="sm"
+              data-overlay-trigger="palette"
               onClick={openPalette}
             >
               <SearchIcon size={15} />
             </IconButton>
             <ThemeToggle />
-            <IconButton label="Accessibility settings" size="sm" aria-expanded={a11yOpen} onClick={() => toggleOverlay("a11y")}>
+            <IconButton label="Accessibility settings" data-overlay-trigger="a11y" size="sm" aria-expanded={a11yOpen} onClick={() => toggleOverlay("a11y")}>
               <AccessibilityIcon size={16} />
             </IconButton>
-            <IconButton label="Ask Tay AI" size="sm" aria-expanded={chatOpen} onClick={() => toggleOverlay("chat")}>
+            <IconButton label="Ask Tay AI" data-overlay-trigger="chat" size="sm" aria-expanded={chatOpen} onClick={() => toggleOverlay("chat")}>
               <ChatIcon size={15} />
             </IconButton>
             {availability.open && (
@@ -159,7 +160,7 @@ export function Navbar() {
               </a>
             )}
             {/* Phones: chat stays one tap away in the header; theme and accessibility are in the menu sheet. */}
-            <IconButton label="Ask Tay AI" aria-expanded={chatOpen} onClick={() => toggleOverlay("chat")}>
+            <IconButton label="Ask Tay AI" data-overlay-trigger="chat" aria-expanded={chatOpen} onClick={() => toggleOverlay("chat")}>
               <ChatIcon size={18} />
             </IconButton>
             <IconButton
@@ -239,11 +240,11 @@ export function Navbar() {
               {/* Spec §5: the sheet carries the theme toggle and the palette too (inside the focus trap). */}
               <div className="mt-6 flex items-center gap-3 border-t border-line pt-6">
                 <ThemeToggle />
-                <IconButton label="Open command palette" onClick={() => { closeMenu(); openPalette(); }}>
+                <IconButton label="Open command palette" data-overlay-trigger="palette" onClick={() => { closeMenu(); openPalette(); }}>
                   <SearchIcon size={18} />
                 </IconButton>
                 {/* After the sheet's own focus restore, so the panel returns focus to the menu button on close. */}
-                <IconButton label="Accessibility settings" onClick={() => { closeMenu(); setTimeout(() => toggleOverlay("a11y"), 0); }}>
+                <IconButton label="Accessibility settings" data-overlay-trigger="a11y" onClick={() => { closeMenu(); setTimeout(() => toggleOverlay("a11y"), 0); }}>
                   <AccessibilityIcon size={18} />
                 </IconButton>
               </div>

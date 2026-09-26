@@ -57,7 +57,10 @@ export function SmoothScroll() {
       lenis.raf(time);
       raf = lenis.isScrolling ? requestAnimationFrame(loop) : 0;
     };
-    const kick = () => { if (!raf && !document.hidden) raf = requestAnimationFrame(loop); };
+    // Restarting after idle: Lenis's clock is stale, so its first delta would be the whole idle time and the
+    // damping would jump straight to the target — the first wheel notch snapped (review #3). A zero clock
+    // makes that first frame a zero-length step; the glide starts on the next.
+    const kick = () => { if (!raf && !document.hidden) { lenis.time = 0; raf = requestAnimationFrame(loop); } };
     const inputs = ["wheel", "touchstart", "touchmove", "keydown", "pointerdown"] as const;
     for (const e of inputs) window.addEventListener(e, kick, { passive: true });
     window.addEventListener("scroll", kick, { passive: true });   // programmatic and anchor scrolls
