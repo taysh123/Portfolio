@@ -54,7 +54,7 @@ function inner(children: ReactNode, arrow?: boolean) {
         This span has to be a FLEX row, not a plain one.
 
         It wraps all the children together, so for a button like
-        `<Button><BookOpenIcon/>Case study</Button>` the icon and the label end
+        `<Button><Icon/>Case study</Button>` the icon and the label end
         up inside it — which meant the button's own `gap-2` was applying
         between this span and the arrow, never between the icon and the text,
         and the SVG was sitting on the text's BASELINE rather than its centre.

@@ -10,13 +10,16 @@ export function Entrance({ children }: { children: React.ReactNode }) {
       </noscript>
       {/* Dark in both themes: the stage is the studio, and the hero starts life as the laptop's screen. */}
       <div className="entrance__stage" data-theme="dark">
+        {/* Portrait before landscape, AVIF before JPEG: a browser without AVIF still gets its own framing. */}
         <picture className="entrance__poster">
           <source media="(max-aspect-ratio: 9/10)" srcSet="/entrance/poster-portrait.avif" type="image/avif" />
+          <source media="(max-aspect-ratio: 9/10)" srcSet="/entrance/poster-portrait.jpg" type="image/jpeg" />
           <source srcSet="/entrance/poster-landscape.avif" type="image/avif" />
           <img src="/entrance/poster-landscape.jpg" alt="" fetchPriority="high" decoding="async" className="entrance__poster" />
         </picture>
         <picture className="entrance__still">
           <source media="(max-aspect-ratio: 9/10)" srcSet="/entrance/still-portrait.avif" type="image/avif" />
+          <source media="(max-aspect-ratio: 9/10)" srcSet="/entrance/still-portrait.jpg" type="image/jpeg" />
           <source srcSet="/entrance/still-landscape.avif" type="image/avif" />
           <img src="/entrance/still-landscape.jpg" alt="" decoding="async" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         </picture>

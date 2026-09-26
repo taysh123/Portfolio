@@ -542,14 +542,6 @@ export const projects: Project[] = [
   },
 ];
 
-/** Featured projects first, source order preserved within each group. */
-export const orderedProjects = [
-  ...projects.filter((p) => p.featured),
-  ...projects.filter((p) => !p.featured),
-];
-
-export const featuredProject = projects.find((p) => p.featured) ?? projects[0];
-
 /** The label public surfaces show in place of a private repository's link. Not clickable. */
 export const PRIVATE_REPO_LABEL = "Private repository";
 

@@ -67,22 +67,6 @@ export function ArrowDownIcon(props: IconProps) {
   );
 }
 
-export function ArrowLeftIcon(props: IconProps) {
-  return (
-    <svg {...base(props)}>
-      <path d="M19 12H5M11 18l-6-6 6-6" />
-    </svg>
-  );
-}
-
-export function ArrowRightIcon(props: IconProps) {
-  return (
-    <svg {...base(props)}>
-      <path d="M5 12h14M13 6l6 6-6 6" />
-    </svg>
-  );
-}
-
 export function MenuIcon(props: IconProps) {
   return (
     <svg {...base(props)}>
@@ -95,14 +79,6 @@ export function CloseIcon(props: IconProps) {
   return (
     <svg {...base(props)}>
       <path d="M6 6l12 12M18 6 6 18" />
-    </svg>
-  );
-}
-
-export function SparkIcon(props: IconProps) {
-  return (
-    <svg {...base(props)}>
-      <path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.5 5.5l2.8 2.8M15.7 15.7l2.8 2.8M5.5 18.5l2.8-2.8M15.7 8.3l2.8-2.8" />
     </svg>
   );
 }
@@ -158,107 +134,11 @@ export function SearchIcon(props: IconProps) {
   );
 }
 
-export function ZapIcon(props: IconProps) {
-  return (
-    <svg {...base(props)}>
-      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-    </svg>
-  );
-}
-
-export function ShieldIcon(props: IconProps) {
-  return (
-    <svg {...base(props)}>
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    </svg>
-  );
-}
-
-export function LayersIcon(props: IconProps) {
-  return (
-    <svg {...base(props)}>
-      <polygon points="12 2 2 7 12 12 22 7 12 2" />
-      <polyline points="2 17 12 22 22 17" />
-      <polyline points="2 12 12 17 22 12" />
-    </svg>
-  );
-}
-
-export function CpuIcon(props: IconProps) {
-  return (
-    <svg {...base(props)}>
-      <rect x="4" y="4" width="16" height="16" rx="2" />
-      <rect x="9" y="9" width="6" height="6" />
-      <line x1="9" y1="1" x2="9" y2="4" />
-      <line x1="15" y1="1" x2="15" y2="4" />
-      <line x1="9" y1="20" x2="9" y2="23" />
-      <line x1="15" y1="20" x2="15" y2="23" />
-      <line x1="20" y1="9" x2="23" y2="9" />
-      <line x1="20" y1="14" x2="23" y2="14" />
-      <line x1="1" y1="9" x2="4" y2="9" />
-      <line x1="1" y1="14" x2="4" y2="14" />
-    </svg>
-  );
-}
-
-export function SmartphoneIcon(props: IconProps) {
-  return (
-    <svg {...base(props)}>
-      <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
-      <line x1="12" y1="18" x2="12.01" y2="18" />
-    </svg>
-  );
-}
-
-export function BookOpenIcon(props: IconProps) {
-  return (
-    <svg {...base(props)}>
-      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-    </svg>
-  );
-}
-
-export function ChevronRightIcon(props: IconProps) {
-  return (
-    <svg {...base(props)}>
-      <polyline points="9 18 15 12 9 6" />
-    </svg>
-  );
-}
-
 export function XIcon(props: IconProps) {
   return (
     <svg {...base(props)}>
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  );
-}
-
-export function CodeIcon(props: IconProps) {
-  return (
-    <svg {...base(props)}>
-      <path d="M8 6 3 12l5 6M16 6l5 6-5 6M13.8 4.2l-3.6 15.6" />
-    </svg>
-  );
-}
-
-export function CheckCircleIcon(props: IconProps) {
-  return (
-    <svg {...base(props)}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="m8.4 12.2 2.4 2.4 4.8-5.2" />
-    </svg>
-  );
-}
-
-/** Isometric container — the shipping/packaging glyph. */
-export function PackageIcon(props: IconProps) {
-  return (
-    <svg {...base(props)}>
-      <path d="M12 2.6 20.5 7v10L12 21.4 3.5 17V7z" />
-      <path d="m3.8 7.2 8.2 4.5 8.2-4.5M12 21.2v-9.5" />
     </svg>
   );
 }

@@ -57,7 +57,7 @@ whether something is deployed.
 
 | Project | Status | What it is | Verified |
 |---|---|---|---|
-| **T Poker** | Web live · Android unpublished | Poker study platform + home-game manager from one Expo codebase, ASP.NET Core CQRS backend | 892 tests · 5 CI jobs |
+| **T Poker** | Live: web, App Store, Google Play | Poker study platform + home-game manager from one Expo codebase, ASP.NET Core CQRS backend | 892 tests · 5 CI jobs |
 | **Aegis** (formerly SentinelAI) | Runs locally | SOC platform where module isolation is enforced by the compiler | 8 bounded contexts · 0 cross-context refs · 105 tests |
 | **DeveloperOS** | Released | Local-first code workspace that refuses to answer without a file:line citation | 363 tests · 0.82:1 to source · 34 ADRs · 0 runtime deps |
 | **GRAVITY FLOW** | v1.0.0-rc | One-touch Phaser 3 physics puzzler, Android-only | 150 levels · 220 tests |

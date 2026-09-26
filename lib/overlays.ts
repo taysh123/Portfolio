@@ -26,11 +26,11 @@ export function toggleOverlay(name: Overlay) {
 }
 
 /** Whether an open was requested and not yet handled (a panel's initial state reads this). */
-export function overlayRequested(name: Overlay): boolean { return pending[name]; }
-export function clearOverlayRequest(name: Overlay) { pending[name] = false; }
+function overlayRequested(name: Overlay): boolean { return pending[name]; }
+function clearOverlayRequest(name: Overlay) { pending[name] = false; }
 
 /** Panels report their state; chrome buttons read it. */
-export function setOverlayOpen(name: Overlay, v: boolean) { if (open[name] !== v) { open[name] = v; emit(); } }
+function setOverlayOpen(name: Overlay, v: boolean) { if (open[name] !== v) { open[name] = v; emit(); } }
 export function useOverlayOpen(name: Overlay): boolean {
   return useSyncExternalStore(
     (l) => { listeners.add(l); return () => listeners.delete(l); },

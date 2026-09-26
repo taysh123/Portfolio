@@ -23,3 +23,10 @@ it("three.js and the spike routes are gone", () => {
 it("the e2e fixture route is never in the sitemap", () => {
   expect(fs.readFileSync("app/sitemap.ts", "utf8")).not.toMatch(/e2e-fixtures/);
 });
+it("every entrance poster and still that ships is referenced — a portrait JPEG nobody offers is dead weight or a missing fallback", () => {
+  const stills = fs.readdirSync("public/entrance").filter((f) => /^(poster|still)-/.test(f));
+  expect(stills.filter((f) => !all.includes(`/entrance/${f}`))).toEqual([]);
+});
+it("lib/textures.ts and the throwaway preview scene are gone", () => {
+  expect(fs.existsSync("lib/textures.ts")).toBe(false); expect(fs.existsSync("design/render/blender/preview")).toBe(false);
+});
