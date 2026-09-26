@@ -15,6 +15,8 @@
     "encode:frames": "node scripts/encode-frames.mjs",
     "measure": "node scripts/measure.mjs",
     "trace:entrance": "node scripts/trace-entrance.mjs",
+    "profile:entrance": "node scripts/profile-entrance.mjs",
+    "bench:frame-formats": "node scripts/bench-frame-formats.mjs",
     "scan:controls": "node scripts/fab-scan.mjs",
     "shoot": "node scripts/shoot.mjs",
     "render:lookdev": "bpyenv/bin/python design/render/blender/render.py --quality lookdev --exr --out design/render/blender/out-lookdev",

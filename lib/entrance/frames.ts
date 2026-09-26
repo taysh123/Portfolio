@@ -29,7 +29,9 @@ export function pickFramingKind(vw: number, vh: number) {
 export function pickTier(tiers: number[], vw: number, dpr: number, saveData: boolean): number {
   const sorted = [...tiers].sort((a, b) => a - b);
   if (saveData) return sorted[0];
-  const want = dpr >= 1.5 && vw >= 1280 ? Infinity : Math.min(vw * Math.min(dpr, 2), 1280);
+  // Phones (narrower than 480 CSS px) animate from a tier of at most 640 px: measured smoother on a
+  // mobile-class CPU than 720, with no visible difference at device resolution (scripts/profile-entrance.mjs).
+  const want = dpr >= 1.5 && vw >= 1280 ? Infinity : Math.min(vw * Math.min(dpr, 2), vw < 480 ? 640 : 1280);
   const fit = sorted.filter((t) => t <= want);
   return fit.length ? fit[fit.length - 1] : sorted[0];
 }

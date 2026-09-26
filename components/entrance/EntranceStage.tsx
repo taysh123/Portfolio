@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef } from "react";
-import { useScroll, useMotionValueEvent } from "framer-motion";
+import { useEffect, useRef } from "react";
 import { BEATS, segment, easeOut, easeInOut } from "@/lib/timeline";
 import { FrameStore } from "@/lib/entrance/FrameStore";
 import { drawFrame } from "@/lib/entrance/FramePlayer";
@@ -11,6 +10,7 @@ import { stageGeometry } from "./stageGeometry";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
 import type { Manifest, FrameSet, Quad } from "@/lib/entrance/types";
 import { jumpTo } from "@/lib/scroll";
+import { profiler, experiment } from "@/lib/entrance/profile";
 
 const VEIL = 0.72; // near-black over the studio at p = 0; matches the CSS first paint
 const CHAPTERS: [number, string][] = [[BEATS.lift[0], "01 — Scroll to begin"], [BEATS.lid[0], "02 — Scroll to open"], [BEATS.identity[0], "03 — Welcome"]];
@@ -35,7 +35,13 @@ const saveData = () => {
 };
 
 type StageState = { set?: FrameSet; store?: FrameStore<ImageBitmap>; kind: "landscape" | "portrait"; gen: number;
-  tier: number; vw: number; vh: number; pContain: number; raf: number; p: number; poster?: HTMLImageElement; hooks?: Hooks };
+  tier: number; vw: number; vh: number; pContain: number; raf: number; p: number; poster?: HTMLImageElement; hooks?: Hooks;
+  /** Scroll geometry, measured on resize only: progress is then pure arithmetic on scrollY, no layout reads. */
+  top: number; range: number; drawnKey: string;
+  /** Adaptive cross-fade: the playhead's last position in frame units, and whether blending is on. */
+  lastF: number; blend: boolean;
+  /** Quad (image space → viewport) of the last painted frame, for a hold. */
+  heldQuad?: Quad | null };
 
 const container = () => document.getElementById("entrance")!;
 
@@ -49,12 +55,37 @@ function skipIntro(focusTitle = true) {
 /** Anchors that mean "the start of the content": the skip link, Back to top, the logo. */
 const HERO_HASHES = new Set(["#main", "#hero"]);
 
-/** Decoded ImageBitmaps cost w·h·4 bytes each: narrow the decode window as the tier grows. */
-const windowFor = (tier: number) => (tier >= 1920 ? 3 : tier >= 1280 ? 5 : 8);
+/** Decoded ImageBitmaps cost w·h·4 bytes each: narrow the decode window as the tier grows. Ahead of the
+ *  playhead (in the direction of travel) outweighs behind; peak memory stays near the old symmetric window's. */
+const windowFor = (tier: number) => (tier >= 1920 ? { ahead: 5, behind: 2 } : tier >= 1280 ? { ahead: 8, behind: 3 } : { ahead: 10, behind: 3 });
+
+/**
+ * Canvas backing scale: never more pixels than the frames themselves carry. The canvas's backing store is
+ * handed to the compositor every frame, at a cost proportional to its pixel count — the dominant main-thread
+ * cost in profiling (scripts/profile-entrance.mjs): a 1440×900 @2x canvas was 2880×1800 while the 1920-px
+ * frames cover it at 1.2 source px per CSS px. Backing at the source's own density stores every source pixel
+ * once; above it, extra pixels are interpolated and add no detail. Floor 1 (never below CSS px), cap 2.
+ */
+const backingScale = (set: FrameSet | undefined, tier: number, vw: number, vh: number) => {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  if (experiment().backing) return Math.min(window.devicePixelRatio || 1, experiment().backing!);
+  if (!set || !tier || !vw || !vh) return 1;
+  const tierH = (tier * set.height) / set.width, srcPerCss = 1 / Math.max(vw / tier, vh / tierH);
+  return Math.min(dpr, Math.max(1, srcPerCss));
+};
+
+/** Writes a style property (or text) only when its value changes: most of the stage's values hold for many frames. */
+const last = new WeakMap<object, Record<string, string>>();
+const put = (el: HTMLElement, prop: string, v: string) => {
+  const m = last.get(el) ?? (last.set(el, {}), last.get(el)!);
+  if (m[prop] === v) return;
+  m[prop] = v;
+  if (prop === "text") el.textContent = v; else el.style.setProperty(prop, v);
+};
 
 /** Every inline property the stage writes, so static mode can hand the hero back untouched. */
 function resetInline(els: (HTMLElement | null | undefined)[]) {
-  for (const el of els) if (el) for (const k of ["left", "top", "width", "height", "transform", "clip-path", "opacity", "pointer-events"]) el.style.removeProperty(k);
+  for (const el of els) if (el) { last.delete(el); for (const k of ["left", "top", "width", "height", "transform", "clip-path", "opacity", "pointer-events"]) el.style.removeProperty(k); }
 }
 
 export function EntranceStage({ children }: { children: React.ReactNode }) {
@@ -65,21 +96,25 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
   const veilRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
   const chapterRef = useRef<HTMLParagraphElement>(null);
-  // The imperative stage lives inside the effect below; scroll events reach it through this ref.
-  const renderRef = useRef<((p: number) => void) | null>(null);
-  const progressRef = useRef(0);
-
-  const containerRef = useRef<HTMLElement | null>(null);
-  // Layout effects run before Framer's own effects, so the target exists when useScroll attaches.
-  useLayoutEffect(() => { containerRef.current = container(); }, []);
-  const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end end"] });
-  useMotionValueEvent(scrollYProgress, "change", (p) => { progressRef.current = p; renderRef.current?.(p); });
+  // The imperative stage lives inside the effect below; the fonts-ready callback reaches it through this ref.
+  const renderRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (reduced) { document.documentElement.dataset.entranceDone = "true"; return; }
     const stage = canvasRef.current!.parentElement!;
-    const s: StageState = { kind: stageGeometry(window.innerWidth, window.innerHeight).kind, gen: 0, tier: 0, vw: 0, vh: 0, pContain: BEATS.push[1], raf: 0, p: progressRef.current };
+    const s: StageState = { kind: stageGeometry(window.innerWidth, window.innerHeight).kind, gen: 0, tier: 0, vw: 0, vh: 0, pContain: BEATS.push[1], raf: 0, p: 0, top: 0, range: 1, drawnKey: "", lastF: 0, blend: true };
     const canvas = canvasRef.current!, surface = surfaceRef.current!, hero = heroRef.current!;
+    // One context for the life of the stage. Opaque: every draw covers the whole canvas (cover fit), so the
+    // compositor never blends it and no clear is needed. It stays hidden (CSS) until its first draw, so an
+    // opaque, still-empty canvas never hides the poster underneath.
+    const ctx = canvas.getContext("2d", { alpha: false })!;
+    // Progress through the entrance, as Framer's useScroll computed it ("start start" → "end end").
+    const progressNow = () => Math.min(1, Math.max(0, (window.scrollY - s.top) / s.range));
+    const sizeCanvas = () => {
+      const k = backingScale(s.set, s.tier, s.vw, s.vh), w = Math.round(s.vw * k), h = Math.round(s.vh * k);
+      if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; s.drawnKey = ""; }
+      ctx.setTransform(k, 0, 0, k, 0, 0);
+    };
     const veil = veilRef.current!, title = titleRef.current!, chapter = chapterRef.current!;
 
     // Geometry: framing, container height, canvas backing size — on mount and whenever the stage box changes.
@@ -89,11 +124,13 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       const vw = stage.clientWidth, vh = stage.clientHeight, g = stageGeometry(window.innerWidth, window.innerHeight);
       const c = container(); c.dataset.framing = g.kind; c.style.setProperty("--entrance-h", `${g.containerSvh}svh`);
       s.vw = vw; s.vh = vh;
+      s.top = c.getBoundingClientRect().top + window.scrollY;
+      s.range = Math.max(1, c.offsetHeight - document.documentElement.clientHeight);
       if (s.kind !== g.kind) { s.kind = g.kind; void boot(); }
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.round(vw * dpr); canvas.height = Math.round(vh * dpr); canvas.getContext("2d")!.setTransform(dpr, 0, 0, dpr, 0, 0);
-      hero.style.width = `${vw}px`; hero.style.height = `${vh}px`;
-      measureHooks(); computeContain(); render(s.p);
+      sizeCanvas();
+      put(hero, "width", `${vw}px`); put(hero, "height", `${vh}px`);
+      // Drawn now, not next frame: resizing cleared the canvas, and an opaque cleared canvas is black.
+      measureHooks(); computeContain(); frame();
     };
 
     // One frame set at a time: a framing change (or unmount) bumps `gen`, which retires any boot still in flight.
@@ -105,28 +142,37 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       if (gen !== s.gen) return;
       const kind = s.kind, set = m?.[kind];
       if (!set?.frames?.length || !set.tiers?.length) return; // malformed manifest: the poster stays
-      const tier = pickTier(set.tiers, s.vw, window.devicePixelRatio || 1, saveData());
+      const tier = experiment().tier ?? pickTier(set.tiers, s.vw, window.devicePixelRatio || 1, saveData());
       const posterImg = new Image(); posterImg.src = `/entrance/${set.poster}.avif`; await posterImg.decode().catch(() => {});
       if (gen !== s.gen) return;
-      s.set = set; s.tier = tier; s.poster = posterImg;
+      s.set = set; s.tier = tier; s.poster = posterImg; s.drawnKey = ""; sizeCanvas();
       const stillIndex = set.frames.findIndex((f) => f.file === "k1-on");
       const keep = [0, stillIndex, set.pushEndIndex].filter((i) => i >= 0);
       const store = new FrameStore<ImageBitmap>({
         count: set.frames.length,
         order: loadOrder(set.frames.length, { stillIndex, pushEndIndex: set.pushEndIndex, lidEnd: stillIndex - 1, saveData: saveData() }),
         // A 404 must fail the fetch, not hand an HTML error page to the decoder (review M9).
-        fetchBlob: async (i) => { const r = await fetch(`/entrance/${kind}/${tier}/${set.frames[i].file}.avif`); if (!r.ok) throw new Error(`frame ${i}: ${r.status}`); return r.blob(); },
-        decode: (b) => createImageBitmap(b), window: windowFor(tier), concurrency: 4, keep,
+        fetchBlob: async (i, urgent) => {
+          const r = await fetch(`/entrance/${kind}/${tier}/${set.frames[i].file}.avif`, { priority: urgent ? "high" : "low" } as RequestInit);
+          if (!r.ok) throw new Error(`frame ${i}: ${r.status}`); return r.blob();
+        },
+        decode: (b) => createImageBitmap(b), ...windowFor(tier), concurrency: 6, keep,
+        decodeConcurrency: (navigator.hardwareConcurrency || 4) >= 8 ? 4 : 3,
       });
       s.store = store;
       // A decoded frame only matters while the room is visible: from identity on, the opaque surface covers
       // the canvas, so background decodes cost no draw (spec §9 idle work; found in Plan 2 Task 12, where
       // a scrolled-away entrance kept redrawing for every frame the store finished).
-      store.onChange(() => { if (s.p < identityAt()) render(s.p); });
-      store.setPlayhead(0);
-      const go = () => { if (s.store === store) store.start(); };
-      if (document.readyState === "complete") go(); else window.addEventListener("load", go, { once: true });
-      computeContain(); render(s.p);
+      store.onChange(() => { if (s.p < identityAt()) request(); });
+      store.setPlayhead(frameIndexAt(set, progressNow()));
+      // Frames load from the load event (spec §9: nothing competes with first paint) — or from the viewer's
+      // first scroll, key or touch if that comes sooner: then the sequence is needed now.
+      const go = () => { if (s.store === store) store.start(); off(); };
+      const early = ["wheel", "touchstart", "keydown", "pointerdown"] as const;
+      const off = () => { window.removeEventListener("load", go); for (const e of early) window.removeEventListener(e, go); };
+      if (document.readyState === "complete") go();
+      else { window.addEventListener("load", go, { once: true }); for (const e of early) window.addEventListener(e, go, { once: true, passive: true }); }
+      computeContain(); request();
     };
 
     // The identity card is the hero's name line, centred and enlarged; measured once per resize.
@@ -162,57 +208,79 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       // Before identity the surface needs a real quad: with none (frames not decoded yet, a manifest failure)
       // it stays hidden rather than flashing full-screen over the rendered room.
       const shown = p >= BEATS.wake[0] && (quad !== null || p >= identityP);
-      surface.style.opacity = shown ? String(segment(p, BEATS.wake[0], BEATS.wake[0] + 0.04)) : "0";
+      put(surface, "opacity", shown ? String(segment(p, BEATS.wake[0], BEATS.wake[0] + 0.04)) : "0");
       // pContain can equal the push end (no push frame covers the viewport): then it is a step, not a ramp.
       let toIdentity = portrait ? segment(p, ...BEATS.portraitOpen)
         : s.pContain < BEATS.push[1] ? segment(p, s.pContain, BEATS.push[1], easeOut) : Number(p >= BEATS.push[1]);
       if (p >= identityP || !quad) toIdentity = 1; // no quad (nothing decoded, or a back-facing frame): rest at identity
       const q = quad ?? ([{ x: 0, y: 0 }, { x: s.vw, y: 0 }, { x: s.vw, y: s.vh }, { x: 0, y: s.vh }] as Quad);
       const t = surfaceTransform({ kind: s.kind, quad: q, vw: s.vw, vh: s.vh, toIdentity });
-      surface.style.left = `${t.box.x}px`; surface.style.top = `${t.box.y}px`; surface.style.width = `${t.box.w}px`; surface.style.height = `${t.box.h}px`;
-      surface.style.transform = t.matrix; surface.style.clipPath = t.clip;
-      hero.style.left = `${-t.box.x}px`; hero.style.top = `${-t.box.y}px`;
-      surface.style.pointerEvents = p >= identityP ? "auto" : "none";
+      // The box (left/top/width/height) depends only on the viewport, so after the first frame these four
+      // layout-affecting writes are skipped; the motion itself is the transform and the clip.
+      put(surface, "left", `${t.box.x}px`); put(surface, "top", `${t.box.y}px`); put(surface, "width", `${t.box.w}px`); put(surface, "height", `${t.box.h}px`);
+      put(surface, "transform", t.matrix); put(surface, "clip-path", t.clip);
+      put(hero, "left", `${-t.box.x}px`); put(hero, "top", `${-t.box.y}px`);
+      put(surface, "pointer-events", p >= identityP ? "auto" : "none");
     };
 
     // Inside the screen: boot log → identity card → the card lands as the name line, the hero rises in.
     const choreograph = (p: number) => {
       const h = s.hooks; if (!h) return;
-      h.bootLines.forEach((el, i) => { el.style.opacity = String(segment(p, 0.4 + 0.03 * i, 0.44 + 0.03 * i)); });
-      if (h.boot) h.boot.style.opacity = String(1 - segment(p, BEATS.identity[0], BEATS.identity[0] + 0.05));
-      if (h.tagline) h.tagline.style.opacity = String(segment(p, 0.57, 0.62) * (1 - segment(p, 0.84, 0.88)));
+      h.bootLines.forEach((el, i) => { put(el, "opacity", String(segment(p, 0.4 + 0.03 * i, 0.44 + 0.03 * i))); });
+      if (h.boot) put(h.boot, "opacity", String(1 - segment(p, BEATS.identity[0], BEATS.identity[0] + 0.05)));
+      if (h.tagline) put(h.tagline, "opacity", String(segment(p, 0.57, 0.62) * (1 - segment(p, 0.84, 0.88))));
       if (h.name) {
         const land = segment(p, s.kind === "portrait" ? 0.9 : BEATS.portal[0], BEATS.navIn[0], easeInOut), f = h.nameFrom, r = 1 - land;
-        h.name.style.opacity = String(segment(p, 0.55, 0.6));
-        h.name.style.transform = r ? `translate(${f.x * r}px, ${f.y * r}px) scale(${1 + (f.k - 1) * r})` : "";
+        put(h.name, "opacity", String(segment(p, 0.55, 0.6)));
+        put(h.name, "transform", r ? `translate(${f.x * r}px, ${f.y * r}px) scale(${1 + (f.k - 1) * r})` : "");
       }
       for (const [el, at] of h.reveals) {
         const t = segment(p, at, at + 0.04, easeOut);
         // clear the mask's overflow-clip-margin too, or the top of the line peeks out
-        el.style.transform = t < 1 ? `translateY(calc(${(1 - t) * 100}% + ${(1 - t) * 14}px))` : "";
+        put(el, "transform", t < 1 ? `translateY(calc(${(1 - t) * 100}% + ${(1 - t) * 14}px))` : "");
       }
     };
 
-    const render = (p: number) => {
+    // One frame of work, at most once per display frame, reading the scroll position when it runs: in the
+    // same animation frame as Lenis's scroll write (or the native scroll), so the room never trails the page.
+    const frame = () => {
+      cancelAnimationFrame(s.raf); s.raf = 0;
+      const t0 = performance.now(), p = progressNow();
       s.p = p;
-      cancelAnimationFrame(s.raf);
-      s.raf = requestAnimationFrame(() => {
-        const ctx = canvas.getContext("2d")!;
-        const zoom = 1 + 0.03 * segment(p, ...BEATS.lift, easeOut);
-        const { quad } = s.set && s.store
-          ? drawFrame({ ctx, frames: s.set.frames, p, store: s.store as never, fallback: (s.poster ?? null) as never, fallbackQuad: null, frameW: s.set.width, frameH: s.set.height, vw: s.vw, vh: s.vh, zoom })
-          : { quad: null as Quad | null };
-        s.store?.setPlayhead(frameIndexAt(s.set, p));
-        veil.style.opacity = String(VEIL * (1 - segment(p, ...BEATS.lift, easeOut)));
-        chapter.textContent = CHAPTERS.filter(([at]) => p >= at).pop()?.[1] ?? "";
-        chapter.style.opacity = String(1 - segment(p, BEATS.push[0], BEATS.push[0] + 0.04));
-        title.style.opacity = String(segment(p, 0.02, 0.1) * (1 - segment(p, ...BEATS.titleOut)));
-        placeSurface(p, quad);
-        choreograph(p);
-        document.documentElement.dataset.entranceDone = String(p >= BEATS.navIn[0]);
-        window.dispatchEvent(new CustomEvent("entrance:progress", { detail: { p } }));
-      });
+      const zoom = 1 + 0.03 * segment(p, ...BEATS.lift, easeOut);
+      // Frames crossed since the last draw. Blending stops at ≥ 1.25 frames per display frame and resumes
+      // below 0.75 (hysteresis, so a speed near the threshold does not flicker between the two).
+      let speed = 0;
+      if (s.set) {
+        const r = resolveFrame(p, s.set.frames), f = r.a + r.w;
+        speed = Math.abs(f - s.lastF);
+        s.lastF = f;
+        if (s.blend && speed >= 1.25) s.blend = false; else if (!s.blend && speed <= 0.75) s.blend = true;
+      }
+      const drawn = s.set && s.store
+        ? drawFrame({ ctx, frames: s.set.frames, p, store: s.store as never, fallback: (s.poster ?? null) as never, fallbackQuad: null, frameW: s.set.width, frameH: s.set.height, vw: s.vw, vh: s.vh, zoom, skipKey: s.drawnKey, blend: s.blend, held: s.drawnKey.startsWith("pair:") || s.drawnKey.startsWith("near:") ? s.heldQuad ?? null : undefined })
+        : null;
+      if (drawn) {
+        s.drawnKey = drawn.key; if (drawn.path !== "none") canvas.dataset.drawn = "";
+        if (drawn.path !== "hold") s.heldQuad = drawn.quad;
+      }
+      const quad: Quad | null = drawn?.quad ?? null, drawMs = performance.now() - t0;
+      s.store?.setPlayhead(frameIndexAt(s.set, p));
+      put(veil, "opacity", String(VEIL * (1 - segment(p, ...BEATS.lift, easeOut))));
+      put(chapter, "text", CHAPTERS.filter(([at]) => p >= at).pop()?.[1] ?? "");
+      put(chapter, "opacity", String(1 - segment(p, BEATS.push[0], BEATS.push[0] + 0.04)));
+      put(title, "opacity", String(segment(p, 0.02, 0.1) * (1 - segment(p, ...BEATS.titleOut))));
+      placeSurface(p, quad);
+      choreograph(p);
+      const done = String(p >= BEATS.navIn[0]);
+      if (document.documentElement.dataset.entranceDone !== done) document.documentElement.dataset.entranceDone = done;
+      profiler()?.render?.({ p, queuedAt: t0, start: t0, ms: performance.now() - t0, drawMs, path: drawn?.path ?? "none", want: drawn?.want ?? -1, drawn: drawn?.drawnA ?? null });
+      // Snapped to the nearest frame for speed: look again next frame. If the scroll has stopped, the speed is
+      // then 0, blending resumes and the exact approved state for p is drawn — nothing is left mid-snap at rest.
+      // Once blending is back on, no further frame is requested (no idle loop).
+      if (!s.blend) request();
     };
+    const request = () => { if (!s.raf) s.raf = requestAnimationFrame(frame); };
 
     // Focus arriving inside the hero before the portal (Tab) jumps to identity and stays on the control it reached.
     const onFocus = (e: FocusEvent) => { if (s.p < 1 && hero.contains(e.target as Node)) skipIntro(false); };
@@ -227,24 +295,25 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
     const onSkip = () => skipIntro();   // dispatched by the command palette's "Home" (Plan 2 Task 4)
 
     const ro = new ResizeObserver(() => apply());
-    renderRef.current = render;
+    renderRef.current = request;
     apply(); void boot();
     ro.observe(stage);
     window.addEventListener("resize", apply);
+    window.addEventListener("scroll", request, { passive: true });
     document.addEventListener("focusin", onFocus); document.addEventListener("click", onClick);
     window.addEventListener("hashchange", onHash); window.addEventListener("entrance:skip", onSkip);
     if (HERO_HASHES.has(location.hash)) requestAnimationFrame(() => skipIntro());
-    void document.fonts?.ready.then(() => { if (renderRef.current === render) { measureHooks(); render(s.p); } });
+    void document.fonts?.ready.then(() => { if (renderRef.current === request) { measureHooks(); request(); } });
     return () => {
       renderRef.current = null; s.gen++;
-      ro.disconnect(); window.removeEventListener("resize", apply);
+      ro.disconnect(); window.removeEventListener("resize", apply); window.removeEventListener("scroll", request);
       document.removeEventListener("focusin", onFocus); document.removeEventListener("click", onClick);
       window.removeEventListener("hashchange", onHash); window.removeEventListener("entrance:skip", onSkip);
       s.store?.dispose(); cancelAnimationFrame(s.raf);
       // Static mode takes over (reduced motion switched on): hand every element back with no inline geometry.
       const h = s.hooks;
       resetInline([surface, hero, veil, title, chapter, h?.boot, h?.tagline, h?.name, ...(h?.bootLines ?? []), ...(h?.reveals.map(([el]) => el) ?? [])]);
-      canvas.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
+      delete canvas.dataset.drawn; canvas.width = 0; canvas.height = 0;
     };
   }, [reduced]);
 

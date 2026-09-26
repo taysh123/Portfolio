@@ -36,3 +36,49 @@ describe("drawFrame", () => {
   });
 });
 
+
+describe("drawFrame: skipping unchanged draws (entrance smoothness pass)", () => {
+  const store = { nearestDecoded: (i: number) => i, get: (i: number) => img(["a", "b", "c"][i]) };
+  it("an identical plan does not repaint; a new frame, blend weight or size does", () => {
+    const ctx = fakeCtx();
+    const first = drawFrame({ ...base, ctx: ctx as never, frames, p: 0.25, store });
+    expect(first.painted).toBe(true); expect(ctx.calls).toHaveLength(2);
+    const same = drawFrame({ ...base, ctx: ctx as never, frames, p: 0.25, store, skipKey: first.key });
+    expect(same.painted).toBe(false); expect(ctx.calls).toHaveLength(2);
+    expect(same.quad).toEqual(first.quad);                       // the surface still gets its quad
+    // Below 8-bit alpha resolution the blend is the same picture.
+    expect(drawFrame({ ...base, ctx: ctx as never, frames, p: 0.25 + 1e-6, store, skipKey: first.key }).painted).toBe(false);
+    expect(drawFrame({ ...base, ctx: ctx as never, frames, p: 0.26, store, skipKey: first.key }).painted).toBe(true);
+    expect(drawFrame({ ...base, ctx: ctx as never, frames, p: 0.25, store, skipKey: first.key, vw: 961 }).painted).toBe(true);
+  });
+});
+
+describe("drawFrame: adaptive cross-fade (entrance smoothness pass)", () => {
+  const store = { nearestDecoded: (i: number) => i, get: (i: number) => img(["a", "b", "c"][i]) };
+  it("blend: false draws the nearest frame alone, with that frame's own quad", () => {
+    const ctx = fakeCtx();
+    const r = drawFrame({ ...base, ctx: ctx as never, frames, p: 0.27, store, blend: false });
+    expect(ctx.calls).toEqual(["c@1.00"]);                      // 0.27 is nearer c (0.3) than b (0.2)
+    expect(r.quad![0].x).toBeCloseTo(0.2 * 960);                // c's quad, not an interpolated one
+  });
+  it("a second layer too faint to see is not drawn; a visible one is", () => {
+    const a = fakeCtx(); drawFrame({ ...base, ctx: a as never, frames, p: 0.2005, store });
+    expect(a.calls).toEqual(["b@1.00"]);
+    const b = fakeCtx(); drawFrame({ ...base, ctx: b as never, frames, p: 0.21, store });
+    expect(b.calls).toEqual(["b@1.00", "c@0.10"]);
+  });
+});
+
+describe("drawFrame: hold instead of the poster mid-sequence (entrance smoothness pass)", () => {
+  const empty = { nearestDecoded: () => null, get: () => undefined };
+  it("with a frame already painted, nothing near decoded holds that frame and its quad", () => {
+    const ctx = fakeCtx(); const held = quad(0.25);
+    const r = drawFrame({ ...base, ctx: ctx as never, frames, p: 0.3, store: empty, skipKey: "pair:1:-:960x540@1.00000", held });
+    expect(ctx.calls).toEqual([]); expect(r.path).toBe("hold"); expect(r.quad).toBe(held);
+  });
+  it("before anything is painted, the poster still stands in", () => {
+    const ctx = fakeCtx();
+    const r = drawFrame({ ...base, ctx: ctx as never, frames, p: 0.3, store: empty });
+    expect(ctx.calls).toEqual(["poster@1.00"]); expect(r.path).toBe("fallback");
+  });
+});

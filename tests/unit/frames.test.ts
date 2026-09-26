@@ -44,6 +44,10 @@ describe("pickTier", () => {
     expect(pickTier([1280, 1920], 1440, 2, false)).toBe(1920);
     expect(pickTier([1280, 1920], 1440, 1, false)).toBe(1280);
     expect(pickTier([1280, 1920], 1440, 2, true)).toBe(1280);
+    // Phones animate from the 600 tier; a portrait tablet keeps 720.
+    expect(pickTier([600, 720], 390, 3, false)).toBe(600);
+    expect(pickTier([600, 720], 430, 3, false)).toBe(600);
+    expect(pickTier([600, 720], 768, 2, false)).toBe(720);
   });
 });
 

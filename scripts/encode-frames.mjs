@@ -14,7 +14,10 @@ const SRC = arg("--src", "design/render/blender/out");
 const DST = arg("--dst", "public/entrance");
 const ONLY = arg("--only-framing", null);
 if (ONLY && !["landscape", "portrait"].includes(ONLY)) throw new Error(`--only-framing ${ONLY}`);
-const TIERS = { landscape: [1280, 1920], portrait: [720] };
+// Portrait 600 animates on phones (narrower than 480 CSS px): measured smoother than 720 with no visible
+// difference at device resolution (scripts/profile-entrance.mjs). Posters keep their own tier (POSTER_TIER).
+const TIERS = { landscape: [1280, 1920], portrait: [600, 720] };
+const POSTER_TIER = { landscape: 1280, portrait: 720 };
 // Texture provenance always comes from the frozen, committed screen textures, whatever --src is.
 const screens = JSON.parse(await fs.readFile("design/render/blender/frozen/screens.json", "utf8"));
 const snapshot = screens.snapshot ?? execSync("git rev-parse --short HEAD").toString().trim();
@@ -45,8 +48,9 @@ async function encodeFraming(kind, partial) {
   }
   for (const [name, src] of [["poster", seq[0].n], ["still", "still"]]) {
     if (!existsSync(`${dir}/${src}.png`)) continue; // a partial chunk may not have the still yet
-    await sharp(`${dir}/${src}.png`).resize(tiers[0]).avif({ quality: 55 }).toFile(`${DST}/${name}-${kind}.avif`);
-    await sharp(`${dir}/${src}.png`).resize(tiers[0]).jpeg({ quality: 80, mozjpeg: true }).toFile(`${DST}/${name}-${kind}.jpg`);
+    const pt = tiers.includes(POSTER_TIER[kind]) ? POSTER_TIER[kind] : tiers[0];
+    await sharp(`${dir}/${src}.png`).resize(pt).avif({ quality: 55 }).toFile(`${DST}/${name}-${kind}.avif`);
+    await sharp(`${dir}/${src}.png`).resize(pt).jpeg({ quality: 80, mozjpeg: true }).toFile(`${DST}/${name}-${kind}.jpg`);
   }
   return {
     width, height, tiers, poster: `poster-${kind}`, still: `still-${kind}`,
@@ -72,7 +76,7 @@ if (ONLY) {
 if (process.argv.includes("--check-budget")) {
   // Budgets per named tier (spec §9); only the framings this run encoded, only the tiers they actually have
   // (a preview set's tiers are its master width and are reported, not budgeted).
-  const BUDGET = { landscape: { 1280: 2.5e6, 1920: 4e6 }, portrait: { 720: 1.2e6 } };
+  const BUDGET = { landscape: { 1280: 2.5e6, 1920: 4e6 }, portrait: { 600: 1.2e6, 720: 1.2e6 } };
   const size = async (d) => (await Promise.all((await fs.readdir(d)).map(async (f) => (await fs.stat(`${d}/${f}`)).size))).reduce((a, b) => a + b, 0);
   const b = {}, over = [];
   for (const [kind, set] of Object.entries(encoded)) {

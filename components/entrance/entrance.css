@@ -43,3 +43,5 @@
 /* Nothing left to skip once the portal completes. */
 html[data-entrance-done="true"] .entrance__skip { visibility: hidden; } /* not just transparent: out of the Tab order */
 
+/* The canvas is opaque (alpha: false): until its first draw it would be black, so the poster below shows through. */
+.entrance__canvas:not([data-drawn]) { visibility: hidden; }

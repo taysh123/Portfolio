@@ -3476,3 +3476,71 @@ All #2–#8 regressions were observed failing against the pre-fix build, except 
 - Facts re-checked against the Aegis repository: AI analysis is the built-in mock provider (honest note unchanged); no CI workflow (unchanged); tests unchanged since the counted snapshot (105 incl. Testcontainers); 9 tags now (was 7 — updated).
 - **T Poker:** `data/internal-repos.ts` deleted; the private address is in no tracked file (unit test over `git ls-files`, digest-based — the name is not stored in tests either), no production file (270 build files incl. 78 source maps), and no served HTML, chunk, sitemap, robots or manifest (e2e). Earlier commits still contain it (published history is not rewritten).
 - Gate: tsc clean · ESLint 0 warnings · Vitest 94/94 · clean `next build` · Playwright 99/99 · entrance ×3 81/81 · JS 259.5 KB gzip · HTML 394.1 KB · LCP 356 / 180 ms · CLS 0 · entrance p95 4.85 ms · 0 control collisions at five sizes · keyboard walk 48/38 stops, 0 issues, both themes · Aegis world settled under OS and in-app reduced motion.
+
+## Entrance smoothness pass (recorded 2026-09-26)
+
+Runtime only: the Blender renders, camera, choreography, hero and portal are unchanged. Profiled with
+`scripts/profile-entrance.mjs` (real wheel input through Lenis on desktop; raw CDP touch swipes on phones at 4× CPU
+throttling and a 12 Mbps / 60 ms network; slow, fast, reversal, and reload-then-scroll-immediately; 3 runs each,
+medians) against the pre-change build (same profiling hooks, served from a separate worktree) and the final build.
+Headless Chromium rasterises canvases in software, so absolute costs run high next to a GPU device; the comparison is
+like-for-like. WebKit/Safari is not available in this environment.
+
+### Bottlenecks found
+1. **Canvas backing larger than the frames.** `ProduceCanvasResource` (handing the canvas to the compositor) was
+   70–90% of main-thread time; it scales with backing pixels × layers drawn. At 1440×900 @2x the canvas was
+   2880×1800 while the 1920 frames cover it at 1.2 source px per CSS px (5.2 MP vs 1.9 MP needed).
+2. **Redraws with nothing new** on static beats and after the push end.
+3. **Decode misses on fast scrolls** (16–61% of renders drew a stand-in frame up to 8 frames away, or the poster):
+   one static fetch queue, a symmetric decode window, and decode starting only once a blob had arrived.
+4. **One frame of lag** (Framer's scroll value, then a second rAF) and per-frame writes of unchanged styles
+   (incl. layout-affecting left/top/width/height), a text node and an unconsumed `entrance:progress` event.
+
+### Changes
+- Canvas backing capped at the frames' own density (floor 1, cap 2): 1728×1080 at 1440 @2x, 591×1280 → 492×1066
+  on a 390 px phone. Context cached, `alpha: false` (hidden until first draw), no clear (every draw covers).
+- Draws skipped when frames, blend (8-bit alpha), zoom and size are unchanged.
+- FrameStore ranks every fetch and decode by the playhead: current frame, next two in the direction of travel,
+  keyframes, the ahead window, a shorter behind window, then distance; bounded, never duplicated; fetch priority hints.
+  Loading still starts at `load` (no frame before load), or at the first scroll/touch/key if sooner.
+- Adaptive cross-fade: at ≥ 1.25 frames per display frame the nearest frame is drawn alone with its own quad (image
+  and surface stay locked); below 0.75 the approved blend resumes, and a stopped scroll always resolves to it.
+- Mid-sequence, with nothing near decoded, the last frame is held instead of drawing the poster (the opening beat).
+- Progress from `scrollY` in one rAF (same frame as the scroll write); styles written only on change.
+- Portrait 600 tier (from the final masters, AVIF q52) for screens < 480 CSS px; 720 kept for tablets and posters.
+
+### Frame formats (`scripts/bench-frame-formats.mjs`, SSIM-matched to the shipped AVIF)
+WebP decodes 1.3–1.9× faster than AVIF in Chromium, JPEG faster still, but at 2.2–3× the payload: landscape
+1280 1.48 MB AVIF vs 3.36 MB WebP (budget 2.5 MB), 1920 2.17 vs 5.37 MB (budget 4 MB). Decode runs off the main
+thread, and with playhead-aware loading the misses left are throughput-bound only for the 1920 tier on this 4-core
+container. **AVIF kept.**
+
+### Before → after
+| Scenario / pattern | Missed display frames | Long tasks >50 ms (max) | Stand-in frames (max dist) | Canvas lag p95 | Decoded bitmaps |
+|---|---|---|---|---|---|
+| desktop-1440-dpr1/slow | 1% → **1%** | 0 (0 ms) → **0 (0 ms)** | 0% (0) → **0% (0)** | 4 → **0 px** | 51.6 → 55.3 MB |
+| desktop-1440-dpr1/fast | 1% → **1%** | 0 (0 ms) → **0 (0 ms)** | 22% (7) → **0% (0)** | 37 → **0 px** | 47.9 → 51.6 MB |
+| desktop-1440-dpr1/reversal | 3% → **0%** | 0 (0 ms) → **0 (0 ms)** | 1% (1) → **0% (0)** | 12 → **0 px** | 51.6 → 55.3 MB |
+| desktop-1440-dpr1/cold-fast | 4% → **1%** | 0 (0 ms) → **0 (0 ms)** | 23% (5) → **7% (3)** | 36 → **0 px** | 47.9 → 51.6 MB |
+| desktop-1440-dpr2/slow | 58% → **10%** | 47 (110 ms) → **0 (0 ms)** | 0% (0) → **0% (0)** | 6 → **0 px** | 82.9 → 91.2 MB |
+| desktop-1440-dpr2/fast | 49% → **7%** | 3 (56 ms) → **0 (0 ms)** | 40% (8) → **30% (8)** | 59 → **0 px** | 74.6 → 82.9 MB |
+| desktop-1440-dpr2/reversal | 55% → **12%** | 39 (76 ms) → **0 (0 ms)** | 15% (2) → **1% (1)** | 19 → **0 px** | 82.9 → 91.2 MB |
+| desktop-1440-dpr2/cold-fast | 41% → **9%** | 1 (56 ms) → **0 (0 ms)** | 61% (8) → **36% (8)** | 59 → **0 px** | 58.1 → 82.9 MB |
+| desktop-1280x720/slow | 0% → **0%** | 0 (0 ms) → **0 (0 ms)** | 0% (0) → **0% (0)** | 3 → **0 px** | 51.6 → 55.3 MB |
+| desktop-1280x720/fast | 1% → **0%** | 0 (0 ms) → **0 (0 ms)** | 16% (7) → **0% (0)** | 35 → **0 px** | 47.9 → 51.6 MB |
+| desktop-1280x720/reversal | 0% → **0%** | 0 (0 ms) → **0 (0 ms)** | 0% (0) → **0% (0)** | 12 → **0 px** | 51.6 → 55.3 MB |
+| desktop-1280x720/cold-fast | 0% → **0%** | 0 (0 ms) → **0 (0 ms)** | 16% (6) → **10% (3)** | 34 → **0 px** | 47.9 → 51.6 MB |
+| mobile-390x844/slow | 57% → **29%** | 131 (124 ms) → **5 (72 ms)** | 0% (0) → **0% (0)** | 0 → **0 px** | 70 → 43.5 MB |
+| mobile-390x844/fast | 60% → **43%** | 19 (117 ms) → **1 (54 ms)** | 0% (0) → **0% (0)** | 0 → **0 px** | 70 → 41 MB |
+| mobile-390x844/reversal | 57% → **33%** | 79 (109 ms) → **5 (64 ms)** | 0% (0) → **0% (0)** | 0 → **0 px** | 70 → 41 MB |
+| mobile-390x844/cold-fast | 59% → **44%** | 17 (97 ms) → **2 (87 ms)** | 35% (2) → **6% (0)** | 0 → **0 px** | 70 → 41 MB |
+| mobile-844x390/slow | 56% → **31%** | 57 (97 ms) → **3 (63 ms)** | 9% (2) → **7% (2)** | 0 → **0 px** | 47.9 → 51.6 MB |
+| mobile-844x390/fast | 57% → **48%** | 9 (89 ms) → **1 (54 ms)** | 50% (8) → **40% (7)** | 0 → **0 px** | 47.9 → 51.6 MB |
+| mobile-844x390/reversal | 53% → **39%** | 26 (101 ms) → **4 (72 ms)** | 48% (7) → **25% (5)** | 0 → **0 px** | 47.9 → 51.6 MB |
+| mobile-844x390/cold-fast | 54% → **41%** | 4 (105 ms) → **2 (93 ms)** | 92% (5) → **92% (5)** | 43 → **0 px** | 18.4 → 14.7 MB |
+
+Gate: tsc clean · ESLint 0 warnings · Vitest 103/103 · Playwright 100/100 · entrance + geometry ×3: 84/84 ·
+JS 260.7 KB gzip (≤ 286) · HTML 394.2 KB (≤ 568) · LCP 340 / 184 ms (≤ 1200) · CLS 0 · entrance main-thread p95
+4.5–4.7 ms (≤ 8). Frame payload: + portrait 600 tier 0.42 MB (phones download it instead of the 0.48 MB 720 tier).
+Beats before → after (PSNR): desktop @1 identical at all 10 beats; @2 50–57 dB; phones 39–55 dB; the portal (p = 1)
+identical everywhere.

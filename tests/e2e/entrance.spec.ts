@@ -1,4 +1,5 @@
 import { test, expect } from "playwright/test";
+import sharp from "sharp";
 
 // At rest the surface is untransformed: no transform, the 2D identity, or the 3D identity the stage writes.
 const identity = /^(none|matrix\(1, 0, 0, 1, 0, 0\)|matrix3d\(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1\))$/;
@@ -215,4 +216,24 @@ test("jumping mid-sequence never flashes the hero full-screen before its quad ex
   });
   // Visible and full-width at p = 0.6 would be the flash: on the laptop, the screen is well under the viewport width.
   expect(samples.filter((s) => s.opacity !== "0" && s.w > 0.95)).toEqual([]);
+});
+
+test("a fast jump settles on the picture a slow approach gives (adaptive cross-fade resolves at rest)", async ({ browser }) => {
+  // A jump of > 1.25 frames draws the nearest frame alone (speed mode); once the scroll stops, the stage must
+  // resolve to the exact blend for p. A phone: native scrolling, so each jump is one scroll event.
+  const shoot = async (jump: boolean) => {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+    const page = await ctx.newPage();
+    const to = (p: number) => page.evaluate((p) => { const c = document.getElementById("entrance")!; window.scrollTo({ top: c.offsetTop + p * (c.offsetHeight - innerHeight), behavior: "instant" as ScrollBehavior }); }, p);
+    await page.goto("/", { waitUntil: "load" }); await page.waitForTimeout(2500);
+    await to(0.75); await page.waitForTimeout(1800);
+    if (jump) await to(0.85); else for (let k = 1; k <= 40; k++) { await to(0.75 + (0.1 * k) / 40); await page.waitForTimeout(34); }
+    await page.waitForTimeout(1800);
+    const raw = await sharp(await page.screenshot()).resize(390).removeAlpha().raw().toBuffer();
+    await ctx.close(); return raw;
+  };
+  const [a, b] = [await shoot(true), await shoot(false)];
+  let se = 0; for (let i = 0; i < a.length; i++) se += (a[i] - b[i]) ** 2;
+  const psnr = 10 * Math.log10(65025 / Math.max(se / a.length, 1e-9));
+  expect(psnr).toBeGreaterThan(40);                 // measured ~53 dB; a frame left mid-snap measured ~26 dB
 });
