@@ -159,6 +159,9 @@ export function CaseStudyPanel({
                     src={project.media.image}
                     alt={project.media.alt ?? `${project.name} interface`}
                     fill
+                    // The first thing in view when the panel opens (it mounts on open): lazy left it blank for a beat.
+                    loading="eager"
+                    fetchPriority="high"
                     sizes="(max-width: 1100px) 100vw, 68rem"
                     className={
                       project.media.fit === "contain"
