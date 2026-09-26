@@ -21,9 +21,17 @@ export function loadOrder(n: number, o: { stillIndex: number; pushEndIndex: numb
   return out;
 }
 
+/**
+ * Framing and scroll runway (container height; the runway is that minus one viewport). Phones scroll natively,
+ * and at 260svh one ordinary swipe (~60% of the screen of finger travel) crossed ~0.375 of the sequence — up to
+ * three beats — while a short landscape screen played all 65 landscape frames over 624 px. Measured runways
+ * (scripts/profile-entrance.mjs --variant '{"runway":…}'): portrait 340svh brings a swipe to ~0.25 (about one
+ * beat) and 2–3 frames per display frame on a fast swipe; short landscape needs 360svh to stop outrunning its
+ * frames. Desktop keeps 400svh: its choreography and wheel pacing are unchanged.
+ */
 export function pickFramingKind(vw: number, vh: number) {
-  if (vw / vh < 0.9) return { kind: "portrait" as const, containerSvh: 260 as const };
-  return { kind: "landscape" as const, containerSvh: (vh < 500 ? 260 : 400) as 260 | 400 };
+  if (vw / vh < 0.9) return { kind: "portrait" as const, containerSvh: 340 as const };
+  return { kind: "landscape" as const, containerSvh: (vh < 500 ? 360 : 400) as 360 | 400 };
 }
 
 export function pickTier(tiers: number[], vw: number, dpr: number, saveData: boolean): number {

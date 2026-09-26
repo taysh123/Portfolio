@@ -31,8 +31,8 @@ describe("loadOrder", () => {
 
 describe("pickFramingKind", () => {
   it.each([
-    [1440, 900, "landscape", 400], [390, 844, "portrait", 260], [768, 1024, "portrait", 260],
-    [844, 390, "landscape", 260], [1024, 768, "landscape", 400],
+    [1440, 900, "landscape", 400], [390, 844, "portrait", 340], [768, 1024, "portrait", 340],
+    [844, 390, "landscape", 360], [1024, 768, "landscape", 400],
   ])("%ix%i → %s %i", (w, h, kind, svh) => {
     expect(pickFramingKind(w, h)).toEqual({ kind, containerSvh: svh });
   });

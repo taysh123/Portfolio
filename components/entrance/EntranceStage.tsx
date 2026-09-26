@@ -122,7 +122,8 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
     // scrollbars make innerWidth/innerHeight disagree with the box the canvas and the surface live in.
     const apply = () => {
       const vw = stage.clientWidth, vh = stage.clientHeight, g = stageGeometry(window.innerWidth, window.innerHeight);
-      const c = container(); c.dataset.framing = g.kind; c.style.setProperty("--entrance-h", `${g.containerSvh}svh`);
+      const x = experiment().runway, svh = (g.kind === "portrait" ? x?.portrait : g.containerSvh !== 400 ? x?.short : undefined) ?? g.containerSvh;
+      const c = container(); c.dataset.framing = g.kind; c.style.setProperty("--entrance-h", `${svh}svh`);
       s.vw = vw; s.vh = vh;
       s.top = c.getBoundingClientRect().top + window.scrollY;
       s.range = Math.max(1, c.offsetHeight - document.documentElement.clientHeight);

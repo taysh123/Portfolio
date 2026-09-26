@@ -53,6 +53,12 @@ export type ProjectMedia = {
   gallery?: { src: string; alt: string }[];
   /** "contain" for portrait phone captures, "cover" for wide desktop shots. */
   fit?: "cover" | "contain";
+  /**
+   * Serve these pre-encoded WebPs as they are, not through the image optimiser. T Poker's tall phone captures
+   * failed to load through `/_next/image` on the Vercel Preview while plain static files were delivered fine
+   * (entrance frames, manifest); the files are already small, so the optimiser adds a failure point, not value.
+   */
+  direct?: boolean;
 };
 
 export type Project = {
@@ -126,6 +132,7 @@ export const projects: Project[] = [
       image: "/projects/poker/home.webp",
       alt: "T Poker home screen — cash game or tournament",
       fit: "contain",
+      direct: true,
       gallery: [
         { src: "/projects/poker/tournament-live.webp", alt: "Live tournament dashboard with blind clock" },
         { src: "/projects/poker/podium.webp", alt: "Tournament results podium" },

@@ -16,6 +16,6 @@ export const profiler = (): EntranceProfiler | undefined =>
   typeof window === "undefined" ? undefined : (window as unknown as { __ENTRANCE_PROF__?: EntranceProfiler }).__ENTRANCE_PROF__;
 
 /** Profiling experiments only (scripts/profile-entrance.mjs --variant): forced tier, canvas backing, blending. */
-export type EntranceExperiment = { tier?: number; backing?: number };
+export type EntranceExperiment = { tier?: number; backing?: number; runway?: { portrait?: number; short?: number } };
 export const experiment = (): EntranceExperiment =>
   (typeof window === "undefined" ? undefined : (window as unknown as { __ENTRANCE_EXP__?: EntranceExperiment }).__ENTRANCE_EXP__) ?? {};

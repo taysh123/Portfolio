@@ -3544,3 +3544,38 @@ JS 260.7 KB gzip (≤ 286) · HTML 394.2 KB (≤ 568) · LCP 340 / 184 ms (≤ 1
 4.5–4.7 ms (≤ 8). Frame payload: + portrait 600 tier 0.42 MB (phones download it instead of the 0.48 MB 720 tier).
 Beats before → after (PSNR): desktop @1 identical at all 10 beats; @2 50–57 dB; phones 39–55 dB; the portal (p = 1)
 identical everywhere.
+
+## Real-device follow-up: phone runway and T Poker images (recorded 2026-09-26)
+
+### Entrance runway (phones)
+Phones scroll natively (Lenis leaves touch alone); at 260svh one ordinary swipe (~60% of the screen of finger
+travel) crossed ~0.375 of the sequence — up to three beats — and a short landscape screen played all 65 landscape
+frames over 624 px. Runways measured with the same finger speeds (`--variant '{"runway":…}'`, 2 runs each):
+
+| Runway | Portrait: swipe Δp · fast fr/frame p95 · cold stand-ins | Short landscape: swipe Δp · fast fr/frame p50/p95 · fast / cold stand-ins |
+|---|---|---|
+| 260svh (was) | 0.375 · 4 · 19% | 0.375 · 5/13 · 48% / 90% |
+| 320svh | 0.273 · 3 · 2% | 0.273 · 7/10 · 54% / 75% |
+| 340svh | 0.25 · 3 · 6% | 0.25 · 7/9 · 50% / 71% |
+| 360svh | 0.231 · 2 · 2% | 0.231 · 7/8 · 17% / 35% |
+
+Chosen: **portrait 340svh** (a swipe ≈ one beat; 360 adds little), **short landscape 360svh** (the 65-frame set needs
+it). Desktop stays 400svh. Final 3-run profile: portrait fast stand-ins 0%, cold 2%; short landscape fast 18%,
+reversal 10%, cold 36% (was 48% / 29% / 90%). Missed display frames on the throttled headless phone (27–45%) are
+software-raster bound and are not a stand-in for an iPhone's GPU canvas; real-device testing decides.
+
+### T Poker phone screenshots
+On the Vercel Preview the three flagship phones rendered as black shells showing their alt text (failed loads).
+Only the image-optimiser route differed from assets that loaded (the entrance frames and manifest are plain static
+files); locally every `/_next/image` size for them returned 200 (AVIF and WebP), and through the Preview's branch
+alias Vercel's optimiser returned 200 when asked for JPEG. The browser-negotiated AVIF/WebP responses could not be
+replayed from this environment (its network policy denies `*.vercel.app`, and the Vercel fetch tool sends no
+Accept header), so the exact failing status on Vercel was not observed. Fix: T Poker's already-small WebPs are
+served directly — the flagship phones from new 640-px variants (from the original PNGs; ≤ 31 KB each), the case
+study from the 1290-px originals — so they never touch the optimiser. Other projects keep it.
+`tests/e2e/images.spec.ts` asserts every flagship-world and case-study image decodes (`naturalWidth > 0`) at
+retina desktop and phone sizes, with no failed or ≥ 400 image responses, and that T Poker's phones bypass the
+optimiser.
+
+Gate: tsc clean · ESLint 0 warnings · Vitest 103/103 · Playwright 104/104 · entrance + geometry + images ×3: 96/96 ·
+JS 260.7 KB · HTML 391.3 KB · LCP 308 / 184 ms · CLS 0 · entrance p95 3.2 ms.

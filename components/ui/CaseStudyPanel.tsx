@@ -158,6 +158,7 @@ export function CaseStudyPanel({
                   <Image
                     src={project.media.image}
                     alt={project.media.alt ?? `${project.name} interface`}
+                    unoptimized={project.media.direct}
                     fill
                     // The first thing in view when the panel opens (it mounts on open): lazy left it blank for a beat.
                     loading="eager"
@@ -289,6 +290,7 @@ export function CaseStudyPanel({
                             <Image
                               src={shot.src}
                               alt={shot.alt}
+                              unoptimized={project.media?.direct}
                               fill
                               loading="lazy"
                               sizes={wide ? "(max-width: 1100px) 100vw, 68rem" : "(max-width: 640px) 100vw, 33rem"}

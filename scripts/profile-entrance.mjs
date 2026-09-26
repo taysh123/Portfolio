@@ -114,6 +114,9 @@ async function run(browser, sc, pattern) {
     drawMs: { p50: pct(R.map((r) => r.drawMs), 0.5), p95: pct(R.map((r) => r.drawMs), 0.95) },
     queueToRenderMs: { p50: pct(R.map((r) => r.start - r.queuedAt), 0.5), p95: pct(R.map((r) => r.start - r.queuedAt), 0.95) },
     lagPx: { p50: pct(lag, 0.5), p95: pct(lag, 0.95) },
+    // Frames of the sequence crossed between consecutive renders (≈ per display frame while moving).
+    framesPerFrame: (() => { const d = R.slice(1).map((r, i) => Math.abs(r.want - R[i].want)).filter((x) => x > 0); return { p50: pct(d, 0.5), p95: pct(d, 0.95) }; })(),
+    runwayPx: L, swipeP: +((sc.h * 0.6) / L).toFixed(3),
     longTasks: { n: P.long.length, over50: P.long.filter((d) => d > 50).length, max: P.long.length ? +Math.max(...P.long).toFixed(1) : 0 },
     decode: { n: P.decodes.length, p50: pct(P.decodes.map((d) => d.ms), 0.5), p95: pct(P.decodes.map((d) => d.ms), 0.95) },
     paths: R.reduce((a, r) => ((a[r.path] = (a[r.path] || 0) + 1), a), {}),
@@ -146,7 +149,7 @@ for (const sc of SCENARIOS.filter((s) => !ONLY.length || ONLY.includes(s.name)))
     const rs = []; for (let k = 0; k < RUNS; k++) rs.push(await run(browser, sc, pattern).catch(() => run(browser, sc, pattern)));
     results[`${sc.name}/${pattern}`] = merge(rs);
     const m = results[`${sc.name}/${pattern}`];
-    console.log(`${sc.name.padEnd(18)} ${pattern.padEnd(9)} drop ${String(m.dropRate).padEnd(5)} missedFr ${String(m.missedFrames).padEnd(4)} render p95 ${String(m.renderMs.p95).padEnd(6)} draw p95 ${String(m.drawMs.p95).padEnd(6)} lag p50/95 ${m.lagPx.p50}/${m.lagPx.p95}px misses ${String(m.misses).padEnd(4)} (${m.missRate}) dist≤${m.missDist.max} unfetched ${m.framesReachedBeforeFetched} decode p95 ${m.decode.p95} long>50 ${m.longTasks.over50} max ${m.longTasks.max} bmp ${m.bitmapMB.max}MB endP ${m.endP}`);
+    console.log(`${sc.name.padEnd(18)} ${pattern.padEnd(9)} drop ${String(m.dropRate).padEnd(5)} missedFr ${String(m.missedFrames).padEnd(4)} render p95 ${String(m.renderMs.p95).padEnd(6)} draw p95 ${String(m.drawMs.p95).padEnd(6)} runway ${m.runwayPx}px swipe Δp ${m.swipeP} fr/frame p50/95 ${m.framesPerFrame.p50}/${m.framesPerFrame.p95} misses ${String(m.misses).padEnd(4)} (${m.missRate}) dist≤${m.missDist.max} unfetched ${m.framesReachedBeforeFetched} decode p95 ${m.decode.p95} long>50 ${m.longTasks.over50} max ${m.longTasks.max} bmp ${m.bitmapMB.max}MB endP ${m.endP}`);
   }
 }
 await browser.close();
