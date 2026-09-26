@@ -87,9 +87,10 @@ export type Project = {
   caseStudy: CaseStudy;
 };
 
-/** T Poker's live App Store listing. */
-const T_POKER_IOS_URL: string | undefined =
-  "https://apps.apple.com/us/app/t-poker-poker-trainer/id6781109023";
+/** T Poker's live store listings (both published). The Play URL is the canonical listing, without the
+ *  share link's `pcampaignid` tracking parameter. */
+const T_POKER_IOS_URL = "https://apps.apple.com/us/app/t-poker-poker-trainer/id6781109023";
+const T_POKER_ANDROID_URL = "https://play.google.com/store/apps/details?id=com.tpoker.app";
 
 export const projects: Project[] = [
   {
@@ -107,8 +108,8 @@ export const projects: Project[] = [
     liveUrl: "https://app.tpoker.app/",
     liveLabel: "Open the app",
     stores: [
-      { platform: "ios", status: T_POKER_IOS_URL ? "live" : "soon", url: T_POKER_IOS_URL },
-      { platform: "android", status: "soon" },
+      { platform: "ios", status: "live", url: T_POKER_IOS_URL },
+      { platform: "android", status: "live", url: T_POKER_ANDROID_URL },
     ],
     metrics: [
       { value: "892", label: "Tests across both stacks" },
@@ -174,7 +175,7 @@ export const projects: Project[] = [
         "End-to-end ownership: schema, API, two clients, CI, and the release paperwork nobody warns you about",
       ],
       honestNote:
-        "The web app is genuinely live. The Android build is signed and store-ready but has not been published — the remaining work is a Play Console listing, not code.",
+        "Everything shown is live: the web app, the App Store build and the Google Play build.",
     },
   },
   {

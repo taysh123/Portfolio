@@ -197,3 +197,19 @@ test("think · build · ship pins at 1280×720 on a fresh load, and pinning neve
   await page.setViewportSize({ width: 1440, height: 900 }); await page.setViewportSize({ width: 1280, height: 720 });
   await expect(page.locator("#approach")).toHaveAttribute("data-pinned", "true");
 });
+
+test("T Poker: both store badges link their live listings — flagship, case study and palette", async ({ page }) => {
+  await skip(page);
+  const flagship = page.locator("#work-poker");
+  await expect(flagship.locator('a[href="https://apps.apple.com/us/app/t-poker-poker-trainer/id6781109023"]')).toHaveCount(1);
+  await expect(flagship.locator('a[href="https://play.google.com/store/apps/details?id=com.tpoker.app"]')).toHaveCount(1);
+  await expect(flagship.getByRole("link", { name: /Google Play — T Poker/ })).toHaveCount(1);
+  const opener = page.locator("button[data-case-study='poker']"); await opener.scrollIntoViewIfNeeded(); await opener.click();
+  const panel = page.getByRole("dialog");
+  await expect(panel.getByRole("link", { name: /App Store — T Poker/ }).first()).toBeVisible();
+  await expect(panel.getByRole("link", { name: /Google Play — T Poker/ }).first()).toBeVisible();
+  await page.keyboard.press("Escape"); await expect(panel).toBeHidden();
+  await page.keyboard.press("Control+k");
+  await page.getByRole("combobox", { name: "Search commands" }).fill("Google Play");
+  await expect(page.getByRole("option", { name: /T Poker — Google Play/ })).toBeVisible();
+});

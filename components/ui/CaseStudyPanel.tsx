@@ -224,7 +224,7 @@ export function CaseStudyPanel({
                 <ul className="mt-4 flex flex-wrap gap-3">
                   {project.stores.map((s) => (
                     <li key={s.platform}>
-                      <StoreBadge listing={s} />
+                      <StoreBadge listing={s} app={project.name} />
                     </li>
                   ))}
                 </ul>

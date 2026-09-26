@@ -131,6 +131,11 @@ export function CommandPalette() {
               },
             ]
           : []),
+        // Published store listings only — a "coming soon" platform has no destination.
+        ...(p.stores ?? []).filter((s) => s.status === "live" && s.url).map((s) => {
+          const store = s.platform === "ios" ? "App Store" : "Google Play";
+          return { id: `store-${p.id}-${s.platform}`, label: `${p.name} — ${store}`, category: "Projects", hint: "Download", external: true, run: openUrl(s.url!) };
+        }),
       ]),
       {
         id: "theme",

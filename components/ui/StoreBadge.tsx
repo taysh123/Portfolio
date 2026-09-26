@@ -20,7 +20,7 @@ import type { StoreListing } from "@/data/projects";
  * That is the whole reason `url` is optional: it is not possible to ship a
  * badge here that promises a destination which does not exist.
  */
-export function StoreBadge({ listing }: { listing: StoreListing }) {
+export function StoreBadge({ listing, app }: { listing: StoreListing; app?: string }) {
   const live = listing.status === "live" && Boolean(listing.url);
   const name = listing.platform === "ios" ? "App Store" : "Google Play";
   const overline = live ? "Download on the" : "Coming soon to";
@@ -60,7 +60,7 @@ export function StoreBadge({ listing }: { listing: StoreListing }) {
 
   if (!live) {
     return (
-      <span className={shell} aria-label={`${name} — coming soon`}>
+      <span className={shell} aria-label={`${app ? `${app} on ` : ""}${name} — coming soon`}>
         {body}
       </span>
     );
@@ -69,7 +69,8 @@ export function StoreBadge({ listing }: { listing: StoreListing }) {
   return (
     <a href={listing.url} target="_blank" rel="noopener noreferrer" className={shell}>
       {body}
-      <span className="sr-only"> (opens in a new tab)</span>
+      {/* Which app: in a screen reader's links list "Download on the App Store" alone is ambiguous. */}
+      <span className="sr-only">{app ? ` — ${app}` : ""} (opens in a new tab)</span>
     </a>
   );
 }

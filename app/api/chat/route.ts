@@ -70,7 +70,8 @@ function buildSystemPrompt(): string {
   const projectLines = projects
     .map((p) => {
       const stack = p.stack.map((s) => s.label).join(", ");
-      const link = p.liveUrl ? ` Live: ${p.liveUrl}.` : "";
+      const live = (p.stores ?? []).filter((s) => s.status === "live" && s.url).map((s) => `${s.platform === "ios" ? "App Store" : "Google Play"}: ${s.url}`);
+      const link = (p.liveUrl ? ` Live: ${p.liveUrl}.` : "") + (live.length ? ` ${live.join(". ")}.` : "");
       return `- ${p.name}${p.formerly ? ` (formerly ${p.formerly})` : ""} (${p.status}): ${p.tagline}. ${p.summary} Stack: ${stack}. Repo: ${publicRepoUrl(p) ?? "private (source not public; do not share or guess a URL)"}.${link}`;
     })
     .join("\n");

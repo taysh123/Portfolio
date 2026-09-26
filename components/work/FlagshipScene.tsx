@@ -11,7 +11,7 @@ import { projectOf, type Flagship } from "@/data/work";
 export function FlagshipScene({ f, world }: { f: Flagship; world: React.ReactNode }) {
   const p = projectOf(f.id);
   const metrics = f.metricLabels.map((l) => p.metrics.find((m) => m.label === l)!);
-  const store = p.stores?.find((s) => s.status === "live" && s.url);
+  const stores = p.stores?.filter((s) => s.status === "live" && s.url) ?? [];
   return (
     <ScrollScene id={`work-${p.id}`} labelledBy={`work-${p.id}-title`} className={`flagship flagship--${p.id}`}>
       <div className="shell flagship__grid">
@@ -27,14 +27,19 @@ export function FlagshipScene({ f, world }: { f: Flagship; world: React.ReactNod
           <ul className="mt-5 flex flex-wrap gap-2" aria-label={`${p.name} stack`}>
             {p.stack.slice(0, 5).map((s) => <li key={s.label} className="label rounded-full border border-line px-2.5 py-1 text-fg-muted">{s.label}</li>)}
           </ul>
-          <div className="mt-7 flex flex-wrap gap-3">
+          {/* Two rows with one job each: the actions, then the published store listings together. */}
+          <div className="mt-7 flex flex-wrap items-center gap-3">
             <button type="button" data-case-study={p.id} className="case-study-trigger inline-flex h-11 items-center rounded-full bg-accent-solid px-5 text-sm font-medium text-white hover:bg-accent-solid-hover">Case study</button>
             {p.liveUrl && <ButtonLink href={p.liveUrl} variant="secondary" external>{p.liveLabel ?? "Live"}</ButtonLink>}
-            {store && <StoreBadge listing={store} />}
             {publicRepoUrl(p)
               ? <ButtonLink href={publicRepoUrl(p)!} variant="ghost" external>Source</ButtonLink>
               : <PrivateRepoLabel className="h-11 px-3" />}
           </div>
+          {stores.length > 0 && (
+            <ul className="mt-3 flex flex-wrap gap-3" aria-label={`Get ${p.name}`}>
+              {stores.map((s) => <li key={s.platform}><StoreBadge listing={s} app={p.name} /></li>)}
+            </ul>
+          )}
         </div>
         <div className="flagship__world" data-world={p.id}>
           {/* "…it recedes while the next number arrives" (spec §5.2): each scene's ghost number assembles
