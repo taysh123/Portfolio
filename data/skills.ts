@@ -138,7 +138,7 @@ export const skillGroups: SkillGroup[] = [
     evidence:
       // The Docker-command line lives in the Approach section's "Ship" stage;
       // this one leads with CI instead so the two are not the same sentence.
-      "T Poker runs 5 CI jobs on every push across two languages, and Aegis's whole stack — API, frontend, PostgreSQL, Redis, RabbitMQ — comes up under one compose file."
+      "T Poker's CI runs eight jobs across two languages, each scoped to what a push changes, and Aegis's whole stack — API, frontend, PostgreSQL, Redis, RabbitMQ — comes up under one compose file."
   },
   {
     id: "verify",

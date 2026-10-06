@@ -19,7 +19,7 @@ export const flagships: Flagship[] = [
   { id: "poker", number: "01", kicker: "A poker study platform and home-game manager, shipped from one codebase",
     story: ["One Expo codebase renders iOS, Android and the live web app, backed by an ASP.NET Core CQRS service over PostgreSQL.",
             "The financial core runs in integer cents, and the two stacks carry 6,210 passing tests."],
-    metricLabels: ["Passing tests, both stacks", "Targets from one codebase", "CI jobs per push"] },
+    metricLabels: ["Passing tests, both stacks", "Targets from one codebase", "CI jobs, scoped per push"] },
   { id: "aegis", number: "02", kicker: "A Security Operations Centre where module isolation is enforced by the compiler",
     story: ["Security events flow from ingestion through detection and threat scoring to alerts over MassTransit and RabbitMQ, and reach the dashboard live over SignalR.",
             "The whole stack comes up from one Docker command that mints its own RS256 keys."],

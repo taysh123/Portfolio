@@ -151,6 +151,21 @@ async function run(browser, sc, pattern) {
     // Video: renders whose frame on screen is not yet the one the scroll asks for, and by how many samples.
     videoLate: R.filter((r) => r.path === "video-late").length, videoBehind: (() => { const d = R.filter((r) => r.path.startsWith("video")).map((r) => Math.abs(r.drawn - r.want)); return { p50: pct(d, 0.5), p95: pct(d, 0.95), max: d.length ? Math.max(...d) : 0 }; })(),
     seekMs: { n: (P.seeks || []).length, p50: pct(P.seeks || [], 0.5), p95: pct(P.seeks || [], 0.95) },
+    // Video: from a render whose target frame changed to the first render presenting that frame (or one past it
+    // in the direction of travel) — how long the picture trails a new scroll position.
+    catchUpMs: (() => {
+      const V = R.filter((r) => r.path.startsWith("video") && r.ts !== undefined && r.drawn !== null), d = [];
+      for (let i = 1; i < V.length; i++) {
+        if (V[i].want === V[i - 1].want) continue;
+        const dir = Math.sign(V[i].want - V[i - 1].want);
+        const j = V.findIndex((r, k) => k >= i && (r.drawn - V[i].want) * dir >= 0);
+        if (j >= 0) d.push(V[j].ts - V[i].ts);
+      }
+      return { n: d.length, p50: pct(d, 0.5), p95: pct(d, 0.95) };
+    })(),
+    // After the last input: from the final render that still trailed to the picture reaching the final target.
+    settleMs: (() => { const V = R.filter((r) => r.path.startsWith("video") && r.ts !== undefined); const last = V.at(-1); if (!last) return null;
+      const firstExact = V.findIndex((r, k) => V.slice(k).every((x) => x.drawn === last.want)); return firstExact >= 0 ? Math.round(last.ts - V[firstExact].ts) : null; })(),
     fetched: Object.values(P.fetch).filter((f) => f.end).length, fetchKB: Math.round(Object.values(P.fetch).reduce((a, f) => a + (f.bytes || 0), 0) / 1024),
     endP: +endY.toFixed(3), overflow, errors,
   };
@@ -175,7 +190,7 @@ for (const sc of SCENARIOS.filter((s) => !ONLY.length || ONLY.includes(s.name)))
     const rs = []; for (let k = 0; k < RUNS; k++) rs.push(await run(browser, sc, pattern).catch(() => run(browser, sc, pattern)));
     results[`${sc.name}/${pattern}`] = merge(rs);
     const m = results[`${sc.name}/${pattern}`];
-    console.log(`${sc.name.padEnd(18)} ${pattern.padEnd(9)} drop ${String(m.dropRate).padEnd(5)} missedFr ${String(m.missedFrames).padEnd(4)} render p95 ${String(m.renderMs.p95).padEnd(6)} draw p95 ${String(m.drawMs.p95).padEnd(6)} runway ${m.runwayPx}px swipe Δp ${m.swipeP} fr/frame p50/95 ${m.framesPerFrame.p50}/${m.framesPerFrame.p95} upd p50/95/cv ${m.updateMs.p50}/${m.updateMs.p95}/${m.updateMs.cv} skips ${m.skips} ${m.player}:${m.format}@${m.tier} late ${m.videoLate} behind p95 ${m.videoBehind.p95} seek p95 ${m.seekMs.p95} allFetched ${m.allFetchedMs}ms ${m.fetchKB}KB misses ${String(m.misses).padEnd(4)} (${m.missRate}) dist≤${m.missDist.max} unfetched ${m.framesReachedBeforeFetched} decode p95 ${m.decode.p95} long>50 ${m.longTasks.over50} max ${m.longTasks.max} bmp ${m.bitmapMB.max}MB endP ${m.endP}`);
+    console.log(`${sc.name.padEnd(18)} ${pattern.padEnd(9)} drop ${String(m.dropRate).padEnd(5)} missedFr ${String(m.missedFrames).padEnd(4)} render p95 ${String(m.renderMs.p95).padEnd(6)} draw p95 ${String(m.drawMs.p95).padEnd(6)} runway ${m.runwayPx}px swipe Δp ${m.swipeP} fr/frame p50/95 ${m.framesPerFrame.p50}/${m.framesPerFrame.p95} upd p50/95/cv ${m.updateMs.p50}/${m.updateMs.p95}/${m.updateMs.cv} skips ${m.skips} ${m.player}:${m.format}@${m.tier} late ${m.videoLate} behind p95 ${m.videoBehind.p95} seek p50/95 ${m.seekMs.p50}/${m.seekMs.p95} catch-up p50/95 ${m.catchUpMs.p50}/${m.catchUpMs.p95} allFetched ${m.allFetchedMs}ms ${m.fetchKB}KB misses ${String(m.misses).padEnd(4)} (${m.missRate}) dist≤${m.missDist.max} unfetched ${m.framesReachedBeforeFetched} decode p95 ${m.decode.p95} long>50 ${m.longTasks.over50} max ${m.longTasks.max} bmp ${m.bitmapMB.max}MB endP ${m.endP}`);
   }
 }
 await browser.close();

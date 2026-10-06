@@ -1,5 +1,5 @@
 VERIFY
-@b89070e
+@d3f8df2
 checks
 typecheck
 passed
@@ -10,19 +10,19 @@ passed
 build
 passed
 project test suites
-counts from data/projects.ts
+passing tests · counts from data/projects.ts
 T Poker
-892 tests
+6,210 passing
 DeveloperOS
-363 tests
+363 passing
 GRAVITY FLOW
-220 tests
+221 passing
 Job Assistant
-162 tests
+162 passing
 Aegis
-105 tests
-1,742
-tests across 5 projects
+105 passing
+7,061
+passing tests across 5 projects
 WRITE
 feature/premium-portfolio-redesign-1mqmgf
 EXPLORER

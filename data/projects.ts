@@ -114,7 +114,8 @@ export const projects: Project[] = [
     metrics: [
       // CI at main: 802 xUnit (incl. the Postgres money-path suite) + 5,379 Jest + 29 Vitest, all passing.
       { value: "6,210", label: "Passing tests, both stacks" },
-      { value: "5", label: "CI jobs per push" },
+      // .github/workflows/ci.yml: eight jobs, each gated on the surface a push changes (plus the secret scan).
+      { value: "8", label: "CI jobs, scoped per push" },
       { value: "3", label: "Targets from one codebase" },
       { value: "0", label: "Floating-point money bugs" },
     ],
@@ -435,7 +436,7 @@ export const projects: Project[] = [
     metrics: [
       { value: "7", label: "Source adapters" },
       { value: "162", label: "Tests" },
-      { value: "310", label: "Filter terms, 8 lists" },
+      { value: "310", label: "Filter terms, 7 lists" },
       { value: "1", label: "SQLite file as all state" },
     ],
     stack: [
@@ -460,7 +461,7 @@ export const projects: Project[] = [
         },
         {
           title: "Deterministic filtering, no model in the hot path",
-          body: "Ranking is 310 configured terms across eight lists plus explicit experience and geography gates. It's boring, it's auditable, and when a good role gets filtered out you can point at the exact rule and change it.",
+          body: "Ranking is 310 configured terms across seven lists plus explicit experience and geography gates. It's boring, it's auditable, and when a good role gets filtered out you can point at the exact rule and change it.",
         },
         {
           title: "A single concurrency group across scheduled jobs",
