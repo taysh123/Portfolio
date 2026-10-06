@@ -3691,3 +3691,50 @@ backing — a visible softening) or the owner's decision on the check; left open
 
 Gate: tsc clean · ESLint 0 warnings · Vitest 109/109 · Playwright 116/116 · entrance + geometry + images + budget +
 idle ×3: 150/150 · quad-lock test verified red (53 px spread with the surface placed from the scroll) then green.
+
+## Release pass: content truth, VERIFY re-render, phone video seeking, entrance budget method (recorded 2026-10-06)
+
+### Content (verified against each repository's current main)
+| Project | Was | Now | Source |
+|---|---|---|---|
+| T Poker | 892 tests · 5 CI jobs per push · 714 commits | **6,210 passing tests** (802 xUnit incl. the Postgres money-path suite + 5,379 Jest + 29 Vitest) · **8 CI jobs, scoped per push** · 1,996 commits | CI run 959 at ced5163 (all jobs green); Jest re-run here (5,379/5,379 in Asia/Jerusalem; one date test is time-zone dependent in UTC) |
+| Aegis | 105 tests | **105 passing tests** (106 defined; one RabbitMQ integration test still failing) | 82 `[Fact]` + 24 `[InlineData]` rows at 31a75aa; no CI to read; dotnet not installable here |
+| DeveloperOS | 363 | 363 (CI green on 2 OS × 3 Python; 362 + 1 Windows-only here) | CI run 40 at de7346c; pytest here |
+| GRAVITY FLOW | 220 tests | **221** over 28 files | Vitest here at d3c6aab |
+| Job Assistant | 162 · 310 filter terms, 8 lists | 162 · **310 terms, 7 lists** (10 defined, 3 empty) | pytest here; config/config.yaml |
+| Portfolio total | 1,742 tests across five projects | **7,061 passing tests across five projects** | sum of the above |
+
+Also: About "GMT+3" → "Israel time" (IST/IDT alternate); Aegis compose evidence → API, frontend, PostgreSQL,
+Redis, RabbitMQ (no worker container); the Stack group "Verification" → "Testing & Tooling" (it lists Claude Code
+and Ollama). The VERIFY monitor in the 3D scene draws these counts (provenance test): its texture was regenerated
+alone (WRITE/BUILD/laptop/pad hashes unchanged) and the 65 frames showing it were re-rendered — Cycles is
+deterministic here (an old-texture re-render of lid-20 matched within 1/255), so a border region around the
+monitor was rendered with the full pipeline and pasted back (16 px feather): PSNR 63.4 dB, mean error 0.025/255
+against a full-frame re-render of lid-20; 37 min instead of ~4 h.
+
+### Phone video seeking
+Keyframe interval, phone portrait profile (VP9 stand-in served with byte ranges, 3 runs each):
+
+| Keyframe every | Seek p95 slow/fast/rev/cold (ms) | Dropped frames slow/fast/rev/cold | H.264 MB portrait/landscape |
+|---|---|---|---|
+| 8 (was) | 31 / 34 / 31 / 41 | 2.6 / 12.2 / 4.9 / 17.5% | 2.9 / 3.1 |
+| **4 (chosen)** | **22 / 33 / 26 / 25** | **2.2 / 4.9 / 2.7 / 11.7%** | **3.7 / 4.2** |
+| 2 | 25 / 25 / 25 / 27 | 4.9 / 3.0 / 1.7 / 12.5% | 5.2 / 6.4 |
+| 1 (all-intra) | 27 / 40 / 29 / 34 | 2.6 / 4.1 / 6.0 / 16.4% | 5.8 / 6.8 |
+
+SSIM against the exact blends: 0.990 portrait / 0.989 landscape. MP4s are faststart (ftyp, moov, free, mdat).
+Video budget 3.5 → 4.5 MB per file for the shorter GOP. VideoPlayer: one seek in flight, newest target from the
+animation frame and from `seeked`; presentations ignored until the first seek completes (no jump back to the first
+frame on a cold start); the first frame fades in with the surface over 180 ms; requestVideoFrameCallback metadata
+in the profiler and the `?entrancePerf=1` panel. Headless Chromium decodes VP9 in software; the iPhone decodes
+H.264 in hardware, so these are relative numbers — the device decides.
+
+### Entrance budget method (scripts/trace-entrance.mjs)
+The old check wheel-scrolled a fixed 7,200 px and gated the p95 of all main-thread tasks: at the 2,700 px entrance
+1,204 of 2,137 sampled tasks came after it (p95 4.4 ms) while its own redraws were already 9–14 ms; the longer
+desktop entrance kept the input inside it (p95 12–13 ms) with no frame slower. Its slow tasks are
+LayerTreeHost::DoUpdateLayers → CanvasResourceProviderSharedImage::ProduceCanvasResource (~9.6 ms of ~13 ms): the
+canvas copy under software GL. The check now scrolls through exactly the entrance and gates separately:
+desktop script work p95 ≤ 8 ms (measured 2.9–3.4); phone (video) main-thread tasks p95 ≤ 8 ms (1.6–2.2); desktop
+compositor work as a regression guard — median of three passes ≤ 1.2 × 12.1 ms baseline = 14.5 ms (five runs
+11.5–13.5). Red check: the same build at DPR 1.5 (1.78× canvas backing) measures 16.0 and 16.7 ms and fails.
