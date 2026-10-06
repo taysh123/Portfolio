@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducedMotion } from "framer-motion";
+import { useMediaQuery } from "@/lib/useMediaQuery";
 import { useAccessibility } from "@/components/providers/AccessibilityProvider";
 
 /**
@@ -16,7 +16,8 @@ import { useAccessibility } from "@/components/providers/AccessibilityProvider";
  * must gate on this combined hook, not on `useReducedMotion()` alone.
  */
 export function useReducedMotionPref(): boolean {
-  const media = useReducedMotion();
+  // Subscribed, not read once: Framer's useReducedMotion() never updates when the OS setting changes mid-session.
+  const media = useMediaQuery("(prefers-reduced-motion: reduce)");
   const { reducedMotion } = useAccessibility();
   return Boolean(media) || reducedMotion;
 }

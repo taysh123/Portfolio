@@ -1,0 +1,125 @@
+.flagship__grid { display: grid; gap: clamp(2rem, 4vw, 4rem); align-items: center; padding-block: clamp(2rem, 8vh, 7rem); }
+@media (min-width: 1024px) { .flagship__grid { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); } }
+/* 1024–1279: a 5/7 copy column is ~390px, which wraps T Poker's actions and store badges onto two rows each and
+   pushes its copy past a 768px viewport (the scene then loses its pin). Even columns keep both rows single. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .flagship__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+.flagship__copy { position: relative; z-index: 2; }                /* never transformed: always legible */
+.flagship__copy dl > div { display: flex; flex-direction: column-reverse; }
+.flagship__world { position: relative; min-height: min(62svh, 640px); }
+/* A world is a definite box bounded by the stage (the pinned stage is one viewport tall; the ScrollScene
+   fit guard unpins anything taller, which must stay the exception). Definite, so nothing shifts on load. */
+.world-frame { position: relative; width: 100%; height: min(60svh, 560px); }
+/* The ghost numeral bleeds past the world by design; clip it at the section, never at the page. */
+.flagship { overflow-x: clip; }
+/* Narrow screens: three metric columns cannot hold an uppercase label, so the metrics stack as rows —
+   value, then label — with the DOM order (dt, dd) unchanged. */
+@media (max-width: 479px) {
+  .flagship__copy dl { grid-template-columns: minmax(0, 1fr); gap: 0.5rem; }
+  .flagship__copy dl > div { flex-direction: row-reverse; justify-content: flex-end; align-items: baseline; gap: 0.75rem; }
+  .flagship__copy dl dt { margin-top: 0; }
+}
+/* Short viewports: the same copy, tighter rhythm, so 1280×720-class laptops keep the pinned story. */
+@media (max-height: 820px) {
+  .flagship__copy h3 { font-size: clamp(1.875rem, 3.2vw, 2.5rem); margin-top: 0.5rem; }
+  .flagship__copy > * + * { margin-top: 0.75rem; }
+  .flagship__copy dl { margin-top: 1rem; padding-top: 0.75rem; }
+  .flagship__copy dl + ul, .flagship__copy ul + div { margin-top: 1rem; }
+}
+.flagship__num { font-variant-numeric: tabular-nums; }
+/* Unpinned (small screens) — spec §5.2 "a single in-view reveal"; never under reduced motion, never in no-JS
+   (data-inview is only ever written by script). One-shot, transform/opacity only. */
+.scene[data-pinned="false"][data-inview="true"] .flagship__world { animation: world-reveal 560ms var(--ease-out) both; }
+@keyframes world-reveal { from { opacity: 0; transform: translateY(24px) scale(0.96); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .flagship__world { animation: none !important; } }
+[data-reduced-motion="true"] .flagship__world { animation: none !important; }
+.flagship__ghost { position: absolute; right: -2%; top: -8%; z-index: 0; pointer-events: none; font: 600 clamp(8rem, 18vw, 16rem)/1 var(--font-sans);
+  letter-spacing: -0.06em; color: var(--fg); opacity: calc(0.06 * var(--assemble) * (1 - var(--recede)));
+  transform: translateY(calc((1 - var(--assemble)) * 48px - var(--recede) * 32px)); }
+
+/* ── World 01 — T Poker ─────────────────────────────────────────────── */
+.world-poker { position: relative; height: min(70svh, 680px); }
+/* The floor stays inside the world and fades in from above — no edge that reads as a stripe across the copy. */
+.world-poker__floor { position: absolute; inset: auto 0 0; height: 42%;
+  background: radial-gradient(60% 55% at 50% 0%, var(--light-cool), transparent 72%), linear-gradient(to bottom, #0a0e14, #05070a);
+  -webkit-mask-image: radial-gradient(70% 100% at 50% 100%, #000 45%, transparent 100%); mask-image: radial-gradient(70% 100% at 50% 100%, #000 45%, transparent 100%); }
+.world-poker__phone { position: absolute; bottom: 16%; left: 50%; width: clamp(140px, 15vw, 220px); aspect-ratio: 1290 / 2796; margin: 0;
+  border-radius: 26px; overflow: hidden; border: 1px solid var(--line-strong); background: #000; box-shadow: var(--shadow-float);
+  translate: -50% 0; will-change: transform; }
+.world-poker__phone img { width: 100%; height: 100%; object-fit: cover; }
+/* Single column (< lg): the world sits under the copy; phones scale with the column, not the viewport's 15vw. */
+@media (max-width: 1023px) {
+  .world-poker { height: clamp(320px, 64svh, 560px); }
+  /* Bounded by height too (≈ 80% of the world: 0.369 × 64svh, 2.167 aspect), so landscape phones never overflow. */
+  .world-poker__phone { width: min(clamp(132px, 26vw, 210px), max(118px, 23.6svh)); bottom: 12%; }
+}
+@media (max-width: 639px) { .world-poker { height: 400px; } .world-poker__phone { bottom: 10%; } }
+/* Parallax per layer: 12 px (back) → 40 px (front) across the hold (spec §5.2). */
+.world-poker__phone--front { z-index: 3;
+  transform: translateY(calc((1 - var(--assemble)) * 120px - (var(--hold) - 0.5) * 40px - var(--recede) * 60px)) scale(calc(0.94 + var(--assemble) * 0.06));
+  opacity: calc(0.35 + var(--assemble) * 0.65 - var(--recede) * 0.5); }
+.world-poker__phone--left { z-index: 1;
+  transform: translateX(calc(var(--assemble) * -64%)) translateY(calc(24px - (var(--hold) - 0.5) * 12px)) rotate(calc(var(--assemble) * -7deg)) scale(0.9);
+  opacity: calc(var(--assemble) * 0.85 - var(--recede) * 0.6); }
+.world-poker__phone--right { z-index: 1;
+  transform: translateX(calc(var(--assemble) * 64%)) translateY(calc(24px - (var(--hold) - 0.5) * 12px)) rotate(calc(var(--assemble) * 7deg)) scale(0.9);
+  opacity: calc(var(--assemble) * 0.85 - var(--recede) * 0.6); }
+
+/* ── World 02 — Aegis ───────────────────────────────────────────── */
+.world-aegis { position: relative; }
+.world-aegis__monitor { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--line-strong); box-shadow: var(--shadow-float);
+  transform: translateY(calc((1 - var(--assemble)) * 60px - var(--recede) * 40px)) scale(calc(0.96 + var(--assemble) * 0.04)); opacity: calc(0.4 + var(--assemble) * 0.6 - var(--recede) * 0.5); }
+.world-aegis__monitor img { display: block; width: 100%; height: auto; }
+.world-aegis__scan { position: absolute; inset: 0 auto 0 -30%; width: 30%; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(91,156,255,0.16), transparent); opacity: 0; }
+/* One pass per entry: re-armed only when data-inview flips back to true (one-shot, never a loop). */
+.scene[data-inview="true"] .world-aegis__scan { animation: aegis-scan 1.4s var(--ease-out) 0.2s 1 both; }
+@keyframes aegis-scan { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(460%); } }
+@media (prefers-reduced-motion: reduce) { .world-aegis__scan { animation: none !important; } }
+[data-reduced-motion="true"] .world-aegis__scan { animation: none !important; }
+.world-aegis__rows { position: absolute; right: -4%; bottom: -8%; width: 46%; display: grid; gap: 8px; }
+/* Each strip shows exactly one real alert row: the capture is scaled to --scale row-widths, shifted left to the
+   rows' left edge (--crop-x) and centred on the row (--y); the strip's height is one row (--crop-h of the image
+   height, via padding-% of the width). All geometry except --scale comes from data (worldAssets.rows). */
+.world-aegis__row { --scale: 3.67; position: relative; height: 0; padding-bottom: calc(var(--scale) * var(--img-hw) * var(--crop-h) * 100%);
+  border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: #0a0e14;
+  transform: translateX(calc((1 - clamp(0, var(--assemble) * 3 - var(--i) * 0.6, 1)) * 60px)); opacity: clamp(0, var(--assemble) * 3 - var(--i) * 0.6, 1); }
+.world-aegis__row img { position: absolute; max-width: none; height: auto; width: calc(var(--scale) * 100%);
+  left: calc(-1 * var(--crop-x) * var(--scale) * 100%); top: 50%; transform: translateY(calc(-1 * var(--y) * 100%)); }
+/* A caption above the monitor, not on it: over the capture it covered the dashboard's own "SOC Overview" heading. */
+.world-aegis__badge { position: relative; width: fit-content; margin: 0 0 12px; display: flex; gap: 8px; align-items: center; color: var(--fg-muted);
+  background: rgba(5,7,10,0.72); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; }
+.world-aegis__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+/* Single column: the rows stay inside the world rather than bleeding off the screen edge. */
+@media (max-width: 1023px) { .world-aegis__rows { right: 8px; width: 58%; } }
+/* 1024–1279 (even flagship columns): the -4% overhang would put the cards on the viewport edge. */
+@media (min-width: 1024px) and (max-width: 1279px) { .world-aegis__rows { right: 0; } }
+
+/* ── World 03 — DeveloperOS ──────────────────────────────────────────── */
+.world-dos { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; perspective: 1600px; }
+.world-dos__win { margin: 0; border-radius: 12px; overflow: hidden; border: 1px solid var(--line-strong); box-shadow: var(--shadow-float); background: #0a0e14;
+  transform: translate3d(calc((1 - var(--assemble)) * var(--dx)), calc((1 - var(--assemble)) * var(--dy) - (var(--hold) - 0.5) * 16px), calc((1 - var(--assemble)) * var(--dz)))
+             rotate(calc((1 - var(--assemble)) * var(--r)));
+  opacity: calc(0.3 + var(--assemble) * 0.7 - var(--recede) * 0.5); }
+.world-dos__win img { display: block; width: 100%; height: auto; }
+.world-dos__card { position: absolute; left: 50%; bottom: -18px; translate: -50% 0; white-space: nowrap; padding: 10px 16px; border-radius: 999px;
+  background: rgba(10,14,20,0.92); border: 1px solid var(--line-strong); color: var(--fg); font: 500 0.8125rem/1 var(--font-mono);
+  transform: translateY(calc((1 - var(--assemble)) * 24px)); opacity: var(--assemble); }
+
+/* ── World 04 — GRAVITY FLOW ─────────────────────────────────────────── */
+.world-gravity { position: relative; display: grid; place-items: center; min-height: min(70svh, 680px); }
+.world-gravity__field { position: absolute; inset: -12% -20%; pointer-events: none; }
+.world-gravity__phone { position: relative; margin: 0; width: clamp(150px, 14vw, 220px); aspect-ratio: 1 / 2; border-radius: 26px; overflow: hidden;
+  border: 1px solid var(--line-strong); box-shadow: var(--shadow-float); background: #000;
+  transform: translateY(calc((1 - var(--assemble)) * 80px - (var(--hold) - 0.5) * 24px - var(--recede) * 50px)); opacity: calc(0.4 + var(--assemble) * 0.6 - var(--recede) * 0.5); }
+.world-gravity__phone img { width: 100%; height: 100%; object-fit: cover; }
+.world-gravity__note { position: absolute; bottom: 4%; color: var(--fg-subtle); }
+.world-gravity__inset { position: absolute; right: 8%; top: 12%; margin: 0; width: clamp(80px, 7vw, 110px); aspect-ratio: 1 / 2; border-radius: 16px; overflow: hidden;
+  border: 1px solid var(--line-strong); box-shadow: var(--shadow-float); transform: translateY(calc((1 - var(--assemble)) * 40px + (var(--hold) - 0.5) * -12px)); opacity: calc(var(--assemble) * 0.9 - var(--recede) * 0.6); }
+.world-gravity__inset img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ── More Work ─────────────────────────────────────────────────────────── */
+/* One drawing at a time (PipelineDiagram): across on wide rows, down on phones. */
+.pipeline--v { display: none; margin-inline: auto; }
+@media (max-width: 639px) { .pipeline--h { display: none; } .pipeline--v { display: block; } }

@@ -1,169 +1,31 @@
-"use client";
+import { socials, siteMeta, availability } from "@/data/socials";
+import { ButtonLink } from "@/components/ui/Button";
+import { PhoneReveal } from "@/components/ui/PhoneReveal";
+import { GithubIcon, LinkedinIcon, MailIcon } from "@/components/ui/icons";
+import "./contact.css";
 
-import { useState } from "react";
-import { Section } from "@/components/ui/Section";
-import { Reveal } from "@/components/ui/Reveal";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { Magnetic } from "@/components/ui/Magnetic";
-import {
-  PhoneIcon,
-  GithubIcon,
-  LinkedinIcon,
-  ArrowUpRightIcon,
-} from "@/components/ui/icons";
-import { socials } from "@/data/socials";
-import { decodePhone } from "@/lib/obfuscate";
-
+/** Spec §5.6: "Let's build / something great." over the planet-horizon light; one primary action. */
 export function Contact() {
+  const channel = "inline-flex min-h-11 items-center gap-2.5 rounded-full border border-line px-4 text-sm text-fg-muted hover:border-line-strong hover:text-fg";
   return (
-    <Section
-      id="contact"
-      eyebrow="05 — Contact"
-      title={
-        <>
-          Let&apos;s build something
-          <br className="hidden sm:block" />{" "}
-          <span className="text-gradient">worth shipping.</span>
-        </>
-      }
-      intro="If you're hiring, collaborating, or just want to say hi — I'd love to hear from you."
-    >
-      <Reveal as="div" className="relative">
-        <GlassCard className="relative p-7 sm:p-10 lg:p-14">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -left-32 -top-32 h-72 w-72 rounded-full bg-[#5b8def]/20 blur-3xl"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -bottom-32 -right-32 h-72 w-72 rounded-full bg-[#b47cff]/20 blur-3xl"
-          />
-
-          <div className="relative grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
-            <div>
-              <p className="font-mono text-[0.7rem] uppercase tracking-[0.24em] text-fg-subtle">
-                Primary channel
-              </p>
-              <Magnetic strength={6} className="mt-4 inline-block">
-                <a
-                  href={`mailto:${socials.email}?subject=${encodeURIComponent("Hi Tay")}`}
-                  className="group inline-flex flex-wrap items-baseline gap-2 text-balance text-2xl font-medium tracking-tight text-fg transition-colors hover:text-fg sm:text-4xl lg:text-5xl"
-                  style={{ fontSize: "clamp(1.5rem, 3.8vw, 3rem)" }}
-                >
-                  {socials.email}
-                  <span
-                    aria-hidden="true"
-                    className="inline-flex h-7 w-7 -translate-y-1 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-fg-muted transition-all duration-500 group-hover:translate-y-[-6px] group-hover:border-white/25 group-hover:text-fg sm:h-10 sm:w-10"
-                  >
-                    <ArrowUpRightIcon size={16} />
-                  </span>
-                </a>
-              </Magnetic>
-
-              <ul className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <li>
-                  <a
-                    href={socials.github.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-fg transition-colors hover:border-white/25 hover:bg-white/[0.07]"
-                  >
-                    <GithubIcon size={16} />
-                    github.com/{socials.github.handle}
-                    <ArrowUpRightIcon size={14} />
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href={socials.linkedin.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-fg transition-colors hover:border-white/25 hover:bg-white/[0.07]"
-                  >
-                    <LinkedinIcon size={16} />
-                    LinkedIn — {socials.linkedin.label}
-                    <ArrowUpRightIcon size={14} />
-                  </a>
-                </li>
-                <li>
-                  <PhoneReveal />
-                </li>
-              </ul>
-            </div>
-
-            <address className="not-italic">
-              <p className="font-mono text-[0.7rem] uppercase tracking-[0.24em] text-fg-subtle">
-                Status
-              </p>
-              <p className="mt-4 text-balance text-lg leading-relaxed text-fg-muted sm:text-xl">
-                Open to junior software developer roles — onsite, hybrid, or
-                remote. I respond fast, write clearly, and care about the work.
-              </p>
-              <ul className="mt-8 space-y-3 text-sm text-fg-muted">
-                <li className="flex items-center gap-3">
-                  <span
-                    aria-hidden="true"
-                    className="relative inline-flex h-2 w-2"
-                  >
-                    <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/60" />
-                    <span className="relative inline-block h-2 w-2 rounded-full bg-emerald-400" />
-                  </span>
-                  Available now
-                </li>
-                <li className="flex items-center gap-3">
-                  <span
-                    aria-hidden="true"
-                    className="inline-block h-2 w-2 rounded-full bg-white/40"
-                  />
-                  Time zone: Israel (GMT+3)
-                </li>
-                <li className="flex items-center gap-3">
-                  <span
-                    aria-hidden="true"
-                    className="inline-block h-2 w-2 rounded-full bg-white/40"
-                  />
-                  Working in English
-                </li>
-              </ul>
-            </address>
-          </div>
-        </GlassCard>
-      </Reveal>
-    </Section>
+    <section id="contact" aria-labelledby="contact-title" data-theme="dark" className="contact seam-top-dark seam-bottom-dark relative overflow-hidden bg-[var(--bg)]">
+      <div className="contact__horizon" aria-hidden="true" />
+      <div className="shell relative py-[clamp(8rem,18vh,14rem)] text-center">
+        {availability.open && <p className="label inline-flex items-center gap-2 text-fg-muted"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--status-live)]" />{availability.label}</p>}
+        <h2 id="contact-title" className="mt-6 text-[clamp(2.75rem,7vw,6rem)] font-semibold leading-[0.98] tracking-[-0.045em] text-fg">
+          Let&apos;s build<br /><span className="text-fg-muted">something great.</span>
+        </h2>
+        <p className="mx-auto mt-6 max-w-[52ch] text-fg-muted" style={{ fontSize: "var(--text-lead)" }}>{availability.detail}</p>
+        <div className="mt-10 flex justify-center"><ButtonLink href={`mailto:${socials.email}?subject=${encodeURIComponent("Hello Tay")}`} size="lg">Get in touch</ButtonLink></div>
+        <address className="mt-8 flex flex-wrap justify-center gap-3 not-italic">
+          <a className={channel} href={socials.github.url} target="_blank" rel="noopener noreferrer"><GithubIcon size={16} />GitHub<span className="sr-only"> (opens in a new tab)</span></a>
+          <a className={channel} href={socials.linkedin.url} target="_blank" rel="noopener noreferrer"><LinkedinIcon size={16} />LinkedIn<span className="sr-only"> (opens in a new tab)</span></a>
+          <a className={channel} href={`mailto:${socials.email}`}><MailIcon size={16} />Email</a>
+          <PhoneReveal className={channel} />
+        </address>
+        <p aria-hidden="true" className="label mt-16 text-fg-subtle">Ideas / Build / Ship / Repeat.</p>
+        <p className="sr-only">{siteMeta.name}</p>
+      </div>
+    </section>
   );
 }
-
-function PhoneReveal() {
-  const [revealed, setRevealed] = useState<string | null>(null);
-
-  const handleReveal = () => {
-    if (revealed) return;
-    setRevealed(decodePhone(socials.phoneEncoded));
-  };
-
-  return (
-    <>
-      {revealed ? (
-        <a
-          href={`tel:${revealed.replace(/[^0-9+]/g, "")}`}
-          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-fg transition-colors hover:border-white/25 hover:bg-white/[0.07]"
-        >
-          <PhoneIcon size={16} />
-          {revealed}
-          <ArrowUpRightIcon size={14} />
-        </a>
-      ) : (
-        <button
-          type="button"
-          onClick={handleReveal}
-          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-fg-muted transition-colors hover:border-white/25 hover:bg-white/[0.07] hover:text-fg"
-          aria-label="Reveal phone number"
-        >
-          <PhoneIcon size={16} />
-          Reveal phone
-        </button>
-      )}
-    </>
-  );
-}
-

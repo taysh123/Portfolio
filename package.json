@@ -6,22 +6,42 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "render:screens": "python3 design/render/blender/make_screens.py",
+    "render:preview": "bpyenv/bin/python design/render/blender/render.py --quality preview --framing all",
+    "encode:frames": "node scripts/encode-frames.mjs",
+    "measure": "node scripts/measure.mjs",
+    "trace:entrance": "node scripts/trace-entrance.mjs",
+    "pacing:entrance": "node scripts/pacing-entrance.mjs",
+    "profile:entrance": "node scripts/profile-entrance.mjs",
+    "bench:frame-formats": "node scripts/bench-frame-formats.mjs",
+    "scan:controls": "node scripts/fab-scan.mjs",
+    "shoot": "node scripts/shoot.mjs",
+    "render:lookdev": "bpyenv/bin/python design/render/blender/render.py --quality lookdev --exr --out design/render/blender/out-lookdev",
+    "render:final": "bpyenv/bin/python design/render/blender/batch.py",
+    "render:audit": "bpyenv/bin/python design/render/blender/audit.py"
   },
   "dependencies": {
     "framer-motion": "^12.40.0",
+    "lenis": "^1.3.25",
     "next": "16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22.20.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "playwright": "^1.62.1",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.0.2"
   }
 }

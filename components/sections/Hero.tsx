@@ -1,325 +1,62 @@
-"use client";
+import { siteMeta, socials } from "@/data/socials";
+import { ButtonLink } from "@/components/ui/Button";
+import { ArrowDownIcon } from "@/components/ui/icons";
 
-import { useRef } from "react";
-import {
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from "framer-motion";
-import { siteMeta } from "@/data/socials";
-import { GlowOrb } from "@/components/ui/GlowOrb";
-import { HeroArtifact } from "@/components/effects/HeroArtifact";
-import { Magnetic } from "@/components/ui/Magnetic";
-import { ArrowDownIcon, ArrowUpRightIcon } from "@/components/ui/icons";
-import { easeOutExpo, easeSpringSoft } from "@/lib/motion";
+// Height-aware as well as width-aware: on a landscape phone (844×390) the width alone would overflow the screen.
+const lineStyle = { fontSize: "clamp(2.25rem, min(7.2vw, 10.5svh), 6.75rem)", lineHeight: 0.98 } as const;
 
-const subtitleWords = siteMeta.tagline.split(" ");
-
+/**
+ * The site's first real content — and, while the entrance runs, the laptop's screen.
+ *
+ * A server component with no scroll logic of its own. While the entrance is
+ * pinned, `EntranceStage` drives the `data-hero-*` hooks with transform and
+ * opacity only; in static mode (reduced motion or no JavaScript) nothing is
+ * applied and the hero shows at rest.
+ */
 export function Hero() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const prefersReduced = useReducedMotion();
-
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end start"],
-  });
-
-  const orbY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    [0, prefersReduced ? 0 : 180],
-  );
-
-  const gridY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    [0, prefersReduced ? 0 : -80],
-  );
-
-  const contentY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    [0, prefersReduced ? 0 : 60],
-  );
-
-  const contentOpacity = useTransform(
-    scrollYProgress,
-    [0, 0.85],
-    [1, prefersReduced ? 1 : 0],
-  );
-
-  const baseTransition = {
-    duration: 0.9,
-    ease: easeSpringSoft,
-  } as const;
-
   return (
-    <section
-      id="top"
-      ref={containerRef}
-      aria-label="Introduction"
-      className="relative isolate flex min-h-[100svh] items-center overflow-hidden px-5 pb-20 pt-32 sm:px-8 sm:pt-40 lg:min-h-[110vh] 3xl:pt-48"
-    >
-      {/* Counter-parallax grid mask */}
-      <motion.div
-        aria-hidden="true"
-        style={{ y: gridY }}
-        className="pointer-events-none absolute inset-0 -z-20 opacity-50"
-      >
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)",
-            backgroundSize: "72px 72px",
-            maskImage:
-              "radial-gradient(ellipse 70% 50% at 50% 35%, #000 30%, transparent 80%)",
-            WebkitMaskImage:
-              "radial-gradient(ellipse 70% 50% at 50% 35%, #000 30%, transparent 80%)",
-          }}
-        />
-      </motion.div>
+    <section id="hero" aria-labelledby="hero-title" className="hero-surface-content relative flex min-h-[100svh] flex-col justify-center px-[clamp(20px,4vw,40px)] pt-[var(--nav-h)] pb-6">
+      {/* The hero's one atmospheric element (spec §5.1): the dark horizon arc, static, at 40% of Contact's recipe so
+          the page's first and last frames rhyme. Clipped to the hero; behind the content. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        <div className="hero-horizon absolute inset-x-[-20%] bottom-[-70%] h-full rounded-[50%_50%_0_0/100%_100%_0_0] [background:radial-gradient(60%_40%_at_50%_0%,rgba(91,156,255,0.10),transparent_70%)] [box-shadow:0_-1px_0_rgba(155,190,255,0.18)]" />
+      </div>
+      {/* The screen's boot log and identity card. Decorative: the same words
+          are in the h1 and the name line below. */}
+      <div data-hero-boot aria-hidden="true" className="hero-boot pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+        <div className="font-mono text-[clamp(0.875rem,1.6vw,1.25rem)] leading-[1.9] text-fg-muted">
+          <p data-boot-line="0">&gt; initializing portfolio…</p>
+          <p data-boot-line="1">&gt; loading projects…</p>
+          <p data-boot-line="2">&gt; ready.</p>
+        </div>
+      </div>
+      <p data-hero-tagline aria-hidden="true" className="hero-tagline pointer-events-none absolute inset-x-0 top-[56%] text-center text-[clamp(1rem,1.8vw,1.375rem)] text-fg-muted">
+        Building products that ship.
+      </p>
 
-      {/* Parallax orb cluster */}
-      <motion.div
-        aria-hidden="true"
-        style={{ y: orbY }}
-        className="pointer-events-none absolute inset-0 -z-10"
-      >
-        <GlowOrb
-          tone="duo"
-          size={760}
-          className="left-1/2 top-[10%] -translate-x-1/2 opacity-90"
-        />
-
-        <GlowOrb
-          tone="cyan"
-          size={460}
-          className="-left-20 top-1/2 opacity-70"
-        />
-
-        {/* Floating orb */}
-        <motion.div
-          animate={
-            prefersReduced
-              ? undefined
-              : { y: [0, -14, 0] }
-          }
-          transition={
-            prefersReduced
-              ? undefined
-              : {
-                  duration: 9,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }
-          }
-          className="absolute -right-20 top-[33%]"
-        >
-          <GlowOrb
-            tone="violet"
-            size={460}
-            className="opacity-70"
-          />
-        </motion.div>
-      </motion.div>
-
-      {/* Engineering/systems lattice — scroll-reactive 3D centerpiece */}
-      <HeroArtifact progress={scrollYProgress} />
-
-      <motion.div
-        style={{
-          y: contentY,
-          opacity: contentOpacity,
-        }}
-        className="relative mx-auto w-full max-w-5xl 3xl:max-w-6xl"
-      >
-        {/* Availability */}
-        <motion.p
-          initial={prefersReduced ? false : { opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ ...baseTransition, delay: 0.1 }}
-          className="font-mono text-xs uppercase tracking-[0.32em] text-fg-muted sm:text-[0.8rem]"
-        >
-          <span className="inline-flex items-center gap-2">
-            <span
-              aria-hidden="true"
-              className="relative inline-flex h-1.5 w-1.5"
-            >
-              <span className="absolute inset-0 animate-ping rounded-full bg-[#b47cff]/60" />
-              <span className="relative inline-block h-1.5 w-1.5 rounded-full bg-gradient-to-br from-[#5b8def] to-[#b47cff]" />
-            </span>
-
-            Available for software development roles
+      <div className="relative z-10 mx-auto w-full max-w-[1240px]">
+        <h1 id="hero-title" tabIndex={-1} className="outline-none">
+          {/* Not masked: this line travels (the screen's identity card lands here). */}
+          <span className="mb-8 block [@media(max-height:500px)]:mb-3">
+            <span data-hero-name className="label inline-block text-fg-muted">{siteMeta.name} · {siteMeta.role}</span>
           </span>
-        </motion.p>
-
-        {/* Main title */}
-        <h1
-          className="mt-6 text-balance font-semibold leading-[0.95] tracking-tight text-fg sm:mt-8"
-          style={{
-            fontSize: "clamp(2.75rem, 8.2vw, 7rem)",
-          }}
-        >
-          <span className="sr-only">{siteMeta.name}</span>
-
-          <SplitReveal
-            text="Tay"
-            delay={0.18}
-            reduced={!!prefersReduced}
-          />
-
-          <br />
-
-          <SplitReveal
-            text="Shofer."
-            delay={0.32}
-            reduced={!!prefersReduced}
-            gradient
-          />
+          <span className="hero-mask block">
+            <span data-hero-line="1" className="block font-semibold tracking-[-0.045em] text-fg" style={lineStyle}>I build software</span>
+          </span>
+          <span className="hero-mask block">
+            <span data-hero-line="2" className="block font-semibold tracking-[-0.045em] text-fg-muted" style={lineStyle}>people can actually use.</span>
+          </span>
         </h1>
-
-        {/* Subtitle */}
-        <motion.p
-          initial={prefersReduced ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{
-            duration: 1,
-            delay: 0.55,
-            ease: easeOutExpo,
-          }}
-          className="mt-8 max-w-2xl text-pretty text-lg leading-relaxed text-fg-muted sm:text-xl 3xl:text-2xl"
-        >
-          {subtitleWords.map((word, i) => (
-            <motion.span
-              key={`${word}-${i}`}
-              initial={prefersReduced ? false : { opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.5,
-                delay: 0.6 + i * 0.018,
-                ease: easeOutExpo,
-              }}
-              className="inline-block mr-[0.25em]"
-            >
-              {word}
-            </motion.span>
-          ))}
-        </motion.p>
-
-        {/* CTA buttons */}
-        <motion.div
-          initial={prefersReduced ? false : { opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: 0.8,
-            delay: 1.05,
-            ease: easeOutExpo,
-          }}
-          className="mt-10 flex flex-col gap-3 sm:mt-12 sm:flex-row sm:items-center sm:gap-4"
-        >
-          <Magnetic>
-            <a
-              href="#projects"
-              className="group relative inline-flex h-12 items-center justify-center gap-2 overflow-hidden rounded-full bg-fg px-6 text-sm font-medium text-bg transition-transform duration-300 hover:scale-[1.02] sm:h-14 sm:text-base"
-            >
-              <span className="relative z-[1]">
-                View Work
-              </span>
-
-              <ArrowUpRightIcon
-                size={18}
-                className="relative z-[1]"
-              />
-
-              <span
-                aria-hidden="true"
-                className="absolute inset-0 bg-gradient-to-r from-[#5b8def] to-[#b47cff] opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-              />
-            </a>
-          </Magnetic>
-
-          <Magnetic>
-            <a
-              href="#contact"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-6 text-sm font-medium text-fg backdrop-blur-md transition-colors hover:border-white/30 hover:bg-white/[0.08] sm:h-14 sm:text-base"
-            >
-              Get in touch
-            </a>
-          </Magnetic>
-        </motion.div>
-
-        {/* Scroll indicator */}
-        <motion.div
-          initial={prefersReduced ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 1.6 }}
-          className="mt-20 flex items-center gap-3 text-fg-subtle sm:mt-28"
-          aria-hidden="true"
-        >
-          <span className="hairline w-12" />
-
-          <span className="font-mono text-[0.7rem] uppercase tracking-[0.28em]">
-            Scroll
-          </span>
-
-          <motion.span
-            animate={
-              prefersReduced
-                ? undefined
-                : { y: [0, 4, 0] }
-            }
-            transition={
-              prefersReduced
-                ? undefined
-                : {
-                    duration: 2.4,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }
-            }
-            className="inline-flex"
-          >
-            <ArrowDownIcon size={16} />
-          </motion.span>
-        </motion.div>
-      </motion.div>
+        <div className="hero-mask mt-8 [@media(max-height:500px)]:mt-3">
+          <p data-hero-lead className="max-w-[62ch] text-fg-muted" style={{ fontSize: "clamp(1.125rem, 1.5vw, 1.3125rem)" }}>{siteMeta.heroLead}</p>
+        </div>
+        <div className="hero-mask mt-10 [@media(max-height:500px)]:mt-4">
+          <div data-hero-ctas className="flex flex-col gap-3 sm:flex-row">
+            <ButtonLink href="#work" size="lg">Explore my work <ArrowDownIcon size={16} /></ButtonLink>
+            <ButtonLink href={socials.github.url} variant="secondary" size="lg" external>GitHub ↗</ButtonLink>
+          </div>
+        </div>
+      </div>
     </section>
-  );
-}
-
-function SplitReveal({
-  text,
-  delay,
-  reduced,
-  gradient,
-}: {
-  text: string;
-  delay: number;
-  reduced: boolean;
-  gradient?: boolean;
-}) {
-  return (
-    <span
-      className={
-        gradient
-          ? "text-gradient inline-block"
-          : "inline-block"
-      }
-    >
-      <motion.span
-        initial={reduced ? false : { y: "110%" }}
-        animate={{ y: "0%" }}
-        transition={{
-          duration: 1.05,
-          delay,
-          ease: easeOutExpo,
-        }}
-        className="inline-block"
-      >
-        {text}
-      </motion.span>
-    </span>
   );
 }

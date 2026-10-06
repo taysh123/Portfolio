@@ -15,8 +15,7 @@ export type A11yPrefs = {
 export const THEME_COOKIE = "theme";
 export const A11Y_COOKIE = "a11y";
 
-export const DEFAULT_THEME: Theme = "dark";
-export const DEFAULT_A11Y: A11yPrefs = {
+const DEFAULT_A11Y: A11yPrefs = {
   reducedMotion: false,
   highContrast: false,
   largeText: false,

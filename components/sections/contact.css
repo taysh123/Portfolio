@@ -1,0 +1,7 @@
+/* Planet-horizon light (spec §5.6): a CSS arc, a faint grid, cool light pooling. No image, no loop. */
+.contact__horizon { position: absolute; inset: auto -20% -62% -20%; height: 110%; border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  background: radial-gradient(60% 40% at 50% 0%, rgba(91,156,255,0.20), transparent 70%), #05070a;
+  box-shadow: 0 -1px 0 rgba(155,190,255,0.35), 0 -40px 120px rgba(91,156,255,0.12); }
+.contact__horizon::after { content: ""; position: absolute; inset: 0; opacity: 0.25;
+  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 56px 56px;
+  mask-image: radial-gradient(60% 50% at 50% 0%, #000, transparent 75%); }

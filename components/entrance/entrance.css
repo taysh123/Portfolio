@@ -1,0 +1,53 @@
+/* Pinned by default; static under reduced motion (OS or in-app) — decided at first paint. */
+.entrance { position: relative; height: var(--entrance-h, 700svh); }
+/* The same runways as lib/entrance/frames.ts pickFramingKind, so the first paint already has the right length. */
+@media (max-aspect-ratio: 9/10) { .entrance { height: var(--entrance-h, 340svh); } }
+@media (min-aspect-ratio: 9/10) and (max-height: 499px) { .entrance { height: var(--entrance-h, 360svh); } }
+.entrance__stage { position: sticky; top: 0; height: 100svh; overflow: hidden; background: var(--bg); isolation: isolate; }
+.entrance__canvas, .entrance__poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* Near-black, not black: the studio reads through it at p = 0 (spec §4.1 Arrival). */
+.entrance__veil { position: absolute; inset: 0; background: #000; opacity: 0.72; pointer-events: none; }
+.entrance__surface { position: absolute; left: 0; top: 0; transform-origin: 0 0; background: var(--screen); opacity: 0; will-change: transform, opacity; }
+.entrance__surface > .entrance__hero { position: absolute; width: 100vw; height: 100svh; background: var(--bg); }
+.entrance__still { display: none; }
+/* Bottom centre: the corners belong to the chat and accessibility buttons. */
+.entrance__skip { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 5; white-space: nowrap; }
+/* Spec §4.6 fallback: a faint scrim keeps the room title legible wherever the frame is busy. */
+.entrance__title { background: radial-gradient(ellipse 34% 90% at 50% 50%, rgba(5, 7, 10, 0.55), transparent 72%); }
+
+@media (prefers-reduced-motion: reduce) {
+  .entrance { height: auto; }
+  .entrance__stage { position: static; height: auto; overflow: visible; }
+  .entrance__canvas, .entrance__poster, .entrance__veil, .entrance__overlay, .entrance__skip { display: none; }
+  .entrance__still { display: block; position: relative; height: 100svh; }
+  .entrance__surface { position: static; transform: none !important; opacity: 1 !important; clip-path: none !important; }
+  .entrance__surface, .entrance__surface > .entrance__hero { position: static; left: auto !important; top: auto !important; width: auto !important; height: auto !important; pointer-events: auto !important; }
+}
+[data-reduced-motion="true"] .entrance { height: auto; }
+[data-reduced-motion="true"] .entrance__stage { position: static; height: auto; overflow: visible; }
+[data-reduced-motion="true"] .entrance__canvas, [data-reduced-motion="true"] .entrance__poster,
+[data-reduced-motion="true"] .entrance__veil, [data-reduced-motion="true"] .entrance__overlay,
+[data-reduced-motion="true"] .entrance__skip { display: none; }
+[data-reduced-motion="true"] .entrance__still { display: block; position: relative; height: 100svh; }
+[data-reduced-motion="true"] .entrance__surface { position: static; transform: none !important; opacity: 1 !important; clip-path: none !important; }
+/* !important on geometry too: the stage writes inline px sizes, and static mode must win the moment it applies. */
+[data-reduced-motion="true"] .entrance__surface, [data-reduced-motion="true"] .entrance__surface > .entrance__hero { position: static; left: auto !important; top: auto !important; width: auto !important; height: auto !important; pointer-events: auto !important; }
+
+/* Nav: hidden until the portal completes; shown at first paint in static mode. */
+[data-reduced-motion="true"] header[data-entrance-nav] { opacity: 1; pointer-events: auto; }
+@media (prefers-reduced-motion: reduce) { header[data-entrance-nav] { opacity: 1; pointer-events: auto; } }
+
+/* Screen choreography hooks. Everything the stage animates is transform or
+   opacity; with no script running none of it is applied and the hero is at rest. */
+.hero-mask { overflow: clip; overflow-clip-margin: 10px; }
+.hero-boot, .hero-tagline { opacity: 0; }
+[data-hero-name] { transform-origin: 50% 50%; }
+.entrance__chapter { position: absolute; left: clamp(20px, 4vw, 40px); top: 24px; z-index: 4; }
+/* Nothing left to skip once the portal completes. */
+html[data-entrance-done="true"] .entrance__skip { visibility: hidden; } /* not just transparent: out of the Tab order */
+
+/* The canvas is opaque (alpha: false): until its first draw it would be black, so the poster below shows through. */
+.entrance__canvas:not([data-drawn]) { visibility: hidden; }
+/* The video instead stays rendered but transparent until its first frame: a hidden video might not present
+   frames (nor report them), so it would never be marked drawn. */
+.entrance__video:not([data-drawn]) { visibility: visible; opacity: 0; }

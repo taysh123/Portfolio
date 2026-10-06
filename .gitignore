@@ -42,3 +42,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# python bytecode from local agent tooling
+__pycache__/
+*.pyc
+/.superpowers
+/test-results
+/playwright-report
+/bpyenv
+/shots
