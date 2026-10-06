@@ -6,7 +6,8 @@ Run with the system Python 3 + Pillow: `npm run render:screens`.
 
 The snapshot hash drawn on the screens is HEAD; the script refuses a tree with tracked changes,
 so every exit code it draws belongs to that commit.
-Per-project test counts come from data/projects.ts.
+Per-project test counts come from data/projects.ts: each project's passing-test metric (a count of passing
+tests in that repository's CI, not of test definitions — Aegis has 106 with one known failure).
 """
 import re
 import subprocess
@@ -81,14 +82,14 @@ for i, name in enumerate(CHECKS):
     d.text((W - 110 - d.textlength("passed", font=F(MONO, 34)), y + 36), "passed", font=F(MONO, 34), fill=CYAN)
 # test suites per project — data/projects.ts
 src = open(R + "data/projects.ts").read()
-counts = [("T Poker", 892), ("DeveloperOS", 363), ("GRAVITY FLOW", 220), ("Job Assistant", 162), ("Aegis", 105)]
+counts = [("T Poker", 6210), ("DeveloperOS", 363), ("GRAVITY FLOW", 221), ("Job Assistant", 162), ("Aegis", 105)]
 for name, n in counts:
-    assert re.search(rf"(?<![\d,]){n}(?![\d,])", src), name  # provenance: every number appears in data/projects.ts as a whole number
+    assert re.search(rf"(?<![\d,]){n:,}(?![\d,])", src), name  # provenance: every number appears in data/projects.ts as a whole number
 # Project test suites — FACTUAL METADATA from data/projects.ts, not runs. They were not executed for
 # this snapshot, so no check mark, no pass colour, no "passed" wording (user decision, 2026-09-26).
 y0 = 290 + len(CHECKS) * 130 + 40
 d.text((60, y0), "project test suites", font=F(MONO, 34), fill=MUTED)
-d.text((60, y0 + 44), "counts from data/projects.ts", font=F(MONO, 26), fill=(96, 108, 128))
+d.text((60, y0 + 44), "passing tests · counts from data/projects.ts", font=F(MONO, 26), fill=(96, 108, 128))
 NEUTRAL_BAR = (58, 70, 92)
 mx = max(n for _, n in counts)
 for i, (name, n) in enumerate(counts):
@@ -96,15 +97,15 @@ for i, (name, n) in enumerate(counts):
     d.rounded_rectangle((60, y, W - 60, y + 210), 20, fill=PANEL, outline=LINE, width=2)
     d.ellipse((96, y + 58, 112, y + 74), fill=(120, 132, 152))              # neutral bullet, not a status
     d.text((140, y + 30), name, font=F(SANS, 58), fill=FG)
-    t = f"{n} tests"
+    t = f"{n:,} passing"
     d.text((W - 100 - d.textlength(t, font=F(MONO, 50)), y + 38), t, font=F(MONO, 50), fill=FG)
     bx0, bx1, by = 100, W - 100, y + 145
     d.rounded_rectangle((bx0, by, bx1, by + 22), 11, fill=(22, 30, 44))
-    d.rounded_rectangle((bx0, by, bx0 + (bx1 - bx0) * n / mx, by + 22), 11, fill=NEUTRAL_BAR)
+    d.rounded_rectangle((bx0, by, bx0 + max(22, (bx1 - bx0) * n / mx), by + 22), 11, fill=NEUTRAL_BAR)   # proportional; never thinner than its cap
 tot = sum(n for _, n in counts)
 d.rounded_rectangle((60, Hh - 300, W - 60, Hh - 80), 22, fill=(12, 24, 44), outline=ICE, width=3)
 d.text((110, Hh - 262), f"{tot:,}", font=F(SANS, 120), fill=FG)
-d.text((110 + d.textlength(f"{tot:,}", font=F(SANS, 120)) + 30, Hh - 200), "tests across 5 projects", font=F(SANS, 48), fill=MUTED)
+d.text((110 + d.textlength(f"{tot:,}", font=F(SANS, 120)) + 30, Hh - 200), "passing tests across 5 projects", font=F(SANS, 48), fill=MUTED)
 im.save(H + "screen_verify.png")
 
 # ── CENTER: WRITE (2560x1440) — real source, big structure ───────────────

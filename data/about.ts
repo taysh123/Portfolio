@@ -8,7 +8,7 @@ export const about = {
   facts: [
     { value: "B.Sc.", label: "Computer Science" },
     { value: "Full stack", label: "Web · Mobile · Backend" },
-    { value: "Israel", label: "GMT+3 · works in English" },
+    { value: "Israel", label: "Israel time · works in English" },
     { value: "∞", label: "Still learning" },
   ],
 };

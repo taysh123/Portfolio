@@ -138,11 +138,11 @@ export const skillGroups: SkillGroup[] = [
     evidence:
       // The Docker-command line lives in the Approach section's "Ship" stage;
       // this one leads with CI instead so the two are not the same sentence.
-      "T Poker runs 5 CI jobs on every push across two languages, and Aegis's whole stack — API, workers, Postgres, Redis, RabbitMQ — comes up under one compose file."
+      "T Poker runs 5 CI jobs on every push across two languages, and Aegis's whole stack — API, frontend, PostgreSQL, Redis, RabbitMQ — comes up under one compose file."
   },
   {
     id: "verify",
-    title: "Verification",
+    title: "Testing & Tooling",
     caption: "How I know it works",
     glyph: "verify",
     items: [
@@ -156,7 +156,10 @@ export const skillGroups: SkillGroup[] = [
       { label: "Ollama" },
     ],
     evidence:
-      "1,742 tests across five projects, weighted toward settlement math, threat scoring, retrieval grounding and level progression.",
-    lead: { value: "1,742", unit: "tests across five projects" },
+      // Passing tests, counted from each repository's CI at its current main (T Poker 6,210: 802 xUnit + 5,379 Jest +
+      // 29 Vitest; DeveloperOS 363; GRAVITY FLOW 221; Job Assistant 162; Aegis 105 of 106 — one RabbitMQ
+      // integration test still fails there). A count of passing tests, not of test definitions.
+      "7,061 passing tests across five projects, weighted toward settlement math, threat scoring, retrieval grounding and level progression.",
+    lead: { value: "7,061", unit: "passing tests across five projects" },
   },
 ];

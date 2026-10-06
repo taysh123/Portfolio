@@ -51,7 +51,7 @@ export const approachSteps: ApproachStep[] = [
     summary:
       "Test the thing you'd argue about. Coverage is a number; a test that pins a disputed behaviour is leverage.",
     /*
-      This used to be the 1,742-test count — the same sentence the Toolkit's
+      This used to be the portfolio-wide test count — the same sentence the Toolkit's
       Verification group already carries, almost word for word. Repeating a
       number in two places does not make it twice as true; it makes the second
       one filler. The section's own intro promises "a settlement engine pinned

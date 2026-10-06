@@ -47,7 +47,7 @@ export const siteMeta = {
   url: "https://tayshofer.dev",
   locale: "en_US",
   location: "Israel",
-  timezone: "GMT+3",
+  timezone: "Israel time (IST/IDT)",
 } as const;
 
 export const availability = {

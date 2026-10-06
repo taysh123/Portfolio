@@ -18,12 +18,12 @@ export type MoreWorkRow = { id: "job-assistant" | "orders-delivery"; diagram: { 
 export const flagships: Flagship[] = [
   { id: "poker", number: "01", kicker: "A poker study platform and home-game manager, shipped from one codebase",
     story: ["One Expo codebase renders iOS, Android and the live web app, backed by an ASP.NET Core CQRS service over PostgreSQL.",
-            "The financial core runs in integer cents and is covered by 892 tests across both languages."],
-    metricLabels: ["Tests across both stacks", "Targets from one codebase", "CI jobs per push"] },
+            "The financial core runs in integer cents, and the two stacks carry 6,210 passing tests."],
+    metricLabels: ["Passing tests, both stacks", "Targets from one codebase", "CI jobs per push"] },
   { id: "aegis", number: "02", kicker: "A Security Operations Centre where module isolation is enforced by the compiler",
     story: ["Security events flow from ingestion through detection and threat scoring to alerts over MassTransit and RabbitMQ, and reach the dashboard live over SignalR.",
             "The whole stack comes up from one Docker command that mints its own RS256 keys."],
-    metricLabels: ["Bounded contexts", "Cross-context references", "Tests, incl. Testcontainers"],
+    metricLabels: ["Bounded contexts", "Cross-context references", "Passing tests, incl. Testcontainers"],
     statusNote: "Runs locally — the live stream shown is a local demo",
     // Rows measured on the 3840×2160 live-alerts capture: card borders at y 500–631, 644–775, 788–919 and x 528,
     // so centres 565.5 / 709.5 / 853.5 ÷ 2160; `left` and `height` keep a 10 px margin of page around each card.

@@ -100,8 +100,8 @@ export const projects: Project[] = [
     summary:
       "Expo app, React web build, and an ASP.NET Core CQRS backend — with a settlement engine that closes a night in the fewest exact transfers.",
     description:
-      "Two products in one: a study platform with lessons, daily drills and an AI coach, and a home-game manager with a buy-in ledger, tournament clock and end-of-night settlement. One Expo codebase renders iOS, Android and the live web app; behind it sits an ASP.NET Core backend built on Clean Architecture with MediatR CQRS over PostgreSQL. The financial core runs in integer cents and is covered by 892 tests across both languages.",
-    context: "Solo build · 714 commits",
+      "Two products in one: a study platform with lessons, daily drills and an AI coach, and a home-game manager with a buy-in ledger, tournament clock and end-of-night settlement. One Expo codebase renders iOS, Android and the live web app; behind it sits an ASP.NET Core backend built on Clean Architecture with MediatR CQRS over PostgreSQL. The financial core runs in integer cents, and the two stacks carry 6,210 passing tests.",
+    context: "Solo build · 1,996 commits",
     status: "live",
     featured: true,
     repo: { visibility: "private" },
@@ -112,7 +112,8 @@ export const projects: Project[] = [
       { platform: "android", status: "live", url: T_POKER_ANDROID_URL },
     ],
     metrics: [
-      { value: "892", label: "Tests across both stacks" },
+      // CI at main: 802 xUnit (incl. the Postgres money-path suite) + 5,379 Jest + 29 Vitest, all passing.
+      { value: "6,210", label: "Passing tests, both stacks" },
       { value: "5", label: "CI jobs per push" },
       { value: "3", label: "Targets from one codebase" },
       { value: "0", label: "Floating-point money bugs" },
@@ -194,7 +195,8 @@ export const projects: Project[] = [
     metrics: [
       { value: "8", label: "Bounded contexts" },
       { value: "0", label: "Cross-context references" },
-      { value: "105", label: "Tests, incl. Testcontainers" },
+      // 106 defined; one RabbitMQ integration test is a known failure, so the metric is the passing count.
+      { value: "105", label: "Passing tests, incl. Testcontainers" },
       { value: "1", label: "Command to run it all" },
     ],
     stack: [
@@ -345,7 +347,7 @@ export const projects: Project[] = [
     name: "GRAVITY FLOW",
     tagline: "One touch, 150 hand-tuned levels, and physics that had to feel fair",
     summary:
-      "A Phaser 3 puzzler in strict TypeScript — hold to create a gravity well, 15 worlds, 220 tests pinning the physics and progression.",
+      "A Phaser 3 puzzler in strict TypeScript — hold to create a gravity well, 15 worlds, 221 tests pinning the physics and progression.",
     description:
       "Press and hold to spawn an inverse-square gravity well and pull a lost star home. 150 data-driven levels across 15 worlds build on seven core mechanics, alongside a deterministic seeded endless mode and a cosmetics economy that is explicitly incapable of affecting gameplay. Built on Phaser 3 with strict TypeScript and a Vitest suite that pins both the physics and the progression logic.",
     context: "Solo build · 215 commits",
@@ -356,7 +358,7 @@ export const projects: Project[] = [
     ],
     metrics: [
       { value: "150", label: "Levels across 15 worlds" },
-      { value: "220", label: "Tests over 28 files" },
+      { value: "221", label: "Tests over 28 files" },
       { value: "7", label: "Core mechanics" },
       { value: "13", label: "Scenes, 14 entity classes" },
     ],

@@ -21,13 +21,14 @@ import { brand } from "@/lib/tokens";
 
 /**
  * The social card's own proof points (moved here from `data/socials.ts` when the page stopped using them,
- * Plan 2 Task 23). Every figure is verifiable from the repositories. The test count is the sum across the
- * five self-directed projects: T Poker 677 + 215, DeveloperOS 363, GRAVITY FLOW 220, Job Assistant 162,
- * Aegis 103 + 2. Deliberately not a project count: the lead stat is that something runs in production.
+ * Plan 2 Task 23). Every figure is verifiable from the repositories. The test count is the sum of passing tests
+ * across the five self-directed projects (each repository's CI at main): T Poker 6,210, DeveloperOS 363,
+ * GRAVITY FLOW 221, Job Assistant 162, Aegis 105. Deliberately not a project count: the lead stat is that
+ * something runs in production.
  */
 const CARD_STATS = [
   { value: "Live", label: "In production today" },
-  { value: "1,742", label: "Tests across the work" },
+  { value: "7,061", label: "Passing tests across the work" },
   { value: "B.Sc.", label: "Computer Science" },
 ] as const;
 

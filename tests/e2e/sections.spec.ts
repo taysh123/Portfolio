@@ -133,9 +133,9 @@ test("stack: six groups in data order, the two lead groups are wide with their f
   await page.goto("/"); await page.locator("[data-skip-intro]").click();
   await expect(page.locator("#skills h2")).toHaveText("The tools I build with.");
   await expect(page.locator("#skills")).toContainText("Enough range to own a product end to end.");
-  await expect(page.locator("#skills [data-card] h3")).toHaveText(["Languages", "Interface", "Services & APIs", "Data & State", "Delivery", "Verification"]);
+  await expect(page.locator("#skills [data-card] h3")).toHaveText(["Languages", "Interface", "Services & APIs", "Data & State", "Delivery", "Testing & Tooling"]);
   await expect(page.locator("#skills [data-card][data-wide]")).toHaveCount(2);
-  await expect(page.locator("#skills [data-card][data-wide]").nth(1)).toContainText("1,742");
+  await expect(page.locator("#skills [data-card][data-wide]").nth(1)).toContainText("7,061");
 });
 
 test("pointer light follows the hovered card only, and not under reduced motion", async ({ page }) => {
