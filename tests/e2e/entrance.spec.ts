@@ -293,7 +293,7 @@ test("?entrancePerf=1 shows the diagnostics panel with performance numbers only"
   for (const p of [0.2, 0.4, 0.6]) { await page.evaluate((p) => { const c = document.getElementById("entrance")!; scrollTo({ top: c.offsetTop + p * (c.offsetHeight - innerHeight), behavior: "instant" as ScrollBehavior }); }, p); await page.waitForTimeout(300); }
   await expect(panel.getByRole("button", { name: "Copy" })).toBeVisible();
   const json = await page.evaluate(() => (window as unknown as { __entrancePerf: () => { json: Record<string, unknown> } }).__entrancePerf().json);
-  expect(Object.keys(json).sort()).toEqual(["adapts", "cfg", "decodeMs", "decoded", "dist", "drawMs", "fetch", "fps", "gestures", "hints", "late", "misses", "paths", "raf", "renders", "seekMs", "skips", "video"]);
+  expect(Object.keys(json).sort()).toEqual(["adapts", "cfg", "decodeMs", "decoded", "dist", "drawMs", "fetch", "fps", "gestures", "hints", "late", "misses", "paths", "presentDelayMs", "presentedPerSec", "processingMs", "raf", "renders", "seekMs", "seekToPresentMs", "skips", "video"]);
   expect(JSON.stringify(json)).not.toMatch(/Mozilla|AppleWebKit|http/);   // no user agent, no URLs
   // Experiment parameters are honoured only with the panel: the canvas, WebP and AVIF paths on the same phone.
   await page.goto("/?entrancePerf=1&entrancePlayer=canvas", { waitUntil: "load" });

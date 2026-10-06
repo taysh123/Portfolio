@@ -55,6 +55,8 @@ const CAD_WINDOW = 20;   // display frames: a third of a second of scrolling at 
 
 const container = () => document.getElementById("entrance")!;
 
+/** The scrub video's first frame fades in over the poster (cold start), with the surface. */
+const REVEAL_MS = 180;
 const VIDEO_TYPES = [{ ext: "mp4", type: 'video/mp4; codecs="avc1.640028"' }, { ext: "webm", type: 'video/webm; codecs="vp9"' }] as const;
 
 /**
@@ -303,13 +305,13 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
     // The progress at which the surface reaches identity and covers the viewport.
     const identityAt = () => (s.kind === "portrait" ? BEATS.portraitOpen[1] : BEATS.push[1]);
 
-    const placeSurface = (p: number, quad: Quad | null) => {
+    const placeSurface = (p: number, quad: Quad | null, fade = 1) => {
       const portrait = s.kind === "portrait";
       const identityP = identityAt();
       // Before identity the surface needs a real quad: with none (frames not decoded yet, a manifest failure)
       // it stays hidden rather than flashing full-screen over the rendered room.
       const shown = p >= BEATS.wake[0] && (quad !== null || p >= identityP);
-      put(surface, "opacity", shown ? String(segment(p, BEATS.wake[0], BEATS.wake[0] + 0.04)) : "0");
+      put(surface, "opacity", shown ? String(+(segment(p, BEATS.wake[0], BEATS.wake[0] + 0.04) * fade).toFixed(3)) : "0");
       // pContain can equal the push end (no push frame covers the viewport): then it is a step, not a ramp.
       let toIdentity = portrait ? segment(p, ...BEATS.portraitOpen)
         : s.pContain < BEATS.push[1] ? segment(p, s.pContain, BEATS.push[1], easeOut) : Number(p >= BEATS.push[1]);
@@ -423,6 +425,11 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       v.seekTo(p);
       put(v.el, "transform", zoom === 1 ? "" : `scale(${zoom})`);
       const shown = v.shown, last = meta.samples - 1;
+      // Cold start: the first presented frame may be far from the poster (the viewer scrolled before the video
+      // could seek). Rather than cut to it, the video and the hero surface fade in together over REVEAL_MS — an
+      // honest hold on the poster, then one soft transition, never a jump back or a frozen-then-sudden catch-up.
+      const reveal = v.firstShownAt ? Math.min(1, (performance.now() - v.firstShownAt) / REVEAL_MS) : 0;
+      put(v.el, "opacity", String(+reveal.toFixed(3)));
       // Progress of the picture on screen: the scroll's own below the first frame (a still, zoomed by the lift)
       // and past the last once the video has reached it; the shown sample's in between.
       const pv = shown < 0 ? Math.min(p, meta.p0) : p <= meta.p0 && shown === 0 ? p : p >= meta.p1 && shown === last ? p : v.progressOf(shown);
@@ -430,8 +437,9 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       const q = lerpQuad(set.frames[r.a].quad, set.frames[r.b].quad, r.w);
       const quad = shown < 0 || !q ? null : quadToViewport(q, meta.width, meta.height, fit);
       overlays(p);
-      placeSurface(pv, quad);
+      placeSurface(pv, quad, p >= identityAt() ? 1 : reveal);   // at identity the hero shows, video or not
       choreograph(p);
+      if (reveal > 0 && reveal < 1) request();
       profiler()?.render?.({ p, queuedAt: t0, start: t0, ms: performance.now() - t0, drawMs: 0, path: shown < 0 ? "fallback" : shown === v.wanted ? "video" : "video-late", want: v.wanted, drawn: shown < 0 ? null : shown, ts, painted: true, moving });
       // No polling while a seek runs: the player's onFrame asks for the next frame when the picture changes.
     };

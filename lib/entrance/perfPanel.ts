@@ -24,6 +24,7 @@ type Stats = {
   decodes: number[]; decodedNow: number; bytesNow: number; decodedPeak: number; bytesPeak: number;
   fetched: number; fetchBytes: number; fetchFirst: number; fetchLast: number; draws: number[];
   seeks: number[]; late: number; updates: number; gestures: Gesture[];
+  presented: number; processing: number[]; delays: number[]; seekToPresent: number[];
 };
 /** One scroll gesture (a burst of scrolling with no pause over 250 ms): how far it went and what it covered. */
 type Gesture = { ms: number; scrollPx: number; wheelPx: number; dp: number; beats: number; frames: number };
@@ -31,7 +32,7 @@ const BEAT_EDGES = [0.12, 0.38, 0.53, 0.68, 0.88];
 
 const fresh = (): Stats => ({ adapts: [], rafDts: [], paths: {}, misses: 0, renders: 0, skips: 0, distNow: 0, distMax: 0, distSum: 0, distN: 0,
   decodes: [], decodedNow: 0, bytesNow: 0, decodedPeak: 0, bytesPeak: 0, fetched: 0, fetchBytes: 0, fetchFirst: 0, fetchLast: 0, draws: [],
-  seeks: [], late: 0, updates: 0, gestures: [] });
+  seeks: [], late: 0, updates: 0, gestures: [], presented: 0, processing: [], delays: [], seekToPresent: [] });
 
 const pct = (a: number[], q: number) => { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.floor(q * s.length))]; };
 const avg = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
@@ -76,6 +77,13 @@ export function install() {
       if (bytes > S.bytesPeak) { S.bytesPeak = bytes; } if (decoded > S.decodedPeak) S.decodedPeak = decoded;
     },
     seek: (ms) => { S.seeks.push(ms); if (S.seeks.length > 500) S.seeks.shift(); },
+    // requestVideoFrameCallback metadata: frames actually composited, decode time, how far ahead of display.
+    presented: (f) => {
+      if (performance.now() - lastScroll < 150) S.presented++;
+      if (f.processingMs !== undefined) { S.processing.push(f.processingMs); if (S.processing.length > 500) S.processing.shift(); }
+      if (f.delayMs !== undefined) { S.delays.push(f.delayMs); if (S.delays.length > 500) S.delays.shift(); }
+      if (f.seekToPresentMs !== undefined) { S.seekToPresent.push(f.seekToPresentMs); if (S.seekToPresent.length > 500) S.seekToPresent.shift(); }
+    },
     render: (r) => {
       lastP = r.p;
       if (r.skipped) { S.skips++; return; }
@@ -127,6 +135,7 @@ export function install() {
         lg ? `last gesture: ${lg.scrollPx} px scroll${lg.wheelPx ? ` (wheel ${lg.wheelPx})` : ""} in ${lg.ms} ms → Δp ${lg.dp} · ${lg.beats} beat edges · ${lg.frames} frames` : "gestures: —",
         gs.length ? `gestures (${gs.length}): avg |Δp| ${(avg(gs.map((x) => Math.abs(x.dp)))).toFixed(3)} · avg beat edges ${f1(avg(gs.map((x) => x.beats)))}` : "",
         c?.player === "video" ? `video seeks n ${S.seeks.length} · avg ${f1(avg(S.seeks))} · p95 ${f1(pct(S.seeks, 0.95))} ms · late renders ${S.late} · buffered ${buffered === null ? "—" : Math.round(buffered * 100) + "%"} · readyState ${vid?.readyState ?? "—"}` : "",
+        c?.player === "video" ? `presented while scrolling ${f1(scrollingS ? S.presented / scrollingS : 0)}/s · seek→presented p50 ${f1(pct(S.seekToPresent, 0.5))} · p95 ${f1(pct(S.seekToPresent, 0.95))} ms${S.processing.length ? ` · decode ${f1(avg(S.processing))} ms` : ""}${S.delays.length ? ` · ahead of display ${f1(avg(S.delays))} ms` : ""}` : "",
         `paths ${Object.entries(S.paths).map(([k, v]) => `${k} ${v}`).join(" · ") || "—"}${S.skips ? ` · cadence skips ${S.skips}` : ""}`,
         `misses ${S.misses}/${S.renders} (${S.renders ? f1((100 * S.misses) / S.renders) : 0}%) · frame distance now ${S.distNow} · max ${S.distMax} · avg ${S.distN ? (S.distSum / S.distN).toFixed(2) : 0}`,
         `draw ms avg ${f1(avg(S.draws))} · p95 ${f1(pct(S.draws, 0.95))}`,
@@ -142,6 +151,8 @@ export function install() {
         decodeMs: { n: S.decodes.length, avg: +f1(avg(S.decodes)), p95: +f1(pct(S.decodes, 0.95)), max: +f1(Math.max(0, ...S.decodes)) },
         decoded: { now: S.decodedNow, nowMB: +mb(S.bytesNow), peak: S.decodedPeak, peakMB: +mb(S.bytesPeak) },
         fetch: { n: S.fetched, kb: Math.round(S.fetchBytes / 1024), firstMs: Math.round(S.fetchFirst), lastMs: Math.round(S.fetchLast) }, adapts: S.adapts,
+        presentedPerSec: +f1(scrollingS ? S.presented / scrollingS : 0), seekToPresentMs: { p50: +f1(pct(S.seekToPresent, 0.5)), p95: +f1(pct(S.seekToPresent, 0.95)) },
+        processingMs: S.processing.length ? +f1(avg(S.processing)) : null, presentDelayMs: S.delays.length ? +f1(avg(S.delays)) : null,
         fps: +f1(fps), seekMs: { n: S.seeks.length, avg: +f1(avg(S.seeks)), p95: +f1(pct(S.seeks, 0.95)) }, late: S.late,
         video: vid ? { buffered: buffered === null ? null : +buffered.toFixed(3), readyState: vid.readyState } : null, gestures: S.gestures, hints },
     };

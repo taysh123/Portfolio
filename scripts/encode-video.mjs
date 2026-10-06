@@ -1,8 +1,10 @@
 // Final PNG masters → a scrub video per framing, for touch devices (lib/entrance/VideoPlayer.ts).
 // usage: FFMPEG=/path/to/ffmpeg node scripts/encode-video.mjs [--src DIR] [--dst DIR] [--only portrait|landscape]
 //        [--samples N] [--keyint K] [--crf C] [--no-webm] [--check-budget] [--check-only]
-// Shipped with the defaults: 240 samples, a keyframe every 8, CRF 18 — SSIM ≈ 0.989 against the exact blends
-// (the AVIF frames: 0.9915), 2.9 MB portrait / 3.1 MB landscape (MP4).
+// Shipped with the defaults: 240 samples, a keyframe every 4, CRF 18. Keyframe interval measured 2026-10-06
+// (scripts/profile-entrance.mjs --video, phone portrait): every 4 cut seek p95 by up to ~40% and fast/cold dropped
+// frames from 12/18% to 5/12% against every 8; every 2 and all-intra gained nothing further for 39–100% more bytes.
+// A seek decodes at most 3 frames past a keyframe. 3.7 MB portrait / 4.2 MB landscape (MP4).
 //
 // Every video frame is the canvas's own approved picture at one progress value: the two neighbouring renders
 // cross-faded exactly as FramePlayer draws them (A, then B at alpha w). Samples are uniform in progress between
@@ -22,7 +24,7 @@ const SRC = arg("--src", "design/render/blender/out-final");
 const DST = arg("--dst", "public/entrance");
 const ONLY = arg("--only", null);
 const SAMPLES = Number(arg("--samples", 240));
-const KEYINT = Number(arg("--keyint", 8));
+const KEYINT = Number(arg("--keyint", 4));
 const CRF = Number(arg("--crf", 18));
 const WEBM = !process.argv.includes("--no-webm");
 const FFMPEG = process.env.FFMPEG || "ffmpeg";
@@ -92,9 +94,10 @@ for (const kind of CHECK_ONLY ? [] : ONLY ? [ONLY] : ["portrait", "landscape"]) 
 }
 if (!CHECK_ONLY && !process.argv.includes("--dry")) await fs.writeFile(manifestPath, JSON.stringify(manifest));
 
-// Payload budget per phone video (one format per visitor): ~3× the WebP frames, bought for hardware decoding.
+// Payload budget per phone video (one format per visitor), bought for hardware decoding. 4.5 MB since the
+// keyframe interval went from 8 to 4 (2026-10-06, measured smoother seeking); was 3.5 MB at every 8.
 if (CHECK_ONLY || process.argv.includes("--check-budget")) {
-  const BUDGET = 3.5e6, over = [];
+  const BUDGET = 4.5e6, over = [];
   for (const kind of ONLY ? [ONLY] : ["portrait", "landscape"]) for (const ext of ["mp4", "webm"]) {
     const n = (await fs.stat(`${DST}/${kind}/scrub.${ext}`).catch(() => ({ size: 0 }))).size;
     if (n > BUDGET) over.push(`${kind} scrub.${ext}: ${n} > ${BUDGET}`);

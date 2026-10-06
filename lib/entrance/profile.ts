@@ -11,6 +11,8 @@ export type EntranceProfiler = {
   adapt?(a: { mode: string; cadence: string; reason: string; dropRate: number; baseMs: number }): void;
   /** A video seek completed (VideoPlayer): its latency and the sample it went to. */
   seek?(ms: number, sample: number): void;
+  /** A video frame was composited (requestVideoFrameCallback metadata, where the browser provides it). */
+  presented?(f: { sample: number; presentedFrames?: number; processingMs?: number; delayMs?: number; seekToPresentMs?: number }): void;
   fetchStart?(i: number, t: number): void;
   fetchEnd?(i: number, t: number, bytes: number): void;
   decode?(i: number, ms: number, w: number, h: number): void;

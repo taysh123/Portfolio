@@ -18,9 +18,15 @@ import { profiler } from "./profile";
  * seeks instead would replay stale positions after the finger stops. So the newest target waits for the
  * running seek, then goes.
  *
+ * Seeks are issued from the stage's animation frame (one target per display frame) and from `seeked` (the
+ * newest target as soon as the decoder is free), so after the finger stops at most one stale seek finishes
+ * before the final one: no queue to drain, no delayed catch-up.
+ *
  * Presented frame: reported by requestVideoFrameCallback (the frame actually composited, by its media time),
  * or by `seeked` where that is missing. The stage places the hero surface from this frame's progress, never
  * from the scroll position, so the screen quad and the picture cannot separate even while a seek is late.
+ * Nothing counts as presented before the first seek completes: the element's own initial frame (the start of
+ * the sequence) is never shown over a viewer who has already scrolled, so a cold start cannot jump backwards.
  */
 export class VideoPlayer {
   readonly el: HTMLVideoElement;
@@ -33,6 +39,9 @@ export class VideoPlayer {
   private disposed = false;
   private rvfc = 0;
   private hasRvfc = false;
+  private seekedOnce = false;
+  /** performance.now() of the first presented frame (the stage fades the video in from there), or 0. */
+  firstShownAt = 0;
   failed = false;
 
   constructor(private o: { meta: VideoMeta; sources: { src: string; type: string }[]; onFrame: () => void; onError: () => void }) {
@@ -88,22 +97,30 @@ export class VideoPlayer {
 
   private setShown(s: number) {
     if (s === this.shown) return;
+    if (this.shown < 0) this.firstShownAt = performance.now();
     this.shown = s; this.o.onFrame();
   }
 
   private watchFrames() {
-    const v = this.el as HTMLVideoElement & { requestVideoFrameCallback?: (cb: (now: number, m: { mediaTime: number }) => void) => number };
+    type Meta = { mediaTime: number; presentedFrames?: number; processingDuration?: number; expectedDisplayTime?: number };
+    const v = this.el as HTMLVideoElement & { requestVideoFrameCallback?: (cb: (now: number, m: Meta) => void) => number };
     this.hasRvfc = typeof v.requestVideoFrameCallback === "function";
     if (!this.hasRvfc) return;
-    const cb = (_now: number, m: { mediaTime: number }) => {
+    const cb = (now: number, m: Meta) => {
       if (this.disposed) return;
-      this.setShown(Math.max(0, Math.min(this.o.meta.samples - 1, Math.round(m.mediaTime * this.o.meta.fps))));
+      const s = Math.max(0, Math.min(this.o.meta.samples - 1, Math.round(m.mediaTime * this.o.meta.fps)));
+      if (this.seekedOnce) {
+        profiler()?.presented?.({ sample: s, presentedFrames: m.presentedFrames, processingMs: m.processingDuration === undefined ? undefined : m.processingDuration * 1000,
+          delayMs: m.expectedDisplayTime === undefined ? undefined : m.expectedDisplayTime - now, seekToPresentMs: s === this.requested ? now - this.seekStart : undefined });
+        this.setShown(s);
+      }
       this.rvfc = v.requestVideoFrameCallback!(cb);
     };
     this.rvfc = v.requestVideoFrameCallback(cb);
   }
 
   private onSeeked = () => {
+    this.seekedOnce = true;
     profiler()?.seek?.(performance.now() - this.seekStart, this.requested);
     // The seek's frame is the one composited next. requestVideoFrameCallback reports it when available; where
     // it is missing (Safari < 15.4), or does not fire for a paused element's seek, it is taken from here after

@@ -57,10 +57,10 @@ whether something is deployed.
 
 | Project | Status | What it is | Verified |
 |---|---|---|---|
-| **T Poker** | Live: web, App Store, Google Play | Poker study platform + home-game manager from one Expo codebase, ASP.NET Core CQRS backend | 892 tests · 5 CI jobs |
-| **Aegis** | Runs locally | SOC platform where module isolation is enforced by the compiler | 8 bounded contexts · 0 cross-context refs · 105 tests |
+| **T Poker** | Live: web, App Store, Google Play | Poker study platform + home-game manager from one Expo codebase, ASP.NET Core CQRS backend | 6,210 passing tests · 8 path-scoped CI jobs |
+| **Aegis** | Runs locally | SOC platform where module isolation is enforced by the compiler | 8 bounded contexts · 0 cross-context refs · 105 of 106 tests passing |
 | **DeveloperOS** | Released | Local-first code workspace that refuses to answer without a file:line citation | 363 tests · 0.82:1 to source · 34 ADRs · 0 runtime deps |
-| **GRAVITY FLOW** | v1.0.0-rc | One-touch Phaser 3 physics puzzler, Android-only | 150 levels · 220 tests |
+| **GRAVITY FLOW** | v1.0.0-rc | One-touch Phaser 3 physics puzzler, Android-only | 150 levels · 221 tests |
 | **Job Assistant** | Runs locally | Seven-adapter job pipeline delivering one Telegram digest | 162 tests · 310 filter terms |
 | **Orders & Delivery** | University coursework | Hand-rolled JSON-over-TCP protocol, JavaFX client, Dijkstra routing | 16 protocol routes |
 
