@@ -14,6 +14,8 @@ const ONLY = arg("only", "")?.split(",").filter(Boolean);
 const OUT = arg("out", "");
 // --variant '{"backing":2}' etc.: passed to the stage as window.__ENTRANCE_EXP__ (lib/entrance/profile.ts).
 const VARIANT = JSON.parse(arg("variant", "null"));
+// --video FILE: serve FILE in place of the entrance's scrub video (a keyframe-interval or quality candidate).
+const VIDEO = arg("video", "");
 
 const DESKTOP_NET = { latency: 20, downloadThroughput: (30e6 / 8), uploadThroughput: (10e6 / 8) };
 const MOBILE_NET = { latency: 60, downloadThroughput: (12e6 / 8), uploadThroughput: (4e6 / 8) };
@@ -43,6 +45,15 @@ const INIT = () => {
   requestAnimationFrame(loop);
   new PerformanceObserver((l) => { for (const e of l.getEntries()) if (P.rec) P.long.push(e.duration); }).observe({ type: "longtask", buffered: false });
   addEventListener("scroll", () => { if (P.rec) P.scrolls.push({ t: performance.now(), y: scrollY }); }, { passive: true, capture: true });
+};
+
+// A static file with HTTP range support, as a CDN serves it (a scrub video is fetched in byte ranges).
+const serveRange = (route, file) => {
+  const buf = fs.readFileSync(file), total = buf.length, type = file.endsWith(".webm") ? "video/webm" : "video/mp4";
+  const range = /bytes=(\d*)-(\d*)/.exec(route.request().headers().range ?? "");
+  if (!range) return route.fulfill({ status: 200, body: buf, headers: { "content-type": type, "accept-ranges": "bytes", "content-length": String(total) } });
+  const start = range[1] ? Number(range[1]) : 0, end = range[2] ? Math.min(Number(range[2]), total - 1) : total - 1;
+  return route.fulfill({ status: 206, body: buf.subarray(start, end + 1), headers: { "content-type": type, "accept-ranges": "bytes", "content-range": `bytes ${start}-${end}/${total}`, "content-length": String(end - start + 1) } });
 };
 
 const pct = (a, q) => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); return +s[Math.min(s.length - 1, Math.floor(q * s.length))].toFixed(2); };
@@ -80,6 +91,7 @@ async function run(browser, sc, pattern) {
   await cdp.send("Network.emulateNetworkConditions", { offline: false, ...sc.net });
   await page.addInitScript(INIT);
   if (VARIANT) await page.addInitScript((v) => { window.__ENTRANCE_EXP__ = v; }, VARIANT);
+  if (VIDEO) await page.route(/\/entrance\/(portrait|landscape)\/scrub\.(mp4|webm)$/, (route) => serveRange(route, VIDEO));
   const errors = []; page.on("pageerror", (e) => errors.push(String(e)));
   if (pattern === "cold-fast") {
     await page.goto(BASE + "/", { waitUntil: "domcontentloaded", timeout: 60000 });

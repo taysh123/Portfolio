@@ -37,7 +37,10 @@ def run(name, cmd, log=None):
 if subprocess.run("git status --porcelain --untracked-files=no", cwd=R, shell=True, capture_output=True, text=True).stdout.strip():
     raise SystemExit("make_screens: tracked changes present; commit first so the drawn checks belong to HEAD")
 EXIT = {"typecheck": run("typecheck", "npx tsc --noEmit"), "lint": run("lint", "npx eslint"),
-        "tests": run("tests", "npx vitest run"), "build": run("build", "npx next build", "build.txt")}
+        # Every unit test except the provenance check of the very texture this script is about to draw: that one
+        # compares data/ against frozen/screens.json, which cannot agree until this run's output is frozen.
+        "tests": run("tests", "npx vitest run --exclude tests/unit/verify-provenance.test.ts"),
+        "build": run("build", "npx next build", "build.txt")}
 HAS_TESTS = bool(subprocess.run("git ls-files 'tests/unit/*.test.ts'", cwd=R, shell=True, capture_output=True, text=True).stdout.strip())
 CHECKS = [n for n in ("typecheck", "lint", "tests", "build") if EXIT[n] == 0 and (n != "tests" or HAS_TESTS)]
 DRAWN = []
