@@ -1,4 +1,7 @@
 @import "tailwindcss";
+/* Class scanning: site code only. The planning notes and render sources quote class names they describe. */
+@source not "../docs";
+@source not "../design";
 
 /* ═══════════════════════════════════════════════════════════════════════
    DESIGN TOKENS
