@@ -12,6 +12,8 @@
  * Only technologies actually used in the shipped projects appear here.
  */
 
+import { passingTests } from "@/data/proof";
+
 export type SkillGroup = {
   id: string;
   title: string;
@@ -159,7 +161,7 @@ export const skillGroups: SkillGroup[] = [
       // Passing tests, counted from each repository's CI at its current main (T Poker 6,210: 802 xUnit + 5,379 Jest +
       // 29 Vitest; DeveloperOS 363; GRAVITY FLOW 221; Job Assistant 162; Aegis 105 of 106 — one RabbitMQ
       // integration test still fails there). A count of passing tests, not of test definitions.
-      "7,061 passing tests across five projects, weighted toward settlement math, threat scoring, retrieval grounding and level progression.",
-    lead: { value: "7,061", unit: "passing tests across five projects" },
+      `${passingTests.value} passing tests across ${passingTests.projectsWord} projects, weighted toward settlement math, threat scoring, retrieval grounding and level progression.`,
+    lead: { value: passingTests.value, unit: `passing tests across ${passingTests.projectsWord} projects` },
   },
 ];

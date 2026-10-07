@@ -1,0 +1,15 @@
+/* The hero's horizon arc. It hangs from the bottom of the content block (never from the section), so no
+   viewport size can lift its rim into the CTAs or the project index. */
+.hero { --arc-gap: 40px; }
+.hero-horizon {
+  position: absolute; left: 50%; top: calc(100% + var(--arc-gap)); z-index: -1; pointer-events: none;
+  width: 140vw; height: 100svh; transform: translateX(-50%);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  background: radial-gradient(60% 40% at 50% 0%, rgba(91, 156, 255, 0.10), transparent 70%);
+  box-shadow: 0 -1px 0 rgba(155, 190, 255, 0.18);
+}
+/* Phones: a 140vw ellipse is a steep dome at 390px. Wider and flatter reads as a horizon again. */
+@media (max-width: 639px) { .hero-horizon { width: 320vw; height: 640px; } }
+
+.hero-index__link { transition: border-color 150ms var(--ease-out); }
+.hero-index__link:hover { border-color: var(--line-strong); }

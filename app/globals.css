@@ -45,6 +45,9 @@
   --surface-1: rgba(255, 255, 255, 0.030);
   --surface-2: rgba(255, 255, 255, 0.055);
   --surface-3: rgba(16, 18, 30, 0.92);
+  /* The scrolled navbar: same hue as --surface-3, opaque enough that page copy never reads through it (the blur
+     stays for depth, but readability must not depend on it — some renderers drop backdrop-filter). */
+  --nav-bg: rgba(16, 18, 30, 0.97);
   --surface-sunken: rgba(0, 0, 0, 0.24);
 
   /* ── Text ──────────────────────────────────────────────────────────────
@@ -180,6 +183,7 @@
   --surface-1: rgba(255, 255, 255, 0.78);
   --surface-2: rgba(255, 255, 255, 0.94);
   --surface-3: rgba(255, 255, 255, 0.97);
+  --nav-bg: rgba(255, 255, 255, 0.97);
   --surface-sunken: rgba(11, 14, 26, 0.04);
 
   /* Contrast vs --bg #f5f6f8: fg 17.9:1 · muted 8.1:1 · subtle 5.8:1 (floor 5.4, tokens.test.ts) */
@@ -400,6 +404,7 @@
     backdrop-filter: blur(28px) saturate(170%);
     -webkit-backdrop-filter: blur(28px) saturate(170%);
   }
+  .glass.nav-glass { background-color: var(--nav-bg); }
 
   /* Gradient hairline border, brighter at the top edge — the cheap trick
      that makes a flat panel read as a lit object. */

@@ -40,7 +40,9 @@ export const siteMeta = {
   headline: "I build software people can actually use.",
   /** The hero's one-sentence lead under the headline. */
   heroLead:
-    "Computer Science graduate building polished products, real-time systems and production-ready software.",
+    // Every clause is a fact in data/projects.ts: T Poker (live on both stores), Aegis (live SignalR alerting),
+    // DeveloperOS (local-first), and the About copy's "from an empty repo to a running system".
+    "Computer Science graduate who takes products from an empty repo to a running system: a cross-platform app live on the App Store and Google Play, a real-time security platform and a local-first developer workspace.",
   tagline:
     "Computer Science graduate building real-time platforms, developer tools, and cross-platform products — designed, tested, and shipped end to end.",
   domain: "tayshofer.dev",

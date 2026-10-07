@@ -88,7 +88,7 @@ export function Navbar() {
         className={cn(
           "fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,backdrop-filter,opacity] duration-[var(--dur-slow)] ease-[var(--ease-out-expo)]",
           scrolled
-            ? "glass border-b border-line-subtle"
+            ? "glass nav-glass border-b border-line-subtle"
             : "border-b border-transparent bg-transparent",
         )}
       >

@@ -17,7 +17,7 @@ describe("content truth", () => {
   });
   it("headline and hero lead are the approved copy", () => {
     expect(siteMeta.headline).toBe("I build software people can actually use.");
-    expect(siteMeta.heroLead).toMatch(/^Computer Science graduate building polished products/);
+    expect(siteMeta.heroLead).toBe("Computer Science graduate who takes products from an empty repo to a running system: a cross-platform app live on the App Store and Google Play, a real-time security platform and a local-first developer workspace.");
   });
   it("no banned claims appear in site source", () => {
     for (const d of ["components", "data", "app"]) for (const f of (fs.readdirSync(d, { recursive: true }) as string[]).filter((f) => /\.tsx?$/.test(f))) {

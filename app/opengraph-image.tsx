@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { siteMeta } from "@/data/socials";
+import { passingTests } from "@/data/proof";
 import { brand } from "@/lib/tokens";
 
 /**
@@ -28,7 +29,7 @@ import { brand } from "@/lib/tokens";
  */
 const CARD_STATS = [
   { value: "Live", label: "In production today" },
-  { value: "7,061", label: "Passing tests across the work" },
+  { value: passingTests.value, label: "Passing tests across the work" },
   { value: "B.Sc.", label: "Computer Science" },
 ] as const;
 
