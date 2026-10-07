@@ -1,6 +1,5 @@
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { Entrance } from "@/components/entrance/Entrance";
 import { Hero } from "@/components/sections/Hero";
 import { About } from "@/components/sections/About";
 import { Work } from "@/components/work/Work";
@@ -15,14 +14,14 @@ import { Contact } from "@/components/sections/Contact";
 /**
  * The page (spec §5): one continuous story, not a stack of panels.
  *
- *   Entrance  the studio you scroll into; the laptop's screen becomes the hero
+ *   Hero      the page opens directly on it
  *   Work      four flagship worlds on a dark stage, then two more-work rows
  *   About     engineer by training, builder by nature
  *   Stack     the six groups as a bento
  *   Think · Build · Ship   a typographic, pinned sequence
  *   Contact   a dark closing stage, one primary action
  *
- * The entrance, the flagship run and Contact are dark in both themes (Plan 2
+ * The hero, the flagship run and Contact are dark in both themes (Plan 2
  * decision 1); About, Stack and Think · Build · Ship follow the site theme.
  */
 export default function Page() {
@@ -30,7 +29,8 @@ export default function Page() {
     <>
       <Navbar />
       <main id="main" className="relative">
-        <Entrance><Hero /></Entrance>
+        {/* Dark in both themes, as the page's opening frame always was (Plan 2 decision 1). */}
+        <div data-theme="dark" className="bg-bg"><Hero /></div>
         <Work worlds={{ poker: <PokerWorld />, aegis: <AegisWorld />, developeros: <DeveloperOSWorld />, "gravity-flow": <GravityWorld /> }} />
         <About />
         <Stack />

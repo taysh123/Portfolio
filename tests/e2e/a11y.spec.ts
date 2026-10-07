@@ -1,7 +1,7 @@
 // tests/e2e/a11y.spec.ts — landmarks and heading outline for the whole page (spec §8).
 import { test, expect } from "playwright/test";
 test("landmarks and heading outline", async ({ page }) => {
-  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.goto("/");
   await expect(page.locator("main")).toHaveCount(1); await expect(page.locator("footer")).toHaveCount(1);
   await expect(page.locator("h1")).toHaveCount(1);
   const outline = await page.evaluate(() => [...document.querySelectorAll("main h1, main h2, main h3")].map((h) => Number(h.tagName[1])));
@@ -9,7 +9,7 @@ test("landmarks and heading outline", async ({ page }) => {
   expect(await page.locator("main h2").allTextContents()).toEqual(["Selected work", "Engineer by training.Builder by nature.", "The tools I build with.", "Think. Build. Ship.", "Let's buildsomething great."]);
 });
 test("every interactive element is ≥ 44px below lg", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 }); await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.setViewportSize({ width: 390, height: 844 }); await page.goto("/");
   const small = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>("main a[href], main button, footer a[href]")]
     .filter((el) => el.offsetParent && getComputedStyle(el).visibility !== "hidden")
     .map((el) => ({ t: el.textContent?.trim().slice(0, 30), ...el.getBoundingClientRect().toJSON() }))

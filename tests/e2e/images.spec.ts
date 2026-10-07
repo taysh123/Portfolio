@@ -18,7 +18,7 @@ for (const [label, viewport, dpr, mobile] of [["retina desktop", { width: 1440, 
     const page = await ctx.newPage();
     const failed: string[] = []; page.on("requestfailed", (r) => { if (/\/projects\//.test(r.url())) failed.push(r.url()); });
     const bad: string[] = []; page.on("response", (r) => { if (/\/projects\/|_next\/image/.test(r.url()) && r.status() >= 400) bad.push(`${r.status()} ${r.url()}`); });
-    await page.goto("/"); await page.locator("[data-skip-intro]").click();
+    await page.goto("/");
     for (const id of ["poker", "aegis", "developeros", "gravity-flow"]) await everyImageLoads(page, `#work-${id} .flagship__world`);
     expect(failed).toEqual([]); expect(bad).toEqual([]);
     await ctx.close();
@@ -27,7 +27,7 @@ for (const [label, viewport, dpr, mobile] of [["retina desktop", { width: 1440, 
 
 test("T Poker's phones are served as the pre-encoded files, not through the image optimiser", async ({ page }) => {
   const urls: string[] = []; page.on("request", (r) => { if (/poker/.test(r.url()) && /\.webp|_next\/image/.test(r.url())) urls.push(r.url()); });
-  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.goto("/");
   await everyImageLoads(page, "#work-poker .flagship__world");
   expect(urls.length).toBeGreaterThan(0);
   expect(urls.filter((u) => u.includes("_next/image"))).toEqual([]);
@@ -35,7 +35,7 @@ test("T Poker's phones are served as the pre-encoded files, not through the imag
 });
 
 test("case-study hero and gallery images finish loading for every project", async ({ page }) => {
-  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.goto("/");
   for (const id of ["poker", "aegis", "developeros", "gravity-flow", "job-assistant", "orders-delivery"]) {
     const opener = page.locator(`button[data-case-study='${id}']`); await opener.scrollIntoViewIfNeeded(); await opener.click();
     const dialog = page.getByRole("dialog"); await expect(dialog).toBeVisible();

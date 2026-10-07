@@ -1,6 +1,6 @@
 // tests/e2e/sections.spec.ts
 import { test, expect, type Page } from "playwright/test";
-const skip = async (page: Page) => { await page.goto("/"); await page.locator("[data-skip-intro]").click(); };
+const skip = async (page: Page) => { await page.goto("/"); };
 
 test("Work: one h2, four flagship h3s in order, then two more-work h3s", async ({ page }) => {
   await skip(page);
@@ -13,7 +13,7 @@ test("restored scroll inside a pinned flagship shows a legible composition (Revi
   await page.evaluate(() => { const s = document.getElementById("work-aegis")!; window.scrollTo({ top: s.getBoundingClientRect().top + scrollY + s.offsetHeight * 0.4, behavior: "instant" as ScrollBehavior }); });
   await page.reload(); await page.waitForTimeout(600);
   // Scroll targets are always document-relative (getBoundingClientRect().top + scrollY): #work-* sits inside
-  // the positioned .work__stage, so offsetTop would be off by the whole entrance height.
+  // the positioned .work__stage, so offsetTop would be off by everything above the stage.
   const copy = page.locator("#work-aegis .flagship__copy");
   await expect(copy).toBeInViewport();
   expect(await copy.evaluate((el) => getComputedStyle(el).opacity)).toBe("1");
@@ -43,7 +43,7 @@ test("copy never depends on scroll position: every flagship's copy is opaque at 
 });
 
 test("poker world: three phones, the front one rises as the others fan (transform-only)", async ({ page }) => {
-  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.goto("/");
   const at = async (f: number) => {
     await page.evaluate((f) => { const s = document.getElementById("work-poker")!; window.scrollTo({ top: s.getBoundingClientRect().top + scrollY + (s.offsetHeight - innerHeight) * f, behavior: "instant" as ScrollBehavior }); }, f);
     await page.waitForTimeout(200);
@@ -57,7 +57,7 @@ test("poker world: three phones, the front one rises as the others fan (transfor
 });
 
 test("aegis world: dashboard monitor, three alert rows, one scan pass per entry (not a loop)", async ({ page }) => {
-  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.goto("/");
   await page.evaluate(() => document.getElementById("work-aegis")!.scrollIntoView());
   await expect(page.locator(".world-aegis__row")).toHaveCount(3);
   const scan = page.locator(".world-aegis__scan");
@@ -67,7 +67,7 @@ test("aegis world: dashboard monitor, three alert rows, one scan pass per entry 
 });
 
 test("developeros world: four windows converge as the scene assembles; the citation card is present", async ({ page }) => {
-  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.goto("/");
   const spread = async (f: number) => {
     await page.evaluate((f) => { const s = document.getElementById("work-developeros")!; window.scrollTo({ top: s.getBoundingClientRect().top + scrollY + (s.offsetHeight - innerHeight) * f, behavior: "instant" as ScrollBehavior }); }, f);
     await page.waitForTimeout(200);
@@ -79,7 +79,7 @@ test("developeros world: four windows converge as the scene assembles; the citat
 });
 
 test("gravity world: the field loops only while in view, and never under reduced motion (Review Focus 3)", async ({ page }) => {
-  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.goto("/");
   const raf = (ms: number) => page.evaluate(async (ms) => { let n = 0; const o = requestAnimationFrame; window.requestAnimationFrame = (cb) => o((t) => { n++; cb(t); }); await new Promise((r) => setTimeout(r, ms)); window.requestAnimationFrame = o; return n; }, ms);
   await page.evaluate(() => document.getElementById("work-gravity-flow")!.scrollIntoView());
   await page.waitForTimeout(900);
@@ -94,7 +94,7 @@ test("gravity world: the field loops only while in view, and never under reduced
 });
 
 test("more work: two unpinned rows with their pipeline diagrams, and the coursework label", async ({ page }) => {
-  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.goto("/");
   const rows = page.locator(".more-work__row");
   await expect(rows).toHaveCount(2);
   // Exactly one drawing is displayed per row (across on wide rows, down on phones).
@@ -107,7 +107,7 @@ test("more work: two unpinned rows with their pipeline diagrams, and the coursew
 
 test("more work on a phone: the pipeline is drawn down the column, labels at a legible size", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.goto("/");
   const svg = page.locator(".more-work__row").nth(0).locator("svg:visible");
   await expect(svg).toHaveCount(1); await expect(svg).toHaveClass(/pipeline--v/);
   const px = await svg.evaluate((el) => { const t = el.querySelector("text")!; return t.getBoundingClientRect().height; });
@@ -116,21 +116,21 @@ test("more work on a phone: the pipeline is drawn down the column, labels at a l
 });
 
 test("about: the spec §5.3 title and the approved facts row, in order", async ({ page }) => {
-  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.goto("/");
   await expect(page.locator("#about h2")).toContainText("Builder by nature.");
   await expect(page.locator("#about dd")).toHaveText(["B.Sc.", "Full stack", "Israel", "∞"]);
 });
 
 test("about: no horizontal overflow at 375px", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 });
-  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.goto("/");
   await page.locator("#about").scrollIntoViewIfNeeded();
   expect(await page.locator("#about").evaluate((el) => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
 });
 
 test("stack: six groups in data order, the two lead groups are wide with their figures", async ({ page }) => {
-  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.goto("/");
   await expect(page.locator("#skills h2")).toHaveText("The tools I build with.");
   await expect(page.locator("#skills")).toContainText("Enough range to own a product end to end.");
   await expect(page.locator("#skills [data-card] h3")).toHaveText(["Languages", "Interface", "Services & APIs", "Data & State", "Delivery", "Testing & Tooling"]);
@@ -139,7 +139,7 @@ test("stack: six groups in data order, the two lead groups are wide with their f
 });
 
 test("pointer light follows the hovered card only, and not under reduced motion", async ({ page }) => {
-  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.goto("/");
   const card = page.locator("#skills [data-card]").first(); await card.scrollIntoViewIfNeeded();
   const box = (await card.boundingBox())!; await page.mouse.move(box.x + 40, box.y + 30);
   await expect.poll(() => card.evaluate((el) => el.style.getPropertyValue("--mx"))).toMatch(/px$/);
@@ -162,7 +162,7 @@ test("think · build · ship: pinned at 1440, one word lit at a time", async ({ 
 
 for (const [name, setup] of [
   ["at 390 × 844", async (page: Page) => { await page.setViewportSize({ width: 390, height: 844 }); await skip(page); }],
-  // Reduced motion: the entrance is static and has no skip control, so the page is simply loaded.
+  // Reduced motion: the page is simply loaded.
   ["under reduced motion", async (page: Page) => { await page.emulateMedia({ reducedMotion: "reduce" }); await page.goto("/"); }],
 ] as const) {
   test(`think · build · ship ${name}: all three slots visible, stacked`, async ({ page }) => {

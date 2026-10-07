@@ -1,5 +1,5 @@
 // Real-browser screenshots for visual passes. Writes PNGs and a contact sheet per theme.
-// usage: npm run shoot -- --out shots/x --theme dark --sizes 1440x900,390x844 --entrance 0,0.45,1 --sections work,about,work-poker@0.5
+// usage: npm run shoot -- --out shots/x --theme dark --sizes 1440x900,390x844 --sections hero,work,about,work-poker@0.5
 import fs from "node:fs";
 import { chromium } from "playwright";
 import sharp from "sharp";
@@ -7,7 +7,6 @@ import sharp from "sharp";
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
 const out = arg("out", "shots"), theme = arg("theme", "dark"), base = arg("base", "http://localhost:3400");
 const sizes = arg("sizes", "1440x900,1366x768,768x1024,390x844,375x667,844x390").split(",");
-const beats = arg("entrance", "").split(",").filter(Boolean).map(Number);
 const sections = arg("sections", "").split(",").filter(Boolean);
 fs.mkdirSync(out, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || undefined });
@@ -19,22 +18,19 @@ for (const size of sizes) {
   const page = await ctx.newPage();
   page.on("pageerror", (e) => report.push(`${size} pageerror ${e}`));
   await page.goto(base + "/", { waitUntil: "networkidle" });
-  const shots = [...beats.map((p) => ({ kind: "entrance", key: p })), ...sections.map((s) => ({ kind: "section", key: s }))];
+  const shots = sections.map((s) => ({ kind: "section", key: s }));
   for (const s of shots) {
-    await page.evaluate(({ kind, key }) => {
-      if (kind === "entrance") { const c = document.getElementById("entrance"); window.scrollTo({ top: c.offsetTop + key * (c.offsetHeight - innerHeight), behavior: "instant" }); }
-      else {
-        // "id@f": a fraction f through a pinned scene. Document-relative, never offsetTop (scenes sit inside the
-        // positioned Work stage).
-        const [id, f] = key.split("@"); const el = document.getElementById(id);
-        const top = el.getBoundingClientRect().top + scrollY + (f === undefined ? 0 : Number(f) * (el.offsetHeight - innerHeight));
-        window.scrollTo({ top, behavior: "instant" });
-      }
+    await page.evaluate(({ key }) => {
+      // "id@f": a fraction f through a pinned scene. Document-relative, never offsetTop (scenes sit inside the
+      // positioned Work stage).
+      const [id, f] = key.split("@"); const el = document.getElementById(id);
+      const top = el.getBoundingClientRect().top + scrollY + (f === undefined ? 0 : Number(f) * (el.offsetHeight - innerHeight));
+      window.scrollTo({ top, behavior: "instant" });
     }, s);
     await page.waitForTimeout(1100);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
     if (overflow > 0) report.push(`${size} ${s.key} horizontal overflow ${overflow}px`);
-    const file = `${out}/${theme}-${size}-${s.kind === "entrance" ? "p" + s.key : s.key.replace("@", "_at_")}.png`;
+    const file = `${out}/${theme}-${size}-${s.key.replace("@", "_at_")}.png`;
     await page.screenshot({ path: file }); files.push(file);
   }
   await ctx.close();

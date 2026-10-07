@@ -3,9 +3,9 @@ import { test, expect } from "playwright/test";
 test("light theme: the dark spine stays dark, theme sections are light, a toggle shifts no layout", async ({ browser }) => {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   await ctx.addCookies([{ name: "theme", value: "light", url: "http://localhost:3400" }]);
-  const page = await ctx.newPage(); await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  const page = await ctx.newPage(); await page.goto("/");
   const bg = (sel: string) => page.locator(sel).first().evaluate((el) => getComputedStyle(el).getPropertyValue("--bg").trim());
-  expect(await bg(".entrance__stage")).toBe("#05070a");
+  expect(await bg("#hero")).toBe("#05070a");
   expect(await bg(".work__stage")).toBe("#05070a");
   expect(await bg("#contact")).toBe("#05070a");
   expect(await bg("#about")).toBe("#f5f6f8");
@@ -21,7 +21,7 @@ for (const theme of ["dark", "light"]) {
   test(`hero at identity has the dark stage background in the ${theme} theme (spec §10, decision 3)`, async ({ browser }) => {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     await ctx.addCookies([{ name: "theme", value: theme, url: "http://localhost:3400" }]);
-    const page = await ctx.newPage(); await page.goto("/"); await page.locator("[data-skip-intro]").click();
+    const page = await ctx.newPage(); await page.goto("/");
     await expect.poll(() => page.locator("#hero").evaluate((el) => getComputedStyle(el.parentElement!).backgroundColor)).toBe("rgb(5, 7, 10)");
     await ctx.close();
   });

@@ -22,7 +22,7 @@ for (const [w, h] of [[1440, 900], [390, 844]]) {
   const page = await ctx.newPage();
   await page.goto(BASE + "/", { waitUntil: "networkidle" });
   const lcpMs = await page.evaluate(() => window.__lcp);
-  // Walk the whole page, not just the entrance: every section's reveals count toward CLS.
+  // Walk the whole page: every section's reveals count toward CLS.
   for (let i = 0; i < 600; i++) {
     const atEnd = await page.evaluate(() => innerHeight + scrollY >= document.documentElement.scrollHeight - 2);
     if (atEnd) break;
