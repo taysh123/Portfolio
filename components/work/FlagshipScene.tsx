@@ -1,51 +1,74 @@
 import { ScrollScene } from "@/components/scenes/ScrollScene";
 import { StatusChip } from "@/components/ui/Tag";
-import { StoreBadge } from "@/components/ui/StoreBadge";
 import { ButtonLink } from "@/components/ui/Button";
 import { PrivateRepoLabel } from "@/components/ui/PrivateRepoLabel";
 import { publicRepoUrl } from "@/data/projects";
-import { projectOf, type Flagship } from "@/data/work";
+import { flagships, projectOf, type Flagship } from "@/data/work";
+import "./chapter.css";
 
-/** One flagship world (spec §5.2). The copy column is never transformed — it is legible the whole
- *  time the scene is visible; only the world responds to --assemble / --hold / --recede. */
+/**
+ * One flagship chapter (spec §5.2, M2). Every chapter shares one structure — a header (chapter number, title,
+ * kicker), the world, and a body (story, what I built, metrics, actions) — laid out by its `layout` and `side`.
+ *
+ * DOM order is head → world → body, so on a phone the story reads NUMBER → TITLE → VISUAL → COPY → METRICS →
+ * ACTION; on wide screens a grid puts head and body in one column and the world in the other. The copy is never
+ * transformed — it is legible the whole time the scene is visible; only the world responds to the scene vars.
+ */
 export function FlagshipScene({ f, world }: { f: Flagship; world: React.ReactNode }) {
   const p = projectOf(f.id);
   const metrics = f.metricLabels.map((l) => p.metrics.find((m) => m.label === l)!);
-  const stores = p.stores?.filter((s) => s.status === "live" && s.url) ?? [];
+  const total = String(flagships.length).padStart(2, "0");
+  const index = flagships.findIndex((x) => x.id === f.id);
   return (
     <ScrollScene id={`work-${p.id}`} labelledBy={`work-${p.id}-title`} className={`flagship flagship--${p.id}`}>
-      <div className="shell flagship__grid">
-        <div className="flagship__copy">
-          <p className="label flex items-center gap-3 text-fg-subtle"><span aria-hidden="true" className="flagship__num">{f.number}</span><StatusChip status={p.status} /></p>
-          <h3 id={`work-${p.id}-title`} className="mt-4 text-[clamp(2rem,4vw,3.25rem)] font-semibold tracking-[-0.03em] text-fg">{p.name}</h3>
-          <p className="mt-3 text-fg-muted" style={{ fontSize: "var(--text-lead)" }}>{f.kicker}</p>
-          <p className="mt-5 max-w-[62ch] text-fg-muted">{f.story[0]} {f.story[1]}</p>
-          {f.statusNote && <p className="label mt-4 text-fg-subtle">{f.statusNote}</p>}
-          <dl className="mt-7 grid grid-cols-3 gap-4 border-t border-line pt-5">
-            {metrics.map((m) => (<div key={m.label}><dt className="label mt-1 text-fg-subtle">{m.label}</dt><dd className="text-[clamp(1.5rem,2.4vw,2rem)] font-semibold text-fg">{m.value}</dd></div>))}
+      <div className="shell chapter" data-layout={f.layout} data-side={f.side}>
+        <header className="chapter__head">
+          <div className="chapter__marker">
+            {/* The chapter number is the section's editorial anchor; the ticks place it in the run of four. */}
+            <p className="chapter__num" data-chapter-num aria-label={`Project ${Number(f.number)} of ${flagships.length}`}>
+              <span aria-hidden="true">{f.number}</span>
+            </p>
+            <div className="chapter__of" aria-hidden="true">
+              <span className="label">/ {total}</span>
+              <span className="chapter__ticks">{flagships.map((x, i) => <i key={x.id} data-on={i === index ? "" : undefined} />)}</span>
+            </div>
+            <StatusChip status={p.status} className="chapter__status" />
+          </div>
+          <h3 id={`work-${p.id}-title`} className="chapter__title">{p.name}</h3>
+          <p className="chapter__kicker">{f.kicker}</p>
+        </header>
+
+        <div className="chapter__world flagship__world" data-world={p.id}>
+          <span aria-hidden="true" className="chapter__ghost">{f.number}</span>
+          {world}
+        </div>
+
+        <div className="chapter__body">
+          <p className="chapter__story">{f.story[0]} {f.story[1]}</p>
+          {f.statusNote && <p className="label chapter__note">{f.statusNote}</p>}
+          <p className="chapter__built" data-built>
+            <span className="label chapter__built-label">Built solo</span>
+            <span className="chapter__built-text">{f.built}</span>
+          </p>
+          <dl className="chapter__metrics" data-metrics>
+            {metrics.map((m) => (
+              <div key={m.label} className="chapter__metric">
+                <dt className="chapter__metric-label">{m.label}</dt>
+                <dd className="chapter__metric-value" data-metric-value>{m.value}</dd>
+              </div>
+            ))}
           </dl>
-          <ul className="mt-5 flex flex-wrap gap-2" aria-label={`${p.name} stack`}>
-            {p.stack.slice(0, 5).map((s) => <li key={s.label} className="label rounded-full border border-line px-2.5 py-1 text-fg-muted">{s.label}</li>)}
+          <ul className="chapter__stack" aria-label={`${p.name} stack`}>
+            {p.stack.slice(0, 4).map((s) => <li key={s.label} className="label">{s.label}</li>)}
           </ul>
-          {/* Two rows with one job each: the actions, then the published store listings together. */}
-          <div className="mt-7 flex flex-wrap items-center gap-3">
+          {/* Store listings live in the world, under the product they ship (PokerWorld). */}
+          <div className="chapter__actions">
             <button type="button" data-case-study={p.id} className="case-study-trigger inline-flex h-11 items-center rounded-full bg-accent-solid px-5 text-sm font-medium text-white hover:bg-accent-solid-hover">Case study</button>
             {p.liveUrl && <ButtonLink href={p.liveUrl} variant="secondary" external>{p.liveLabel ?? "Live"}</ButtonLink>}
             {publicRepoUrl(p)
               ? <ButtonLink href={publicRepoUrl(p)!} variant="ghost" external>Source</ButtonLink>
               : <PrivateRepoLabel className="h-11 px-3" />}
           </div>
-          {stores.length > 0 && (
-            <ul className="mt-3 flex flex-wrap gap-3" aria-label={`Get ${p.name}`}>
-              {stores.map((s) => <li key={s.platform}><StoreBadge listing={s} app={p.name} /></li>)}
-            </ul>
-          )}
-        </div>
-        <div className="flagship__world" data-world={p.id}>
-          {/* "…it recedes while the next number arrives" (spec §5.2): each scene's ghost number assembles
-              with its world, so the next number rises as the previous world recedes. */}
-          <span aria-hidden="true" className="flagship__ghost">{f.number}</span>
-          {world}
         </div>
       </div>
     </ScrollScene>

@@ -85,7 +85,7 @@ test("#6 revealing the phone number keeps keyboard focus on it", async ({ page }
 
 test("#7 #8 metrics read value above label; case-study groups are dt then dd", async ({ page }) => {
   await skip(page);
-  const order = await page.locator("#work-poker .flagship__copy dl > div").first().evaluate((d) =>
+  const order = await page.locator("#work-poker .chapter__metrics > div").first().evaluate((d) =>
     d.querySelector("dd")!.getBoundingClientRect().top < d.querySelector("dt")!.getBoundingClientRect().top);
   expect(order).toBe(true);
   const opener = page.locator("button[data-case-study='poker']"); await opener.scrollIntoViewIfNeeded(); await opener.click();

@@ -27,6 +27,10 @@ export function CaseStudyHost() {
       opener.current = b; setMounted(true); setId(b.dataset.caseStudy ?? null);
     };
     document.addEventListener("click", onClick);
+    // Replay a press that landed before this listener existed (Work.tsx's inline early-click recorder).
+    const w = window as Window & { __csReady?: boolean; __csEarly?: HTMLElement };
+    w.__csReady = true;
+    if (w.__csEarly) { const b = w.__csEarly; w.__csEarly = undefined; queueMicrotask(() => b.click()); }   // through onClick
     return () => document.removeEventListener("click", onClick);
   }, []);
   // The trap already restores focus; this covers browsers that don't focus a clicked button (Safari). It must

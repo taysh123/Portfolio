@@ -14,9 +14,12 @@ test("restored scroll inside a pinned flagship shows a legible composition (Revi
   await page.reload(); await page.waitForTimeout(600);
   // Scroll targets are always document-relative (getBoundingClientRect().top + scrollY): #work-* sits inside
   // the positioned .work__stage, so offsetTop would be off by everything above the stage.
-  const copy = page.locator("#work-aegis .flagship__copy");
-  await expect(copy).toBeInViewport();
-  expect(await copy.evaluate((el) => getComputedStyle(el).opacity)).toBe("1");
+  // The chapter's copy is its head (number, title, kicker) and its body (story, built, metrics, actions).
+  for (const part of ["#work-aegis .chapter__head", "#work-aegis .chapter__body"]) {
+    const copy = page.locator(part);
+    await expect(copy).toBeInViewport();
+    expect(await copy.evaluate((el) => getComputedStyle(el).opacity)).toBe("1");
+  }
   await expect(page.locator("#work-aegis h3")).toBeVisible();
 });
 
@@ -33,12 +36,29 @@ test("case study: Enter opens, Escape closes, focus returns to the opener — lo
   await expect(opener).toBeFocused();
 });
 
+test("a Case study press made before hydration is not lost", async ({ page }) => {
+  // Hold the client bundle back so the press certainly lands before React attaches the delegated listener.
+  let release!: () => void; const gate = new Promise<void>((r) => (release = r));
+  await page.route(/\/_next\/static\/chunks\/.*\.js$/, async (route) => { await gate; await route.continue(); });
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  const opener = page.locator("button[data-case-study='aegis']");
+  await opener.scrollIntoViewIfNeeded(); await opener.click();
+  expect(await page.evaluate(() => (window as unknown as { __csReady?: boolean }).__csReady)).toBeFalsy();  // pre-hydration
+  release();
+  await expect(page.getByRole("dialog")).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole("dialog")).toContainText("Aegis");
+});
+
 test("copy never depends on scroll position: every flagship's copy is opaque at scene p = 0, .5 and 1", async ({ page }) => {
   await skip(page);
   for (const id of ["poker", "aegis", "developeros", "gravity-flow"]) for (const f of [0.02, 0.5, 0.98]) {
     await page.evaluate(({ id, f }) => { const s = document.getElementById(`work-${id}`)!; window.scrollTo({ top: s.getBoundingClientRect().top + scrollY + (s.offsetHeight - innerHeight) * f, behavior: "instant" as ScrollBehavior }); }, { id, f });
     await page.waitForTimeout(150);
-    expect(await page.locator(`#work-${id} .flagship__copy`).evaluate((el) => getComputedStyle(el).opacity), `${id}@${f}`).toBe("1");
+    for (const part of ["chapter__head", "chapter__body"]) {
+      // opacity of the element and every ancestor up to the scene: nothing on the copy's path is faded
+      const o = await page.locator(`#work-${id} .${part}`).evaluate((el) => { let v = 1; for (let e: Element | null = el; e && !e.matches("[data-scene]"); e = e.parentElement) v *= Number(getComputedStyle(e).opacity); return v; });
+      expect(o, `${id} ${part}@${f}`).toBe(1);
+    }
   }
 });
 
@@ -66,16 +86,30 @@ test("aegis world: dashboard monitor, three alert rows, one scan pass per entry 
   await expect(page.locator(".world-aegis")).toContainText(/local demo/i);
 });
 
-test("developeros world: four windows converge as the scene assembles; the citation card is present", async ({ page }) => {
+test("developeros world: one legible capture with an evidence mark per cited span, and the refusal beside it", async ({ page }) => {
   await page.goto("/");
-  const spread = async (f: number) => {
-    await page.evaluate((f) => { const s = document.getElementById("work-developeros")!; window.scrollTo({ top: s.getBoundingClientRect().top + scrollY + (s.offsetHeight - innerHeight) * f, behavior: "instant" as ScrollBehavior }); }, f);
-    await page.waitForTimeout(200);
-    return page.locator(".world-dos__win").evaluateAll((els) => els.reduce((a, el) => a + Math.hypot(new DOMMatrix(getComputedStyle(el).transform).m41, new DOMMatrix(getComputedStyle(el).transform).m42), 0));
-  };
-  await expect(page.locator(".world-dos__win")).toHaveCount(4);
-  expect(await spread(0.5)).toBeLessThan(await spread(0.02));    // converged
-  await expect(page.locator(".world-dos__card")).toHaveText(/Grounded answers · file:line citations/);
+  await page.evaluate(() => document.getElementById("work-developeros")!.scrollIntoView());
+  const shot = page.locator(".world-dos__shot img");
+  await expect(shot).toHaveAttribute("alt", /file:line citations/);
+  // Legible: drawn at >= 40% of its natural width (the old 2×2 grid drew each capture at ~12%).
+  const ratio = await shot.evaluate((img: HTMLImageElement) => img.getBoundingClientRect().width / img.naturalWidth);
+  expect(ratio).toBeGreaterThanOrEqual(0.4);
+  await expect(page.locator(".world-dos__rail li")).toHaveCount(6);
+  await expect(page.locator(".world-dos__refusal img")).toHaveAttribute("alt", /Not guessing/);
+  await expect(page.locator(".world-dos__bar")).toContainText("Search & Ask");
+});
+
+test("developeros on a phone: the same output transcribed — query, cited spans, refusal — each shown once", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await expect(page.locator(".world-dos__shot img")).toBeHidden();
+  await expect(page.locator(".world-dos__cites")).toBeVisible();
+  await expect(page.locator(".world-dos__cites code")).toHaveText(["devos/providers/ollama.py:1-50", "tests/test_ollama.py:1-50", "devos/providers/__init__.py:1-5", "README.md:101-150"]);
+  await expect(page.locator(".world-dos__quote")).toContainText("(Not guessing.)");
+  await expect(page.locator(".world-dos__refusal img")).toBeHidden();
+  // Every transcribed span appears in the capture's own alt text (the capture is the source of truth).
+  const alt = await page.locator(".world-dos__shot img").getAttribute("alt");
+  for (const c of await page.locator(".world-dos__cites code").allTextContents()) expect(alt).toContain(c);
 });
 
 test("gravity world: the field loops only while in view, and never under reduced motion (Review Focus 3)", async ({ page }) => {
@@ -90,7 +124,10 @@ test("gravity world: the field loops only while in view, and never under reduced
   await page.evaluate(() => document.getElementById("contact")!.scrollIntoView()); await page.waitForTimeout(900);
   expect(await raf(1000)).toBe(0);                             // stopped out of view
   for (const img of await page.locator(".world-gravity img").all()) await expect(img).toHaveAttribute("alt", /.+/);  // every image
-  await expect(page.locator(".world-gravity")).toContainText(/Android-only/);
+  // The release state is said once, in the chapter's status note (the world's duplicate caption is gone).
+  const text = (await page.locator("#work-gravity-flow").textContent()) ?? "";
+  expect(text).toMatch(/v1\.0\.0-rc · Android-only/);
+  expect(text.match(/Android-only/gi)?.length).toBe(1);
 });
 
 test("more work: two unpinned rows with their pipeline diagrams, and the coursework label", async ({ page }) => {
@@ -222,7 +259,7 @@ test("every flagship keeps its pinned stage down to 1024×768 — T Poker's stor
       await expect(page.locator(`#work-${id}`), `${id} at ${width}×${height}`).toHaveAttribute("data-fit", "true");
       await expect(page.locator(`#work-${id}`), `${id} at ${width}×${height}`).toHaveAttribute("data-pinned", "true");
     }
-    // Both store badges sit on one row inside the copy column.
+    // Both store badges sit on one row (under the product, in the world, since M2).
     const tops = await page.locator("#work-poker ul[aria-label='Get T Poker'] a").evaluateAll((as) => as.map((a) => Math.round(a.getBoundingClientRect().top)));
     expect(new Set(tops).size, `store row at ${width}×${height}`).toBe(1);
   }

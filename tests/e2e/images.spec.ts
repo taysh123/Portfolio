@@ -2,13 +2,16 @@
 // T Poker's phones rendered as black shells with their alt text on the Vercel Preview (failed loads).
 import { test, expect, type Page } from "playwright/test";
 
+// Every DISPLAYED image must decode. A capture hidden by design at this size (DeveloperOS on phones shows the
+// transcribed output instead) is display:none, so the browser never fetches it — and must stay hidden.
 const decoded = (page: Page, scope: string) => page.locator(`${scope} img`).evaluateAll((imgs) =>
-  imgs.map((i) => ({ src: (i as HTMLImageElement).currentSrc, ok: (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0 })));
+  imgs.filter((i) => i.getClientRects().length > 0 || !i.closest(".world-dos"))
+    .map((i) => ({ src: (i as HTMLImageElement).currentSrc, ok: (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0 })));
 
-async function everyImageLoads(page: Page, scope: string) {
+async function everyImageLoads(page: Page, scope: string, mayShowNone = false) {
   const el = page.locator(scope).first();
   await el.scrollIntoViewIfNeeded();
-  await expect.poll(async () => { const r = await decoded(page, scope); return r.length > 0 && r.every((x) => x.ok); }, { timeout: 15000, message: scope })
+  await expect.poll(async () => { const r = await decoded(page, scope); return (r.length > 0 || mayShowNone) && r.every((x) => x.ok); }, { timeout: 15000, message: scope })
     .toBe(true);
 }
 
@@ -19,7 +22,8 @@ for (const [label, viewport, dpr, mobile] of [["retina desktop", { width: 1440, 
     const failed: string[] = []; page.on("requestfailed", (r) => { if (/\/projects\//.test(r.url())) failed.push(r.url()); });
     const bad: string[] = []; page.on("response", (r) => { if (/\/projects\/|_next\/image/.test(r.url()) && r.status() >= 400) bad.push(`${r.status()} ${r.url()}`); });
     await page.goto("/");
-    for (const id of ["poker", "aegis", "developeros", "gravity-flow"]) await everyImageLoads(page, `#work-${id} .flagship__world`);
+    // On phones DeveloperOS shows its output transcribed (sections.spec covers that); its captures are display:none.
+    for (const id of ["poker", "aegis", "developeros", "gravity-flow"]) await everyImageLoads(page, `#work-${id} .flagship__world`, mobile && id === "developeros");
     expect(failed).toEqual([]); expect(bad).toEqual([]);
     await ctx.close();
   });

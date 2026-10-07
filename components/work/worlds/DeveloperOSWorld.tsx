@@ -1,25 +1,43 @@
 import Image from "next/image";
-import { projectOf } from "@/data/work";
+import { flagships } from "@/data/work";
 
-const WINS = [
-  { src: "/projects/developeros/dashboard.webp", dx: -220, dy: -120, dz: -260, r: -6 },
-  { src: "/projects/developeros/ai-features.webp", dx: 240, dy: -90, dz: -180, r: 5 },
-  { src: "/projects/developeros/learning.webp", dx: -200, dy: 150, dz: -320, r: 4 },
-  { src: "/projects/developeros/career.webp", dx: 230, dy: 170, dz: -220, r: -5 },
-];
+/** Crops of two real captures (public/projects/developeros/{ai-features,learning}.webp): the Search & Ask
+ *  results, and the Learn tab declining a topic it has no indexed material for. The citation rows' centres are
+ *  measured on the 1600×1027 crop (y of each `path:lines` chip ÷ height). */
+const SEARCH = { src: "/projects/developeros/search-citations.webp", w: 1600, h: 1027,
+  alt: "DeveloperOS Search & Ask: the query “ollama provider” answered with file:line citations — devos/providers/ollama.py:1-50, tests/test_ollama.py:1-50, devos/providers/__init__.py:1-5, README.md:101-150 and more" };
+const REFUSAL = { src: "/projects/developeros/refusal.webp", w: 1400, h: 188,
+  alt: "DeveloperOS declining: “I don't have enough indexed material to teach that. Try `devos index <path>`, give a file path, or rephrase the topic. (Not guessing.)”" };
+const CITES = [195, 351, 507, 632, 729, 885].map((y) => y / 1027);
+/** The same output, transcribed verbatim from the captures, for phones (where the captures' type is ~5px). */
+const QUERY = "ollama provider";
+const SPANS = ["devos/providers/ollama.py:1-50", "tests/test_ollama.py:1-50", "devos/providers/__init__.py:1-5", "README.md:101-150"];
+const REFUSAL_TEXT = "I don't have enough indexed material to teach that. Try `devos index <path>`, give a file path, or rephrase the topic. (Not guessing.)";
 
-/** Spec §5.2 world 03: four real windows start scattered in depth and converge into one organised workspace. */
+/** World 03 — evidence. One legible capture, framed like a tool window; an evidence rail marks each cited
+ *  span; the refusal sits beside it, because declining is the other half of answering from evidence. */
 export function DeveloperOSWorld() {
-  const p = projectOf("developeros");
-  const alt = (src: string) => (p.media?.image === src ? p.media.alt : p.media?.gallery?.find((g) => g.src === src)?.alt) ?? "";
+  const notes = flagships.find((f) => f.id === "developeros")!.notes;
   return (
     <div className="world-dos">
-      {WINS.map((w, i) => (
-        <figure key={w.src} className="world-dos__win" style={{ ["--dx" as string]: `${w.dx}px`, ["--dy" as string]: `${w.dy}px`, ["--dz" as string]: `${w.dz}px`, ["--r" as string]: `${w.r}deg`, ["--i" as string]: i }}>
-          <Image src={w.src} alt={alt(w.src)} width={2880} height={1620} sizes="(min-width:1024px) 28vw, 50vw" />
-        </figure>
-      ))}
-      <p className="world-dos__card">Grounded answers · file:line citations</p>
+      <figure className="world-dos__frame">
+        <figcaption className="world-dos__bar label"><span>DeveloperOS</span><span className="world-dos__tab">Search &amp; Ask</span><span className="world-dos__cites-label">{notes[0]}</span></figcaption>
+        <div className="world-dos__shot">
+          <Image src={SEARCH.src} alt={SEARCH.alt} width={SEARCH.w} height={SEARCH.h} sizes="(min-width:1024px) 52vw, 100vw" />
+          <ol className="world-dos__rail" aria-hidden="true">
+            {CITES.map((y, i) => <li key={y} style={{ ["--y" as string]: y, ["--i" as string]: i }} />)}
+          </ol>
+          <ul className="world-dos__cites">
+            <li>Search: “{QUERY}”</li>
+            {SPANS.map((s) => <li key={s}><code>{s}</code><span>[DeveloperOS]</span></li>)}
+          </ul>
+        </div>
+      </figure>
+      <figure className="world-dos__refusal">
+        <figcaption className="label">{notes[1]}</figcaption>
+        <Image src={REFUSAL.src} alt={REFUSAL.alt} width={REFUSAL.w} height={REFUSAL.h} sizes="(min-width:1024px) 34vw, 92vw" />
+        <blockquote className="world-dos__quote">{REFUSAL_TEXT}</blockquote>
+      </figure>
     </div>
   );
 }

@@ -5,6 +5,8 @@ import { flagships, projectOf } from "@/data/work";
 import Image from "next/image";
 import "./worlds/worlds.css";
 
+const EARLY_CASE_STUDY = `document.addEventListener("click",function(e){if(window.__csReady)return;var b=e.target&&e.target.closest&&e.target.closest("[data-case-study]");if(b)window.__csEarly=b;},true);`;
+
 /** Spec §5.2 "each project becomes the whole website". The flagship run is a dark stage in both themes
  *  (Plan 2 decision 1); More Work follows the site theme. */
 export function Work({ worlds = {} }: { worlds?: Partial<Record<string, React.ReactNode>> }) {
@@ -25,6 +27,10 @@ export function Work({ worlds = {} }: { worlds?: Partial<Record<string, React.Re
       </div>
       {/* More Work follows the site theme. */}
       <MoreWork />
+      {/* A "Case study" press before hydration would otherwise be lost (the host's listener isn't attached yet):
+          remember the last early opener; CaseStudyHost replays it on mount. Inline because it must run before
+          any bundle (CSP allows inline scripts, proxy.ts). */}
+      <script dangerouslySetInnerHTML={{ __html: EARLY_CASE_STUDY }} />
       <CaseStudyHost />
       <noscript><style>{".case-study-trigger{display:none}"}</style></noscript>
     </section>

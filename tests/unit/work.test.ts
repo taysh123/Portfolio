@@ -32,3 +32,23 @@ describe("more work", () => {
     expect(projectOf("orders-delivery").status).toBe("coursework");
   });
 });
+
+describe("chapters (M2)", () => {
+  const json = (id: string) => JSON.stringify(projectOf(id)).toLowerCase().replace(/[-‑]/g, " ");
+  it("every number in a built line appears in that project's data", () => {
+    for (const f of flagships) for (const n of numbers(f.built)) expect(JSON.stringify(projectOf(f.id)), `${f.id}: "${n}"`).toContain(n);
+  });
+  it("every world annotation is a phrase from the project's own data or story", () => {
+    for (const f of flagships) for (const note of f.notes) {
+      const hay = json(f.id) + " " + f.story.join(" ").toLowerCase();
+      expect(hay, `${f.id}: "${note}"`).toContain(note.toLowerCase().replace(/[-‑]/g, " "));
+    }
+  });
+  it("layouts are four distinct expressions and the sides alternate", () => {
+    expect(new Set(flagships.map((f) => f.layout)).size).toBe(4);
+    expect(flagships.map((f) => f.side)).toEqual(["copy-left", "world-left", "copy-left", "world-left"]);
+  });
+  it("the derived DeveloperOS crops exist", () => {
+    for (const f of ["search-citations", "refusal"]) expect(fs.existsSync(`public/projects/developeros/${f}.webp`)).toBe(true);
+  });
+});

@@ -1,0 +1,95 @@
+/* ── Flagship chapters (M2) ───────────────────────────────────────────────────
+   One structure, four expressions. Phones read head → world → body (DOM order); from 1024px a grid puts head
+   and body in one column and the world in the other, on the side the chapter's `data-side` names, at the
+   proportions its `data-layout` sets. The chapter number is the editorial anchor: the accent mixed toward the
+   ground (≈3.5:1 — perceptible as large type, never louder than the 18:1 title). */
+.chapter { --chapter-ink: color-mix(in oklab, var(--accent) 64%, var(--bg));
+  display: grid; grid-template-areas: "head" "world" "body"; row-gap: clamp(1.75rem, 4vw, 2.5rem);
+  /* Arriving at a chapter (an index link lands its top at the viewport top) never puts the number under the nav. */
+  padding-block: calc(var(--nav-h) + clamp(1.25rem, 4vh, 2.5rem)) clamp(3rem, 7vh, 5rem); }
+.chapter__head { grid-area: head; position: relative; z-index: 2; }
+.chapter__world { grid-area: world; position: relative; min-width: 0; }
+.chapter__body { grid-area: body; position: relative; z-index: 2; }           /* never transformed: always legible */
+
+@media (min-width: 1024px) {
+  .chapter { column-gap: clamp(3rem, 5vw, 5.5rem); row-gap: 0; align-content: center; align-items: start;
+    /* The fixed nav overlays the pinned stage: the composition starts below it, so the fit guard measures it too. */
+    padding-block: calc(var(--nav-h) + clamp(0.75rem, 3vh, 2.5rem)) clamp(1.5rem, 4vh, 3.5rem); grid-template-rows: auto 1fr; }
+  /* The stack chips repeat Stack and the case study; on wide screens the chapter spends that height on the world. */
+  .chapter__stack { display: none; }
+  .chapter[data-side="copy-left"] { grid-template-areas: "head world" "body world"; grid-template-columns: minmax(0, var(--copy, 5fr)) minmax(0, var(--media, 7fr)); }
+  .chapter[data-side="world-left"] { grid-template-areas: "world head" "world body"; grid-template-columns: minmax(0, var(--media, 7fr)) minmax(0, var(--copy, 5fr)); }
+  .chapter__world { align-self: center; }
+  .chapter__body { margin-top: 1.75rem; }
+  .chapter[data-layout="orbit"] { --copy: 5fr; --media: 6fr; }
+}
+/* 1024–1279: a 5/7 copy column is ~390px and wraps the actions and store badges; even columns keep them single. */
+@media (min-width: 1024px) and (max-width: 1279px) { .chapter { --copy: 1fr !important; --media: 1fr !important; } }
+
+/* Head: number · of-four ticks · status, then the title and kicker. */
+.chapter__marker { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
+.chapter__num { margin: 0; font-size: clamp(3.5rem, 6.4vw, 6rem); font-weight: 600; line-height: 0.8; letter-spacing: -0.06em; color: var(--chapter-ink); }
+.chapter__of { display: grid; gap: 7px; padding-bottom: 4px; color: var(--fg-subtle); }
+.chapter__ticks { display: flex; gap: 4px; }
+.chapter__ticks i { width: 14px; height: 2px; border-radius: 1px; background: var(--line-strong); }
+.chapter__ticks i[data-on] { background: var(--accent); }
+.chapter__status { margin-left: auto; margin-bottom: 2px; }
+.chapter__title { margin-top: 18px; font-size: clamp(2.25rem, 4.2vw, 3.75rem); font-weight: 600; line-height: 1; letter-spacing: -0.035em; color: var(--fg); }
+.chapter__kicker { margin-top: 12px; max-width: 34ch; color: var(--fg-muted); font-size: var(--text-lead); line-height: 1.4; text-wrap: pretty; }
+
+/* Body. */
+.chapter__story { max-width: 58ch; color: var(--fg-muted); line-height: 1.6; }
+.chapter__note { margin-top: 12px; color: var(--fg-subtle); }
+/* What I built: an owned statement, not another paragraph — an accent rule, a label, one line in full ink. */
+.chapter__built { margin-top: 22px; display: grid; gap: 6px; padding-left: 14px; border-left: 2px solid var(--accent); }
+.chapter__built-label { color: var(--accent); }
+.chapter__built-text { color: var(--fg); font-weight: 500; line-height: 1.45; max-width: 52ch; }
+
+/* Metrics (dataviz stat-tile contract): the value leads — sans semibold, proportional figures — and its
+   sentence-case label sits under it. Values top-align, so a label that wraps never moves its value. DOM order
+   stays dt, dd (label, then value) for screen readers; the grid draws the value first. */
+.chapter__metrics { margin-top: 26px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--line); }
+.chapter__metric { display: grid; grid-template-areas: "value" "label"; align-content: start; gap: 8px; padding: 16px 16px 0 0; }
+.chapter__metric + .chapter__metric { padding-left: 16px; border-left: 1px solid var(--line); }
+.chapter__metric-value { grid-area: value; margin: 0; font-size: clamp(1.875rem, 2.7vw, 2.5rem); font-weight: 600; line-height: 1; letter-spacing: -0.03em; color: var(--fg); }
+.chapter__metric-label { grid-area: label; font-size: 0.8125rem; line-height: 1.35; color: var(--fg-muted); text-wrap: balance; }
+/* Phones: three columns would squeeze each label to ~90px; rows keep every value in one column and every
+   label on one left edge. */
+@media (max-width: 479px) {
+  .chapter__metrics { grid-template-columns: 1fr; }
+  .chapter__metric, .chapter__metric + .chapter__metric { grid-template-areas: "value label"; grid-template-columns: 5.5rem 1fr; align-items: baseline;
+    gap: 12px; padding: 12px 0; border-left: 0; border-bottom: 1px solid var(--line); }
+  .chapter__metric-value { font-size: 1.75rem; }
+}
+
+.chapter__stack { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 6px; }
+.chapter__stack li { border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; color: var(--fg-muted); }
+.chapter__actions { margin-top: 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+
+/* Short laptop viewports keep the pinned story: a tighter rhythm, and the stack chips (repeated in the case
+   study and in Stack) step aside. */
+@media (min-width: 1024px) and (max-height: 820px) {
+  .chapter__num { font-size: clamp(3rem, 5vw, 4.5rem); }
+  .chapter__title { margin-top: 12px; font-size: clamp(2rem, 3.4vw, 2.75rem); }
+  .chapter__kicker { margin-top: 8px; font-size: 1.0625rem; }
+  .chapter__body { margin-top: 1.1rem; }
+  .chapter__story { font-size: 0.9375rem; line-height: 1.55; }
+  .chapter__built { margin-top: 14px; }
+  .chapter__metrics { margin-top: 16px; }
+  .chapter__metric { padding-top: 12px; }
+  .chapter__stack { display: none; }
+  .chapter__actions { margin-top: 16px; }
+}
+
+/* The ghost numeral: the chapter number at architectural scale behind the world, on its outer edge, drawn as
+   an accent outline over a faint fill — perceptible, never competing with the media in front of it. */
+.chapter__ghost { position: absolute; z-index: 0; top: -0.2em; pointer-events: none; font-size: clamp(9rem, 24vw, 22rem); font-weight: 700;
+  line-height: 1; letter-spacing: -0.07em; color: rgba(91, 156, 255, 0.045); -webkit-text-stroke: 1.5px rgba(91, 156, 255, 0.34);
+  opacity: calc(0.4 + 0.6 * var(--assemble) - 0.4 * var(--recede)); transform: translateY(calc((1 - var(--assemble)) * 40px - var(--recede) * 28px)); }
+.chapter[data-layout="product"] .chapter__ghost { right: -0.06em; }                        /* top-right, behind the side phone */
+.chapter[data-layout="system"] .chapter__ghost { top: auto; bottom: -0.32em; right: -0.18em; }  /* rising from under the monitor */
+.chapter[data-layout="evidence"] .chapter__ghost { top: auto; bottom: -0.3em; left: -0.08em; }  /* under the frame, beside the refusal */
+.chapter[data-layout="orbit"] .chapter__ghost { left: -0.1em; }                             /* the orbit's dark upper-left */
+/* Single column: the ghost stays inside the world box (never under the head's copy), at its upper right. */
+@media (max-width: 1023px) { .chapter[data-layout] .chapter__ghost { top: -0.08em; bottom: auto; right: -0.04em; left: auto; font-size: clamp(8rem, 36vw, 13rem); } }
+.chapter__world > :not(.chapter__ghost) { position: relative; z-index: 1; }
