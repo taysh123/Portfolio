@@ -124,6 +124,9 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-bg text-fg">
+        {/* Ctrl/⌘+K pressed before hydration would be lost (no listener yet) — and fall through to the browser's
+            own shortcut. Record it; Providers replays it once its listener is attached. */}
+        <script dangerouslySetInnerHTML={{ __html: `addEventListener("keydown",function(e){if(window.__paletteReady)return;if((e.ctrlKey||e.metaKey)&&e.key&&e.key.toLowerCase()==="k"){e.preventDefault();window.__paletteEarly=true;}});` }} />
         {/* Without JavaScript a scroll scene would pin 200svh around a frozen frame: never pin then (Plan 2 Task 5). */}
         <noscript>
           <style>{`.scene{height:auto!important}.scene__stage{position:relative!important;height:auto!important}`}</style>

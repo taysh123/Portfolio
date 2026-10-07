@@ -3,21 +3,36 @@ import { GroupGlyph } from "@/components/ui/GroupGlyph";
 import { PointerLight } from "@/components/ui/PointerLight";
 import "./stack.css";
 
-/** Spec §5.4: the six groups exactly as data/skills.ts has them; the two lead groups are wide. */
+/** Spec §5.4, M2b: the six groups exactly as data/skills.ts has them, as a range matrix — one row per group:
+ *  what it is, the tools in it, and the evidence that it's load-bearing. The two lead groups carry their figure.
+ *  Rows, not cards: the breadth reads top to bottom in a few seconds, and nothing is a wall of tags. */
 export function Stack() {
   return (
     <section id="skills" aria-labelledby="stack-title" className="shell py-[clamp(7rem,14vh,12rem)]">
-      <p className="label text-fg-subtle">Stack</p>
-      <h2 id="stack-title" className="mt-4 text-[clamp(2.25rem,5vw,4.5rem)] font-semibold tracking-[-0.035em] text-fg">The tools I build with.</h2>
-      <p className="mt-4 text-fg-muted" style={{ fontSize: "var(--text-lead)" }}>Enough range to own a product end to end.</p>
-      <div data-pointer-light className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="stack-head">
+        <div>
+          <p className="label text-fg-subtle">Stack</p>
+          <h2 id="stack-title" className="stack-head__title">The tools I build with.</h2>
+        </div>
+        <p className="stack-head__lead">Enough range to own a product end to end.</p>
+      </div>
+      <div data-pointer-light className="stack-matrix">
         {skillGroups.map((g) => (
-          <article key={g.id} data-card data-wide={g.lead ? "" : undefined} className={`stack-card raised relative overflow-hidden rounded-[24px] border border-line p-7 ${g.lead ? "lg:col-span-2" : ""}`}>
-            <GroupGlyph glyph={g.glyph} />
-            <h3 className="mt-5 text-lg font-semibold text-fg">{g.title}</h3>
-            {g.lead && <p className="mt-3 flex items-baseline gap-3"><span className="text-[clamp(2.5rem,5vw,4rem)] font-semibold tracking-[-0.04em] text-fg">{g.lead.value}</span><span className="label text-fg-subtle">{g.lead.unit}</span></p>}
-            <ul className="mt-5 flex flex-wrap gap-2">{g.items.map((i) => <li key={i.label} className={`label rounded-full border px-2.5 py-1 ${i.emphasis ? "border-line-strong text-fg" : "border-line text-fg-muted"}`}>{i.label}</li>)}</ul>
-            <p className="mt-5 text-[15px] leading-relaxed text-fg-muted">{g.evidence}</p>
+          <article key={g.id} data-card data-wide={g.lead ? "" : undefined} className="stack-card stack-row">
+            <div className="stack-row__name">
+              <GroupGlyph glyph={g.glyph} />
+              <div>
+                <h3>{g.title}</h3>
+                <p className="stack-row__caption">{g.caption}</p>
+              </div>
+            </div>
+            <ul className="stack-row__items" aria-label={`${g.title} tools`}>
+              {g.items.map((i) => <li key={i.label} data-emphasis={i.emphasis ? "" : undefined}>{i.label}</li>)}
+            </ul>
+            <div className="stack-row__proof">
+              {g.lead && <p className="stack-row__lead"><span>{g.lead.value}</span><span className="label">{g.lead.unit}</span></p>}
+              <p className="stack-row__evidence">{g.evidence}</p>
+            </div>
           </article>
         ))}
       </div>

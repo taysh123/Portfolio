@@ -105,3 +105,26 @@ Every milestone runs `typecheck`, `lint`, `vitest`, the full Playwright suite, c
 - Entrance work of any kind, Blender, renders, and the V2 branch.
 - A visual redesign beyond the items above.
 - New claims, new projects, and changes to the T Poker repository's visibility.
+
+## 4. Progress
+
+- **M1** (666bf28): hero lead, flagship index, derived proof line, arcs clear of controls, opaque scrolled nav.
+- **M2a** (62a6e20): the flagship chapters:
+  - chapter numbers as anchors and stat-tile metrics;
+  - four compositions (product, system, evidence, orbit);
+  - "Built solo" lines;
+  - phone order of number → title → visual → copy.
+
+  It also fixes P1–P6 and makes a Case study press before hydration replay instead of being lost.
+- **M2b**: the rhythm around the chapters:
+  - the Work opener with chapter contents, and no blank screen before 01 on phones;
+  - About as an editorial chapter;
+  - Stack as a range matrix;
+  - Think · Build · Ship at signature scale, clear of the nav;
+  - Contact as a four-channel action set.
+
+  It also makes Ctrl+K before hydration replay instead of being lost.
+- **Performance vs `main`** (1440 and 390):
+  - first-load JS unchanged at 219 KB;
+  - images after a full scroll 176 → 166 KB on desktop and 184 → 155 KB on phones;
+  - CLS stays at 0.

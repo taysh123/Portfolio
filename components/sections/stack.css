@@ -1,6 +1,23 @@
-/* Stack (spec §5.4). */
+/* Stack (spec §5.4, M2b): a range matrix. */
+.stack-head { display: grid; gap: 16px; align-items: end; }
+@media (min-width: 1024px) { .stack-head { grid-template-columns: minmax(0, 1fr) auto; } }
+.stack-head__title { margin-top: 16px; font-size: clamp(2.25rem, 5vw, 4.5rem); font-weight: 600; line-height: 1; letter-spacing: -0.035em; color: var(--fg); }
+.stack-head__lead { color: var(--fg-muted); font-size: var(--text-lead); max-width: 30ch; }
+.stack-matrix { margin-top: clamp(2.5rem, 6vh, 4rem); border-top: 1px solid var(--line-strong); }
+.stack-row { position: relative; display: grid; gap: 14px 32px; padding: 26px 0; border-bottom: 1px solid var(--line); }
+@media (min-width: 1024px) { .stack-row { grid-template-columns: minmax(0, 3.2fr) minmax(0, 4.4fr) minmax(0, 4.4fr); align-items: start; padding: 30px 12px; margin-inline: -12px; } }
+.stack-row__name { display: flex; gap: 16px; align-items: flex-start; }
+.stack-row__name h3 { font-size: 1.125rem; font-weight: 600; color: var(--fg); }
+.stack-row__caption { margin-top: 4px; font-size: 0.875rem; color: var(--fg-subtle); }
+/* The tools as a typeset list, not chips: the load-bearing ones in full ink. */
+.stack-row__items { display: flex; flex-wrap: wrap; gap: 6px 16px; padding-top: 3px; font: 500 0.8125rem/1.5 var(--font-geist-mono), ui-monospace, monospace; color: var(--fg-subtle); }
+.stack-row__items li[data-emphasis] { color: var(--fg); }
+.stack-row__lead { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+.stack-row__lead > span:first-child { font-size: clamp(2.25rem, 4vw, 3.25rem); font-weight: 600; line-height: 1; letter-spacing: -0.04em; color: var(--fg); }
+.stack-row__lead .label { color: var(--fg-subtle); }
+.stack-row__evidence { font-size: 0.9375rem; line-height: 1.55; color: var(--fg-muted); max-width: 52ch; }
 .stack-card > * { position: relative; z-index: 1; }
-/* Pointer light (spec §5.4): drawn only while --mx is set, i.e. on the hovered card, with a fine pointer. */
-.stack-card::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity var(--dur-mid, 320ms);
-  background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), var(--light-cool), transparent 70%); }
+/* Pointer light (spec §5.4): drawn only while --mx is set, i.e. on the hovered row, with a fine pointer. */
+.stack-card::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity var(--dur-mid, 320ms); border-radius: 12px;
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), var(--light-cool), transparent 70%); }
 @media (hover: hover) and (pointer: fine) { .stack-card:hover::before { opacity: 1; } }

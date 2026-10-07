@@ -82,6 +82,16 @@ test("palette 'Home' lands on the hero at identity with the h1 focused (the remo
   await expect(page.locator("#hero-title")).toBeInViewport();
 });
 
+test("Ctrl+K pressed before hydration still opens the palette", async ({ page }) => {
+  let release!: () => void; const gate = new Promise<void>((r) => (release = r));
+  await page.route(/\/_next\/static\/chunks\/.*\.js$/, async (route) => { await gate; await route.continue(); });
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.keyboard.press("Control+k");
+  expect(await page.evaluate(() => (window as unknown as { __paletteReady?: boolean }).__paletteReady)).toBeFalsy();
+  release();
+  await expect(page.getByRole("dialog", { name: "Command palette" })).toBeVisible({ timeout: 15000 });
+});
+
 test("every palette section target exists", async ({ page }) => {
   await page.goto("/");
   for (const id of ["hero", "work", "about", "skills", "approach", "contact"]) await expect(page.locator(`#${id}`)).toHaveCount(1);

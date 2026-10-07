@@ -53,6 +53,10 @@ function useRequestedOverlays(): Record<Kind, boolean> {
     window.addEventListener("palette:open", onPalette);
     window.addEventListener("overlay:open", onOverlay);
     window.addEventListener("keydown", onKey);
+    // Replay a Ctrl/⌘+K recorded before hydration (layout.tsx's inline recorder), then take the shortcut over.
+    const w = window as Window & { __paletteReady?: boolean; __paletteEarly?: boolean };
+    w.__paletteReady = true;
+    if (w.__paletteEarly) { w.__paletteEarly = false; queueMicrotask(requestPaletteOpen); }
     document.addEventListener("pointerover", onIntent, { passive: true });
     document.addEventListener("focusin", onIntent);
     return () => {

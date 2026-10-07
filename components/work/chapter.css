@@ -93,3 +93,22 @@
 /* Single column: the ghost stays inside the world box (never under the head's copy), at its upper right. */
 @media (max-width: 1023px) { .chapter[data-layout] .chapter__ghost { top: -0.08em; bottom: auto; right: -0.04em; left: auto; font-size: clamp(8rem, 36vw, 13rem); } }
 .chapter__world > :not(.chapter__ghost) { position: relative; z-index: 1; }
+
+/* ── The work opener (M2b) ── */
+.work-intro { padding-top: clamp(7rem, 16vh, 12rem); padding-bottom: clamp(2.5rem, 8vh, 6rem); }
+@media (max-width: 1023px) { .work-intro { padding-bottom: 0; } }   /* the first chapter's own nav inset is the gap */
+.work-intro__title { margin-top: 18px; font-size: clamp(3rem, 8.4vw, 8rem); font-weight: 600; line-height: 0.92; letter-spacing: -0.05em; color: var(--fg); }
+.work-intro__lead { margin-top: 18px; max-width: 40ch; color: var(--fg-muted); font-size: var(--text-lead); }
+.work-intro__toc ol { margin-top: clamp(2.5rem, 6vh, 4rem); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line); }
+.work-intro__toc a { display: grid; gap: 6px; padding: 18px 16px 6px 0; min-height: 44px; color: var(--fg-muted); transition: color 150ms var(--ease-out); }
+.work-intro__toc li + li a { padding-left: 16px; border-left: 1px solid var(--line); }
+.work-intro__toc a:hover { color: var(--fg); }
+.work-intro__n { font-size: clamp(2rem, 3.4vw, 3rem); font-weight: 600; line-height: 0.9; letter-spacing: -0.05em; color: color-mix(in oklab, var(--accent) 64%, var(--bg)); }
+@media (max-width: 639px) {
+  .work-intro__toc ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .work-intro__toc li:nth-child(3) a { padding-left: 0; border-left: 0; }
+  .work-intro__toc li:nth-child(n+3) a { border-top: 1px solid var(--line); }
+}
+/* Unpinned (single column): a chapter is as tall as its story — the full-viewport stage left a blank screen
+   between the work opener and 01 on phones (audit M2). */
+@media (max-width: 1023px) { .flagship .scene__stage { min-height: 0; } }

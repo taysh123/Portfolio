@@ -14,10 +14,19 @@ export function Work({ worlds = {} }: { worlds?: Partial<Record<string, React.Re
     <section id="work" aria-labelledby="work-title">
       {/* Hero above is dark in both themes, so no top seam; the bottom seam leads into the themed More Work. */}
       <div data-theme="dark" className="work__stage seam-bottom-dark bg-[var(--bg)]">
-        <header className="shell pt-[clamp(7rem,14vh,12rem)] pb-10">
+        {/* The opener of the work: the section title at display scale, then the four chapters as contents —
+            the same numbers each chapter carries, so the run reads as one system before it starts. */}
+        <header className="shell work-intro">
           <p className="label text-fg-subtle">Work</p>
-          <h2 id="work-title" className="mt-4 text-[clamp(2.25rem,5vw,4.5rem)] font-semibold tracking-[-0.035em] text-fg">Selected work</h2>
-          <p className="mt-4 max-w-[62ch] text-fg-muted" style={{ fontSize: "var(--text-lead)" }}>Four flagship projects, and two more worth a look.</p>
+          <h2 id="work-title" className="work-intro__title">Selected work</h2>
+          <p className="work-intro__lead">Four flagship projects, and two more worth a look.</p>
+          <nav aria-label="Flagship chapters" className="work-intro__toc">
+            <ol>
+              {flagships.map((f) => (
+                <li key={f.id}><a href={`#work-${f.id}`}><span className="work-intro__n" aria-hidden="true">{f.number}</span><span>{projectOf(f.id).name}</span></a></li>
+              ))}
+            </ol>
+          </nav>
         </header>
         {flagships.map((f) => {
           const p = projectOf(f.id);
