@@ -9,7 +9,7 @@ const PUBLIC_REPOS = new Set(projects.map(publicRepoUrl).filter(Boolean).map((u)
 test("no page HTML, client script, route or source map carries the private repository", async ({ page }) => {
   const bodies: [string, string][] = [];
   page.on("response", async (r) => { if (/\.(js|json|map|txt|xml|html)(\?|$)|\/$|_rsc=/.test(r.url())) { try { bodies.push([r.url(), await r.text()]); } catch { /* redirects, opaque */ } } });
-  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.goto("/");
   // Open every lazy surface so its chunk is fetched too.
   await page.keyboard.press("Control+k"); await expect(page.getByRole("dialog")).toBeVisible(); await page.keyboard.press("Escape");
   const opener = page.locator("button[data-case-study='poker']"); await opener.scrollIntoViewIfNeeded(); await opener.click();
@@ -26,7 +26,7 @@ test("no page HTML, client script, route or source map carries the private repos
 });
 
 test("T Poker shows a non-clickable 'Private repository' label and keeps its live link", async ({ page }) => {
-  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.goto("/");
   const label = page.locator("[data-private-repo]").first();
   await label.scrollIntoViewIfNeeded(); await expect(label).toHaveText("Private repository");
   expect(await label.evaluate((el) => el.closest("a,button") === null)).toBe(true);
@@ -34,8 +34,8 @@ test("T Poker shows a non-clickable 'Private repository' label and keeps its liv
 });
 
 test("the command palette offers no T Poker source entry, but keeps the live app", async ({ page }) => {
-  await page.goto("/"); await page.locator("[data-skip-intro]").click();
-  await page.locator("header[data-entrance-nav] nav").getByRole("button", { name: /command palette/i }).click();
+  await page.goto("/");
+  await page.locator("header[data-site-nav] nav").getByRole("button", { name: /command palette/i }).click();
   await page.getByRole("combobox", { name: "Search commands" }).fill("T Poker");
   const list = page.getByRole("listbox", { name: "Commands" });
   await expect(list.getByRole("option", { name: /T Poker — live/ })).toBeVisible();
@@ -44,7 +44,7 @@ test("the command palette offers no T Poker source entry, but keeps the live app
 });
 
 test("the T Poker case study shows the label, no source link, and keeps the live and App Store links", async ({ page }) => {
-  await page.goto("/"); await page.locator("[data-skip-intro]").click();
+  await page.goto("/");
   await page.locator("#work").scrollIntoViewIfNeeded();
   await page.getByRole("button", { name: /case study/i }).filter({ hasText: /case study/i }).first().click();
   const panel = page.getByRole("dialog");

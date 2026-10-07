@@ -12,7 +12,7 @@ import type { Theme, A11yPrefs } from "@/lib/theme";
 /**
  * Three overlays that are invisible until the visitor asks for them, so none of them belong in the first
  * load — and none of them are MOUNTED until asked for either: a dynamic component that renders on load
- * still fetches its chunk right after hydration, on every visit, competing with the entrance frames (the
+ * still fetches its chunk right after hydration, on every visit, competing with the page's own first loads (the
  * palette's chunk carries the full project data; each also carries its own copy of framer-motion's
  * shared modules). The review measured ~450 KB of idle fetches (review #5).
  *

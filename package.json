@@ -10,19 +10,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "render:screens": "python3 design/render/blender/make_screens.py",
-    "render:preview": "bpyenv/bin/python design/render/blender/render.py --quality preview --framing all",
-    "encode:frames": "node scripts/encode-frames.mjs",
     "measure": "node scripts/measure.mjs",
-    "trace:entrance": "node scripts/trace-entrance.mjs",
-    "pacing:entrance": "node scripts/pacing-entrance.mjs",
-    "profile:entrance": "node scripts/profile-entrance.mjs",
-    "bench:frame-formats": "node scripts/bench-frame-formats.mjs",
     "scan:controls": "node scripts/fab-scan.mjs",
-    "shoot": "node scripts/shoot.mjs",
-    "render:lookdev": "bpyenv/bin/python design/render/blender/render.py --quality lookdev --exr --out design/render/blender/out-lookdev",
-    "render:final": "bpyenv/bin/python design/render/blender/batch.py",
-    "render:audit": "bpyenv/bin/python design/render/blender/audit.py"
+    "shoot": "node scripts/shoot.mjs"
   },
   "dependencies": {
     "framer-motion": "^12.40.0",

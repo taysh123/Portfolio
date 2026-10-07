@@ -1,7 +1,7 @@
 // tests/e2e/aegis.spec.ts — the Aegis rebrand is complete: renamed repository, canonical captures (2026-09-26).
 import { test, expect, type Page } from "playwright/test";
 const REPO = "https://github.com/taysh123/aegis";
-const skip = async (page: Page) => { await page.goto("/"); await page.locator("[data-skip-intro]").click(); };
+const skip = async (page: Page) => { await page.goto("/"); };
 
 test("Aegis links its renamed repository from the flagship, the case study and the palette", async ({ page }) => {
   await skip(page);

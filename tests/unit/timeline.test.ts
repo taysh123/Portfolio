@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { clamp01, segment, easeInOut, easeOut, BEATS } from "@/lib/timeline";
+import { clamp01, segment, easeInOut, easeOut } from "@/lib/timeline";
 
 describe("segment", () => {
   it("is 0 before, 1 after, and linear inside", () => {
@@ -22,10 +22,5 @@ describe("segment", () => {
     }
     expect(clamp01(-1)).toBe(0);
     expect(clamp01(2)).toBe(1);
-  });
-  it("beats match the spec", () => {
-    expect(BEATS.lid).toEqual([0.12, 0.38]);
-    expect(BEATS.push).toEqual([0.68, 0.88]);
-    expect(BEATS.portal).toEqual([0.88, 1]);
   });
 });

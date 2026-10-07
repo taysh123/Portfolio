@@ -34,9 +34,6 @@ describe.each([["dark", dark], ["light", light]] as const)("%s theme contrast fl
   });
 });
 
-it("--screen is the dark screen black in both themes", () => {
-  expect(dark.screen.toLowerCase()).toBe("#05070a"); expect(light.screen.toLowerCase()).toBe("#05070a");
-});
 
 it("the shared names later sections use are declared (a reference to an undefined token fails silently)", () => {
   for (const name of ["--line", "--line-strong", "--ease-out", "--ease-in-out"]) expect(css, name).toMatch(new RegExp(`\\s${name}:\\s`));

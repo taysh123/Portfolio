@@ -11,7 +11,7 @@ import { DUR, easeOutExpo } from "@/lib/motion";
 import { useFocusTrap, useScrollLock } from "@/lib/useFocusTrap";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
 import { cn } from "@/lib/cn";
-import { glideTo } from "@/lib/scroll";
+import { glideTo, jumpTo } from "@/lib/scroll";
 import { paletteOpenRequested, clearPaletteOpenRequest } from "@/lib/palette";
 
 type Command = {
@@ -84,12 +84,13 @@ export function CommandPalette() {
 
   const commands: Command[] = useMemo(() => {
     // Navigate AFTER the focus trap has restored focus on close: otherwise that restore pulls focus (and
-    // the scroll) back to wherever the palette was opened from. "Home" lands on the hero at identity via
-    // the entrance (entrance:skip), since #hero lives inside the pinned stage.
+    // the scroll) back to wherever the palette was opened from.
     const go = (id: string) => () => {
       close();
       setTimeout(() => {
-        if (id === "hero") window.dispatchEvent(new Event("entrance:skip"));
+        // Home: straight to the top (through Lenis when it runs) with the page title focused, so the next Tab
+        // starts at the top of the content. Every other section glides to just under the header.
+        if (id === "hero") { jumpTo(0); document.getElementById("hero-title")?.focus({ preventScroll: true }); }
         else { const el = document.getElementById(id); if (el) glideTo(el); }
       }, 0);
     };

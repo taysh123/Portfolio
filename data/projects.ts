@@ -56,7 +56,7 @@ export type ProjectMedia = {
   /**
    * Serve these pre-encoded WebPs as they are, not through the image optimiser. T Poker's tall phone captures
    * failed to load through `/_next/image` on the Vercel Preview while plain static files were delivered fine
-   * (entrance frames, manifest); the files are already small, so the optimiser adds a failure point, not value.
+   * (other static assets); the files are already small, so the optimiser adds a failure point, not value.
    */
   direct?: boolean;
 };

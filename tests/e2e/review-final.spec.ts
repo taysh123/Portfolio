@@ -1,6 +1,6 @@
 // tests/e2e/review-final.spec.ts — regressions for the final pre-PR review (findings #2–#8).
 import { test, expect, type Page } from "playwright/test";
-const skip = async (page: Page) => { await page.goto("/"); await page.locator("[data-skip-intro]").click(); await expect(page.locator("html")).toHaveAttribute("data-entrance-done", "true"); };
+const skip = async (page: Page) => { await page.goto("/"); };
 
 test("#2 chat and accessibility never stack: opening one closes the other", async ({ page }) => {
   await skip(page);
