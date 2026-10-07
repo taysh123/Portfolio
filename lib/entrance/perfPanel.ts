@@ -2,8 +2,11 @@
  * `?entrancePerf=1` — a temporary, opt-in diagnostics panel for the entrance, meant for measuring on a real
  * phone and sending the numbers back. Loaded as its own chunk only when the parameter is present; normal
  * visitors never download or run it. It records performance numbers only: framing, tier, format, viewport,
- * device pixel ratio, frame cadence, draw paths, decode times and decoded-bitmap memory. No identifiers, no
- * user agent, nothing sent anywhere — the numbers leave the page only when the viewer copies or shares them.
+ * device pixel ratio, frame cadence, draw paths, decode times and decoded-bitmap memory; the live scroll
+ * progress against the frame asked for and the frame on screen, the video's media time, readyState and
+ * buffered/seekable ranges; and the device class (pointer type, core count, memory, connection type) the
+ * numbers came from. No identifiers, no user agent, nothing sent anywhere — the numbers leave the page only
+ * when the viewer copies or shares them.
  *
  * Optional experiment parameters (also only with entrancePerf=1):
  *   entranceFormat=avif|webp     force the frame format (webp exists for the phone portrait tier only)
@@ -48,7 +51,7 @@ export function install() {
   if (cad === "auto" || cad === "full" || cad === "30") x.cadence = cad;
   w.__ENTRANCE_EXP__ = x;
 
-  let S = fresh(), fetchStart0 = 0, lastScroll = -1e9, lastRaf = 0, lastP = 0, lastDrawn: number | null = null;
+  let S = fresh(), fetchStart0 = 0, lastScroll = -1e9, lastRaf = 0, lastP = 0, lastDrawn: number | null = null, lastWant = -1;
   let g: { t0: number; y0: number; p0: number; wheel: number; frames: number; t1: number } | null = null;
   const endGesture = () => {
     if (!g) return;
@@ -85,7 +88,7 @@ export function install() {
       if (f.seekToPresentMs !== undefined) { S.seekToPresent.push(f.seekToPresentMs); if (S.seekToPresent.length > 500) S.seekToPresent.shift(); }
     },
     render: (r) => {
-      lastP = r.p;
+      lastP = r.p; if (r.want >= 0) lastWant = r.want;
       if (r.skipped) { S.skips++; return; }
       if (r.drawn !== null && r.drawn !== lastDrawn) { if (g) g.frames += Math.abs(r.drawn - (lastDrawn ?? r.drawn)); lastDrawn = r.drawn; if (r.moving || performance.now() - lastScroll < 150) S.updates++; }
       if (!r.moving) return;
@@ -115,6 +118,12 @@ export function install() {
     const vid = document.querySelector<HTMLVideoElement>(".entrance__video");
     const buffered = vid && vid.duration ? Array.from({ length: vid.buffered.length }, (_, i) => vid.buffered.end(i) - vid.buffered.start(i)).reduce((a, b) => a + b, 0) / vid.duration : null;
     const lg = S.gestures.at(-1), gs = S.gestures;
+    // Live state: where the scroll is, what was asked for and what is on screen; media ranges; the device.
+    const ranges = (tr?: TimeRanges) => (tr && tr.length ? Array.from({ length: tr.length }, (_, i) => `${tr.start(i).toFixed(2)}–${tr.end(i).toFixed(2)}`).join(",") + " s" : "—");
+    const nav = navigator as Navigator & { deviceMemory?: number; connection?: { effectiveType?: string; rtt?: number; downlink?: number; saveData?: boolean } };
+    const cn = nav.connection, coarse = matchMedia("(pointer: coarse)").matches;
+    const live = `live: p ${lastP.toFixed(4)} · wanted ${lastWant} · on screen ${lastDrawn ?? "—"}${vid ? ` · media t ${vid.currentTime.toFixed(3)} s · seeking ${vid.seeking} · readyState ${vid.readyState} · buffered ${ranges(vid.buffered)} · seekable ${ranges(vid.seekable)}` : ""}`;
+    const device = `device: ${coarse ? "touch (coarse pointer)" : "fine pointer"} · ${navigator.hardwareConcurrency ?? "?"} cores${nav.deviceMemory ? ` · ${nav.deviceMemory} GB` : ""} · DPR ${devicePixelRatio} · ${innerWidth}×${innerHeight}${cn ? ` · net ${cn.effectiveType ?? "?"}${cn.rtt !== undefined ? `, rtt ${cn.rtt} ms` : ""}${cn.downlink !== undefined ? `, ${cn.downlink} Mb/s` : ""}${cn.saveData ? ", save-data" : ""}` : ""}`;
     const dropPct = dts.length ? (100 * dropped) / (dts.length + dropped) : 0;
     // A first reading of where the time goes; the raw numbers above it are what matters.
     const hints = [
@@ -131,6 +140,7 @@ export function install() {
       text: [
         `entrancePerf · ${c ? `${c.player} · ${c.framing} · ${c.player === "video" ? `${c.format} ${c.tier}px · ${c.count} samples` : `tier ${c.tier} · ${c.format} · ${c.count} frames`} · pacing ${c.pacing}, runway ${Math.round(c.runwayPx)} px` : "loading"}`,
         c ? `viewport ${c.vw}×${c.vh} @${c.dpr} · canvas ${c.canvasW}×${c.canvasH} · mode ${c.mode} · cadence ${c.cadence}` : "",
+        live, device,
         `rAF while scrolling: n ${dts.length} · avg ${f1(avg(dts))} · p95 ${f1(pct(dts, 0.95))} ms · dropped ${f1(dropPct)}% · picture updates ${f1(fps)}/s`,
         lg ? `last gesture: ${lg.scrollPx} px scroll${lg.wheelPx ? ` (wheel ${lg.wheelPx})` : ""} in ${lg.ms} ms → Δp ${lg.dp} · ${lg.beats} beat edges · ${lg.frames} frames` : "gestures: —",
         gs.length ? `gestures (${gs.length}): avg |Δp| ${(avg(gs.map((x) => Math.abs(x.dp)))).toFixed(3)} · avg beat edges ${f1(avg(gs.map((x) => x.beats)))}` : "",
@@ -154,7 +164,8 @@ export function install() {
         presentedPerSec: +f1(scrollingS ? S.presented / scrollingS : 0), seekToPresentMs: { p50: +f1(pct(S.seekToPresent, 0.5)), p95: +f1(pct(S.seekToPresent, 0.95)) },
         processingMs: S.processing.length ? +f1(avg(S.processing)) : null, presentDelayMs: S.delays.length ? +f1(avg(S.delays)) : null,
         fps: +f1(fps), seekMs: { n: S.seeks.length, avg: +f1(avg(S.seeks)), p95: +f1(pct(S.seeks, 0.95)) }, late: S.late,
-        video: vid ? { buffered: buffered === null ? null : +buffered.toFixed(3), readyState: vid.readyState } : null, gestures: S.gestures, hints },
+        video: vid ? { buffered: buffered === null ? null : +buffered.toFixed(3), readyState: vid.readyState, currentTime: +vid.currentTime.toFixed(3), seekable: ranges(vid.seekable) } : null,
+        live: { p: +lastP.toFixed(4), wanted: lastWant, onScreen: lastDrawn }, device, gestures: S.gestures, hints },
     };
   };
   (window as unknown as { __entrancePerf?: () => ReturnType<typeof report> }).__entrancePerf = report;

@@ -14,7 +14,9 @@ import { profiler, experiment } from "@/lib/entrance/profile";
 import { VideoPlayer } from "@/lib/entrance/VideoPlayer";
 import { progressAt, type Pacing } from "@/lib/entrance/pacing";
 
-const VEIL = 0.72; // near-black over the studio at p = 0; matches the CSS first paint
+// Over the room at p = 0, for the title's legibility; matches the CSS first paint. The film itself opens dark
+// (blue hour), so the veil only deepens it slightly and lifts with the camera's first move.
+const VEIL = 0.45;
 const CHAPTERS: [number, string][] = [[BEATS.lift[0], "01 — Scroll to begin"], [BEATS.lid[0], "02 — Scroll to open"], [BEATS.identity[0], "03 — Welcome"]];
 const REVEALS: [string, number][] = [["[data-hero-line='1']", 0.9], ["[data-hero-line='2']", 0.92], ["[data-hero-lead]", 0.94], ["[data-hero-ctas]", 0.96]];
 
@@ -211,7 +213,8 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       s.player = pickPlayer(set, kind, s.vw, s.vh, s.forceCanvas);
       if (s.player === "video") return bootVideo(gen, set, kind, posterImg);
       s.set = set; s.tier = tier; s.format = format; s.fetchConcurrency = fetchConcurrency; s.poster = posterImg; s.drawnKey = ""; sizeCanvas();
-      const stillIndex = set.frames.findIndex((f) => f.file === "k1-on");
+      // The frame at the identity beat (the display awake, the camera at rest-pace): kept decoded, loaded early.
+      const stillIndex = set.frames.reduce((best, f, i) => (Math.abs(f.p - BEATS.identity[0]) < Math.abs(set.frames[best].p - BEATS.identity[0]) ? i : best), 0);
       const keep = [0, stillIndex, set.pushEndIndex].filter((i) => i >= 0);
       const store = new FrameStore<ImageBitmap>({
         count: set.frames.length,
@@ -297,7 +300,7 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
     // The first push frame whose screen covers the viewport: from there the surface eases to identity.
     const computeContain = () => {
       const set = s.set; if (!set) return;
-      const fit = coverFit(set.width, set.height, s.vw, s.vh, 1.03);
+      const fit = coverFit(set.width, set.height, s.vw, s.vh, 1);
       const f = set.frames.find((fr) => fr.p >= BEATS.push[0] && fr.quad && containsRect(quadToViewport(fr.quad, set.width, set.height, fit), s.vw, s.vh));
       s.pContain = f ? f.p : BEATS.push[1];
     };
@@ -324,6 +327,11 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       put(surface, "transform", t.matrix); put(surface, "clip-path", t.clip);
       put(hero, "left", `${-t.box.x}px`); put(hero, "top", `${-t.box.y}px`);
       put(surface, "pointer-events", p >= identityP ? "auto" : "none");
+      // On the display the page is light emitted under cover glass: the rendered frame below carries the glass's
+      // reflections (the display renders as black glass), and the page adds to them (plus-lighter, as emitted
+      // light does). At identity the page is the page again: normal blending, opaque.
+      const glass = p < identityP ? "1" : "";
+      if ((surface.dataset.glass ?? "") !== glass) { if (glass) surface.dataset.glass = glass; else delete surface.dataset.glass; }
     };
 
     // Inside the screen: boot log → identity card → the card lands as the name line, the hero rises in.
@@ -368,7 +376,8 @@ export function EntranceStage({ children }: { children: React.ReactNode }) {
       }
       if (ts !== undefined) c.lastPaintTs = ts;
       s.p = p;
-      const zoom = 1 + 0.03 * segment(p, ...BEATS.lift, easeOut);
+      // No synthetic zoom: the camera itself moves from the first scroll (v2 film).
+      const zoom = 1;
       // Frames crossed since the last draw. Blending stops at ≥ 1.25 frames per display frame and resumes
       // below 0.75 (hysteresis, so a speed near the threshold does not flicker between the two).
       let speed = 0;

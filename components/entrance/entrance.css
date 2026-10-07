@@ -6,8 +6,13 @@
 .entrance__stage { position: sticky; top: 0; height: 100svh; overflow: hidden; background: var(--bg); isolation: isolate; }
 .entrance__canvas, .entrance__poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 /* Near-black, not black: the studio reads through it at p = 0 (spec §4.1 Arrival). */
-.entrance__veil { position: absolute; inset: 0; background: #000; opacity: 0.72; pointer-events: none; }
+.entrance__veil { position: absolute; inset: 0; background: #000; opacity: 0.45; pointer-events: none; }
 .entrance__surface { position: absolute; left: 0; top: 0; transform-origin: 0 0; background: var(--screen); opacity: 0; will-change: transform, opacity; }
+/* The page on the laptop's display: emitted light added to the glass reflections rendered in the frame below
+   (EntranceStage sets data-glass until identity). screen() where plus-lighter is not supported: nearly additive
+   for the dark reflections involved. */
+.entrance__surface[data-glass] { mix-blend-mode: screen; }
+@supports (mix-blend-mode: plus-lighter) { .entrance__surface[data-glass] { mix-blend-mode: plus-lighter; } }
 .entrance__surface > .entrance__hero { position: absolute; width: 100vw; height: 100svh; background: var(--bg); }
 .entrance__still { display: none; }
 /* Bottom centre: the corners belong to the chat and accessibility buttons. */

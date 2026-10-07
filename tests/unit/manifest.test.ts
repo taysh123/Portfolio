@@ -54,8 +54,13 @@ describe("validateManifest", () => {
   });
   it("requires provenance on a final (1920) set", () => {
     const m = man(); m.landscape.width = 1920;
-    expect(validateManifest(m)).toEqual(expect.arrayContaining(["final set: sources must hash data/projects.ts", "final set: verifyCounts must be recorded"]));
-    m.sources = { "data/projects.ts": "ab" }; m.verifyCounts = { Aegis: 105 };
+    expect(validateManifest(m)).toEqual(["final set: sources must hash data/projects.ts"]);
+    m.sources = { "data/projects.ts": "ab" };
+    expect(validateManifest(m)).toEqual([]);
+    // counts are optional (the v2 film draws none) but never recorded empty
+    m.verifyCounts = {};
+    expect(validateManifest(m)).toEqual(["final set: verifyCounts, when recorded, must not be empty"]);
+    m.verifyCounts = { Aegis: 105 };
     expect(validateManifest(m)).toEqual([]);
   });
 });

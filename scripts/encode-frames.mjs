@@ -1,5 +1,7 @@
 // PNG masters (design/render/blender/out) → public/entrance AVIF tiers + manifest.json.
-// usage: node scripts/encode-frames.mjs [--src DIR] [--dst DIR] [--only-framing landscape|portrait] [--check-budget]
+// usage: node scripts/encode-frames.mjs [--src DIR] [--dst DIR] [--only-framing landscape|portrait] [--check-budget] [--verify-counts]
+//   --verify-counts record the frozen VERIFY counts in the manifest — only for a film that draws them (v1's VERIFY
+//                   monitor; the v2 film has none)
 //   --only-framing  encode that framing's finished frames only (a partial batch chunk) into
 //                   DST/manifest.<kind>.json; manifest.json is not written. Frames whose AVIF is
 //                   newer than the master are skipped, so per-chunk runs stay incremental.
@@ -18,6 +20,10 @@ if (ONLY && !["landscape", "portrait"].includes(ONLY)) throw new Error(`--only-f
 // difference at device resolution (scripts/profile-entrance.mjs). Posters keep their own tier (POSTER_TIER).
 const TIERS = { landscape: [1280, 1920], portrait: [600, 720] };
 const POSTER_TIER = { landscape: 1280, portrait: 720 };
+// AVIF quality 72 (v1: 52). The v2 film is low-key (blue hour): at 52 its dark gradients showed 8×8 block structure
+// under a 4× contrast check, at 72 none; dark frames stay small (~13 KB at 1920 vs ~7.5 KB at 52), so the 194-frame
+// 1920 tier is ~2.6 MB, inside its 4 MB budget.
+const AVIF_Q = 72;
 // Phone portrait also ships a WebP copy of its 600 tier: decoded faster than AVIF on a phone CPU
 // (scripts/bench-frame-formats.mjs: 6.7 vs 9.8 ms/frame in Chromium), at the lowest quality whose SSIM
 // matches the AVIF's. Everything else — landscape, tablets, posters — stays AVIF only.
@@ -34,8 +40,8 @@ async function encodeFraming(kind, partial) {
   const meta = await Promise.all(names.map(async (n) => ({ n, ...JSON.parse(await fs.readFile(`${dir}/${n}.json`, "utf8")) })));
   const seq = meta.filter((m) => m.n !== "still").sort((a, b) => a.p - b.p);
   if (!seq.length) throw new Error(`${kind}: no frames in ${dir}`);
-  // pushEndIndex is written as the last frame: K2 / P2 must end the sequence.
-  if (!partial && !seq.at(-1).n.startsWith("push-")) throw new Error(`${kind}: the last frame is ${seq.at(-1).n}, not the push end`);
+  // pushEndIndex is written as the last frame: the push end (the display filling the frame) ends the sequence.
+  if (!partial && !seq.at(-1).quad) throw new Error(`${kind}: the last frame ${seq.at(-1).n} has no screen quad — not the push end`);
   const { width, height } = await sharp(`${dir}/${seq[0].n}.png`).metadata();
   const tiers = TIERS[kind].filter((t) => t <= width);
   if (!tiers.length) tiers.push(width); // preview masters are smaller than every tier; never upscale
@@ -44,7 +50,7 @@ async function encodeFraming(kind, partial) {
     await fs.mkdir(`${DST}/${kind}/${t}`, { recursive: true });
     for (const m of seq) {
       const src = `${dir}/${m.n}.png`, out = `${DST}/${kind}/${t}/${m.n}.avif`;
-      if (!fresh(src, out)) await sharp(src).resize(t).avif({ quality: 52, effort: 6 }).toFile(out);
+      if (!fresh(src, out)) await sharp(src).resize(t).avif({ quality: AVIF_Q, effort: 6 }).toFile(out);
     }
     const wq = WEBP[kind]?.[t];
     if (wq) for (const m of seq) {
@@ -55,10 +61,12 @@ async function encodeFraming(kind, partial) {
     const keep = new Set(seq.flatMap((m) => [`${m.n}.avif`, ...(wq ? [`${m.n}.webp`] : [])]));
     for (const f of await fs.readdir(`${DST}/${kind}/${t}`)) if (/\.(avif|webp)$/.test(f) && !keep.has(f)) await fs.rm(`${DST}/${kind}/${t}/${f}`);
   }
-  for (const [name, src] of [["poster", seq[0].n], ["still", "still"]]) {
+  // The still (reduced motion): a dedicated render when there is one, else the frame nearest the identity beat.
+  const stillSrc = existsSync(`${dir}/still.png`) ? "still" : seq.reduce((a, m) => (Math.abs(m.p - 0.53) < Math.abs(a.p - 0.53) ? m : a)).n;
+  for (const [name, src] of [["poster", seq[0].n], ["still", stillSrc]]) {
     if (!existsSync(`${dir}/${src}.png`)) continue; // a partial chunk may not have the still yet
     const pt = tiers.includes(POSTER_TIER[kind]) ? POSTER_TIER[kind] : tiers[0];
-    await sharp(`${dir}/${src}.png`).resize(pt).avif({ quality: 55 }).toFile(`${DST}/${name}-${kind}.avif`);
+    await sharp(`${dir}/${src}.png`).resize(pt).avif({ quality: AVIF_Q }).toFile(`${DST}/${name}-${kind}.avif`);
     await sharp(`${dir}/${src}.png`).resize(pt).jpeg({ quality: 80, mozjpeg: true }).toFile(`${DST}/${name}-${kind}.jpg`);
   }
   const webp = tiers.filter((t) => WEBP[kind]?.[t]);
@@ -76,7 +84,8 @@ if (ONLY) {
   await fs.writeFile(`${DST}/manifest.${ONLY}.json`, JSON.stringify(set));
   console.log("encoded", set.frames.length, ONLY, "(partial manifest)");
 } else {
-  const manifest = { version: 1, snapshot, ...(screens.sources && { sources: screens.sources }), ...(screens.verify_counts && { verifyCounts: screens.verify_counts }) };
+  const withCounts = process.argv.includes("--verify-counts");
+  const manifest = { version: 1, snapshot, ...(screens.sources && { sources: screens.sources }), ...(withCounts && screens.verify_counts && { verifyCounts: screens.verify_counts }) };
   // The phone scrub videos (scripts/encode-video.mjs) are encoded separately: keep their entries.
   const prev = existsSync(`${DST}/manifest.json`) ? JSON.parse(await fs.readFile(`${DST}/manifest.json`, "utf8")) : {};
   for (const kind of ["landscape", "portrait"]) {

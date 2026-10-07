@@ -1,6 +1,9 @@
 // Final PNG masters → a scrub video per framing, for touch devices (lib/entrance/VideoPlayer.ts).
 // usage: FFMPEG=/path/to/ffmpeg node scripts/encode-video.mjs [--src DIR] [--dst DIR] [--only portrait|landscape]
-//        [--samples N] [--keyint K] [--crf C] [--no-webm] [--check-budget] [--check-only]
+//        [--uniform N] [--keyint K] [--crf C] [--no-webm] [--check-budget] [--check-only]
+// v2 (default): every rendered frame is one video frame, at its own progress (manifest `video.ps`): the frames are
+// already spaced by on-screen motion (design/render/blender/v2/plan_frames.py), so nothing is synthesised.
+// --uniform N: v1 behaviour, N samples uniform in progress, each the canvas's cross-fade of its two neighbours.
 // Shipped with the defaults: 240 samples, a keyframe every 4, CRF 18. Keyframe interval measured 2026-10-06
 // (scripts/profile-entrance.mjs --video, phone portrait): every 4 cut seek p95 by up to ~40% and fast/cold dropped
 // frames from 12/18% to 5/12% against every 8; every 2 and all-intra gained nothing further for 39–100% more bytes.
@@ -23,7 +26,7 @@ const arg = (name, dflt) => { const i = process.argv.indexOf(name); return i > 0
 const SRC = arg("--src", "design/render/blender/out-final");
 const DST = arg("--dst", "public/entrance");
 const ONLY = arg("--only", null);
-const SAMPLES = Number(arg("--samples", 240));
+const UNIFORM = arg("--uniform", null) === null ? null : Number(arg("--uniform", 240));
 const KEYINT = Number(arg("--keyint", 4));
 const CRF = Number(arg("--crf", 18));
 const WEBM = !process.argv.includes("--no-webm");
@@ -58,7 +61,9 @@ async function encode(kind, manifest) {
     return cache.get(i);
   };
   const p0 = set.frames[0].p, p1 = set.frames.at(-1).p;
+  const SAMPLES = UNIFORM ?? set.frames.length;
   const frameAt = async (s) => {
+    if (UNIFORM === null) return raw(s);
     const p = p0 + ((p1 - p0) * s) / (SAMPLES - 1), r = resolve(p, set.frames);
     const A = await raw(r.a); if (r.w === 0 || r.a === r.b) return A;
     const B = await raw(r.b), out = Buffer.allocUnsafe(A.length), w = r.w;
@@ -80,7 +85,7 @@ async function encode(kind, manifest) {
     "-movflags", "+faststart", `${out}/scrub.mp4`], feed);
   if (WEBM) await run([...input, "-c:v", "libvpx-vp9", "-pix_fmt", "yuv420p", "-crf", String(CRF + 12), "-b:v", "0", "-g", String(KEYINT),
     "-deadline", "good", "-cpu-used", "2", "-row-mt", "1", `${out}/scrub.webm`], feed);
-  return { width: W, height: H, samples: SAMPLES, fps: FPS, p0, p1, keyint: KEYINT };
+  return { width: W, height: H, samples: SAMPLES, fps: FPS, p0, p1, keyint: KEYINT, ...(UNIFORM === null && { ps: set.frames.map((f) => f.p) }) };
 }
 
 const manifestPath = `${DST}/manifest.json`;

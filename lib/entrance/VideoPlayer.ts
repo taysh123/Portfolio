@@ -1,5 +1,6 @@
 import type { VideoMeta } from "./types";
 import { profiler } from "./profile";
+import { nearestIndex } from "./frames";
 
 /**
  * Scroll-scrubbed video for phones (the canvas image sequence stays for tablets and desktop, and as the A/B
@@ -10,8 +11,8 @@ import { profiler } from "./profile";
  * A <video> is decoded by the hardware decoder and composited as its own layer: no main-thread decode, no
  * canvas upload, a few decoded frames of memory instead of a window of full bitmaps.
  *
- * The video (scripts/encode-video.mjs) holds `samples` frames uniform in progress between `p0` and `p1`, each
- * one the canvas's exact approved cross-fade, so progress → frame is arithmetic.
+ * The video (scripts/encode-video.mjs) holds `samples` frames, each a rendered frame at its own progress
+ * (`ps`, listed in the manifest; v1 videos are uniform in progress between `p0` and `p1` instead).
  *
  * Seeking: at most one seek in flight, always to the newest target. A seek issued while another runs would
  * cancel it (WebKit), and a stream of them during a swipe can leave nothing ever finishing — a freeze; queued
@@ -75,11 +76,16 @@ export class VideoPlayer {
     const p = this.el.play(); if (p) p.then(() => { this.el.pause(); this.requested = -1; this.pump(); }, () => {});
   }
 
+  /** The sample to show for progress p: the nearest one (by its own progress when the manifest lists them). */
   sampleAt(p: number) {
-    const { p0, p1, samples } = this.o.meta;
+    const { p0, p1, samples, ps } = this.o.meta;
+    if (ps?.length === samples) return nearestIndex(ps, p);
     return Math.max(0, Math.min(samples - 1, Math.round(((p - p0) / (p1 - p0)) * (samples - 1))));
   }
-  progressOf(sample: number) { const { p0, p1, samples } = this.o.meta; return p0 + ((p1 - p0) * sample) / (samples - 1); }
+  progressOf(sample: number) {
+    const { p0, p1, samples, ps } = this.o.meta;
+    return ps?.length === samples ? ps[sample] : p0 + ((p1 - p0) * sample) / (samples - 1);
+  }
 
   seekTo(p: number) { this.target = this.sampleAt(p); this.pump(); }
   get wanted() { return this.target; }

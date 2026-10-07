@@ -35,10 +35,11 @@ export function validateManifest(m: Manifest): string[] {
   if (!/^[0-9a-f]{7,}$/.test(m.snapshot)) errs.push("snapshot must be a git hash");
   checkSet("landscape", m.landscape, errs);
   checkSet("portrait", m.portrait, errs);
-  // The final set (1920 masters) must carry its texture provenance; preview sets predate it.
+  // The final set (1920 masters) must carry its texture provenance; preview sets predate it. Counts are
+  // recorded only by a film that draws them (v1's VERIFY monitor); when recorded they must not be empty.
   if (m.landscape.width >= 1920) {
     if (!m.sources?.["data/projects.ts"]) errs.push("final set: sources must hash data/projects.ts");
-    if (!m.verifyCounts || !Object.keys(m.verifyCounts).length) errs.push("final set: verifyCounts must be recorded");
+    if (m.verifyCounts && !Object.keys(m.verifyCounts).length) errs.push("final set: verifyCounts, when recorded, must not be empty");
   }
   return errs;
 }

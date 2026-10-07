@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { resolveFrame, loadOrder, pickFramingKind, pickTier, pickFormat, lerpQuad } from "@/lib/entrance/frames";
+import { nearestIndex, resolveFrame, loadOrder, pickFramingKind, pickTier, pickFormat, lerpQuad } from "@/lib/entrance/frames";
 
 const frames = [{ p: 0.12 }, { p: 0.2 }, { p: 0.38 }, { p: 0.53 }, { p: 0.68 }, { p: 0.88 }];
 
@@ -68,4 +68,11 @@ describe("pickFormat", () => {
     expect(pickFormat(set, "landscape", 600, 390)).toBe("avif");     // landscape keeps AVIF
     expect(pickFormat({}, "portrait", 600, 390)).toBe("avif");       // a manifest without WebP
   });
+});
+
+describe("nearestIndex (v2 video samples at their own progress)", () => {
+  const ps = [0, 0.01, 0.03, 0.06, 0.1];
+  it("clamps below and above", () => { expect(nearestIndex(ps, -1)).toBe(0); expect(nearestIndex(ps, 2)).toBe(4); });
+  it("picks the nearest, not the floor", () => { expect(nearestIndex(ps, 0.024)).toBe(2); expect(nearestIndex(ps, 0.016)).toBe(1); });
+  it("exact hits and ties", () => { expect(nearestIndex(ps, 0.06)).toBe(3); expect(nearestIndex([0, 0.25, 0.5], 0.375)).toBe(1); });
 });

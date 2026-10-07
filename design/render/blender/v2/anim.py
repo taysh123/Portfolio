@@ -56,6 +56,7 @@ def main():
     ap.add_argument("--out", required=True); ap.add_argument("--w", type=int, default=0); ap.add_argument("--h", type=int, default=0)
     ap.add_argument("--spp", type=int, default=64); ap.add_argument("--noise", type=float, default=0.01)
     ap.add_argument("--first", type=int, default=0); ap.add_argument("--last", type=int, default=-1)
+    ap.add_argument("--still", default="", help="render the reduced-motion still at this p, display lit with this texture");
     ap.add_argument("--stride", type=int, default=1); ap.add_argument("--progressive", action="store_true"); ap.add_argument("--resume", action="store_true")
     ap.add_argument("--exposure", type=float, default=None); ap.add_argument("--state", default="")
     a = ap.parse_args(argv)
@@ -72,7 +73,11 @@ def main():
         LOOK_OVERRIDES.update(json.loads(os.environ["V2_LOOK"]))
     for k, v in LOOK_OVERRIDES.items():
         scene_v2.LOOK[k] = v
-    hd = scene_v2.build({"lid_deg": 0.0, "screen": 1.0, "backlight": 1.0, "spill": 1.0,
+    still_tex = a.still or None
+    if still_tex:
+        # the reduced-motion still: one frame, the display lit with the page's identity card (no DOM over it)
+        ps = [ps[0]] if not a.p else ps
+    hd = scene_v2.build({"lid_deg": 0.0, "screen": 1.0, "backlight": 1.0, "spill": 1.0, "screen_tex": still_tex,
                          "monitor_tex": os.path.join(TEX, "monitor.png"), **STATE}, TEX)
     scene = hd["scene"]
     cd = bpy.data.cameras.new("cam"); cam = bpy.data.objects.new("cam", cd); scene.collection.objects.link(cam)
@@ -113,7 +118,7 @@ def main():
         spill.data.energy = spill_full * q["screen"]
         kc_mul.inputs[1].default_value = kc_full * q["screen"]
         bpy.context.view_layer.update()
-        path = os.path.join(out, f"f{k:04d}")
+        path = os.path.join(out, "still" if still_tex else f"f{k:04d}")
         scene.render.filepath = path + ".png"
         t0 = time.time()
         bpy.ops.render.render(write_still=True)

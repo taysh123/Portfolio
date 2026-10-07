@@ -9,6 +9,16 @@ export function resolveFrame(p: number, frames: { p: number }[]) {
   return { a: lo, b: hi, w: (p - frames[lo].p) / (frames[hi].p - frames[lo].p) };
 }
 
+/** Index of the value in the ascending list `ps` nearest to p (ties go to the lower index). */
+export function nearestIndex(ps: number[], p: number): number {
+  const n = ps.length;
+  if (p <= ps[0]) return 0;
+  if (p >= ps[n - 1]) return n - 1;
+  let lo = 0, hi = n - 1;
+  while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (ps[mid] <= p) lo = mid; else hi = mid; }
+  return p - ps[lo] <= ps[hi] - p ? lo : hi;
+}
+
 export function loadOrder(n: number, o: { stillIndex: number; pushEndIndex: number; lidEnd: number; saveData: boolean }): number[] {
   const out: number[] = [];
   const push = (i: number) => { if (i >= 0 && i < n && !out.includes(i)) out.push(i); };
