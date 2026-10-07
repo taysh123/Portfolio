@@ -127,9 +127,9 @@ def screen_level(p):
     return t * t * (3 - 2 * t)
 
 
-def pose(p, kind="landscape"):
+def pose(p, kind="landscape", keys=None, lens=None, fstop=None):
     """→ {cam, target, lens, fstop, focus, lid_deg, screen}"""
-    keys = KEYS[kind]
+    keys = keys or KEYS[kind]
     xs = [k[0] for k in keys]
     az = pchip(xs, [k[1] for k in keys], p)
     el = pchip(xs, [k[2] for k in keys], p)
@@ -138,5 +138,5 @@ def pose(p, kind="landscape"):
     a, e = math.radians(az), math.radians(el)
     d = (-math.sin(a) * math.cos(e), -math.cos(a) * math.cos(e), math.sin(e))
     cam = tuple(tg[i] + d[i] * di for i in range(3))
-    return {"cam": cam, "target": tuple(tg), "lens": LENS, "fstop": FSTOP, "focus": tuple(tg), "lid_deg": lid_deg(p),
+    return {"cam": cam, "target": tuple(tg), "lens": lens or LENS, "fstop": fstop or FSTOP, "focus": tuple(tg), "lid_deg": lid_deg(p),
             "screen": screen_level(p), "az": az, "el": el, "dist": di}

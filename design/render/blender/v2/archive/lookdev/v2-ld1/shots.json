@@ -1,0 +1,5 @@
+[
+ {"name":"A_closed34","cam":[-0.46,-0.74,0.30],"target":[0.0,0.02,0.02],"lens":50,"fstop":4.0,"focus":[-0.05,-0.08,0.012],"lid":0,"w":960,"h":540,"spp":32},
+ {"name":"B_open_front","cam":[0.02,-0.78,0.24],"target":[0.0,0.08,0.13],"lens":50,"fstop":4.0,"focus":"screen","lid":108,"screen":1.0,"backlight":0.4,"screen_tex":"/home/user/Tay-Shofer---Portfolio/design/render/blender/frozen/screen_laptop.png","w":960,"h":540,"spp":32},
+ {"name":"C_deck_close","cam":[-0.16,-0.30,0.13],"target":[0.0,0.02,0.01],"lens":65,"fstop":2.8,"focus":[-0.04,-0.04,0.012],"lid":108,"screen":1.0,"backlight":0.4,"screen_tex":"/home/user/Tay-Shofer---Portfolio/design/render/blender/frozen/screen_laptop.png","w":960,"h":540,"spp":32}
+]

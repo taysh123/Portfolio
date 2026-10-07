@@ -13,7 +13,9 @@ sys.path.insert(0, HERE)
 import bpy  # noqa: E402
 from bpy_extras.object_utils import world_to_camera_view  # noqa: E402
 from mathutils import Vector  # noqa: E402
+import importlib  # noqa: E402
 import scene_v2  # noqa: E402
+S = importlib.import_module(os.environ.get("V2_SCENE", "scene_v2"))  # noqa: E402
 
 TEX = os.environ.get("V2_TEX", os.path.join(HERE, "tex"))
 
@@ -71,7 +73,7 @@ def render_shot(s, out):
     state = {"lid_deg": s.get("lid", 0.0), "screen": s.get("screen", 0.0), "backlight": s.get("backlight", 0.0),
              "screen_tex": s.get("screen_tex"), "monitor_tex": s.get("monitor_tex", os.path.join(TEX, "monitor.png")), **s.get("state", {})}
     t0 = time.time()
-    h = scene_v2.build(state, TEX)
+    h = S.build(state, TEX)
     scene = h["scene"]
     cam = setup_camera(scene, s, s.get("h", 540) > s.get("w", 960))
     bpy.context.view_layer.update()

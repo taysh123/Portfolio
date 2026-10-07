@@ -77,3 +77,11 @@ See the commit "Entrance v2 scene…" for the scene; runtime changes:
 ## 5. Measurements
 
 (filled in below as the final frames land)
+
+## 6. Frozen (2026-10-07)
+
+The user paused all entrance work at tag `entrance-v3-frozen-2026-10-07`. Nothing here ships to Production. State at the freeze:
+
+- **v2**: the scene, runtime and coarse frame set (25 landscape and 20 portrait) are committed and live on a Preview. The full 194/158-frame render was stopped part-way. The frames it finished are archived in `design/render/blender/v2/archive/v2-final-frames`.
+- **v3**: this is the reference-driven rich workstation, made of `scene_v3.py` (room, three monitors, shelving, corner window, city) and `camera_v3.py` (50 mm, a room-wide establishing shot pushing in to 0.45 m). It reached look-dev only: one look-dev frame and the lens test, archived in `archive/lookdev/v3-*`. No v3 sequence was rendered.
+- **To resume**: run `V2_SCENE=scene_v3 V2_CAMERA=camera_v3 bpyenv/bin/python v2/anim.py --kind landscape --p 0,0.25,0.5,0.75,1 --out OUT --spp 24`. Each frame costs about 131 s on 4 CPU cores at 24 spp, so a full sequence takes many hours.

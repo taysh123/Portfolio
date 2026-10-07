@@ -19,9 +19,12 @@ sys.path.insert(0, HERE)
 import bpy  # noqa: E402
 from bpy_extras.object_utils import world_to_camera_view  # noqa: E402
 from mathutils import Vector  # noqa: E402
+import importlib  # noqa: E402
 import scene_v2  # noqa: E402
 import camera_v2  # noqa: E402
 from shot import configure  # noqa: E402
+SCENE = importlib.import_module(os.environ.get("V2_SCENE", "scene_v2"))  # noqa: E402
+CAMERA = importlib.import_module(os.environ.get("V2_CAMERA", "camera_v2"))  # noqa: E402
 
 TEX = os.environ.get("V2_TEX", os.path.join(HERE, "tex"))
 # Approved look-dev balance (v2 look-dev, 2026-10-06: S3)
@@ -74,17 +77,18 @@ def main():
     for k, v in LOOK_OVERRIDES.items():
         scene_v2.LOOK[k] = v
     still_tex = a.still or None
+    lookdev_tex = os.environ.get("V2_LOOKDEV_TEX")      # look-dev sheets only: show a stand-in for the page once awake
     if still_tex:
         # the reduced-motion still: one frame, the display lit with the page's identity card (no DOM over it)
         ps = [ps[0]] if not a.p else ps
-    hd = scene_v2.build({"lid_deg": 0.0, "screen": 1.0, "backlight": 1.0, "spill": 1.0, "screen_tex": still_tex,
+    hd = SCENE.build({"lid_deg": 0.0, "screen": 1.0, "backlight": 1.0, "spill": 1.0, "screen_tex": still_tex or lookdev_tex,
                          "monitor_tex": os.path.join(TEX, "monitor.png"), **STATE}, TEX)
     scene = hd["scene"]
     cd = bpy.data.cameras.new("cam"); cam = bpy.data.objects.new("cam", cd); scene.collection.objects.link(cam)
-    cd.lens, cd.sensor_width, cd.sensor_fit = camera_v2.LENS, 36.0, "HORIZONTAL"
+    cd.lens, cd.sensor_width, cd.sensor_fit = CAMERA.LENS, 36.0, "HORIZONTAL"
     if a.kind == "portrait":
         cd.sensor_fit, cd.sensor_height = "VERTICAL", 36.0
-    cd.dof.use_dof, cd.dof.aperture_fstop, cd.dof.aperture_blades, cd.dof.aperture_rotation = True, camera_v2.FSTOP, 9, 0.2
+    cd.dof.use_dof, cd.dof.aperture_fstop, cd.dof.aperture_blades, cd.dof.aperture_rotation = True, CAMERA.FSTOP, 9, 0.2
     scene.camera = cam
     spill = bpy.data.objects["screen_spill"]
     spill_full = spill.data.energy
@@ -110,13 +114,15 @@ def main():
         p = ps[k]
         if a.resume and os.path.exists(os.path.join(out, f"f{k:04d}.json")):
             continue
-        q = camera_v2.pose(p, a.kind)
+        q = CAMERA.pose(p, a.kind)
         cam.location = q["cam"]
         cam.rotation_euler = (Vector(q["target"]) - Vector(q["cam"])).to_track_quat("-Z", "Y").to_euler()
         cd.dof.focus_distance = (Vector(q["focus"]) - Vector(q["cam"])).length
         pivot.rotation_euler = (math.radians(-q["lid_deg"]), 0, 0)
         spill.data.energy = spill_full * q["screen"]
         kc_mul.inputs[1].default_value = kc_full * q["screen"]
+        if lookdev_tex and not still_tex:
+            bpy.data.materials["display"].node_tree.nodes["Principled BSDF"].inputs["Emission Strength"].default_value = q["screen"]
         bpy.context.view_layer.update()
         path = os.path.join(out, "still" if still_tex else f"f{k:04d}")
         scene.render.filepath = path + ".png"
