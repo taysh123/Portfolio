@@ -1,0 +1,19 @@
+/* ── About (M10) ── white, a reading measure, one photograph. */
+.about { padding-block: var(--section-y); background: var(--bg-raised); }
+.about__grid { display: grid; gap: 2rem; }
+.about__title { font-size: var(--text-h2); line-height: 1; letter-spacing: var(--tracking-display); font-weight: 620; color: var(--fg); }
+.about__title span { color: var(--fg-subtle); }
+.about__p { max-width: 34em; font-size: clamp(1.0625rem, 1rem + 0.2vw, 1.1875rem); line-height: 1.6; color: var(--fg-muted); }
+.about__p + .about__p { margin-top: 1.125rem; }
+.about__facts { list-style: none; margin: 2rem 0 0; padding: 1.25rem 0 0; border-top: 1px solid var(--border); max-width: 34em; display: flex; flex-wrap: wrap; gap: 0.25rem 0; font-size: 0.9375rem; color: var(--fg-muted); }
+.about__facts li:not(:last-child)::after { content: "·"; margin: 0 0.6em; color: var(--fg-subtle); }
+.about__photo { margin: 0; }
+.about__photo img { display: block; width: 100%; height: auto; border-radius: 14px; background: #0b0d12; }
+.about__photo figcaption { margin-top: 0.75rem; font-size: 0.875rem; color: var(--fg-subtle); }
+.about__photo figcaption b { color: var(--fg); font-weight: 560; }
+@media (min-width: 1024px) {
+  .about__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "title body" "photo body"; column-gap: clamp(3rem, 6vw, 5rem); row-gap: 2.5rem; align-items: start; }
+  .about__title { grid-area: title; }
+  .about__body { grid-area: body; padding-top: 0.5rem; }
+  .about__photo { grid-area: photo; }
+}

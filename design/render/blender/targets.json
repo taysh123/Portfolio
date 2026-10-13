@@ -1,0 +1,8 @@
+{
+  "_why": "Calibrated to the APPROVED preview composition (K0/K1/K2 approved 2026-09-25; Plan 1 camera keys), measured at look-dev quality on 2026-09-26, ±10%. Geometric targets only. Light balance, hue lock, black floor and corner blur are never calibrated. Spec values: K0 laptop 0.25–0.29, K1 0.44–0.48, P0 0.40–0.50, P1 0.80–0.90, K0 title-zone P95 ≤ 0.15.",
+  "K0": { "laptop_width": [0.374, 0.457], "title_p95": [0, 0.254] },
+  "K1off": { "laptop_width": [0.475, 0.58] },
+  "K1on": { "laptop_width": [0.475, 0.58] },
+  "P0": { "laptop_width": [0.48, 0.588] },
+  "P1": { "laptop_width": [0.9, 1.0] }
+}
