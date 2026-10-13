@@ -1,0 +1,148 @@
+/* ── Hero (M10) ───────────────────────────────────────────────────────────────────────────────────────────────────
+   Paper, a headline, one line of range, then the four products as plates. Each plate is a caption above a stage; the
+   caption is in normal flow, so however it wraps the device below it moves down instead of under it.
+
+   The plates change shape instead of shrinking past the point where they read:
+   - from 1240px, one row rising from the hero's bottom edge, widths following the products (T Poker, the shipped
+     one, widest). Below 1240 the narrowest plate drops under ~190px and the two windows under ~260px, so:
+   - 640–1239px, an intentional 2×2 of landscape plates after the copy;
+   - below 640px, a 2×2 mosaic of small plates;
+   - short landscape screens (a phone on its side), copy and a 2×2 side by side, both inside the first screen.
+
+   A window is a capture fitted to its width, never cropped sideways: the crops themselves end where no text crosses
+   the edge (scripts/m10-images.mjs). It hangs from the top of its stage; a capture taller than the stage runs off the
+   plate's bottom edge, a shorter one ends in its own rounded corners. */
+.hero { position: relative; display: flex; flex-direction: column; padding-top: var(--nav-h); background: linear-gradient(180deg, var(--bg) 0%, var(--bg) 55%, var(--bg-low) 100%); }
+.hero__copy { display: grid; gap: 1rem; padding-top: clamp(1.25rem, 4.5vh, 3rem); }
+.hero__title { font-size: var(--text-display); line-height: 0.98; letter-spacing: var(--tracking-display); font-weight: 620; color: var(--fg); max-width: 13ch; }
+.hero__title:focus { outline: none; }
+.hero__lead { font-size: var(--text-lead); line-height: 1.5; color: var(--fg-muted); max-width: 34em; text-wrap: balance; }
+.hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.5rem; margin-top: 1.5rem; }
+
+.plates { display: grid; gap: 12px; margin-top: clamp(2rem, 5.5vh, 3.5rem); }
+.tile { position: relative; display: flex; flex-direction: column; overflow: hidden; isolation: isolate; border-radius: 18px 18px 0 0; }
+.tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 18px 18px 0 0; }
+.tile__cap { display: flex; align-items: flex-start; gap: 10px; padding: 18px 20px 0; font-size: 0.84375rem; line-height: 1.35; }
+.tile__cap b { display: block; font-size: 0.9375rem; font-weight: 600; letter-spacing: -0.01em; }
+.tile__cap > span, .tile__cap b + span { display: block; }
+/* A long state (T Poker's three platforms) wraps evenly on the narrowest plates instead of leaving one word alone. */
+.tile__cap b + span { text-wrap: balance; }
+.tile__icon img { display: block; width: 22px; height: auto; border-radius: 5px; margin-top: 1px; }
+/* The stage: whatever height the caption leaves; the devices hang from its top and are cut by the plate's edge. */
+/* Each plate's stage is a composition of captures: the same on the Hebrew page (the captures never mirror). */
+.tile__stage { direction: ltr; position: relative; flex: 1 1 auto; min-height: 0; margin-top: 18px; }
+/* Hover lifts the device, not the plate: the plate stays flush with the chapter below (no seam opens under it). */
+.tile__phone, .tile__win { transition: translate 280ms var(--ease-out); }
+@media (hover: hover) and (pointer: fine) { .tile:hover :is(.tile__phone, .tile__win) { translate: 0 -8px; } }
+
+/* Each plate's surface and inks: the same hues as the chapters below. */
+.tile--poker { background: linear-gradient(180deg, #0d1a2e 0%, var(--plate-poker) 70%); color: #a9b6cb; }
+.tile--poker b { color: #ffffff; }
+.tile--aegis { background: #e6e9ed; color: #474c56; }
+.tile--aegis b { color: #0c0d10; }
+[data-theme="dark"] .tile--aegis { background: var(--plate-aegis); color: #a3abb9; }
+[data-theme="dark"] .tile--aegis b { color: #f2f4f8; }
+.tile--dos { background: var(--plate-dos); color: #a2a9b6; }
+.tile--dos b { color: #ffffff; }
+.tile--gf { background: radial-gradient(120% 70% at 50% 60%, var(--plate-gf-glow) 0%, var(--plate-gf) 70%); color: #aeb8cc; }
+.tile--gf b { color: #ffffff; }
+
+/* A phone: black glass, the real screen, an object's shadow. */
+.tile__phone { position: absolute; display: block; top: 0; left: 50%; width: 74%; transform: translateX(-50%);
+  padding: 3.2%; border-radius: 17% / 7.8%; background: #0a0a0c; box-shadow: var(--shadow-object), inset 0 0 0 1.5px #2a2b30; }
+.tile__phone img { display: block; width: 100%; height: auto; border-radius: 14% / 6.4%; }
+.tile--poker .tile__phone--front { left: 58%; width: 58%; z-index: 1; }
+.tile--poker .tile__phone--back { left: 27%; width: 44%; top: 30px; opacity: 0.78; }
+/* A window: a dark capture on its plate, at its own aspect ratio. */
+.tile__win { position: absolute; display: block; left: 22px; right: 22px; top: 0; max-height: calc(100% + 12px); overflow: hidden; border-radius: 12px;
+  background: #0b0e14; box-shadow: var(--shadow-object); }
+.tile__win img { display: block; width: 100%; height: auto; }
+.tile--aegis .tile__win { background: #070b13; border: 1px solid rgba(12, 13, 16, 0.18); }
+.tile--dos .tile__win { background: #12151c; }
+/* Aegis's second window (the alert row) joins the incidents window where the plate is tall for its width: the one-row
+   layout and the portrait plates on phones. */
+.tile__win--row { display: none; }
+
+/* From 900px the copy sets as two columns: the headline, then the lead and actions beside it. */
+@media (min-width: 900px) {
+  .hero__copy { grid-template-columns: minmax(0, 1fr) minmax(18rem, 25rem); column-gap: clamp(2rem, 5vw, 4.5rem); align-items: end; }
+  .hero__actions { margin-top: 1.25rem; }
+}
+/* Wide: one row, bleeding to the hero's bottom edge. The first screen is capped at 60rem tall, so on a tall monitor
+   the plates still reach the hero's edge and the T Poker chapter's navy follows directly under them. */
+@media (min-width: 1240px) {
+  .hero { min-height: min(100svh, 60rem); }
+  /* The row grows with the screen up to 36rem — the height at which the devices still run off its bottom edge —
+     and on taller screens the spare height goes around the copy instead (centring it on the paper). */
+  .hero__copy { margin-block: auto; }
+  .plates { flex: 1 1 auto; min-height: 22rem; max-height: 36rem; grid-template-columns: 400fr 360fr 320fr 230fr; }
+  /* Aegis: the incidents window, then the alert that raised them, stacked like the chapter tells it. The two
+     landscape crops are shorter than the stage, so the pair sits just above its middle rather than leaving the
+     whole lower plate empty. */
+  .tile--aegis .tile__stage { display: flex; flex-direction: column; justify-content: center; gap: 14px; padding-inline: 22px; padding-bottom: 12%; }
+  .tile--aegis .tile__win { position: relative; inset: auto; max-height: none; flex: none; }
+  .tile--aegis .tile__win--row { display: block; }
+}
+/* 640–1239px: the copy, then a 2×2 of landscape plates (all corners rounded: they no longer meet the edge). */
+@media (max-width: 1239px) {
+  .hero { padding-bottom: clamp(1.5rem, 4vw, 2.5rem); background: var(--bg); }
+  .plates { grid-template-columns: 1fr 1fr; gap: 12px; margin-top: clamp(1.75rem, 4vw, 2.5rem); }
+  .tile { aspect-ratio: 7 / 5; border-radius: 16px; }
+  .tile:focus-visible { border-radius: 16px; }
+  .tile__stage { margin-top: 16px; }
+  .tile__phone { width: 34%; }
+  .tile--poker .tile__phone--front { left: 62%; width: 34%; }
+  .tile--poker .tile__phone--back { left: 36%; width: 27%; top: 22px; }
+  .tile__win { left: 18px; right: 18px; border-radius: 10px; }
+}
+@media (max-width: 899px) {
+  .hero__copy { padding-top: 1.25rem; }
+  .hero__title { max-width: 14ch; }
+}
+/* Phones: a mosaic of small portrait plates. */
+@media (max-width: 639px) {
+  .hero { padding-bottom: 2rem; }
+  .hero__copy { gap: 0.75rem; }
+  .hero__lead { font-size: 1rem; }
+  .hero__actions { margin-top: 1rem; }
+  .plates { gap: 8px; margin-top: 1.5rem; }
+  .tile { aspect-ratio: 4 / 5; border-radius: 14px; }
+  .tile:focus-visible { border-radius: 14px; }
+  .tile__cap { padding: 11px 12px 0; gap: 7px; font-size: 0.75rem; }
+  .tile__cap b { font-size: 0.8125rem; }
+  .tile__icon img { width: 18px; border-radius: 4px; }
+  .tile__stage { margin-top: 10px; }
+  .tile__phone { width: 62%; }
+  .tile--poker .tile__phone--front { left: 60%; width: 52%; }
+  .tile--poker .tile__phone--back { left: 28%; width: 40%; top: 14px; }
+  .tile__win { left: 10px; right: 10px; border-radius: 8px; }
+  /* Aegis: a portrait plate this narrow can't enlarge its 16:9 crop without clipping text, so, as on the widest layout,
+     the incidents window and the port-scan alert stack centred instead of one small window above an empty plate. */
+  .tile--aegis .tile__stage { display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 0 10px 12%; }
+  .tile--aegis .tile__win { position: relative; inset: auto; max-height: none; flex: none; }
+  .tile--aegis .tile__win--row { display: block; }
+}
+/* A phone on its side (or any short, landscape window under 1240px): the copy and a 2×2 of plates side by side, both
+   inside the first screen, instead of a tall stack that shows only the top of the first plates. */
+@media (orientation: landscape) and (max-height: 540px) and (min-width: 600px) and (max-width: 1239px) {
+  .hero { display: grid; grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr); align-items: center; column-gap: clamp(1rem, 3vw, 2rem);
+    min-height: 100svh; padding: var(--nav-h) var(--pad) 0.75rem; }
+  .hero__copy.shell, .plates.shell { width: auto; margin: 0; }
+  .hero__copy { grid-template-columns: minmax(0, 1fr); padding-top: 0.5rem; gap: 0.5rem; }
+  .hero__title { font-size: clamp(1.75rem, 1rem + 2.6vw, 2.5rem); max-width: 12ch; }
+  .hero__lead { font-size: 0.9375rem; line-height: 1.45; }
+  .hero__actions { margin-top: 0.75rem; }
+  .plates { align-self: stretch; height: calc(100svh - var(--nav-h) - 1.5rem); margin: 0.5rem 0 0; grid-template-rows: 1fr 1fr; gap: 8px; }
+  .tile { aspect-ratio: auto; border-radius: 12px; }
+  .tile:focus-visible { border-radius: 12px; }
+  .tile__cap { padding: 10px 12px 0; gap: 7px; font-size: 0.75rem; }
+  .tile__cap b { font-size: 0.8125rem; }
+  .tile__icon img { width: 18px; border-radius: 4px; }
+  .tile__stage { margin-top: 8px; }
+  .tile__phone { width: 30%; }
+  .tile--poker .tile__phone--front { left: 64%; width: 30%; }
+  .tile--poker .tile__phone--back { left: 40%; width: 24%; top: 12px; }
+  .tile__win { left: 10px; right: 10px; border-radius: 8px; }
+}
+@media (prefers-reduced-motion: reduce) { .tile__phone, .tile__win { transition: none; } }
+[data-reduced-motion="true"] :is(.tile__phone, .tile__win) { transition: none; }

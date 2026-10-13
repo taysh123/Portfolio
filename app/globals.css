@@ -1,0 +1,446 @@
+@import "tailwindcss";
+/* Class scanning: site code only. The planning notes and render sources quote class names they describe. */
+@source not "../docs";
+@source not "../design";
+@source not "../.claude";
+@source not "../.impeccable";
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DESIGN TOKENS (M10, Direction A: an editorial product studio)
+   ───────────────────────────────────────────────────────────────────────
+   The page is paper: a light, quiet field, so the four products can carry the colour. Each product sits on its own
+   plate (navy, steel, violet, teal), and a plate is a tone scope: it re-declares the ink tokens it needs, so the
+   shared components (buttons, links, the focus ring) read correctly on it without plate-specific variants.
+
+   Plain custom properties, surfaced to Tailwind through `@theme inline` (so a utility emits `var(--token)` and a
+   scope override cascades). Rules this system keeps:
+     1. ONE INTERACTION COLOUR — `--accent` is links and focus. Plate hues are surfaces, never interaction.
+     2. BORDERS ARE rgba, so they sit on any plate.
+   tests/unit/tokens.test.ts holds every contrast floor below.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* A scope re-asserts its ink as well as its tokens: text without a text-* class would otherwise inherit the body's
+   computed colour from outside the scope. */
+[data-theme] { color: var(--fg); }
+
+/* The default: light. */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* ── Surfaces ── */
+  --bg: #f3f4f6;            /* paper */
+  --bg-raised: #ffffff;
+  --bg-low: #e9ebef;        /* the hero's floor */
+  --surface-0: var(--bg);
+  --surface-1: #ffffff;
+  --surface-2: #ffffff;
+  --surface-3: #ffffff;
+  --surface-sunken: rgba(12, 13, 16, 0.04);
+
+  /* ── Ink ── vs --bg: fg 17.7:1 · muted 8.3:1 · subtle 5.8:1 (floor 5.4) */
+  --fg: #0c0d10;
+  --fg-muted: #434852;
+  --fg-subtle: #5a606b;
+  --fg-subtle-raised: #5a606b;   /* 6.3:1 on white */
+
+  /* ── Borders ── */
+  --border-subtle: rgba(12, 13, 16, 0.07);
+  --border: rgba(12, 13, 16, 0.12);
+  --border-strong: rgba(12, 13, 16, 0.22);
+
+  /* ── Accent (interaction) ── 5.9:1 on paper; white on the solid 6.5:1 */
+  --accent: #1a4fe0;
+  --accent-hover: #1442c2;
+  --accent-solid: #1a4fe0;
+  --accent-solid-hover: #1442c2;
+  --accent-soft: rgba(26, 79, 224, 0.10);
+  --accent-line: rgba(26, 79, 224, 0.30);
+  --accent-ring: rgba(26, 79, 224, 0.55);
+  --accent-contrast: #ffffff;
+  /* The primary button is ink on paper; on a dark plate or the dark theme it turns to paper. */
+  --ink-solid: #0c0d10;
+  --ink-solid-hover: #2a2d33;
+  --ink-solid-fg: #ffffff;
+
+  --status-live: #047857;
+  --status-wip: #b45309;
+  --status-idle: #5a6480;
+
+  /* ── Elevation: real shadows for real objects (a window, a phone) ── */
+  --shadow-1: 0 1px 2px rgba(14, 18, 28, 0.06), 0 10px 24px -12px rgba(14, 18, 28, 0.16);
+  --shadow-2: 0 2px 4px rgba(14, 18, 28, 0.06), 0 24px 48px -18px rgba(14, 18, 28, 0.22);
+  --shadow-3: 0 3px 6px rgba(14, 18, 28, 0.07), 0 48px 96px -30px rgba(14, 18, 28, 0.30);
+  --shadow-float: 0 6px 14px -4px rgba(14, 18, 28, 0.10), 0 40px 88px -28px rgba(14, 18, 28, 0.28);
+  --shadow-object: 0 1px 1px rgba(14, 18, 28, 0.06), 0 10px 24px -8px rgba(14, 18, 28, 0.22), 0 42px 90px -30px rgba(14, 18, 28, 0.38);
+
+  /* ── Plates: the four products' surfaces (the same in both themes, except Aegis's steel) ── */
+  --plate-poker: #0a1322;
+  --plate-poker-2: #111d33;
+  --gold: #d8b25c;            /* T Poker's brand gold: 9.3:1 on its plate */
+  --plate-aegis: #e6e9ed;
+  --plate-dos: #17132a;
+  --plate-gf: #04191d;
+  --plate-gf-glow: #0a3a40;
+  --alert: #ee7a30;           /* Aegis's alert orange, on its dark console */
+  --alert-mark: #c4561a;      /* the same signal as a mark on the light steel (3.7:1, non-text) */
+  --cite: #7fb0ff;            /* DeveloperOS's citation blue, on violet: 8.2:1 */
+  --flow: #47e2cb;            /* GRAVITY FLOW's teal */
+
+  /* Shared names (tokens.test.ts asserts they exist). */
+  --line: var(--border);
+  --line-strong: var(--border-strong);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* ── Type ── Geist; display ≤ 5rem, tracking never tighter than −0.04em */
+  --text-display: clamp(2.5rem, 1.6rem + 3.9vw, 5rem);
+  --text-h2: clamp(2.25rem, 1.5rem + 3vw, 4rem);
+  --text-h3: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --text-lead: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
+  --tracking-display: -0.04em;
+  --tracking-heading: -0.03em;
+
+  /* ── Rhythm ── */
+  --stage: 80rem;                       /* 1280: the content measure */
+  --pad: clamp(1.25rem, 4.4vw, 5rem);   /* 20 → 80: the page gutter */
+  --gutter: var(--pad);
+  --nav-h: 4rem;
+  --section-y: clamp(4.5rem, 9vw, 7.5rem);
+
+  /* ── Motion ── */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.2, 0.9, 0.25, 1);
+  --dur-mid: 320ms;
+  --dur-slow: 520ms;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #0b0c0f;
+  --bg-raised: #16181d;
+  --bg-low: #08090b;
+  --surface-0: var(--bg);
+  --surface-1: #121418;
+  --surface-2: #16181d;
+  --surface-3: #16181d;
+  --surface-sunken: rgba(0, 0, 0, 0.24);
+
+  /* vs --bg: fg 17.8:1 · muted 8.6:1 · subtle 6.3:1 */
+  --fg: #f2f4f8;
+  --fg-muted: #a3abb9;
+  --fg-subtle: #8a93a3;
+  --fg-subtle-raised: #8f99aa;
+
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.11);
+  --border-strong: rgba(255, 255, 255, 0.2);
+
+  --accent: #5b9cff;
+  --accent-hover: #7fb0ff;
+  --accent-solid: #2563eb;        /* white 5.2:1 */
+  --accent-solid-hover: #1d4fd0;
+  --accent-soft: rgba(91, 156, 255, 0.13);
+  --accent-line: rgba(91, 156, 255, 0.34);
+  --accent-ring: rgba(91, 156, 255, 0.6);
+  --accent-contrast: #0b0c0f;
+  --ink-solid: #f2f4f8;
+  --ink-solid-hover: #ffffff;
+  --ink-solid-fg: #0b0c0f;
+
+  --status-live: #34d399;
+  --status-wip: #fbbf24;
+  --status-idle: #8a93a8;
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 24px -12px rgba(0, 0, 0, 0.6);
+  --shadow-2: 0 2px 4px rgba(0, 0, 0, 0.45), 0 24px 48px -18px rgba(0, 0, 0, 0.7);
+  --shadow-3: 0 3px 6px rgba(0, 0, 0, 0.5), 0 48px 96px -30px rgba(0, 0, 0, 0.85);
+  --shadow-float: 0 6px 14px -4px rgba(0, 0, 0, 0.5), 0 40px 88px -28px rgba(0, 0, 0, 0.8);
+  --shadow-object: 0 1px 1px rgba(0, 0, 0, 0.3), 0 10px 24px -8px rgba(0, 0, 0, 0.55), 0 42px 90px -30px rgba(0, 0, 0, 0.8);
+
+  /* Aegis's steel darkens with the page — to a blue steel distinct from the dark page and its raised sections; its
+     console stays the same object. */
+  --plate-aegis: #1c232d;
+}
+
+/* ── Plate tone scopes ─────────────────────────────────────────────────────
+   T Poker, DeveloperOS and GRAVITY FLOW are `data-theme="dark"` in both themes; Aegis follows the page. Each then
+   re-binds its surface and inks here. The doubled attribute makes every scope outweigh the theme blocks above,
+   whatever order the bundle puts them in. Floors in tokens.test.ts. */
+/* overflow-x: clip — the side phones peek past the content column to the screen edge and stop there; clip, not hidden,
+   so the plate is no scroll container and nothing sticky breaks. Without it a phone widened the page and mobile
+   browsers zoomed out to fit it. */
+.plate[data-plate] { background: var(--bg); color: var(--fg); overflow-x: clip; }
+.plate[data-plate="poker"][data-plate] {
+  --bg: var(--plate-poker); --bg-raised: var(--plate-poker-2); --surface-1: var(--plate-poker-2); --surface-2: var(--plate-poker-2);
+  --fg: #e9eef7; --fg-muted: #a9b6cb; --fg-subtle: #8f9db4; --fg-subtle-raised: #a9b6cb;
+  --accent: #8fb4ff;
+}
+.plate[data-plate="aegis"][data-plate] { --bg: var(--plate-aegis); }
+[data-theme="light"] .plate[data-plate="aegis"][data-plate] { --fg-muted: #434852; --fg-subtle: #555b66; --accent: #1a4fe0; }
+[data-theme="dark"] .plate[data-plate="aegis"][data-plate] { --fg: #ffffff; --fg-muted: #adb5c2; --fg-subtle: #98a2b2; --accent: #6aa5ff; --alert-mark: #ee7a30; }
+.plate[data-plate="dos"][data-plate] {
+  --bg: var(--plate-dos); --bg-raised: #201b38; --surface-1: #1d1833; --surface-2: #201b38;
+  --fg: #eef1f6; --fg-muted: #a2a9b6; --fg-subtle: #8d95a6; --fg-subtle-raised: #a2a9b6;
+  --accent: #8fb4ff;
+}
+/* GRAVITY FLOW's glow is part of its plate; its top edge is plain --bg (the ramp), so the seam above it meets one colour. */
+.plate[data-plate="gf"][data-plate] {
+  background: linear-gradient(to bottom, var(--bg), transparent 140px), radial-gradient(1100px 640px at 30% 50%, var(--plate-gf-glow) 0%, #03181c 55%, #020c0f 100%) var(--bg);
+  --bg: var(--plate-gf); --bg-raised: #082a2f; --surface-1: #072328; --surface-2: #082a2f;
+  --fg: #e9eef8; --fg-muted: #aeb8cc; --fg-subtle: #93a3b5; --fg-subtle-raised: #aeb8cc;
+  --accent: #8fb4ff;
+}
+
+/* ── Section seams ── a section on a different surface from the one above it fades up into that section across the
+   last --seam of its bottom padding (every section keeps at least 72px of empty space there), so a change of tone is a
+   short band instead of a hard line. Static: nothing animates, nothing listens to the scroll. Not above T Poker: the
+   hero's plates run to the hero's bottom edge. Not above Stack: About is the same surface. */
+:root { --seam: 56px; }
+:is(#work-aegis, #work-developeros, #work-gravity-flow, #more-work, #about, #approach, #contact) { position: relative; }
+:is(#work-aegis, #work-developeros, #work-gravity-flow, #more-work, #about, #approach, #contact)::before {
+  content: ""; position: absolute; inset-inline: 0; top: calc(-1 * var(--seam)); height: var(--seam); pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--seam-to, var(--bg)));
+}
+:is(#about, #contact) { --seam-to: var(--bg-raised); }
+
+/* ── Tailwind bindings ─────────────────────────────────────────────────── */
+@theme inline {
+  --color-bg: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-sunken: var(--surface-sunken);
+
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+
+  --color-line-subtle: var(--border-subtle);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+
+  --color-accent: var(--accent);
+  --color-accent-solid: var(--accent-solid);
+  --color-fg-subtle-raised: var(--fg-subtle-raised);
+  --color-raised: var(--bg-raised);
+  --color-accent-solid-hover: var(--accent-solid-hover);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-line: var(--accent-line);
+  --color-accent-contrast: var(--accent-contrast);
+
+  --color-status-live: var(--status-live);
+  --color-status-wip: var(--status-wip);
+  --color-status-idle: var(--status-idle);
+
+  --font-sans: var(--font-hebrew), var(--font-geist-sans);
+  /* M10: no monospace web font. Code (one command in the DeveloperOS refusal, the case studies' file paths) uses the
+     system's own monospace; nothing else is set in mono. */
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --shadow-e1: var(--shadow-1);
+  --shadow-e2: var(--shadow-2);
+  --shadow-e3: var(--shadow-3);
+  --shadow-float: var(--shadow-float);
+
+  --ease-out-expo: var(--ease-out-expo);
+  --ease-spring: var(--ease-spring);
+
+  --breakpoint-3xl: 1920px;
+}
+
+/* Monotonic radius scale. */
+@theme {
+  --radius-xs: 0.5rem;
+  --radius-sm: 0.75rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 1.75rem;
+  --radius-3xl: 2.25rem;
+  --radius-4xl: 2.75rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   BASE
+   ═══════════════════════════════════════════════════════════════════════ */
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    background-color: var(--surface-0);
+    /* Anchors land under the sticky header. Native scrolling (no scroll library since M10): nothing is pinned any
+       more, so a target's layout is final before the jump starts. */
+    scroll-padding-top: var(--nav-h);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html:not([data-reduced-motion="true"]) { scroll-behavior: smooth; }
+  }
+
+  body {
+    background-color: var(--surface-0);
+    color: var(--fg);
+    /* Heebo first: it covers only Hebrew (unicode-range, app/layout.tsx), so Latin still comes from Geist. */
+    font-family: var(--font-hebrew), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+    font-size: 1.0625rem;
+    line-height: 1.55;
+    position: relative;
+    /* `clip`, not `hidden`: forbids horizontal scrolling without creating a scroll container (sticky keeps working). */
+    overflow-x: clip;
+  }
+
+  ::selection {
+    background-color: var(--accent-soft);
+    color: var(--fg);
+  }
+
+  /* One focus treatment for every focusable element. Solid accent: the indicator clears 3:1 on paper and on every
+     plate (each plate re-binds --accent). */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
+
+  button:not(:disabled), [role="button"], summary, label[for], select { cursor: pointer; }
+
+  h1, h2, h3, h4 { text-wrap: balance; }
+  p { text-wrap: pretty; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   UTILITIES
+   ═══════════════════════════════════════════════════════════════════════ */
+@layer utilities {
+  /* A small sentence-case label. M10 retired the tracked monospace label; the class name stays for the panels. */
+  .label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  /* Tabular figures so numbers don't jitter. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ACCESSIBILITY MODES
+   ═══════════════════════════════════════════════════════════════════════ */
+[data-high-contrast="true"],
+[data-high-contrast="true"] [data-theme="light"],
+[data-high-contrast="true"] .plate[data-plate="aegis"][data-plate] {
+  --fg: #000000;
+  --fg-muted: #16192b;
+  --fg-subtle: #2b3149;
+  --border-subtle: rgba(0, 0, 0, 0.20);
+  --border: rgba(0, 0, 0, 0.34);
+  --border-strong: rgba(0, 0, 0, 0.52);
+  --accent: #1238b0;
+}
+[data-high-contrast="true"][data-theme="dark"],
+[data-high-contrast="true"] [data-theme="dark"],
+[data-high-contrast="true"] .plate[data-plate][data-theme="dark"],
+[data-high-contrast="true"][data-theme="dark"] .plate[data-plate="aegis"][data-plate] {
+  --fg: #ffffff;
+  --fg-muted: #e3e7f0;
+  --fg-subtle: #c9cfdc;
+  --border-subtle: rgba(255, 255, 255, 0.20);
+  --border: rgba(255, 255, 255, 0.34);
+  --border-strong: rgba(255, 255, 255, 0.52);
+  --accent: #a9c6ff;
+}
+
+[data-large-text="true"] {
+  font-size: 112.5%;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MOTION
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+[data-reduced-motion="true"] *,
+[data-reduced-motion="true"] *::before,
+[data-reduced-motion="true"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* A raised card. Rebinds the subtle ink so small text on it keeps ≥ 5.4:1 (tokens.test.ts). */
+.raised { background: var(--bg-raised); --fg-subtle: var(--fg-subtle-raised); }
+
+/* The content measure: 1280 inside the page gutter. */
+.shell { width: min(var(--stage), 100% - 2 * var(--pad)); margin-inline: auto; }
+
+/* ── The header ── one neutral surface on every section: the page's own paper (ink in the dark theme), frosted over
+   whatever passes beneath it, so a chapter boundary slides under the bar instead of repainting it. Its one state is
+   whether the page has moved — a hairline, faded in with the page's easing. Without backdrop-filter it is solid. */
+@media (max-width: 639px) { :root { --nav-h: 3.5rem; } }
+/* The hairline is an inset shadow, not a border, so the bar is exactly --nav-h tall and an anchor lands flush beneath it. */
+.site-nav { background: var(--surface-0); box-shadow: inset 0 -1px 0 transparent; transition: box-shadow 320ms var(--ease-out); }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .site-nav { background: color-mix(in srgb, var(--surface-0) 88%, transparent); -webkit-backdrop-filter: saturate(1.4) blur(16px); backdrop-filter: saturate(1.4) blur(16px); }
+}
+.site-nav[data-scrolled] { box-shadow: inset 0 -1px 0 var(--border); }
+@media (prefers-reduced-motion: reduce) { .site-nav { transition: none; } }
+[data-reduced-motion="true"] .site-nav { transition: none; }
+
+/* ── Chrome motion without a library ─────────────────────────────────── */
+/* Nav: the current section's underline draws in from the centre. */
+.nav-underline { transform: scaleX(0); opacity: 0; transition: transform 200ms var(--ease-out), opacity 200ms var(--ease-out); }
+[aria-current="true"] > .nav-underline { transform: scaleX(1); opacity: 1; }
+/* Theme toggle: the two glyphs cross-fade with a small turn. */
+.theme-glyph { opacity: 0; transform: rotate(-28deg) scale(0.8); transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out); }
+.theme-glyph[data-on] { opacity: 1; transform: none; }
+/* Mobile sheet: enters with @starting-style, exits on data-state=closed (unmounted 200ms later). */
+.menu-sheet { opacity: 1; transition: opacity 180ms var(--ease-out); }
+.menu-sheet__panel { transform: none; transition: transform 240ms var(--ease-out), opacity 240ms var(--ease-out); }
+@starting-style { .menu-sheet { opacity: 0; } .menu-sheet__panel { transform: translateY(16px); opacity: 0; } }
+.menu-sheet[data-state="closed"] { opacity: 0; pointer-events: none; transition-duration: 140ms; }
+.menu-sheet[data-state="closed"] .menu-sheet__panel { transform: translateY(12px); opacity: 0; transition-duration: 140ms; }
+@media (prefers-reduced-motion: reduce) { .nav-underline, .theme-glyph, .menu-sheet, .menu-sheet__panel { transition: none !important; } .theme-glyph { transform: none; } }
+[data-reduced-motion="true"] :is(.nav-underline, .theme-glyph, .menu-sheet, .menu-sheet__panel) { transition: none !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   HEBREW (/he)
+   Hebrew letters lose their counters when tracked as tight as Geist's Latin display sizes, so the Hebrew page loosens
+   the two tracking tokens and the few literal values; a Latin run inside it (a product name marked lang="en") keeps
+   Geist's own tracking.
+   ═══════════════════════════════════════════════════════════════════════ */
+:root:lang(he) { --tracking-display: -0.012em; --tracking-heading: -0.008em; }
+:root:lang(he) [lang="en"] { --tracking-display: -0.04em; --tracking-heading: -0.03em; }
+:root:lang(he) :is(.tbs__word, .more-work__title, .more-work__name):not([lang="en"]) { letter-spacing: -0.01em; }
+
+/* Directional glyphs turn with the reading direction; logos, captures and the check/close marks never do. The
+   external-link arrow points up and toward the line's end (↗ in English, ↖ in Hebrew) and nudges that way on hover. */
+[dir="rtl"] :is(.arrow-out, .dir-icon, .dir-arrow) { scale: -1 1; }
+[dir="rtl"] .dir-arrow { display: inline-block; }
+[dir="rtl"] :is(.group\/btn:hover, .group\/tl:hover) .arrow-out { translate: -0.125rem -0.125rem; }
+
+/* The language switch (components/layout/LanguageSwitch.tsx): two links in one quiet segmented pill. On the English
+   page its one Hebrew word is set in the system face, so the page never downloads Heebo for two letters. */
+:root:lang(en) .lang-switch [lang="he"] { font-family: ui-sans-serif, system-ui, sans-serif; }
+.lang-switch { display: inline-flex; align-items: center; padding: 2px; border-radius: 999px; border: 1px solid var(--border); }
+.lang-switch__opt { display: inline-grid; place-items: center; min-width: 2.5rem; height: 2rem; padding-inline: 0.625rem; border-radius: 999px;
+  font-size: 0.8125rem; font-weight: 560; color: var(--fg-muted); transition: background-color 160ms var(--ease-out), color 160ms var(--ease-out); }
+.lang-switch__opt:hover { color: var(--fg); }
+.lang-switch__opt[aria-current="true"] { background: var(--ink-solid); color: var(--ink-solid-fg); }
+/* A 44px target in the menu sheet, where the switch is full size, and on any touch screen. */
+.lang-switch--full .lang-switch__opt { min-width: 5.5rem; height: 2.75rem; font-size: 0.9375rem; }
+@media (pointer: coarse) { .lang-switch__opt { height: 2.75rem; } }
+

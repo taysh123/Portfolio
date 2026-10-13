@@ -1,0 +1,38 @@
+/* ── Stack (M10) ── rows of plain text, a real filter above them. */
+.stack { padding-block: var(--section-y); background: var(--bg-raised); }
+/* It follows About on the same white: a hairline, not a second background, marks the turn. */
+.about + .stack { padding-top: 0; }
+.about + .stack > .shell { border-top: 1px solid var(--border); padding-top: var(--section-y); }
+.stack__title { font-size: clamp(2rem, 1.4rem + 2.4vw, 3.5rem); line-height: 1.02; letter-spacing: var(--tracking-display); font-weight: 620; color: var(--fg); max-width: 18ch; }
+
+.lens { margin: 1.75rem 0 1.5rem; padding: 0; border: 0; min-width: 0; }
+.lens__label { font-size: 0.9375rem; color: var(--fg-muted); margin-bottom: 0.75rem; padding: 0; }
+.lens__options { display: flex; flex-wrap: wrap; gap: 6px; }
+.lens__option { position: relative; display: inline-flex; }
+.lens__option input { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.lens__option span { display: inline-flex; align-items: center; min-height: 44px; padding: 0 15px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg-raised);
+  font-size: 0.9375rem; color: var(--fg-muted); transition: background-color 160ms var(--ease-out), color 160ms var(--ease-out), border-color 160ms var(--ease-out); }
+@media (hover: hover) and (pointer: fine) { .lens__option:hover span { border-color: var(--border-strong); color: var(--fg); } }
+.lens__option input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lens__option input:checked + span { background: var(--ink-solid); border-color: var(--ink-solid); color: var(--ink-solid-fg); }
+.lens__status { min-height: 1.5em; margin-top: 0.75rem; font-size: 0.9375rem; color: var(--fg-subtle); }
+@media (max-width: 639px) { .lens__option span { padding: 0 14px; font-size: 0.875rem; } }
+
+.sgroups { border-top: 1px solid var(--border); }
+.sgroup { display: grid; gap: 0.5rem; padding: 1.5rem 0; border-bottom: 1px solid var(--border); }
+.sgroup__title { font-size: 1.1875rem; font-weight: 600; letter-spacing: -0.01em; color: var(--fg); }
+.sgroup__tools { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem 1.1rem; font-size: 1.0625rem; line-height: 1.5; color: var(--fg-muted); }
+.sgroup__tools li[data-emphasis] { color: var(--fg); font-weight: 520; }
+.sgroup__evidence { margin-top: 0.6rem; max-width: 46em; font-size: 0.9375rem; line-height: 1.5; color: var(--fg-subtle); }
+.sgroup__used { font-size: 0.875rem; line-height: 1.5; color: var(--fg-subtle); }
+.sgroup__usedLabel { display: block; font-size: 0.75rem; letter-spacing: 0.01em; color: var(--fg-subtle); margin-bottom: 0.15rem; }
+@media (max-width: 899px) { .sgroup__usedLabel { display: inline; } .sgroup__usedLabel::after { content: ":"; } }
+@media (min-width: 900px) {
+  .sgroup { grid-template-columns: minmax(0, 15rem) minmax(0, 1fr) minmax(0, 14rem); column-gap: 2rem; align-items: baseline; }
+  .sgroup__used { text-align: end; }
+}
+/* While a project is chosen, its evidence lines (written about the whole group) step back; the tools are the answer. */
+.stack:has(.lens__option:not([data-all]) input:checked) .sgroup__evidence { display: none; }
+/* Tool names are Latin: each one is isolated left to right, so "C#" or "C++" keeps its order on the Hebrew page while
+   the row itself still runs in the page's direction. (The list carries lang="en"; a Hebrew note inside an item says lang="he".) */
+.sgroup__tools li { unicode-bidi: isolate; direction: ltr; }
