@@ -1,68 +1,100 @@
 import { projects, type Project } from "@/data/projects";
 
 export type WorldKey = "poker" | "aegis" | "developeros" | "gravity-flow";
-/** `rows` crops single alert rows out of one capture. All fractions are of the capture: `centres` are row
- *  centres (y), `left` is where rows start (x), `height` is one row's height (y), `aspect` is height / width. */
-export type WorldAssets = { monitor: string; rows?: { src: string; centres: number[]; left: number; height: number; aspect: number } };
-/** Each chapter's composition (M2): one visual language, four expressions. `side` alternates the world left/right. */
-export type ChapterLayout = "product" | "system" | "evidence" | "orbit";
-export type Flagship = { id: WorldKey; number: "01" | "02" | "03" | "04"; kicker: string; story: [string, string];
-  metricLabels: [string, string, string]; statusNote?: string;
-  layout: ChapterLayout; side: "copy-left" | "world-left";
-  /** What I personally built, condensed from the project's own data (context, caseStudy). Facts only. */
-  built: string;
-  /** The world's annotations. Every one is a phrase from the project's own data (unit-tested), so a label on a
-   *  screenshot can never claim a feature the project doesn't have. */
-  notes: string[];
-  /** Images a world composes. Data, not code: swapping screenshots is a data change (Aegis, decision 6). */
-  worldAssets?: WorldAssets };
-export type MoreWorkRow = { id: "job-assistant" | "orders-delivery"; diagram: { kind: "pipeline" | "duplex"; nodes: string[] }; metricLabels: [string, string] };
+export type PlateKey = "poker" | "aegis" | "dos" | "gf";
 
 /**
- * The Work story (spec §5.2): four flagship worlds, then two "more work" rows.
- * Copy is condensed from data/projects.ts — tests/unit/work.test.ts fails on any number that isn't there.
- * `featured` in projects.ts is untouched; this list decides the order and the flagships.
+ * The Work story (M10, Direction A "Product Plates"): four flagship chapters, each on its own plate, then two more.
+ * Every line is condensed from data/projects.ts or transcribed from a real capture; tests/unit/work.test.ts fails on
+ * a number that isn't in the project's data and on an annotation the data doesn't support.
  */
+export type Flagship = {
+  id: WorldKey;
+  plate: PlateKey;
+  /** The chapter's heading. T Poker's wordmark carries its name, so its heading is the promise instead (the name
+   *  is still in the heading's text for screen readers). */
+  title: string;
+  lede: string;
+  /** What I personally built, condensed from the project's own data. Facts only. */
+  built?: string;
+  /** Short annotations on the real captures. Each is checked against the project's data (work.test.ts). */
+  notes: string[];
+};
+
 export const flagships: Flagship[] = [
-  { id: "poker", number: "01", kicker: "A poker study platform and home-game manager, shipped from one codebase",
-    story: ["One Expo codebase renders iOS, Android and the live web app, backed by an ASP.NET Core CQRS service over PostgreSQL.",
-            "The financial core runs in integer cents, and the two stacks carry 6,210 passing tests."],
-    metricLabels: ["Passing tests, both stacks", "Targets from one codebase", "CI jobs, scoped per push"],
-    layout: "product", side: "copy-left",
-    built: "Schema, API, two clients, CI and both store releases — 1,996 commits.",
+  { id: "poker", plate: "poker", title: "Your home game, handled.",
+    lede: "Buy-ins, rebuys and cash-outs settle to the cent on a phone that may be offline, and still agree with the server when it reconnects.",
+    built: "The Expo app for iOS, Android and the web, the ASP.NET Core CQRS API and the integer-cent settlement engine.",
     notes: ["Tournament clock", "End-of-night settlement", "Integer cents"] },
-  { id: "aegis", number: "02", kicker: "A Security Operations Centre where module isolation is enforced by the compiler",
-    story: ["Security events flow from ingestion through detection and threat scoring to alerts over MassTransit and RabbitMQ, and reach the dashboard live over SignalR.",
-            "The whole stack comes up from one Docker command that mints its own RS256 keys."],
-    metricLabels: ["Bounded contexts", "Cross-context references", "Passing tests, incl. Testcontainers"],
-    statusNote: "Runs locally — the live stream shown is a local demo",
-    layout: "system", side: "world-left",
-    built: "Eight bounded contexts across 27 .NET projects, the event pipeline and the live dashboard — 9 tagged releases.",
-    notes: ["Ingestion", "Normalisation", "Detection", "Threat scoring", "Alerting", "Dashboard", "RabbitMQ", "SignalR"],
-    // Rows measured on the 3840×2160 live-alerts capture: card borders at y 500–631, 644–775, 788–919 and x 528,
-    // so centres 565.5 / 709.5 / 853.5 ÷ 2160; `left` and `height` keep a 10 px margin of page around each card.
-    worldAssets: { monitor: "/projects/aegis/04-dashboard.webp", rows: { src: "/projects/aegis/05-live-alerts.webp", centres: [0.2618, 0.3285, 0.3951], left: 0.135, height: 0.064, aspect: 2160 / 3840 } } },
-  { id: "developeros", number: "03", kicker: "A local-first code workspace that refuses to answer without evidence",
-    story: ["It indexes your own projects into a private SQLite FTS5 index and answers with real file and line citations, declining when the index can't support an answer.",
-            "It ships as one Python package with no runtime dependencies: a CLI, a browser dashboard, an installable PWA or a Windows desktop window."],
-    metricLabels: ["Tests · 0.82:1 to source", "Runtime dependencies", "Decision records"],
-    layout: "evidence", side: "copy-left",
-    built: "The FTS5 index, grounded answers, the CLI, dashboard, PWA and Windows desktop window — v1.0.0 in ~14 days.",
-    notes: ["File and line citations", "Declining when the index can't support an answer"] },
-  { id: "gravity-flow", number: "04", kicker: "One touch, 150 hand-tuned levels, and physics that had to feel fair",
-    story: ["Press and hold to spawn an inverse-square gravity well and pull a lost star home, across 150 data-driven levels in 15 worlds.",
-            "Built on Phaser 3 in strict TypeScript, with a Vitest suite that pins both the physics and the progression."],
-    metricLabels: ["Levels across 15 worlds", "Tests over 28 files", "Core mechanics"],
-    statusNote: "v1.0.0-rc · Android-only · not yet in a store",
-    layout: "orbit", side: "world-left",
-    built: "The physics, all 150 levels across 15 worlds and the progression system — 215 commits.",
-    notes: ["Inverse-square gravity well", "150 levels", "15 worlds"] },
+  { id: "aegis", plate: "aegis", title: "Aegis",
+    lede: "A security operations centre built as eight modules that never reference each other's code.",
+    notes: ["Ingestion", "Normalisation", "Detection", "Threat scoring", "Alerting", "Dashboard", "RabbitMQ", "SignalR"] },
+  { id: "developeros", plate: "dos", title: "DeveloperOS",
+    lede: "A local-first code workspace that answers from your own files, or tells you it can't.",
+    notes: ["file:line citations", "declines outright when the index doesn't support an answer"] },
+  { id: "gravity-flow", plate: "gf", title: "GRAVITY FLOW",
+    lede: "Press and hold to place a gravity well, and pull a lost star home.",
+    notes: ["Gravity well", "lost star", "150 levels across 15 worlds"] },
 ];
 
-export const moreWork: MoreWorkRow[] = [
-  { id: "job-assistant", diagram: { kind: "pipeline", nodes: ["collect", "filter", "dedup", "deliver"] }, metricLabels: ["Source adapters", "Tests"] },
-  { id: "orders-delivery", diagram: { kind: "duplex", nodes: ["client", "TCP", "server"] }, metricLabels: ["Protocol routes", "Concurrent clients"] },
-];
+/** T Poker: the three steps, each captioned with what that real screen shows. */
+export const pokerSteps = [
+  { label: "Start a game", caption: "Cash game or tournament, straight from the home screen, no account needed." },
+  { label: "Run the tournament", caption: "A live tournament dashboard: the blind clock and prize pool for the whole table." },
+  { label: "Settle up", caption: "Guided end-of-night settlement: who pays whom, in exact integer-cent transfers." },
+] as const;
+
+/** Aegis: the line under the capture (the highlighted row, transcribed), and the honest note on coupling. */
+export const aegisCopy = {
+  row: "Port scan detected from 10.10.10.2 (20 distinct ports in 60s)",
+  onScreen: "The Detect step's own output. A Redis HyperLogLog counts the distinct ports each source touches in a 60-second window, so the detector never holds the events themselves.",
+  seam: "No module references another's code: they talk through message contracts on RabbitMQ and a shared kernel, each with its own DbContext. They still share one PostgreSQL schema, the seam to cut before splitting them into services.",
+};
+
+/** Aegis: one alert, start to finish, as implemented. Detection publishes each alert once and two consumers take it
+ *  in parallel (the fork). `detect` is the step the highlighted row on the real capture comes from. */
+export const aegisTrace = {
+  main: [
+    { k: "ingest", name: "Ingest", body: "An agent signs the request body; the API checks the HMAC in constant time." },
+    { k: "normalise", name: "Normalise", body: "Events take one shape and move on over MassTransit and RabbitMQ." },
+    { k: "detect", name: "Detect", body: "A Redis window counts distinct ports per source; the port-scan rule fires at 20 in 60 seconds." },
+  ],
+  fork: [
+    { k: "score", name: "Threat scoring", body: "Severity, MITRE detectability and false-positive rate become one score." },
+    { k: "alert", name: "Alert stream", body: "Pushes the alert over SignalR to every analyst watching its severity." },
+  ],
+  end: { k: "live", name: "Live", body: "It lands in the analyst's feed: the highlighted row above." },
+} as const;
+
+/** DeveloperOS: the retrieval sequence, as implemented. */
+export const dosFlow = [
+  { k: "index", name: "Index", body: "A scan hashes every file; only what changed is indexed again." },
+  { k: "retrieve", name: "Retrieve", body: "One SQLite FTS5 index, ranked by bm25, runs before any answer." },
+  { k: "evidence", name: "Evidence", body: "Each hit is a real file and a line range." },
+  { k: "cite", name: "Cite", body: "Results and answers show the file and lines they came from." },
+  { k: "decline", name: "Or decline", body: "If retrieval comes back empty, it says so. No model is called." },
+] as const;
+
+/** DeveloperOS: what the refusal is. */
+export const dosRefusalCaption = {
+  title: "And when your code can't support an answer, it says so.",
+  body: "The refusal is a code path that runs before any model is called. From the Learning Center, in the app's own words:",
+};
+
+/** GRAVITY FLOW: scope and state, from the project's data. */
+export const gfFacts = [
+  "150 levels across 15 worlds, each new mechanic a field in the level data",
+  "Phaser 3 and strict TypeScript, for Android and the web",
+  "A release candidate, not yet in a store",
+] as const;
+
+/** The Learning Center's refusal, verbatim from the app (devos/api/static/app.js and devos/modules/learning.py). */
+export const dosRefusal = {
+  notice: "Not enough of your indexed code matched this. Try a file path, different words, or import/re-scan the project in the Projects tab.",
+  message: "I don't have enough indexed material to teach that. Try `devos index <path>`, give a file path, or rephrase the topic. (Not guessing.)",
+};
+
+export const moreWork = [{ id: "job-assistant" }, { id: "orders-delivery" }] as const;
 
 export function projectOf(id: string): Project {
   const p = projects.find((x) => x.id === id);

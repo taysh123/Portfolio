@@ -78,7 +78,7 @@ export type Project = {
    * this public repository. Public surfaces read links through `publicRepoUrl()` and show
    * `PRIVATE_REPO_LABEL` in place of a private one.
    */
-  repo: { visibility: "public"; url: string } | { visibility: "private" };
+  repo: { visibility: "public"; url: string } | { visibility: "private" } | { visibility: "unavailable" };
   liveUrl?: string;
   liveLabel?: string;
   featured?: boolean;
@@ -98,10 +98,10 @@ export const projects: Project[] = [
     name: "T Poker",
     tagline: "A poker study platform and home-game manager, shipped from one codebase",
     summary:
-      "Expo app, React web build, and an ASP.NET Core CQRS backend — with a settlement engine that closes a night in the fewest exact transfers.",
+      "Expo app, React web build, and an ASP.NET Core CQRS backend — with a settlement engine that closes a night in a short list of exact, integer-cent transfers.",
     description:
-      "Two products in one: a study platform with lessons, daily drills and an AI coach, and a home-game manager with a buy-in ledger, tournament clock and end-of-night settlement. One Expo codebase renders iOS, Android and the live web app; behind it sits an ASP.NET Core backend built on Clean Architecture with MediatR CQRS over PostgreSQL. The financial core runs in integer cents, and the two stacks carry 6,210 passing tests.",
-    context: "Solo build · 1,996 commits",
+      "Two products in one: a study platform with lessons, daily drills and an AI coach, and a home-game manager with a buy-in ledger, tournament clock and end-of-night settlement. One Expo codebase renders iOS, Android and the live web app; behind it sits an ASP.NET Core backend built on Clean Architecture with MediatR CQRS over PostgreSQL. The financial core runs in integer cents.",
+    context: "Solo build",
     status: "live",
     featured: true,
     repo: { visibility: "private" },
@@ -111,13 +111,10 @@ export const projects: Project[] = [
       { platform: "ios", status: "live", url: T_POKER_IOS_URL },
       { platform: "android", status: "live", url: T_POKER_ANDROID_URL },
     ],
+    // M10: the test and CI-job counts came from the private repository, which a reader can't check; they are gone.
     metrics: [
-      // CI at main: 802 xUnit (incl. the Postgres money-path suite) + 5,379 Jest + 29 Vitest, all passing.
-      { value: "6,210", label: "Passing tests, both stacks" },
-      // .github/workflows/ci.yml: eight jobs, each gated on the surface a push changes (plus the secret scan).
-      { value: "8", label: "CI jobs, scoped per push" },
       { value: "3", label: "Targets from one codebase" },
-      { value: "0", label: "Floating-point money bugs" },
+      { value: "2", label: "Store listings, both live" },
     ],
     stack: [
       { label: "TypeScript", emphasis: true },
@@ -162,7 +159,7 @@ export const projects: Project[] = [
         },
         {
           title: "Local-first guest mode",
-          body: "A full game starts in about thirty seconds with no sign-up. Accounts are an upgrade path, not a gate — which is the difference between a tool people use and one they install once.",
+          body: "A full game runs with no sign-up. Accounts are an upgrade path, not a gate — which is the difference between a tool people use and one they install once.",
         },
       ],
       challenges: [
@@ -184,20 +181,22 @@ export const projects: Project[] = [
   {
     id: "aegis",
     name: "Aegis",
-    tagline: "A Security Operations Centre where module isolation is enforced by the compiler",
+    tagline: "A Security Operations Centre built as eight modules that never reference each other's code",
     summary:
-      "Eight bounded contexts across 27 .NET projects with zero cross-context references — events flow ingestion → detection → scoring → alert over RabbitMQ and stream live to the dashboard.",
+      "Eight bounded contexts across 27 .NET projects with zero project references between modules — events flow ingestion → detection → alert over RabbitMQ, then are scored and streamed live to the dashboard in parallel.",
     description:
-      "A self-hosted SOC platform modelled on the tools it imitates. Security events move through an ingestion → normalisation → detection → threat-scoring → alerting pipeline carried by MassTransit over RabbitMQ, backed by a range-partitioned PostgreSQL and a Redis layer that holds sliding detection windows. Alerts and incident updates reach the Next.js dashboard over SignalR. The whole stack comes up from one Docker command that mints its own RS256 keys.",
-    context: "Solo build · 9 tagged releases",
+      "A self-hosted SOC platform modelled on the tools it imitates. Security events move through an ingestion → normalisation → detection pipeline carried by MassTransit over RabbitMQ, backed by a range-partitioned PostgreSQL and a Redis layer that holds two-bucket detection windows. Every alert detection raises fans out to two consumers at once: threat scoring, and alerting, which streams it live to the Next.js dashboard over SignalR. The whole stack comes up from one launcher script that mints its own RS256 keys and starts everything under Docker Compose.",
+    context: "Solo build",
     status: "local",
     featured: true,
     repo: { url: "https://github.com/taysh123/aegis", visibility: "public" },
     metrics: [
       { value: "8", label: "Bounded contexts" },
-      { value: "0", label: "Cross-context references" },
-      // 106 defined; one RabbitMQ integration test is a known failure, so the metric is the passing count.
-      { value: "105", label: "Passing tests, incl. Testcontainers" },
+      // M9: a ProjectReference scan of all 81 references finds none from one module to another.
+      { value: "0", label: "Project references between modules" },
+      // 82 [Fact] + 24 [InlineData] rows = 106 cases, minus the placeholder Solution_Compiles. No CI yet, so no
+      // "passing" claim.
+      { value: "105", label: "Test cases, incl. 2 Testcontainers" },
       { value: "1", label: "Command to run it all" },
     ],
     stack: [
@@ -212,48 +211,42 @@ export const projects: Project[] = [
       { label: "Docker Compose" },
     ],
     media: {
-      // Captured from the live application (Aegis v0.8.1, synthetic demo data): the repository's portfolio set,
-      // keeping its file numbering. New names, not new bytes under old ones, so no image cache serves the old captures.
-      // The architecture diagram is trimmed to its content (3840×1440, the empty canvas below it removed).
-      image: "/projects/aegis/04-dashboard.webp",
-      alt: "Aegis SOC Overview: live metrics, incidents by status and the live alert feed",
+      // Captured from the live application (Aegis v0.8.1, synthetic demo data). Only a crop of the Incidents board is
+      // public: the other captures show a seeded placeholder agent ID, the mock provider's text (and a 0–1 threat score
+      // printed as /100), or a diagram that overstates the system; two of the board's four seeded incidents carry
+      // technique tags that contradict their titles. scripts/m10-images.mjs cuts this file (AEGIS_BOARD).
+      image: "/projects/aegis/incident-board-open.webp",
+      alt: "The Aegis Incidents page, which groups related alerts and works them open → investigating → resolved: the Open column's first incident, “Privilege escalation on workstation”, severity 80, high, one alert, MITRE T1548",
       fit: "cover",
-      gallery: [
-        { src: "/projects/aegis/05-live-alerts.webp", alt: "Live alerts streamed from the detection engine, with severity badges and MITRE context" },
-        { src: "/projects/aegis/06-ai-analysis.webp", alt: "An expanded alert's five-section analysis — summary, risk, MITRE mapping, actions, investigation steps — from the built-in mock provider" },
-        { src: "/projects/aegis/08-incident-kanban.webp", alt: "Incident board with Open, Investigating and Resolved columns" },
-        { src: "/projects/aegis/09-incident-detail.webp", alt: "Incident detail: status workflow, assignment, linked alerts, notes and the activity timeline" },
-        { src: "/projects/aegis/11-architecture-overview.webp", alt: "Aegis architecture: the detection pipeline, the messaging backbone, the modules and the dashboard" },
-      ],
     },
     caseStudy: {
       problem:
-        "Security tooling is where architecture claims go to die: everything starts as clean modules and ends as a monolith with shared tables. The goal here was to build a real detection pipeline and then prove the module boundaries actually hold — not by convention or code review, but by making a violation fail to compile.",
+        "Security tooling is where architecture claims go to die: everything starts as clean modules and ends as a monolith with shared tables. The goal here was to build a real detection pipeline and then keep the module boundaries honest — no module may reference another module's code.",
       architecture:
-        "Eight bounded contexts — ingestion, detection, threat scoring, alerts, incidents, agents, auth, analysis — each split into Domain, Application and Infrastructure projects across 27 .csproj files. No module references another module. All inter-module traffic is message contracts on RabbitMQ through a shared kernel, and each context owns its own DbContext. PostgreSQL holds normalised events in a range-partitioned table with a GIN index over the JSONB payload; Redis carries the SignalR backplane, sliding detection windows and alert deduplication.",
+        "Eight bounded contexts — ingestion, detection, threat scoring, alerts, incidents, agents, auth, analysis — each split into Domain, Application and Infrastructure projects across 27 .csproj files. No module references another module's code: of 81 project references, none crosses a module. Modules talk through message contracts on RabbitMQ and a shared kernel, and each has its own DbContext — though they still share one PostgreSQL schema (four modules map the alerts table, and threat scoring updates it directly), which is the seam to cut before splitting them into services. PostgreSQL holds normalised events in a range-partitioned table with a GIN index over the JSONB payload; Redis carries the SignalR backplane, sliding detection windows and alert deduplication.",
       decisions: [
         {
-          title: "Isolation the compiler enforces",
-          body: "A scripted scan of every ProjectReference across all 27 projects returns zero module-to-module edges. That's the whole point: a modular monolith where the boundary is a build error is one you can actually split into services later. One where the boundary is a code-review habit is not.",
+          title: "Boundaries a scan can check",
+          body: "A scan of every ProjectReference across all 27 projects finds zero module-to-module edges, so no module can call another's code. The shared database tables are the remaining coupling, and the next step is an architecture test in CI so the boundary can't quietly erode.",
         },
         {
           title: "Sliding windows in Redis instead of buffered events",
-          body: "Brute-force and port-scan detection need counts over a moving window. Rather than hold events in memory, detectors use two-bucket Redis windows and HyperLogLog for distinct-port cardinality — bounded memory regardless of event rate, and state that survives a restart.",
+          body: "Brute-force and port-scan detection need counts over a moving window. Rather than hold events in memory, detectors use two-bucket Redis windows and HyperLogLog for distinct-port cardinality — bounded memory regardless of event rate, and state that survives a restart. The port-scan rule counts distinct ports per source in 60-second windows and fires at 20.",
         },
         {
-          title: "Threat scores you can argue with",
-          body: "Score = (severity ÷ 100) × MITRE detectability × (1 − false-positive rate), and the calculator returns a breakdown record carrying all three inputs. An analyst can see why something scored 82, which is the difference between a tool people trust and a number they ignore.",
+          title: "A score that keeps its inputs",
+          body: "Score = (severity ÷ 100) × MITRE detectability × (1 − false-positive rate), and the calculator returns a breakdown record carrying all three inputs, ready to surface to an analyst. The dashboard doesn't show the breakdown yet; surfacing it is the next step.",
         },
         {
           title: "Agent ingestion authenticated by body HMAC",
-          body: "Agents sign the request body; the API compares in constant time. The RS256 signing key never leaves the API process, refresh tokens are 64 bytes of CSPRNG stored SHA-256-hashed and rotated single-use.",
+          body: "Agents sign the request body; the API compares in constant time. Only the API holds the RS256 private key, refresh tokens are 64 bytes of CSPRNG stored SHA-256-hashed and rotated single-use.",
         },
       ],
       challenges: [
-        "Keeping eight contexts genuinely independent while a single event still has to traverse five of them",
+        "Keeping eight contexts genuinely independent while a single event still has to traverse four of them",
         "Making detection state bounded — a SOC that OOMs under load is worse than no SOC",
         "Mapping detectors onto MITRE ATT&CK techniques so scores mean something outside this codebase",
-        "Making first run reproducible: generated secrets, RS256 keys, health gating and idempotent seed data from one command",
+        "Making first run reproducible: generated secrets, RS256 keys, health gating and idempotent seed data from one launcher script",
       ],
       learned: [
         "Architecture claims are only worth what you can mechanically verify — so verify them in CI, or at least in a script",
@@ -273,13 +266,15 @@ export const projects: Project[] = [
       "Indexes your own projects into SQLite FTS5 and answers with file:line citations — 363 tests, 34 decision records, and zero runtime dependencies.",
     description:
       "Point it at your code and it builds a private FTS5 index that powers ranked search and grounded question-answering, where every response cites real file and line locations and the system declines outright when the index doesn't support an answer. It ships as one Python package with no runtime dependencies, reachable four ways — CLI, browser dashboard, installable PWA, or a standalone Windows desktop window with a per-user installer.",
-    context: "Solo build · v1.0.0 in ~14 days",
+    context: "Solo build · v1.0.0 in 11 days",
     status: "released",
     featured: true,
     repo: { url: "https://github.com/taysh123/DeveloperOS", visibility: "public" },
     metrics: [
-      { value: "363", label: "Tests · 0.82:1 to source" },
-      { value: "0", label: "Runtime dependencies" },
+      // 363 `def test_` in 18 files; CI: ubuntu/windows × Python 3.11–3.13.
+      { value: "363", label: "Tests, CI on Linux and Windows" },
+      // pyproject.toml: dependencies = []; React and htm are vendored.
+      { value: "0", label: "Python runtime dependencies" },
       { value: "34", label: "Decision records" },
       { value: "6", label: "CI matrix combinations" },
     ],
@@ -308,11 +303,11 @@ export const projects: Project[] = [
       problem:
         "Tools that answer questions about your codebase have one failure mode that matters: confidently making something up. A wrong citation is worse than no answer, because it costs you the time to discover it was wrong. The design constraint was therefore inverted — build the refusal path first, and let answering be the thing that has to earn its way in.",
       architecture:
-        "A scan hashes each file and compares it against the stored index hash, so unchanged files short-circuit and re-indexing stays incremental. Content lands in SQLite FTS5 with bm25 ranking across eight tables. Retrieval runs before generation, and if it comes back empty the answer function returns an insufficient-evidence message without ever calling a provider. The dashboard is served over a loopback-only HTTP API and the same package also exposes 24 CLI commands and an installable PWA.",
+        "A scan hashes each file and compares it against the stored index hash, so unchanged files short-circuit and re-indexing stays incremental. Content lands in an eight-table SQLite schema with one FTS5 index ranked by bm25. Retrieval runs before generation, and if it comes back empty the answer function returns an insufficient-evidence message without ever calling a provider. The dashboard is served over a loopback-only HTTP API and the same package also exposes 24 CLI commands and an installable PWA.",
       decisions: [
         {
           title: "Zero runtime dependencies",
-          body: "Everything is Python's standard library — http.server, sqlite3, urllib, imaplib. No pip install step, no dependency CVEs, no supply chain. The frontend is React plus htm vendored directly into the repo: no npm, no build step, no CDN, a 1,595-line SPA that just loads.",
+          body: "Everything is Python's standard library — http.server, sqlite3, urllib. No pip install step, no dependency CVEs, no supply chain. The frontend is React plus htm vendored directly into the repo: no npm, no build step, no CDN, a 1,595-line SPA that just loads.",
         },
         {
           title: "Refusal as a first-class code path",
@@ -346,12 +341,12 @@ export const projects: Project[] = [
   {
     id: "gravity-flow",
     name: "GRAVITY FLOW",
-    tagline: "One touch, 150 hand-tuned levels, and physics that had to feel fair",
+    tagline: "One touch, 150 levels across 15 worlds, built around a gravity well you place yourself",
     summary:
-      "A Phaser 3 puzzler in strict TypeScript — hold to create a gravity well, 15 worlds, 221 tests pinning the physics and progression.",
+      "A Phaser 3 puzzler in strict TypeScript — hold to create a gravity well, 15 worlds, 1,277 CI-checked tests across progression, saves and purchases.",
     description:
-      "Press and hold to spawn an inverse-square gravity well and pull a lost star home. 150 data-driven levels across 15 worlds build on seven core mechanics, alongside a deterministic seeded endless mode and a cosmetics economy that is explicitly incapable of affecting gameplay. Built on Phaser 3 with strict TypeScript and a Vitest suite that pins both the physics and the progression logic.",
-    context: "Solo build · 215 commits",
+      "Press and hold to spawn an inverse-square gravity well and pull a lost star home. 150 data-driven levels across 15 worlds build on seven core mechanics, alongside a deterministic seeded endless mode and a cosmetics economy that is explicitly incapable of affecting gameplay. Built on Phaser 3 with strict TypeScript, and a Vitest suite over progression, saves and purchases.",
+    context: "Solo build",
     status: "rc",
     repo: { url: "https://github.com/taysh123/Gravity-Game", visibility: "public" },
     stores: [
@@ -359,9 +354,10 @@ export const projects: Project[] = [
     ],
     metrics: [
       { value: "150", label: "Levels across 15 worlds" },
-      { value: "221", label: "Tests over 28 files" },
+      // The repo's facts block, generated from vitest on a green run and checked by CI (2026-10-08).
+      { value: "1,277", label: "CI-checked tests, 61 files" },
       { value: "7", label: "Core mechanics" },
-      { value: "13", label: "Scenes, 14 entity classes" },
+      { value: "14", label: "Scenes, 14 entity classes" },
     ],
     stack: [
       { label: "TypeScript (strict)", emphasis: true },
@@ -410,7 +406,7 @@ export const projects: Project[] = [
         "Tuning the gravity constant until the mechanic is learnable in one touch but still has a skill ceiling",
         "Making 15 boss encounters each teach something rather than just raise the difficulty",
         "Keeping AdMob, RevenueCat and Firebase out of the web bundle without forking the codebase",
-        "Writing tests for a physics game, where the thing you actually care about is feel",
+        "Writing tests for a game, where the thing you actually care about is feel",
       ],
       learned: [
         "Content stops being code the moment there's more than about twenty of it",
@@ -419,18 +415,18 @@ export const projects: Project[] = [
         "Retiring content is easier when it's data — you unreference it instead of deleting it",
       ],
       honestNote:
-        "This is at v1.0.0-rc and has not shipped to a store. It is Android-only — there is no iOS build. The leaderboard is localStorage, so it ranks you against yourself, not against other players.",
+        "This is at v1.0.0-rc and has not shipped to a store. It builds for Android and the web — there is no iOS build. The leaderboard is localStorage, so it ranks you against yourself, not against other players.",
     },
   },
   {
     id: "job-assistant",
     name: "Job Assistant",
-    tagline: "Seven job boards, one Telegram digest, and a deliberate refusal to auto-apply",
+    tagline: "Seven job sources, one Telegram digest, and a deliberate refusal to auto-apply",
     summary:
       "A collect → filter → dedup → deliver pipeline over seven source adapters, including LinkedIn ingested from alert emails over IMAP rather than scraped.",
     description:
-      "Pulls software-engineering postings from seven adapters, scores them against a deterministic rule engine of 310 filter terms, deduplicates across sources with different shapes, and delivers a single paginated Telegram digest whose job cards carry Save, Ignore, Open and Mark-Applied actions. It began as free GitHub Actions crons that committed SQLite back into the repo, and has since been rebuilt around one always-on process shipped as a Docker image.",
-    context: "Solo build · 287 jobs collected over 61 runs",
+      "Pulls software-engineering postings from seven adapters, scores them against a deterministic rule engine of 310 filter terms, deduplicates across sources with different shapes, and delivers a single paginated Telegram digest whose job cards carry Save, Ignore, Open and Mark-Applied actions. It began as free GitHub Actions crons that committed SQLite back into the repo, and has since been rebuilt around one always-on process that runs in a Docker container.",
+    context: "Solo build · 287 jobs collected over 57 runs (June 2026)",
     status: "local",
     repo: { url: "https://github.com/taysh123/job-assistant", visibility: "public" },
     metrics: [
@@ -485,7 +481,7 @@ export const projects: Project[] = [
         "The most useful automation is the kind that stops short of the irreversible step",
       ],
       honestNote:
-        "The scheduled crons are now disabled — this runs as a Docker service. Of the 287 jobs collected so far, every row is still marked new, so the Save and Mark-Applied flows work but haven't yet been used in anger.",
+        "The scheduled crons are now disabled — this runs as a Docker service. Of the 287 jobs collected by June 2026, every row is still marked new, so the Save and Mark-Applied flows work but haven't yet been used in anger.",
     },
   },
   {
@@ -498,11 +494,9 @@ export const projects: Project[] = [
       "A two-tier ordering and dispatch system built for an advanced Java course. A multithreaded server speaks a hand-written JSON-over-TCP protocol to a JavaFX desktop client, routing sixteen domain actions through a controller factory to a generic DAO layer. Delivery routing injects a shortest-path strategy over a weighted city graph to produce routes and ETAs.",
     context: "University coursework · HIT",
     status: "coursework",
-    repo: { url: "https://github.com/taysh123/orders-delivery-management-system", visibility: "public" },
+    repo: { visibility: "unavailable" },
     metrics: [
       { value: "16", label: "Protocol routes" },
-      { value: "10", label: "Concurrent clients" },
-      { value: "33", label: "Java source files" },
       { value: "4", label: "Domains, one DAO layer" },
     ],
     stack: [
@@ -543,13 +537,20 @@ export const projects: Project[] = [
         "Dependency injection makes most sense the first time you swap the thing behind the interface",
       ],
       honestNote:
-        "This is coursework and I'm listing it as such. It has no automated tests, and the DAO rewrites an entire entity file per save with no synchronisation — under the ten-thread pool, concurrent writes to the same domain would lose updates. The Dijkstra implementation itself was supplied with the assignment as a prebuilt library; the strategy seam around it is mine.",
+        "This is coursework, built as a two-person course submission, and I'm listing it as such. It has no automated tests, and the DAO rewrites an entire entity file per save with no synchronisation — under the ten-thread pool, concurrent writes to the same domain would lose updates. The Dijkstra implementation itself was supplied with the assignment as a prebuilt library; the strategy seam around it is the project's own.",
     },
   },
 ];
 
 /** The label public surfaces show in place of a private repository's link. Not clickable. */
 export const PRIVATE_REPO_LABEL = "Private repository";
+/** For a repository that anonymous visitors can't reach (private or removed — indistinguishable from outside). */
+export const UNAVAILABLE_REPO_LABEL = "Source not publicly accessible";
+
+/** What to show instead of a source link, or undefined when there is a public link. */
+export function repoLabel(p: Pick<Project, "repo">): string | undefined {
+  return p.repo.visibility === "private" ? PRIVATE_REPO_LABEL : p.repo.visibility === "unavailable" ? UNAVAILABLE_REPO_LABEL : undefined;
+}
 
 /** The repository link a visitor may follow — undefined when the repository is private. */
 export function publicRepoUrl(p: Pick<Project, "repo">): string | undefined {

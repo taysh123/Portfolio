@@ -30,7 +30,7 @@ export function StoreBadge({ listing, app }: { listing: StoreListing; app?: stri
       <span
         aria-hidden="true"
         className={cn(
-          "shrink-0 transition-colors duration-[var(--dur-mid)]",
+          "shrink-0 transition-colors duration-150",
           live ? "text-fg group-hover/store:text-accent" : "text-fg-subtle",
         )}
       >

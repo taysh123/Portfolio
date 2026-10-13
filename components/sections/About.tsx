@@ -1,32 +1,28 @@
 import { about } from "@/data/about";
 import "./about.css";
 
-/** About (spec §5.3, M2b): a different chapter from the hero — the title, the idea the first paragraph is about
- *  pulled out at display scale, the two paragraphs, and the facts as stat tiles. Site theme. Nothing added. */
+/**
+ * About (M10): the title, two paragraphs at a reading measure, one line of facts — and the page's one photograph:
+ * the studio the four products came out of, as a still with a caption. A static image; no 3D runtime, no parallax.
+ */
 export function About() {
-  const idea = about.paragraphs[0].match(/make the wrong thing hard to express/i)![0];
   return (
-    <section id="about" aria-labelledby="about-title" className="about shell py-[clamp(7rem,14vh,12rem)]">
-      <div className="about__grid">
-        <div className="about__head">
-          <p className="label text-fg-subtle">About</p>
-          <h2 id="about-title" className="about__title">
-            {about.title[0]}<br /><span className="text-fg-muted">{about.title[1]}</span>
-          </h2>
-        </div>
+    <section id="about" aria-labelledby="about-title" className="about">
+      <div className="shell about__grid">
+        <h2 id="about-title" className="about__title">{about.title[0]}<br /><span>{about.title[1]}</span></h2>
         <div className="about__body">
-          <p className="about__idea" aria-hidden="true">{idea[0].toUpperCase() + idea.slice(1)}.</p>
-          {about.paragraphs.map((p) => <p key={p.slice(0, 24)} className="about__p max-w-[62ch]">{p}</p>)}
+          {about.paragraphs.map((p) => <p key={p.slice(0, 24)} className="about__p">{p}</p>)}
+          <ul className="about__facts">{about.facts.map((f) => <li key={f}>{f}</li>)}</ul>
         </div>
+        <figure className="about__photo">
+          <picture>
+            <source type="image/avif" srcSet="/work/about-studio-800.avif 800w, /work/about-studio-1200.avif 1200w, /work/about-studio-1600.avif 1600w" sizes="(min-width: 1024px) 40vw, 100vw" />
+            <img src="/work/about-studio-1200.webp" srcSet="/work/about-studio-800.webp 800w, /work/about-studio-1200.webp 1200w, /work/about-studio-1600.webp 1600w"
+              sizes="(min-width: 1024px) 40vw, 100vw" width={1600} height={1200} loading="lazy" decoding="async" alt={about.photo.alt} />
+          </picture>
+          <figcaption><b>{about.photo.caption}.</b> {about.photo.note}</figcaption>
+        </figure>
       </div>
-      <dl className="about__facts">
-        {about.facts.map((f) => (
-          <div key={f.value} className="about__fact">
-            <dt>{f.label}</dt>
-            <dd>{f.value}</dd>
-          </div>
-        ))}
-      </dl>
     </section>
   );
 }

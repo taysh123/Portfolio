@@ -1,119 +1,133 @@
-// tests/e2e/hero.spec.ts — M1: the hero says who, what, proof and where to go; the arcs never touch a control;
-// the scrolled navbar never lets page copy read through it.
-import { test, expect, type Page } from "playwright/test";
-import sharp from "sharp";
+// tests/e2e/hero.spec.ts — the first screen (M10): headline, range, and the four plates as navigation.
+import { test, expect } from "playwright/test";
+import { open, PHONES, CHAPTERS } from "../support/page";
 
-const SIZES = [[1440, 900], [1280, 720], [768, 1024], [390, 844], [375, 667], [360, 780]] as const;
-const SCENES = { "T Poker": "#work-poker", Aegis: "#work-aegis", DeveloperOS: "#work-developeros", "GRAVITY FLOW": "#work-gravity-flow" };
-
-test("the hero index links the four flagships to their scenes, with their verified states", async ({ page }) => {
+test("the plates link the four products to their chapters, each with its verified state", async ({ page }) => {
   await page.goto("/");
-  const index = page.getByRole("navigation", { name: "Flagship projects" });
-  const links = index.getByRole("link");
-  await expect(links).toHaveCount(4);
-  const states = ["Live on iOS & Android", "Open source", "Released", "Release candidate"];
-  let i = 0;
-  for (const [name, href] of Object.entries(SCENES)) {
-    const link = links.nth(i);
-    await expect(link).toHaveAttribute("href", href);
-    await expect(link).toContainText(name); await expect(link).toContainText(states[i]);
-    await expect(page.locator(href)).toHaveCount(1);                         // every target exists
-    i++;
+  const plates = page.getByRole("navigation", { name: "Flagship projects" }).getByRole("link");
+  await expect(plates).toHaveCount(4);
+  expect(await plates.evaluateAll((as) => as.map((a) => a.getAttribute("href")))).toEqual(CHAPTERS.map((c) => `#work-${c}`));
+  const text = (await plates.allTextContents()).map((t) => t.replace(/\s+/g, " ").trim());
+  expect(text).toEqual(["T PokerLive on iOS & Android", "AegisSource on GitHub", "DeveloperOSReleased · v1.0.0", "GRAVITY FLOWRelease candidate"]);
+  expect(text.join(" ")).not.toMatch(/open source/i);
+});
+
+const tiles = (page: import("playwright/test").Page) => page.locator(".plates .tile").evaluateAll((ts) => ts.map((t) => {
+  const r = t.getBoundingClientRect(), lines = (e: Element) => { const g = document.createRange(); g.selectNodeContents(e); return new Set([...g.getClientRects()].map((x) => Math.round(x.top))).size; };
+  const cap = t.querySelector(".tile__cap > span:last-child")!;
+  return { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height), bottom: r.bottom,
+    nameLines: lines(cap.querySelector("b")!), stateLines: lines(cap.querySelector("b + span")!) };
+}));
+
+test("from 1240px: one row, T Poker (the shipped product) widest, every plate wide enough to read, captions on one line", async ({ browser }) => {
+  for (const vp of [[1240, 800], [1280, 700], [1280, 720], [1440, 900], [1920, 1080]] as const) {
+    const { ctx, page } = await open(browser, vp);
+    const t = await tiles(page);
+    expect(new Set(t.map((x) => x.y)).size, `${vp[0]}: one row`).toBe(1);
+    const w = t.map((x) => x.w);
+    expect(w[0], `${vp[0]}: ${w}`).toBe(Math.max(...w));
+    expect(new Set(w).size, `${vp[0]}: ${w}`).toBe(4);
+    expect(Math.min(...w), `${vp[0]}: narrowest plate ${Math.min(...w)}`).toBeGreaterThanOrEqual(190);
+    expect(Math.min(w[1], w[2]), `${vp[0]}: the two windows' plates`).toBeGreaterThanOrEqual(260);
+    for (const x of t) { expect(x.nameLines, `${vp[0]} name`).toBe(1); expect(x.stateLines, `${vp[0]} state`).toBe(1); }
+    await ctx.close();
   }
 });
 
-test("following an index link lands its scene in view", async ({ page }) => {
-  await page.goto("/");
-  await page.getByRole("navigation", { name: "Flagship projects" }).getByRole("link", { name: /DeveloperOS/ }).click();
-  await expect(page.locator("#work-developeros-title")).toBeInViewport({ timeout: 5000 });
-});
-
-test("the hero proof figure equals the Stack figure (one derived number)", async ({ page }) => {
-  await page.goto("/");
-  const proof = (await page.locator("[data-hero-proof]").innerText()).trim();
-  expect(proof).toBe("7,061 passing tests across five projects");
-  await expect(page.locator("#skills")).toContainText(proof.split(" ")[0]);
-});
-
-/** Rim height of the arc (an elliptical top edge) at page x. */
-async function arc(page: Page, sel: string) {
-  return page.locator(sel).evaluate((el) => {
-    const r = el.getBoundingClientRect();
-    return { cx: r.left + r.width / 2, top: r.top, rx: r.width / 2, ry: r.height };
-  });
-}
-const rimY = (a: { cx: number; top: number; rx: number; ry: number }, x: number) => {
-  const t = Math.min(1, Math.abs(x - a.cx) / a.rx);
-  return a.top + a.ry * (1 - Math.sqrt(1 - t * t));
-};
-
-for (const [w, h] of SIZES) {
-  test(`${w}×${h}: the hero arc stays ≥24px clear of the CTAs and the index`, async ({ page }) => {
-    await page.setViewportSize({ width: w, height: h });
-    await page.goto("/");
-    const a = await arc(page, "[data-hero-arc]");
-    const boxes = await page.locator("[data-hero-ctas] a, [data-hero-index] a").evaluateAll((els) => els.map((e) => e.getBoundingClientRect().toJSON()));
-    expect(boxes.length).toBe(6);
-    for (const b of boxes) {
-      // the closest rim point over the control's width is at the x nearest the apex
-      const x = Math.max(b.left, Math.min(a.cx, b.right));
-      expect(rimY(a, x) - b.bottom, JSON.stringify(b)).toBeGreaterThanOrEqual(24);
-    }
-  });
-
-  test(`${w}×${h}: the Contact arc passes over the CTA and channel row, ≥24px clear`, async ({ page }) => {
-    await page.setViewportSize({ width: w, height: h });
-    await page.goto("/");
-    await page.locator("#contact").scrollIntoViewIfNeeded();
-    const a = await arc(page, ".contact__horizon");
-    const boxes = await page.locator("#contact .contact__actions a, #contact .contact__actions button").evaluateAll((els) => els.map((e) => e.getBoundingClientRect().toJSON()));
-    expect(boxes.length).toBeGreaterThanOrEqual(5);
-    for (const b of boxes) {
-      // controls sit under the rim: the rim's lowest point over the control's width must clear its top
-      const far = Math.abs(b.left - a.cx) > Math.abs(b.right - a.cx) ? b.left : b.right;
-      expect(b.top - rimY(a, far), JSON.stringify(b)).toBeGreaterThanOrEqual(24);
-    }
-  });
-}
-
-test("phones: the index is two compact columns; tablet and up: one row of four", async ({ page }) => {
-  for (const [w, h, cols] of [[390, 844, 2], [360, 780, 2], [768, 1024, 4], [1440, 900, 4]] as const) {
-    await page.setViewportSize({ width: w, height: h });
-    await page.goto("/");
-    const tops = await page.locator("[data-hero-index] a").evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
-    expect(new Set(tops).size, `${w}`).toBe(4 / cols);
-    const r = await page.locator("[data-hero-index]").evaluate((e) => e.getBoundingClientRect().toJSON());
-    expect(r.right, `${w}`).toBeLessThanOrEqual(w);
-    if (cols === 2) expect(r.height, `${w}: compact`).toBeLessThanOrEqual(170);
-    for (const b of await page.locator("[data-hero-index] a").evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height))) expect(b).toBeGreaterThanOrEqual(44);
+test("640–1239px: an intentional 2×2 of equal landscape plates (not four squeezed into a row), captions on one line", async ({ browser }) => {
+  for (const vp of [[1024, 768], [1180, 820], [768, 1024], [1236, 900]] as const) {
+    const { ctx, page } = await open(browser, vp);
+    const t = await tiles(page);
+    expect(new Set(t.map((x) => x.x)).size, `${vp[0]}: two columns`).toBe(2);
+    expect(new Set(t.map((x) => x.y)).size, `${vp[0]}: two rows`).toBe(2);
+    expect(new Set(t.map((x) => x.w)).size, `${vp[0]}: equal widths`).toBe(1);
+    for (const x of t) { expect(x.w / x.h, `${vp[0]}: landscape`).toBeGreaterThan(1.2); expect(x.nameLines).toBe(1); expect(x.stateLines).toBe(1); }
+    // The first row is whole in the first screen at 1024×768.
+    if (vp[0] === 1024) expect(t[0].bottom).toBeLessThanOrEqual(vp[1]);
+    await ctx.close();
   }
 });
 
-test("375×667: the primary CTA is inside the first viewport", async ({ page }) => {
-  await page.setViewportSize({ width: 375, height: 667 });
-  await page.goto("/");
-  const b = await page.getByRole("link", { name: /Explore my work/ }).boundingBox();
-  expect(b!.y + b!.height).toBeLessThanOrEqual(667);
+test("a short landscape screen sets the copy and the 2×2 side by side, all of it inside the first screen", async ({ browser }) => {
+  for (const vp of [[844, 390], [932, 430], [740, 360]] as const) {
+    const { ctx, page } = await open(browser, vp);
+    const copy = await page.locator(".hero__copy").boundingBox(), cta = await page.locator("[data-hero-ctas]").boundingBox();
+    const t = await tiles(page);
+    expect(t.every((x) => x.x > copy!.x + copy!.width - 1), `${vp[0]}: plates beside the copy`).toBe(true);
+    expect(cta!.y + cta!.height, `${vp[0]}: the action`).toBeLessThanOrEqual(vp[1]);
+    for (const x of t) expect(x.bottom, `${vp[0]}: plate bottom`).toBeLessThanOrEqual(vp[1]);
+    expect(new Set(t.map((x) => x.x)).size).toBe(2); expect(new Set(t.map((x) => x.y)).size).toBe(2);
+    await ctx.close();
+  }
 });
 
-for (const [w, h] of [[1440, 900], [390, 844]] as const) {
-  test(`${w}×${h}: the scrolled navbar hides the copy beneath it`, async ({ page }) => {
-    await page.setViewportSize({ width: w, height: h });
-    await page.goto("/");
-    // Put About's body copy directly under the bar, then compare the bar with and without the page behind it.
-    await page.evaluate(() => { const p = document.querySelector("#about p.max-w-\\[62ch\\]")!; scrollTo({ top: p.getBoundingClientRect().top + scrollY - 20, behavior: "instant" }); });
-    await page.waitForTimeout(900);
-    const navH = await page.locator("header[data-site-nav]").evaluate((e) => e.getBoundingClientRect().height);
-    const clip = { x: 0, y: 0, width: w, height: Math.floor(navH) - 2 };
-    const withPage = await page.screenshot({ clip });
-    await page.addStyleTag({ content: "main, footer { visibility: hidden !important; }" });
-    await page.waitForTimeout(100);
-    const without = await page.screenshot({ clip });
-    const [a, b] = await Promise.all([withPage, without].map((x) => sharp(x).raw().toBuffer()));
-    let max = 0, sum = 0;
-    for (let i = 0; i < a.length; i++) { const d = Math.abs(a[i] - b[i]); sum += d; if (d > max) max = d; }
-    // Measured with headless Chromium (which drops the blur): 97% opaque bleeds 6 levels at most; the old 92% bled 14.
-    expect(max, `max channel delta`).toBeLessThanOrEqual(10);
-    expect(sum / a.length, `mean channel delta`).toBeLessThan(1);
+test("the plates' windows show their captures whole across: fitted to the window's width, never cropped sideways", async ({ browser }) => {
+  for (const vp of [[1440, 900], [1280, 700], [1024, 768], [844, 390], [390, 844]] as const) {
+    const { ctx, page } = await open(browser, vp);
+    const r = await page.locator(".plates .tile__win").evaluateAll((ws) => ws.map((w) => {
+      const img = w.querySelector("img") as HTMLImageElement, ir = img.getBoundingClientRect(), wr = w.getBoundingClientRect();
+      return { left: ir.left - wr.left, right: wr.right - ir.right, aspect: ir.width / ir.height, natural: img.naturalWidth / img.naturalHeight };
+    }));
+    expect(r).toHaveLength(2);
+    for (const x of r) {
+      expect(Math.abs(x.left), `${vp[0]} left`).toBeLessThanOrEqual(1.5);
+      expect(Math.abs(x.right), `${vp[0]} right`).toBeLessThanOrEqual(1.5);
+      expect(Math.abs(x.aspect - x.natural) / x.natural, `${vp[0]} aspect`).toBeLessThan(0.02);
+    }
+    await ctx.close();
+  }
+});
+
+test("desktop: the plates end where the hero ends — the first screen's bottom edge, or the hero's cap on tall screens", async ({ browser }) => {
+  for (const vp of [[1440, 900], [1280, 720], [1280, 700], [1920, 1080], [2560, 1440]] as const) {
+    const { ctx, page } = await open(browser, vp);
+    const [plates, hero] = await page.evaluate(() => [".plates", "#hero"].map((s) => Math.round(document.querySelector(s)!.getBoundingClientRect().bottom)));
+    expect(Math.abs(plates - hero), `${vp[0]}×${vp[1]}: plates end at ${plates}, the hero at ${hero}`).toBeLessThanOrEqual(2);
+    // The hero is the first screen up to its cap (60rem); past that the page simply continues below it.
+    expect(Math.abs(hero - Math.min(vp[1], 960)), `${vp[0]}×${vp[1]}: hero ends at ${hero}`).toBeLessThanOrEqual(2);
+    // The captions never fall outside their tile.
+    const out = await page.locator(".plates .tile").evaluateAll((ts) => ts.filter((t) => { const c = t.querySelector(".tile__cap")!.getBoundingClientRect(), r = t.getBoundingClientRect(); return c.bottom > r.bottom + 0.5 || c.top < r.top - 0.5; }).length);
+    expect(out, `${vp[0]}×${vp[1]}`).toBe(0);
+    await ctx.close();
+  }
+});
+
+for (const vp of PHONES) {
+  test(`${vp[0]}×${vp[1]}: the action comes before the mosaic, inside the first screen, with room between them`, async ({ browser }) => {
+    const { ctx, page } = await open(browser, vp);
+    const cta = await page.locator("[data-hero-ctas]").boundingBox(), plates = await page.locator(".plates").boundingBox();
+    expect(cta!.y + cta!.height).toBeLessThanOrEqual(vp[1]);
+    expect(plates!.y - (cta!.y + cta!.height)).toBeGreaterThanOrEqual(16);
+    // A 2×2 mosaic: two columns, two rows, equal tiles.
+    const tiles = await page.locator(".plates .tile").evaluateAll((ts) => ts.map((t) => { const r = t.getBoundingClientRect(); return [Math.round(r.x), Math.round(r.y), Math.round(r.width)]; }));
+    expect(new Set(tiles.map((t) => t[0])).size).toBe(2); expect(new Set(tiles.map((t) => t[1])).size).toBe(2); expect(new Set(tiles.map((t) => t[2])).size).toBe(1);
+    // The headline sets in two lines.
+    expect(await page.locator("#hero-title").evaluate((h) => { const r = document.createRange(); r.selectNodeContents(h); return new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size; })).toBe(2);
+    await ctx.close();
   });
 }
+
+test("following a plate lands its chapter right under the header", async ({ browser }) => {
+  for (const vp of [[1440, 900], [390, 844]] as const) {
+    const { ctx, page } = await open(browser, vp);
+    for (const id of CHAPTERS) {
+      await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }));
+      await page.locator(`.plates a[href="#work-${id}"]`).click();
+      await expect.poll(() => page.evaluate((id) => { const nav = document.querySelector("header[data-site-nav]")!.getBoundingClientRect().bottom;
+        return Math.abs(document.getElementById(`work-${id}`)!.getBoundingClientRect().top - nav); }, id), { message: `${vp[0]} ${id}` }).toBeLessThan(1);
+    }
+    await ctx.close();
+  }
+});
+
+test("the hero's first-screen images load eagerly with real dimensions; only the two largest-paint candidates jump the queue", async ({ page }) => {
+  await page.goto("/");
+  const imgs = await page.locator(".plates img").evaluateAll((is) => is.map((i) => ({ loading: i.getAttribute("loading"), fp: i.getAttribute("fetchpriority"), w: i.getAttribute("width"), h: i.getAttribute("height"),
+    tile: i.closest(".tile")!.className })));
+  // Lighthouse's LCP element: Aegis's window on wide screens, DeveloperOS's window on phones.
+  expect(imgs.filter((i) => i.fp === "high").map((i) => i.tile.split(" ")[1])).toEqual(["tile--aegis", "tile--dos"]);
+  expect(imgs.length).toBe(6);                                         // five captures and T Poker's icon
+  for (const i of imgs) { expect(i.loading).toBe("eager"); expect(Number(i.w)).toBeGreaterThan(0); expect(Number(i.h)).toBeGreaterThan(0); }
+  // AVIF is offered first.
+  expect(await page.locator(".plates picture source").first().getAttribute("type")).toBe("image/avif");
+});

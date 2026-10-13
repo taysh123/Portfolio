@@ -15,9 +15,12 @@ it("every component module is imported by something", () => {
   });
   expect(orphans).toEqual([]);
 });
-it("three.js and the spike routes are gone", () => {
+it("M10: no WebGL and no 3D runtime anywhere — three is not a dependency, and no studio engine, palette or chat remains", () => {
   const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
-  expect(pkg.dependencies?.three).toBeUndefined(); expect(pkg.devDependencies?.["@types/three"]).toBeUndefined();
+  for (const dep of ["three", "@types/three", "lenis"]) { expect(pkg.dependencies?.[dep], dep).toBeUndefined(); expect(pkg.devDependencies?.[dep], dep).toBeUndefined(); }
+  expect(all).not.toMatch(/from\s*["']three["']|getContext\(\s*["']webgl|WebGLRenderer/);
+  for (const p of ["lib/studio", "components/studio", "data/studio.ts", "public/studio", "components/ui/CommandPalette.tsx", "components/ui/AIChatWidget.tsx", "lib/palette.ts", "app/api/chat", "components/scenes", "app/e2e-fixtures"])
+    expect(fs.existsSync(p), p).toBe(false);
   expect(fs.existsSync("app/gl-spike")).toBe(false); expect(fs.existsSync("app/render-studio")).toBe(false); expect(fs.existsSync("public/arrival")).toBe(false);
 });
 it("the e2e fixture route is never in the sitemap", () => {

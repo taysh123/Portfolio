@@ -2,7 +2,7 @@ import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { ArrowUpRightIcon } from "@/components/ui/icons";
 
-type Variant = "primary" | "secondary" | "ghost";
+type Variant = "primary" | "accent" | "secondary" | "ghost";
 type Size = "sm" | "md" | "lg";
 
 /**
@@ -19,9 +19,10 @@ type Size = "sm" | "md" | "lg";
  * where the pointer earns the density.
  */
 const base =
-  "group/btn relative inline-flex items-center justify-center gap-2 rounded-full font-medium whitespace-nowrap " +
-  "transition-[background-color,border-color,color,transform] duration-[var(--dur-mid)] ease-[var(--ease-out-expo)] " +
-  "active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50";
+  "group/btn relative inline-flex cursor-pointer items-center justify-center gap-2 rounded-full font-medium whitespace-nowrap " +
+  // Hover is a colour change, not a journey: 160ms ease-out (M3). The press scale is the only transform.
+  "transition-[background-color,border-color,color,transform] duration-[160ms] ease-[var(--ease-out)] " +
+  "active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50";
 
 const sizes: Record<Size, string> = {
   sm: "h-11 px-4 text-sm lg:h-9",
@@ -30,8 +31,11 @@ const sizes: Record<Size, string> = {
 };
 
 const variants: Record<Variant, string> = {
+  // M10: the primary action is an ink pill — ink on paper, paper on a dark plate or in the dark theme.
   primary:
-    "bg-accent-solid text-white shadow-e1 hover:bg-accent-solid-hover",
+    "bg-[var(--ink-solid)] text-[var(--ink-solid-fg)] hover:bg-[var(--ink-solid-hover)]",
+  accent:
+    "bg-accent-solid text-white hover:bg-accent-solid-hover",
   secondary:
     "border border-line bg-surface-2 text-fg hover:border-line-strong hover:bg-surface-1",
   ghost:
@@ -43,7 +47,7 @@ type CommonProps = {
   size?: Size;
   className?: string;
   children: ReactNode;
-  /** Appends the shared arrow glyph, animated on hover. */
+  /** Appends the shared arrow glyph, animated on hover. External links get it by default. */
   arrow?: boolean;
 };
 
@@ -114,7 +118,8 @@ export function ButtonLink({
         : null)}
       {...rest}
     >
-      {inner(children, arrow)}
+      {/* One external-link cue site-wide: the arrow glyph (never a typed "↗" in the label). */}
+      {inner(children, arrow ?? external)}
       {external && <span className="sr-only"> (opens in a new tab)</span>}
     </a>
   );

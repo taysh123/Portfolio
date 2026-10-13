@@ -6,14 +6,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Tag, StatusChip } from "@/components/ui/Tag";
 import { ButtonLink } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
-import { Eyebrow } from "@/components/ui/Eyebrow";
 import { StoreBadge } from "@/components/ui/StoreBadge";
 import { GithubIcon, XIcon } from "@/components/ui/icons";
 import { DUR, easeOutExpo } from "@/lib/motion";
 import { useFocusTrap, useScrollLock } from "@/lib/useFocusTrap";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
 import { PrivateRepoLabel } from "@/components/ui/PrivateRepoLabel";
-import { publicRepoUrl, type Project } from "@/data/projects";
+import { publicRepoUrl, repoLabel, type Project } from "@/data/projects";
 
 /**
  * The case study, as a full product presentation.
@@ -44,6 +43,11 @@ import { publicRepoUrl, type Project } from "@/data/projects";
  * so it is kept: `useFocusTrap` cycles Tab inside the dialog and restores
  * focus to the card that opened it.
  */
+/** The surface a project's captures sit on: its plate in the work chapters (M10), or the raised surface. */
+function plateOf(id: string) {
+  return ({ poker: "var(--plate-poker)", aegis: "#05070c", developeros: "var(--plate-dos)", "gravity-flow": "var(--plate-gf)" } as Record<string, string>)[id] ?? "#0b0e14";
+}
+
 export function CaseStudyPanel({
   project,
   onClose,
@@ -89,32 +93,16 @@ export function CaseStudyPanel({
             animate={{ opacity: 1, y: 0 }}
             exit={reduced ? { opacity: 0 } : { opacity: 0, y: 42 }}
             transition={{ duration: DUR.slow, ease: easeOutExpo }}
-            /*
-              `data-lenis-prevent` IS THE BUG FIX, not a nicety.
-
-              Lenis listens for `wheel` on the window and calls
-              preventDefault() so it can drive the page itself. A nested scroll
-              container therefore never receives the event, and this panel sat
-              at scrollTop 0 no matter how hard you scrolled — while Escape,
-              Tab and End all worked, which is what pointed at the wheel rather
-              than at the panel. Measured before the fix: wheel 0 -> 0,
-              keyboard End -> 3122.
-
-              Lenis skips any event whose composed path contains this
-              attribute, which hands the wheel back to the browser and lets the
-              panel scroll natively. `overscroll-contain` then stops the page
-              behind it from taking over at the ends.
-            */
-            data-lenis-prevent
+            /* `overscroll-contain`: the page behind never takes over at the panel's ends. */
             className="fixed inset-0 z-[61] overflow-y-auto overscroll-contain"
             style={{ background: "var(--bg)" }}
           >
             {/* ── Sticky chrome ──────────────────────────────────────── */}
-            <header className="sticky top-0 z-20 border-b border-line bg-[color-mix(in_oklab,var(--bg-raised)_95%,transparent)] backdrop-blur-md">
+            <header className="sticky top-0 z-20 border-b border-line bg-raised">
               <div className="mx-auto flex w-full max-w-[68rem] items-center justify-between gap-4 px-[var(--gutter)] py-3.5">
                 <div className="flex min-w-0 items-center gap-3">
-                  <Eyebrow as="span">Case study</Eyebrow>
-                  <span aria-hidden="true" className="hairline hidden w-8 sm:block" />
+                  <span className="text-[0.9375rem] text-fg-subtle">Case study</span>
+                  <span aria-hidden="true" className="text-fg-subtle">/</span>
                   <p className="truncate text-[0.9375rem] font-medium text-fg">
                     {project.name}
                   </p>
@@ -125,36 +113,13 @@ export function CaseStudyPanel({
               </div>
             </header>
 
-            {/* ── Hero capture ───────────────────────────────────────── */}
+            {/* ── Hero capture, on the product's own plate (M10) ─────── */}
             {project.media?.image && (
               <div className="relative mx-auto w-full max-w-[68rem] px-[var(--gutter)] pt-[var(--gutter)]">
-                {/*
-                  A portrait phone capture inside a 16:9 hero leaves two thirds
-                  of the frame empty, and empty reads as broken. Contained
-                  media gets a shallower frame AND a pool of light behind it,
-                  so the negative space reads as a lit stage — which is how
-                  phone screenshots are presented in every product page worth
-                  copying — rather than as a picture that failed to load.
-                */}
                 <div
-                  className={
-                    "relative w-full overflow-hidden rounded-2xl border border-line " +
-                    (project.media.fit === "contain"
-                      ? "aspect-[16/11]"
-                      : "aspect-[16/9]")
-                  }
-                  style={{ background: "var(--panel-solid)" }}
+                  className={"relative w-full overflow-hidden rounded-2xl " + (project.media.fit === "contain" ? "aspect-[16/11]" : "aspect-[16/9]")}
+                  style={{ background: plateOf(project.id) }}
                 >
-                  {project.media.fit === "contain" && (
-                    <span
-                      aria-hidden="true"
-                      className="pointer-events-none absolute left-1/2 top-1/2 h-[86%] w-[52%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] blur-[70px]"
-                      style={{
-                        background:
-                          "radial-gradient(closest-side, var(--glow-strong), var(--glow-blue) 48%, transparent 76%)",
-                      }}
-                    />
-                  )}
                   <Image
                     src={project.media.image}
                     alt={project.media.alt ?? `${project.name} interface`}
@@ -164,20 +129,7 @@ export function CaseStudyPanel({
                     loading="eager"
                     fetchPriority="high"
                     sizes="(max-width: 1100px) 100vw, 68rem"
-                    className={
-                      project.media.fit === "contain"
-                        ? "object-contain p-4"
-                        : "object-cover object-top"
-                    }
-                  />
-                  <span
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4"
-                    style={{
-                      background:
-                        "linear-gradient(to top, var(--bg), transparent)",
-                      opacity: 0.7,
-                    }}
+                    className={project.media.fit === "contain" ? "object-contain p-6" : "object-cover object-top"}
                   />
                 </div>
               </div>
@@ -187,28 +139,36 @@ export function CaseStudyPanel({
               {/* ── The pitch ────────────────────────────────────────── */}
               <div className="flex flex-wrap items-center gap-2.5">
                 <StatusChip status={project.status} />
-                <span className="label text-fg-subtle">{project.context}</span>
+                <span className="text-[0.9375rem] text-fg-subtle">{project.context}</span>
               </div>
 
               <h2
                 id="case-study-title"
-                className="mt-5 font-semibold leading-[1.05] tracking-[var(--tracking-heading)] text-fg"
+                className="mt-5 font-semibold leading-[1.02] tracking-[var(--tracking-display)] text-fg"
                 style={{ fontSize: "var(--text-h2)" }}
               >
                 {project.name}
               </h2>
-              <p
-                className="mt-4 max-w-3xl leading-relaxed text-fg-muted"
-                style={{ fontSize: "var(--text-lead)" }}
-              >
+              <p className="mt-4 max-w-[38em] leading-relaxed text-fg-muted" style={{ fontSize: "var(--text-lead)" }}>
                 {project.tagline}
               </p>
-              <p className="mt-5 max-w-3xl leading-relaxed text-fg-muted">
-                {project.description}
-              </p>
+              <p className="mt-5 max-w-[42em] leading-relaxed text-fg-muted">{project.description}</p>
+
+              {/* ── The facts: one quiet line, not tiles ─────────────── */}
+              {project.metrics.length > 0 && (
+                <dl className="mt-6 flex max-w-[48em] flex-wrap gap-x-5 gap-y-1.5 border-t border-line pt-5 text-[0.9375rem] text-fg-muted">
+                  {project.metrics.map((m) => (
+                    <div key={m.label} className="flex gap-1.5">
+                      {/* dt before dd (a valid group, read label-then-value); row-reverse shows the value first. */}
+                      <dt className="order-2">{m.label}</dt>
+                      <dd className="order-1 tnum font-semibold text-fg">{m.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
 
               {/* ── Every way to get it ──────────────────────────────── */}
-              <div className="mt-9 flex flex-wrap items-center gap-3">
+              <div className="mt-8 flex flex-wrap items-center gap-3">
                 {project.liveUrl && (
                   <ButtonLink href={project.liveUrl} external arrow>
                     {project.liveLabel ?? "Open the app"}
@@ -220,7 +180,7 @@ export function CaseStudyPanel({
                     View source
                   </ButtonLink>
                 ) : (
-                  <PrivateRepoLabel className="px-2" />
+                  <PrivateRepoLabel className="px-2" label={repoLabel(project)} />
                 )}
               </div>
 
@@ -234,30 +194,11 @@ export function CaseStudyPanel({
                 </ul>
               )}
 
-              {/* ── The numbers ──────────────────────────────────────── */}
-              <dl className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {project.metrics.map((m) => (
-                  <div
-                    key={m.label}
-                    className="raised flex flex-col-reverse rounded-xl border border-line px-4 py-3.5"
-                  >
-                    {/* dt before dd (a valid group, read label-then-value); column-reverse shows the value on top. */}
-                    <dt className="label mt-2 text-fg-subtle">{m.label}</dt>
-                    <dd className="tnum text-2xl font-semibold leading-none text-fg">
-                      {m.value}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-
               {/* ── Gallery ──────────────────────────────────────────── */}
               {project.media?.gallery && project.media.gallery.length > 0 && (
-                <section className="mt-14">
-                  <Eyebrow rule>Inside the product</Eyebrow>
-                  {/* Captioned, because a screenshot nobody can read is
-                      decoration. `<figure>`/`<figcaption>` so the caption is
-                      bound to its image for assistive tech too. */}
-                  <ul className="mt-6 grid gap-5 sm:grid-cols-2">
+                <Block title="Inside the product" className="mt-14">
+                  {/* Captioned, because a screenshot nobody can read is decoration. */}
+                  <ul className="grid gap-5 sm:grid-cols-2">
                     {project.media.gallery.map((shot, i, all) => {
                       // An odd last shot spans both columns rather than sitting alone beside a gap.
                       const wide = all.length % 2 === 1 && i === all.length - 1;
@@ -266,27 +207,15 @@ export function CaseStudyPanel({
                         <figure>
                           <div
                             className={
-                              "relative w-full overflow-hidden rounded-xl border border-line " +
-                              // Same reasoning as the hero: a portrait capture
-                              // needs a taller frame or it sits in a pool of
-                              // dead space.
-                              // A wide (spanning) shot is a banner: 8:3, the ratio of Aegis's architecture diagram.
+                              "relative w-full overflow-hidden rounded-xl " +
+                              // A portrait capture needs a taller frame; a wide (spanning) shot is a banner (8:3, the
+                              // ratio of Aegis's architecture diagram).
                               (project.media?.fit === "contain"
                                 ? wide ? "aspect-[2/1]" : "aspect-[4/3]"
                                 : wide ? "aspect-[8/3]" : "aspect-[16/10]")
                             }
-                            style={{ background: "var(--panel-solid)" }}
+                            style={{ background: plateOf(project.id) }}
                           >
-                            {project.media?.fit === "contain" && (
-                              <span
-                                aria-hidden="true"
-                                className="pointer-events-none absolute left-1/2 top-1/2 h-[80%] w-[58%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] blur-[50px]"
-                                style={{
-                                  background:
-                                    "radial-gradient(closest-side, var(--glow-strong), transparent 74%)",
-                                }}
-                              />
-                            )}
                             <Image
                               src={shot.src}
                               alt={shot.alt}
@@ -294,22 +223,16 @@ export function CaseStudyPanel({
                               fill
                               loading="lazy"
                               sizes={wide ? "(max-width: 1100px) 100vw, 68rem" : "(max-width: 640px) 100vw, 33rem"}
-                              className={
-                                project.media?.fit === "contain"
-                                  ? "object-contain p-3"
-                                  : "object-cover object-top"
-                              }
+                              className={project.media?.fit === "contain" ? "object-contain p-4" : "object-cover object-top"}
                             />
                           </div>
-                          <figcaption className="mt-2.5 text-[0.8125rem] leading-relaxed text-fg-subtle">
-                            {shot.alt}
-                          </figcaption>
+                          <figcaption className="mt-2.5 text-[0.875rem] leading-relaxed text-fg-subtle">{shot.alt}</figcaption>
                         </figure>
                       </li>
                       );
                     })}
                   </ul>
-                </section>
+                </Block>
               )}
 
               {/* ── The engineering ──────────────────────────────────── */}
@@ -327,14 +250,12 @@ export function CaseStudyPanel({
               </div>
 
               <Block title="Engineering decisions" className="mt-14">
-                <ul className="grid gap-4 sm:grid-cols-2">
+                {/* Ruled rows, not a grid of equal cards. */}
+                <ul className="border-t border-line">
                   {project.caseStudy.decisions.map((d) => (
-                    <li
-                      key={d.title}
-                      className="raised rounded-xl border border-line p-5"
-                    >
-                      <h4 className="text-[0.95rem] font-medium text-fg">{d.title}</h4>
-                      <p className="mt-2 text-sm leading-relaxed text-fg-muted">{d.body}</p>
+                    <li key={d.title} className="grid gap-2 border-b border-line py-5 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] md:gap-8">
+                      <h4 className="text-[1rem] font-semibold text-fg">{d.title}</h4>
+                      <p className="text-[0.9375rem] leading-relaxed text-fg-muted">{d.body}</p>
                     </li>
                   ))}
                 </ul>
@@ -351,11 +272,9 @@ export function CaseStudyPanel({
 
               {project.caseStudy.honestNote && (
                 <Block title="What this isn't" className="mt-14">
-                  <div className="raised rounded-xl border border-line p-5">
-                    <p className="leading-relaxed text-fg-muted">
-                      {project.caseStudy.honestNote}
-                    </p>
-                  </div>
+                  <p className="max-w-[46em] border-l-2 border-line-strong pl-5 leading-relaxed text-fg-muted">
+                    {project.caseStudy.honestNote}
+                  </p>
                 </Block>
               )}
 
@@ -383,7 +302,7 @@ export function CaseStudyPanel({
                     View source
                   </ButtonLink>
                 ) : (
-                  <PrivateRepoLabel className="px-2" />
+                  <PrivateRepoLabel className="px-2" label={repoLabel(project)} />
                 )}
               </div>
             </div>
@@ -405,7 +324,7 @@ function Block({
 }) {
   return (
     <section className={className}>
-      <h3 className="label mb-4 text-fg-subtle">{title}</h3>
+      <h3 className="mb-4 text-[1.125rem] font-semibold tracking-[-0.01em] text-fg">{title}</h3>
       {children}
     </section>
   );

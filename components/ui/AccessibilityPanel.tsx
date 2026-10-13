@@ -4,7 +4,6 @@ import { useCallback, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAccessibility } from "@/components/providers/AccessibilityProvider";
 import { IconButton } from "@/components/ui/IconButton";
-import { Eyebrow } from "@/components/ui/Eyebrow";
 import { XIcon } from "@/components/ui/icons";
 import { DUR, easeOutExpo } from "@/lib/motion";
 import { useFocusTrap } from "@/lib/useFocusTrap";
@@ -66,12 +65,11 @@ export function AccessibilityPanel() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={reduced ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: DUR.mid, ease: easeOutExpo }}
-            data-lenis-prevent
-            className="glass edge-lit w-[min(19rem,calc(100vw-1.5rem))] max-h-[calc(100svh-var(--nav-h)-1.5rem)] overflow-y-auto overscroll-contain rounded-2xl border border-line p-5 shadow-float"
+            className="bg-raised w-[min(19rem,calc(100vw-1.5rem))] max-h-[calc(100svh-var(--nav-h)-1.5rem)] overflow-y-auto overscroll-contain rounded-2xl border border-line p-5 shadow-float"
             style={{ background: "var(--bg-raised)" }}   /* solid: settings text must not show the page behind it */
           >
             <div className="flex items-center justify-between gap-3">
-              <Eyebrow as="span">Accessibility</Eyebrow>
+              <span className="text-[0.9375rem] font-semibold text-fg">Accessibility</span>
               <IconButton
                 label="Close accessibility settings"
                 size="sm"

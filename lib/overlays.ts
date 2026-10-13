@@ -3,27 +3,22 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 
 /**
- * The chat and accessibility panels, opened from the site chrome (the nav on desktop, the header and menu sheet
- * on phones) rather than from floating corner buttons: a fixed button in a bottom corner sat on top of copy and
- * tap targets at rest on every viewport narrower than ~1400px (final polish pass, scripts/fab-scan.mjs).
+ * The accessibility panel, opened from the site chrome (the header on desktop, the menu sheet on phones) rather than
+ * from a floating corner button, which sat on top of copy and tap targets at rest on narrow viewports.
  *
- * Both panels are dynamic chunks, so — as with the palette (lib/palette.ts) — a request made before a panel has
- * mounted is recorded and honoured by its initial state. The panels report their open state here so the chrome
- * buttons can expose it as aria-expanded.
+ * The panel is a dynamic chunk, so a request made before it has mounted is recorded and honoured by its initial
+ * state. The panel reports its open state here so the chrome button can expose it as aria-expanded.
  */
-export type Overlay = "chat" | "a11y";
+export type Overlay = "a11y";
 
-const pending: Record<Overlay, boolean> = { chat: false, a11y: false };
-const open: Record<Overlay, boolean> = { chat: false, a11y: false };
+const pending: Record<Overlay, boolean> = { a11y: false };
+const open: Record<Overlay, boolean> = { a11y: false };
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 
 /** Open (or, if already open, close) a panel. */
 export function toggleOverlay(name: Overlay) {
   if (open[name]) { window.dispatchEvent(new CustomEvent("overlay:close", { detail: name })); return; }
-  // The two panels share one anchor under the nav: opening one closes the other rather than stacking them.
-  const other: Overlay = name === "chat" ? "a11y" : "chat";
-  if (open[other]) window.dispatchEvent(new CustomEvent("overlay:close", { detail: other }));
   pending[name] = true;
   window.dispatchEvent(new CustomEvent("overlay:open", { detail: name }));
 }

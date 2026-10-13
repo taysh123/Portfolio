@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useLayoutEffect, type RefObject } from "react";
-import { lockScroll, unlockScroll } from "@/lib/scroll";
 
 const FOCUSABLE = [
   "a[href]",
@@ -113,16 +112,14 @@ export function useFocusTrap(
   }, [active, ref]);
 }
 
-/** Locks body scroll while `active`, preserving the original inline value. */
+/** Locks page scroll while `active`. Counted, so closing one of two stacked overlays keeps the page locked; the
+ *  original inline value comes back when the last one closes. */
+let locks = 0;
+let saved = "";
 export function useScrollLock(active: boolean) {
   useEffect(() => {
     if (!active) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    lockScroll();
-    return () => {
-      document.body.style.overflow = previous;
-      unlockScroll();
-    };
+    if (locks++ === 0) { saved = document.body.style.overflow; document.body.style.overflow = "hidden"; }
+    return () => { if (--locks === 0) document.body.style.overflow = saved; };
   }, [active]);
 }

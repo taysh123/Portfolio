@@ -128,3 +128,35 @@ Every milestone runs `typecheck`, `lint`, `vitest`, the full Playwright suite, c
   - first-load JS unchanged at 219 KB;
   - images after a full scroll 176 → 166 KB on desktop and 184 → 155 KB on phones;
   - CLS stays at 0.
+- **Tooling** (a1a7464): project-local Impeccable 4.5.2 (skill, agents, design hook) and the four Emil Kowalski motion skills, pinned in `skills-lock.json`.
+- **M3** (93bfb3e): case-study triggers on the shared `Button`, one focus ring, pointer cursors, and a keyboard spec covering tab order, the palette (Ctrl/Cmd+K), the menu and focus return.
+- **M4** (0d114fa): two-column landscape chapters (720–1023px), container-query worlds for narrow phones and 320px, and the Contact status dot inline with its label.
+- **M5** (ee915dc): framer-motion off the first-load path (50 KB gzip less JS, script evaluation 512 → 343 ms on mobile Lighthouse); the JS budget tightened to 225 KB.
+- **M6** (fd2e64f): Software Engineer positioning, claims re-checked against each public repository (Aegis launcher script, DeveloperOS 11 days, GRAVITY FLOW's current counts, Job Assistant's sources and runs, Orders as a two-person submission), and a social card with no collisions.
+- **M7**:
+  - Geist kept over Inter, after side-by-side renders of the hero and a chapter at 1440 and 390. Inter set wider, so the hero lead broke inside "Google Play", and it crowded at the hero's tracking.
+  - Labels at 12px / 0.12em, the same width per character as 11px / 0.18em.
+  - The side-stripe accents removed, and the section overlines that only repeated the nav removed.
+  - More Work as ruled rows, lighter than the chapters.
+  - The Contact slogan removed, and the footer finished with mark, name, role, channels and copyright.
+  - The Impeccable detector now finds 0 anti-patterns. Two grid advisories are kept as part of the approved direction.
+- **Performance at M7** (Lighthouse 13.5, three runs each):
+  - Desktop: 100 in all four categories, LCP 0.72 s, CLS 0.
+  - Mobile: performance 90–95; accessibility, best practices and SEO 100; LCP median 3.2 s under simulated slow 4G (it was 3.05 s before M5, and the run-to-run range is 2.4–3.3 s); CLS 0.
+- **M8: creative elevation** ("Living Systems Studio"; references in `docs/superpowers/research/2026-10-12-m8-portfolio-references.md`).
+  - **Hero:** a system map of the projects. Every edge is a technology both projects list in their own stack, enforced by a unit test.
+    - It draws itself in after first paint.
+    - Signal pulses ride the edges while the hero is in view.
+    - Layers parallax with the pointer.
+    - Focusing a project in the index lights its edges.
+    - The plane tilts away as the hero scrolls out.
+  - **Signal spine** (≥1360px): chapter ticks at their true document positions, with a scroll-driven signal and the current chapter marked.
+  - **Worlds:** one mechanism each.
+    - T Poker: settlement transfers on the table rail.
+    - Aegis: the implemented fan-out, where detection is consumed by threat scoring and alerting (then SignalR) in parallel, with packets. The copy is corrected to match the code.
+    - DeveloperOS: scan → FTS5 → bm25 → cite or decline.
+    - GRAVITY FLOW: a star accelerating into the well, and hold-to-pull on the field.
+  - **Lower page:** a Stack project lens derived from project text (unit-tested), Think · Build · Ship stage nodes, masked title reveals, a Contact rim light, and a footer system-map signature.
+  - **Performance:** JS +1.1 KB gzip (204.9 → 206.0); desktop Lighthouse 100.
+    - Mobile performance is 88–93 (M7: 90–95), with a median LCP of 3.48 s (M7: 3.24 s), after deferring the map intro past first paint.
+    - The remaining gap is the larger HTML document (+13.4 KB gzip) and a bimodal headless first-paint stall that M7 showed too.

@@ -21,7 +21,7 @@ export function Tag({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2.5 py-1 font-mono text-[0.6875rem] leading-none tracking-[0.04em]",
+        "inline-flex items-center rounded-full border px-2.5 py-1 text-[0.8125rem] leading-none",
         emphasis
           ? "border-accent-line bg-accent-soft text-fg"
           : "border-line-subtle bg-surface-1 text-fg-muted",

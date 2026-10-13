@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { ButtonLink } from "@/components/ui/Button";
-import { Eyebrow } from "@/components/ui/Eyebrow";
 
 export const metadata: Metadata = {
   title: "Page not found",
@@ -14,10 +13,9 @@ export default function NotFound() {
   return (
     <main className="flex min-h-[100svh] items-center justify-center px-[var(--gutter)]">
       <div className="w-full max-w-lg text-center">
-        <Eyebrow className="justify-center">404</Eyebrow>
         <h1
-          className="mt-5 font-semibold leading-[1.05] tracking-[var(--tracking-heading)] text-fg"
-          style={{ fontSize: "var(--text-h1)" }}
+          className="font-semibold leading-[1.02] tracking-[var(--tracking-display)] text-fg"
+          style={{ fontSize: "var(--text-h2)" }}
         >
           That page doesn&apos;t exist.
         </h1>
@@ -26,7 +24,7 @@ export default function NotFound() {
           scroll.
         </p>
         <div className="mt-8 flex justify-center">
-          <ButtonLink href="/" size="lg" arrow>
+          <ButtonLink href="/" size="lg">
             Back to the start
           </ButtonLink>
         </div>

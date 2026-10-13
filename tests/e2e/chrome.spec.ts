@@ -1,187 +1,268 @@
-// tests/e2e/chrome.spec.ts
-import { test, expect } from "playwright/test";
+// tests/e2e/chrome.spec.ts — header, menu, theme and keyboard (M10).
+import { test, expect, type Page } from "playwright/test";
+import { open, CHAPTERS } from "../support/page";
 
-test("desktop nav: TS · Work · About · Stack · Contact · availability pill, palette and theme buttons", async ({ page }) => {
+test("desktop header: name, four destinations, accessibility, theme and one Contact action — no palette, no chat", async ({ page }) => {
   await page.goto("/");
-  const nav = page.locator("header[data-site-nav] nav");
-  for (const l of ["Work", "About", "Stack", "Contact"]) await expect(nav.getByRole("link", { name: l, exact: true })).toBeVisible();
-  await expect(nav.getByRole("link", { name: /Available for work/ })).toHaveAttribute("href", "#contact");
-  await expect(nav.getByRole("button", { name: /command palette/i })).toBeVisible();
-  await expect(nav.getByRole("button", { name: /theme|light mode|dark mode/i })).toBeVisible();
+  const header = page.locator("header[data-site-nav]");
+  await expect(header.getByRole("link", { name: "Tay Shofer — home" })).toBeVisible();
+  for (const name of ["Work", "About", "Stack", "Contact"]) await expect(header.getByRole("link", { name, exact: true })).toBeVisible();
+  await expect(header.getByRole("button", { name: "Accessibility settings" })).toBeVisible();
+  await expect(header.getByRole("button", { name: /Switch to (dark|light) mode/ })).toBeVisible();
+  await expect(header.getByRole("link", { name: "Get in touch" })).toHaveAttribute("href", "#contact");
+  await expect(page.getByRole("button", { name: /palette|search|chat|ask/i })).toHaveCount(0);
+  // Ctrl/⌘+K is the browser's again: nothing on the page claims it.
+  for (const combo of ["Control+k", "Meta+k"]) { await page.keyboard.press(combo); await expect(page.locator("[role=dialog]")).toHaveCount(0); }
+  // No chat endpoint, and no key-bearing route to expose.
+  expect((await page.request.post("/api/chat", { data: {} })).status()).toBe(404);
 });
 
-test("below lg: TS, the availability dot (with text for screen readers) and the menu button", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
-  await expect(page.locator("header[data-site-nav] [data-availability-dot]")).toBeVisible();
-  await expect(page.locator("header[data-site-nav] [data-availability-dot]")).toHaveAccessibleName(/Available for work/);
-  await page.getByRole("button", { name: "Open menu" }).click();
-  const sheet = page.getByRole("dialog");
-  for (const l of ["Work", "About", "Stack", "Contact"]) await expect(sheet.getByRole("link", { name: l, exact: true })).toBeVisible();
-});
-
-test("mobile sheet: keyboard reaches the theme toggle and palette, Escape restores focus (spec §10)", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
-  const menu = page.getByRole("button", { name: "Open menu" });
-  await menu.focus(); await page.keyboard.press("Enter");
-  const sheet = page.getByRole("dialog"); await expect(sheet).toBeVisible();
-  const reached: string[] = [];
-  for (let i = 0; i < 14; i++) { await page.keyboard.press("Tab"); reached.push((await page.evaluate(() => document.activeElement?.getAttribute("aria-label") ?? document.activeElement?.textContent ?? "")).trim()); }
-  expect(reached.some((r) => /theme|light mode|dark mode/i.test(r))).toBe(true);
-  expect(reached.some((r) => /palette|search/i.test(r))).toBe(true);
-  await page.keyboard.press("Escape"); await expect(sheet).toBeHidden(); await expect(menu).toBeFocused();
-});
-
-// Chat and accessibility live in the site chrome, not in floating corner buttons (final polish pass).
-test("chat and accessibility are in the nav, visible and working from first paint", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.locator("header[data-site-nav]")).toHaveCSS("opacity", "1");
-  const nav = page.locator("header[data-site-nav] nav");
-  for (const [name, dialog] of [["Ask Tay AI", "Ask Tay AI"], ["Accessibility settings", "Accessibility settings"]] as const) {
-    const b = nav.getByRole("button", { name, exact: true }); await expect(b).toBeVisible();
-    await expect(b).toHaveAttribute("aria-expanded", "false");
-    await b.click(); await expect(page.getByRole("dialog", { name: dialog })).toBeVisible();
-    await expect(b).toHaveAttribute("aria-expanded", "true");
-    await page.keyboard.press("Escape"); await expect(page.getByRole("dialog", { name: dialog })).toBeHidden();
-    await expect(b).toBeFocused();                                                  // focus returns to its opener
-  }
-  await expect(page.locator("[data-floating-control]")).toHaveCount(0);
-});
-
-test("static mode: chat and accessibility are reachable from first paint", async ({ browser }) => {
-  const ctx = await browser.newContext({ reducedMotion: "reduce" }); const page = await ctx.newPage();
-  await page.goto("/");
-  await expect(page.locator("header[data-site-nav]")).toHaveCSS("opacity", "1");
-  await expect(page.locator("header[data-site-nav] nav").getByRole("button", { name: "Ask Tay AI", exact: true })).toBeVisible();
+test("light is the default; the dark theme is the visitor's choice and is remembered", async ({ browser }) => {
+  const { ctx, page } = await open(browser, [1440, 900]);
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe("rgb(243, 244, 246)");
+  await page.getByRole("button", { name: "Switch to dark mode" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.reload(); await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await ctx.close();
 });
 
-test("phones: chat in the header, accessibility in the menu sheet — focus returns to the menu button", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+test("a theme toggle shifts no layout", async ({ page }) => {
   await page.goto("/");
-  await page.locator("header[data-site-nav]").getByRole("button", { name: "Ask Tay AI", exact: true }).click();
-  await expect(page.getByRole("dialog", { name: "Ask Tay AI" })).toBeVisible();
-  await page.keyboard.press("Escape");
-  const menu = page.getByRole("button", { name: "Open menu" }); await menu.click();
-  await page.getByRole("dialog", { name: "Navigation" }).getByRole("button", { name: "Accessibility settings" }).click();
-  await expect(page.getByRole("dialog", { name: "Accessibility settings" })).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog", { name: "Accessibility settings" })).toBeHidden();
-  await expect(menu).toBeFocused();
-});
-
-test("palette 'Home' lands on the hero at identity with the h1 focused (the removed #top regression)", async ({ page }) => {
-  await page.goto("/");
-  // Start from a focused control far down the page, as a keyboard user would: the trap restores focus
-  // here on close, and Home must still win.
-  await page.locator("footer a").first().focus();
-  await page.keyboard.press("Control+k");
-  await page.getByRole("option", { name: "Home" }).click();
-  await expect(page.locator("#hero-title")).toBeFocused();
-  await expect(page.locator("#hero-title")).toBeInViewport();
-});
-
-test("Ctrl+K pressed before hydration still opens the palette", async ({ page }) => {
-  let release!: () => void; const gate = new Promise<void>((r) => (release = r));
-  await page.route(/\/_next\/static\/chunks\/.*\.js$/, async (route) => { await gate; await route.continue(); });
-  await page.goto("/", { waitUntil: "domcontentloaded" });
-  await page.keyboard.press("Control+k");
-  expect(await page.evaluate(() => (window as unknown as { __paletteReady?: boolean }).__paletteReady)).toBeFalsy();
-  release();
-  await expect(page.getByRole("dialog", { name: "Command palette" })).toBeVisible({ timeout: 15000 });
-});
-
-test("every palette section target exists", async ({ page }) => {
-  await page.goto("/");
-  for (const id of ["hero", "work", "about", "skills", "approach", "contact"]) await expect(page.locator(`#${id}`)).toHaveCount(1);
-});
-
-test("nav anchors glide the section to just under the fixed header (Lenis-aware, Plan 2 Task 23)", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/");
-  await page.locator("header[data-site-nav] nav").getByRole("link", { name: "About", exact: true }).click();
-  // Lands (after the glide) with the section's top just below the header: 40–140px from the viewport top.
-  await expect.poll(async () => page.locator("#about").evaluate((el) => { const t = el.getBoundingClientRect().top; return t >= 40 && t < 140; }), { timeout: 5000 }).toBe(true);
-  await expect(page).toHaveURL(/#about$/);
-});
-
-// Nothing but the header is fixed over the page at rest — no control can sit on copy or tap targets
-// (scripts/fab-scan.mjs found 24–46 collisions per viewport with the old corner buttons).
-for (const [w, h] of [[375, 667], [390, 844], [844, 390], [1280, 720]] as const) {
-  test(`no fixed control overlaps the page at rest at ${w}x${h} (floating-control regression)`, async ({ page }) => {
-    await page.setViewportSize({ width: w, height: h });
-    await page.goto("/");
-    for (const f of [0, 0.35, 0.7, 1]) {
-      await page.evaluate((f) => scrollTo({ top: (document.documentElement.scrollHeight - innerHeight) * f, behavior: "instant" as ScrollBehavior }), f);
-      await page.waitForTimeout(900);
-      const fixed = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>("body *")].filter((e) => {
-        const cs = getComputedStyle(e); if (cs.position !== "fixed" || cs.visibility === "hidden" || +cs.opacity === 0) return false;
-        if (e.closest("header[data-site-nav]") || e.closest("[role=dialog]")) return false;
-        const r = e.getBoundingClientRect(); return r.width > 1 && r.height > 1 && r.bottom > 0 && r.top < innerHeight && cs.clip !== "rect(0px, 0px, 0px, 0px)";
-      }).map((e) => e.tagName + "." + String(e.className).slice(0, 40)));
-      expect(fixed, `at ${f}`).toEqual([]);
-    }
-  });
-}
-
-for (const [w, h] of [[844, 390], [390, 844]] as const) {
-  test(`the accessibility panel fits the viewport at ${w}x${h} (every control reachable)`, async ({ page }) => {
-    await page.setViewportSize({ width: w, height: h });
-    await page.goto("/");
-    await page.getByRole("button", { name: "Open menu" }).click();
-    await page.getByRole("dialog", { name: "Navigation" }).getByRole("button", { name: "Accessibility settings" }).click();
-    const box = (await page.getByRole("dialog", { name: "Accessibility settings" }).boundingBox())!;
-    expect(box.y).toBeGreaterThanOrEqual(0); expect(box.y + box.height).toBeLessThanOrEqual(h);
-  });
-}
-
-test("a palette request made before its chunk loads is honoured when it arrives (Plan 2 Task 24)", async ({ page }) => {
-  // Hold back the palette's dynamic chunk (the only script that renders "Search commands") for 2s.
-  await page.route(/\/_next\/static\/chunks\/.*\.js$/, async (route) => {
-    const res = await route.fetch(); const body = await res.text();
-    if (body.includes("Search commands")) await new Promise((r) => setTimeout(r, 2000));
-    await route.fulfill({ response: res, body });
-  });
-  await page.goto("/");
-  await page.locator("header[data-site-nav] nav").getByRole("button", { name: /command palette/i }).click();
-  await expect(page.getByRole("combobox", { name: "Search commands" })).toBeVisible({ timeout: 10_000 });
-});
-
-test("the palette is a real overlay: fixed in the viewport, and opening/closing it never moves the page (Plan 2 Task 24)", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/");
+  await page.evaluate(() => { (window as unknown as { __cls: number }).__cls = 0; new PerformanceObserver((l) => { for (const e of l.getEntries() as unknown as { value: number; hadRecentInput: boolean }[]) if (!e.hadRecentInput) (window as unknown as { __cls: number }).__cls += e.value; }).observe({ type: "layout-shift" }); });
   await page.evaluate(() => document.getElementById("about")!.scrollIntoView({ behavior: "instant" as ScrollBehavior }));
-  await page.waitForTimeout(300);
-  const y0 = await page.evaluate(() => Math.round(scrollY));
-  await page.keyboard.press("Control+k");
-  const dialog = page.getByRole("dialog", { name: "Command palette" });
-  await expect(dialog).toBeVisible();
-  expect(await dialog.evaluate((el) => getComputedStyle(el).position)).toBe("fixed");
-  await expect(dialog).toBeInViewport({ ratio: 0.9 });
-  expect(await page.evaluate(() => Math.round(scrollY))).toBe(y0);
-  await page.keyboard.press("Escape"); await expect(dialog).toBeHidden();
-  expect(await page.evaluate(() => Math.round(scrollY))).toBe(y0);
+  await page.getByRole("button", { name: /Switch to (dark|light) mode/ }).click(); await page.waitForTimeout(400);
+  expect(await page.evaluate(() => (window as unknown as { __cls: number }).__cls)).toBeLessThan(0.02);
 });
 
-test("844×390: the menu sheet scrolls, so its last control is reachable by a real wheel scroll", async ({ page }) => {
-  await page.setViewportSize({ width: 844, height: 390 });
-  await page.goto("/");
-  await page.getByRole("button", { name: "Open menu" }).click();
-  const sheet = page.getByRole("dialog", { name: "Navigation" }); await expect(sheet).toBeVisible();
-  const box = (await sheet.boundingBox())!;
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  for (let i = 0; i < 8; i++) { await page.mouse.wheel(0, 200); await page.waitForTimeout(60); }
-  await expect(sheet.getByRole("link", { name: "Get in touch" })).toBeInViewport();
+const tone = (page: Page) => page.locator("header[data-site-nav]").evaluate((h) => ({ zone: h.dataset.zone, theme: h.getAttribute("data-theme"), bg: getComputedStyle(h).backgroundColor }));
+const bgOf = (page: Page, id: string) => page.locator(`#${id}`).evaluate((e) => getComputedStyle(e).backgroundColor);
+/** Puts the top of #id right under the header (plus `nudge` px), then waits for the next painted frame. */
+async function under(page: Page, id: string, nudge = 0) {
+  await page.evaluate(([id, nudge]) => { const nav = document.querySelector("header[data-site-nav]")!.getBoundingClientRect().height; const s = document.getElementById(id as string)!; scrollTo({ top: s.getBoundingClientRect().top + scrollY - nav + (nudge as number), behavior: "instant" as ScrollBehavior }); }, [id, nudge] as const);
+  await page.screenshot({ clip: { x: 0, y: 0, width: 100, height: 40 } });
+}
+/** Contrast of every visible header control on what is behind it: link text at 4.5:1, an icon button's glyph at 3:1.
+ *  A control with a solid fill of its own (the "Get in touch" pill) is measured against that fill. */
+const headerRatios = (page: Page) => page.locator("header[data-site-nav]").evaluate((h) => {
+  const lum = (c: string) => { const [r, g, b] = c.match(/[\d.]+/g)!.slice(0, 3).map(Number).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const page = lum(getComputedStyle(h).backgroundColor);
+  const shown = (e: HTMLElement) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== "hidden"; };
+  return [...h.querySelectorAll<HTMLElement>("a, button")].filter(shown).map((e) => {
+    const fill = getComputedStyle(e).backgroundColor, solid = !/rgba\(.*,\s*0\)$/.test(fill) && fill !== "transparent";
+    const glyph = e.tagName === "BUTTON" ? e.querySelector("svg") : null;
+    const f = lum(getComputedStyle(glyph ?? e).color), b = solid ? lum(fill) : page;
+    return { t: (e.getAttribute("aria-label") || e.textContent || "").trim(), icon: !!glyph, r: (Math.max(f, b) + 0.05) / (Math.min(f, b) + 0.05) };
+  });
 });
 
-test("the chat and accessibility panels are opaque (the page never shows through their text)", async ({ page }) => {
-  await page.goto("/");
-  const nav = page.locator("header[data-site-nav] nav");
-  for (const name of ["Ask Tay AI", "Accessibility settings"]) {
-    await nav.getByRole("button", { name, exact: true }).click();
-    const bg = await page.getByRole("dialog", { name }).evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(bg, name).toMatch(/^rgb\(/);                                       // rgb(), not rgba(…, <1)
-    await page.keyboard.press("Escape");
+for (const theme of ["light", "dark"] as const) {
+  test(`${theme}: the header takes the tone of the section beneath it, in the frame the jump lands`, async ({ browser }) => {
+    const { ctx, page } = await open(browser, [1440, 900], { theme });
+    for (const id of CHAPTERS) {
+      await under(page, `work-${id}`);
+      const t = await tone(page);
+      expect(t.zone, id).toBe(`work-${id}`);
+      expect(t.bg, id).toBe(await bgOf(page, `work-${id}`));
+      expect(t.theme, id).toBe(id === "aegis" ? null : "dark");                              // Aegis follows the page
+    }
+    // The sections between the plates have a surface of their own, and the header matches each of them.
+    for (const id of ["about", "skills", "approach"]) {
+      await under(page, id, 4);
+      const t = await tone(page);
+      expect(t.zone, id).toBe(id);
+      expect(t.bg, id).toBe(await bgOf(page, id));
+      expect(t.theme, id).toBeNull();
+    }
+    // Contact is the last section and shorter than this screen, so it never reaches the header here; at the end of
+    // the page the header still matches whatever is beneath it.
+    await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" as ScrollBehavior }));
+    await page.screenshot({ clip: { x: 0, y: 0, width: 100, height: 40 } });
+    const beneath = await page.evaluate(() => { const y = document.querySelector("header[data-site-nav]")!.getBoundingClientRect().bottom + 1;
+      return [...document.querySelectorAll("main section[id]")].find((s) => { const r = s.getBoundingClientRect(); return r.top <= y && r.bottom > y; })!.id; });
+    expect((await tone(page)).zone).toBe(beneath);
+    expect((await tone(page)).bg).toBe(await bgOf(page, beneath));
+    // Back at the top, the header is paper over the hero.
+    await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }));
+    await page.screenshot({ clip: { x: 0, y: 0, width: 100, height: 40 } });
+    expect((await tone(page)).zone).toBe("page");
+    for (const id of ["work-poker", "work-aegis", "work-developeros", "work-gravity-flow", "about", "skills", "approach"]) {
+      await under(page, id, 4);
+      const ratios = await headerRatios(page);
+      expect(ratios.filter((r) => r.icon).map((r) => r.t), id).toEqual(expect.arrayContaining(["Accessibility settings"]));
+      for (const r of ratios) expect(r.r, `${id} ${r.t}`).toBeGreaterThanOrEqual(r.icon ? 3 : 4.5);
+    }
+    await ctx.close();
+  });
+}
+
+test("1280×720: Contact reaches the header, and the header takes its white", async ({ browser }) => {
+  for (const theme of ["light", "dark"] as const) {
+    const { ctx, page } = await open(browser, [1280, 720], { theme });
+    await under(page, "contact", 4);
+    const t = await tone(page);
+    expect(t.zone, theme).toBe("contact");
+    expect(t.bg, theme).toBe(await bgOf(page, "contact"));
+    for (const r of await headerRatios(page)) expect(r.r, `${theme} ${r.t}`).toBeGreaterThanOrEqual(r.icon ? 3 : 4.5);
+    await ctx.close();
   }
+});
+
+test("phones, both themes: the header's theme and menu buttons read on every section they pass over", async ({ browser }) => {
+  for (const theme of ["light", "dark"] as const) {
+    const { ctx, page } = await open(browser, [390, 844], { theme });
+    for (const id of ["hero", ...CHAPTERS.map((c) => `work-${c}`), "about", "skills", "contact"]) {
+      if (id === "hero") { await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" as ScrollBehavior })); await page.screenshot({ clip: { x: 0, y: 0, width: 100, height: 40 } }); }
+      else await under(page, id, 4);
+      const ratios = await headerRatios(page);
+      expect(ratios.filter((r) => r.icon).length, `${theme} ${id}`).toBe(2);                 // theme and menu
+      for (const r of ratios) expect(r.r, `${theme} ${id} ${r.t}`).toBeGreaterThanOrEqual(r.icon ? 3 : 4.5);
+    }
+    await ctx.close();
+  }
+});
+
+for (const theme of ["light", "dark"] as const) {
+  test(`phones, ${theme}: during real touch swipes the header matches the section under its edge on every frame — no lag, no flash`, async ({ browser }) => {
+    test.setTimeout(120_000);
+    const { ctx, page } = await open(browser, [390, 844], { theme });
+    // Every animation frame: the colour the header shows, and the colour of the section beneath its bottom edge.
+    await page.evaluate(() => {
+      const w = window as unknown as { __frames: { y: number; id?: string; want: string; got: string }[] }; w.__frames = [];
+      const page = getComputedStyle(document.body).backgroundColor;
+      const tick = () => {
+        const h = document.querySelector("header[data-site-nav]")!, y = h.getBoundingClientRect().bottom + 1;
+        const s = [...document.querySelectorAll<HTMLElement>("main section[id]")].find((s) => { const r = s.getBoundingClientRect(); return r.top <= y && r.bottom > y; });
+        const bg = s ? getComputedStyle(s).backgroundColor : "rgba(0, 0, 0, 0)";
+        w.__frames.push({ y: scrollY, id: s?.id, want: bg === "rgba(0, 0, 0, 0)" ? page : bg, got: getComputedStyle(h).backgroundColor });
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+    const cdp = await ctx.newCDPSession(page);
+    const touch = (type: "touchStart" | "touchMove" | "touchEnd", y = 0) => cdp.send("Input.dispatchTouchEvent", { type, touchPoints: type === "touchEnd" ? [] : [{ x: 300, y }] });
+    const swipe = async (dy: number) => {
+      const y0 = dy > 0 ? 730 : 130, n = Math.round(Math.abs(dy) / 28);
+      await touch("touchStart", y0);
+      for (let i = 1; i <= n; i++) { await touch("touchMove", y0 - (dy * i) / n); await page.waitForTimeout(16); }
+      await page.waitForTimeout(60); await touch("touchEnd");
+    };
+    const end = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
+    for (let i = 0; i < 60 && (await page.evaluate(() => scrollY)) < end - 40; i++) { await swipe(560); await page.waitForTimeout(100); }
+    for (let i = 0; i < 8; i++) { await swipe(-560); await page.waitForTimeout(60); }
+    const frames = await page.evaluate(() => (window as unknown as { __frames: { y: number; id?: string; want: string; got: string }[] }).__frames);
+    expect(new Set(frames.map((f) => f.id)).size, `${theme}: sections crossed`).toBeGreaterThanOrEqual(8);
+    const off = frames.filter((f) => f.y > 8 && f.want !== f.got);
+    expect(off, `${theme}: ${off.length} of ${frames.length} frames out of step, e.g. ${JSON.stringify(off[0])}`).toHaveLength(0);
+    await ctx.close();
+  });
+}
+
+test("desktop: after a jump to any chapter, its Case study button is whole in the first screen, below the header", async ({ browser }) => {
+  for (const vp of [[1920, 1080], [1440, 900], [1366, 768], [1280, 720], [1280, 700], [1024, 768]] as const) {
+    const { ctx, page } = await open(browser, vp);
+    for (const id of CHAPTERS) {
+      await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }));
+      await page.evaluate((id) => { location.hash = `#work-${id}`; }, id);
+      await expect.poll(() => page.evaluate((id) => Math.abs(document.getElementById(`work-${id}`)!.getBoundingClientRect().top - document.querySelector("header[data-site-nav]")!.getBoundingClientRect().bottom), id)).toBeLessThan(1);
+      const [top, bottom, nav] = await page.evaluate((id) => { const b = document.querySelector(`#work-${id} .case-study-trigger`)!.getBoundingClientRect(); return [b.top, b.bottom, document.querySelector("header[data-site-nav]")!.getBoundingClientRect().bottom]; }, id);
+      expect(top, `${vp[0]}×${vp[1]} ${id}`).toBeGreaterThanOrEqual(nav);
+      expect(bottom, `${vp[0]}×${vp[1]} ${id}: ends at ${Math.round(bottom)}`).toBeLessThanOrEqual(vp[1]);
+    }
+    await ctx.close();
+  }
+});
+
+test("phones: theme in the header, the rest in the menu sheet; Escape and the close button return focus to the menu button", async ({ browser }) => {
+  const { ctx, page } = await open(browser, [390, 844]);
+  const menu = page.getByRole("button", { name: "Open menu" });
+  await expect(page.locator("header").getByRole("button", { name: /Switch to (dark|light) mode/ })).toBeVisible();
+  await menu.click();
+  const sheet = page.getByRole("dialog", { name: "Navigation" });
+  await expect(sheet).toBeVisible();
+  await expect(sheet.getByRole("button", { name: "Close menu" })).toBeFocused();
+  for (const name of ["Work", "About", "Stack", "Contact"]) await expect(sheet.getByRole("link", { name: new RegExp(`^${name}`) })).toBeVisible();
+  await expect(sheet.getByRole("link", { name: "Get in touch" })).toBeVisible();
+  await expect(sheet.getByRole("button", { name: "Accessibility settings" })).toBeVisible();
+  // The focus trap keeps Tab inside the sheet.
+  for (let i = 0; i < 12; i++) { await page.keyboard.press("Tab"); expect(await sheet.evaluate((s) => s.contains(document.activeElement))).toBe(true); }
+  await page.keyboard.press("Escape"); await expect(sheet).toBeHidden(); await expect(menu).toBeFocused();
+  await menu.click(); await sheet.getByRole("button", { name: "Close menu" }).click(); await expect(sheet).toBeHidden(); await expect(menu).toBeFocused();
+  await ctx.close();
+});
+
+test("phones: picking a section in the menu closes it, lands there, and leaves the page scrollable", async ({ browser }) => {
+  const { ctx, page } = await open(browser, [390, 844]);
+  await page.getByRole("button", { name: "Open menu" }).click();
+  await page.getByRole("dialog").getByRole("link", { name: /^Stack/ }).click();
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect.poll(() => page.locator("#skills").evaluate((e) => Math.round(e.getBoundingClientRect().top)), { timeout: 5000 }).toBeLessThan(120);
+  expect(await page.evaluate(() => getComputedStyle(document.body).overflow)).not.toMatch(/hidden/);
+  await ctx.close();
+});
+
+test("844×390 landscape: the menu sheet scrolls, so its last control is reachable", async ({ browser }) => {
+  const { ctx, page } = await open(browser, [844, 390]);
+  await page.getByRole("button", { name: "Open menu" }).click();
+  const last = page.getByRole("dialog").getByRole("link", { name: "Get in touch" });
+  await last.scrollIntoViewIfNeeded(); await expect(last).toBeInViewport();
+  await ctx.close();
+});
+
+type Stop = { name: string; ring: boolean; obscured: boolean };
+async function tabThrough(page: Page, max = 90): Promise<Stop[]> {
+  const stops: Stop[] = [];
+  for (let i = 0; i < max; i++) {
+    await page.keyboard.press("Tab");
+    const s = await page.evaluate(() => {
+      const e = document.activeElement as HTMLElement | null; if (!e || e === document.body) return null;
+      const cs = getComputedStyle(e), r = e.getBoundingClientRect(), nav = document.querySelector("header[data-site-nav]")!;
+      const ringed = cs.outlineStyle !== "none" && parseFloat(cs.outlineWidth) >= 2;
+      // Radios and checkboxes are visually hidden; their visible part (the next sibling) carries the ring.
+      const sib = e.matches("input") ? getComputedStyle(e.nextElementSibling!) : null;
+      return { name: (e.getAttribute("aria-label") || e.textContent || (e as HTMLInputElement).value || "").trim().replace(/\s+/g, " ").slice(0, 40),
+        ring: ringed || (!!sib && sib.outlineStyle !== "none" && parseFloat(sib.outlineWidth) >= 2),
+        obscured: !nav.contains(e) && e.getAttribute("href") !== "#main" && r.top < nav.getBoundingClientRect().bottom - 1 };
+    });
+    if (!s) break;
+    if (stops.length && stops[0].name === s.name && i > 5) break;
+    stops.push(s);
+  }
+  return stops;
+}
+
+for (const vp of [[1440, 900], [390, 844]] as const) {
+  test(`${vp[0]}×${vp[1]}: Tab runs skip link → header → hero → the four chapters → contact → footer, every stop ringed and unobscured`, async ({ browser }) => {
+    const { ctx, page } = await open(browser, vp);
+    const stops = await tabThrough(page);
+    expect(stops[0].name).toBe("Skip to content");
+    const at = (re: RegExp) => stops.findIndex((s) => re.test(s.name));
+    const order = [at(/^See the work/), at(/^T Poker/), at(/^Case study/), at(/^Email me/), at(/^Back to top/)];
+    for (const i of order) expect(i, JSON.stringify(stops.map((s) => s.name))).toBeGreaterThan(0);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    for (const s of stops) { expect(s.ring, `focus ring on ${s.name}`).toBe(true); expect(s.obscured, `${s.name} under the header`).toBe(false); }
+    await ctx.close();
+  });
+}
+
+test("the focus ring is the solid accent: ink-blue on paper, light blue on a dark plate", async ({ page }) => {
+  await page.goto("/");
+  const hero = page.getByRole("link", { name: "See the work" }); await hero.focus();
+  expect(await hero.evaluate((e) => getComputedStyle(e).outlineColor)).toBe("rgb(26, 79, 224)");
+  const store = page.locator("#work-poker a[href*='apps.apple.com']"); await store.focus();
+  expect(await store.evaluate((e) => getComputedStyle(e).outlineColor)).toBe("rgb(143, 180, 255)");
+});
+
+test("every external link opens safely and says so", async ({ page }) => {
+  await page.goto("/");
+  const links = await page.locator('a[target="_blank"]').evaluateAll((as) => as.map((a) => ({ rel: a.getAttribute("rel") ?? "", text: a.textContent ?? "", href: a.getAttribute("href") })));
+  expect(links.length).toBeGreaterThan(8);
+  for (const l of links) { expect(l.rel, l.href!).toMatch(/noopener/); expect(l.rel).toMatch(/noreferrer/); expect(l.text, l.href!).toMatch(/opens in a new tab/); }
+  expect(await page.locator("main").textContent()).not.toContain("↗");
+});
+
+test("every in-page link points at an element that exists", async ({ page }) => {
+  await page.goto("/");
+  const missing = await page.evaluate(() => [...document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')].map((a) => a.getAttribute("href")!).filter((h) => h.length > 1 && !document.getElementById(h.slice(1))));
+  expect(missing).toEqual([]);
 });

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist } from "next/font/google";
 import { cookies } from "next/headers";
 import "./globals.css";
 import { siteMeta } from "@/data/socials";
@@ -10,12 +10,6 @@ import { brand } from "@/lib/tokens";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
   subsets: ["latin"],
   display: "swap",
 });
@@ -92,7 +86,7 @@ export const viewport: Viewport = {
     { media: "(prefers-color-scheme: dark)", color: brand.bg },
     { media: "(prefers-color-scheme: light)", color: brand.bgLight },
   ],
-  colorScheme: "dark light",
+  colorScheme: "light dark",
   width: "device-width",
   initialScale: 1,
 };
@@ -121,19 +115,12 @@ export default async function RootLayout({
       data-reduced-motion={String(a11y.reducedMotion)}
       data-high-contrast={String(a11y.highContrast)}
       data-large-text={String(a11y.largeText)}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-bg text-fg">
-        {/* Ctrl/⌘+K pressed before hydration would be lost (no listener yet) — and fall through to the browser's
-            own shortcut. Record it; Providers replays it once its listener is attached. */}
-        <script dangerouslySetInnerHTML={{ __html: `addEventListener("keydown",function(e){if(window.__paletteReady)return;if((e.ctrlKey||e.metaKey)&&e.key&&e.key.toLowerCase()==="k"){e.preventDefault();window.__paletteEarly=true;}});` }} />
-        {/* Without JavaScript a scroll scene would pin 200svh around a frozen frame: never pin then (Plan 2 Task 5). */}
-        <noscript>
-          <style>{`.scene{height:auto!important}.scene__stage{position:relative!important;height:auto!important}`}</style>
-        </noscript>
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:inline-flex focus:items-center focus:rounded-full focus:border focus:border-line-strong focus:bg-surface-3 focus:px-5 focus:py-3 focus:text-sm focus:text-fg"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:inline-flex focus:items-center focus:rounded-full focus:border focus:border-line-strong focus:bg-raised focus:px-5 focus:py-3 focus:text-sm focus:text-fg"
         >
           Skip to content
         </a>

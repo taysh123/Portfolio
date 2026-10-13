@@ -33,7 +33,7 @@ export const approachSteps: ApproachStep[] = [
     summary:
       "Pick boundaries that a machine can check. A rule enforced by convention is a rule that decays.",
     evidence:
-      "Eight bounded contexts across 27 projects, structured so a cross-module reference fails to compile — verified by a script, not by code review.",
+      "Eight bounded contexts across 27 projects with no project references between modules, so one module can't call another's code — checked by a scan of all 81 references.",
     project: "Aegis",
   },
   {
@@ -68,17 +68,21 @@ export const approachSteps: ApproachStep[] = [
     summary:
       "Reviewable in one command, and honest about what isn't finished. A README that hides the gaps costs you the reader's trust.",
     evidence:
-      "Aegis comes up from a single Docker command that mints its own keys and gates on health. Its repo also carries an audit document where I list my own unfinished work.",
+      "Aegis comes up from a single launcher script that mints its own keys and gates on health. Its repo also carries an audit document where I list my own unfinished work.",
     project: "Aegis · DeveloperOS",
   },
 ];
 
-/** Think · Build · Ship (spec §5.5): three words, each with one real example condensed from the steps above. */
+/** Think · Build · Ship (M10, the approved Direction A copy): three principles, each condensed from the steps above —
+ *  its heading and line from a step's summary, its example from that step's evidence (tests/unit/approach.test.ts). */
 export const pillars = [
-  { word: "Think", line: "Architecture before implementation.", from: ["understand"], project: "T Poker",
-    example: "The hard part of T Poker wasn't the poker UI: it was guaranteeing the money is exact on a phone with no signal, and still correct when the server reconnects." },
-  { word: "Build", line: "Clean, maintainable systems.", from: ["design"], project: "Aegis",
-    example: "Eight bounded contexts, structured so a cross-module reference fails to compile — verified by a script, not by code review." },
-  { word: "Ship", line: "Test. Deploy. Improve.", from: ["verify", "ship"], project: "T Poker · Aegis",
-    example: "The TypeScript settlement fixtures mirror the C# service case for case, and Aegis comes up from a single Docker command that gates on health." },
+  { word: "Think", line: "Find the hard part.", from: ["understand"], project: "T Poker",
+    summary: "It's rarely the feature list. Usually it's one constraint everything else has to bend around.",
+    example: "T Poker: the money has to be exact on a phone with no signal, and still correct when the server reconnects." },
+  { word: "Build", line: "Make the safe path the easy one.", from: ["build"], project: "GRAVITY FLOW",
+    summary: "Constraints belong in types and interfaces, not in a document nobody reads twice.",
+    example: "GRAVITY FLOW: the cosmetics config has no gameplay-affecting fields at all, so pay-to-win is unrepresentable." },
+  { word: "Ship", line: "Ship it honestly.", from: ["ship"], project: "Aegis",
+    summary: "Reviewable in one command, and honest about what isn't finished.",
+    example: "Aegis comes up from a single launcher script, and its repo carries an audit document where I list my own unfinished work." },
 ] as const;

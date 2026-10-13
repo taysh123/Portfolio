@@ -15,9 +15,11 @@ describe("content truth", () => {
   it("the languages evidence does not claim C++ in shipped projects", () => {
     expect(skillGroups.find((g) => g.id === "languages")!.evidence).not.toMatch(/C\+\+ and C# carry/);
   });
-  it("headline and hero lead are the approved copy", () => {
-    expect(siteMeta.headline).toBe("I build software people can actually use.");
-    expect(siteMeta.heroLead).toBe("Computer Science graduate who takes products from an empty repo to a running system: a cross-platform app live on the App Store and Google Play, a real-time security platform and a local-first developer workspace.");
+  it("headline and hero lead are the M10 copy (docs/m10/headline-study.md)", () => {
+    expect(siteMeta.headline).toBe("I build software end to end.");
+    expect(siteMeta.heroLead).toBe("I'm a software engineer who designs, builds and tests mobile apps, security systems, developer tools and games.");
+    expect(siteMeta.role).toBe("Software Engineer");
+    expect(siteMeta.tagline.length).toBeLessThanOrEqual(160);
   });
   it("no banned claims appear in site source", () => {
     for (const d of ["components", "data", "app"]) for (const f of (fs.readdirSync(d, { recursive: true }) as string[]).filter((f) => /\.tsx?$/.test(f))) {

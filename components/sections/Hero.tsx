@@ -1,60 +1,59 @@
 import { siteMeta, socials } from "@/data/socials";
-import { heroIndex, passingTests } from "@/data/proof";
+import { heroIndex } from "@/data/proof";
 import { ButtonLink } from "@/components/ui/Button";
-import { ArrowDownIcon } from "@/components/ui/icons";
+import { TextLink } from "@/components/ui/TextLink";
+import { Pic } from "@/components/ui/Pic";
 import "./hero.css";
 
-// Height-aware as well as width-aware: on a landscape phone (844×390) the width alone would overflow the screen.
-const lineStyle = { fontSize: "clamp(2.25rem, min(7.2vw, 10.5svh), 6.75rem)", lineHeight: 0.98 } as const;
-
-/** The site's first content: the page opens directly on it. A server component with no scroll logic.
- *  Who (the name and role), what (the headline and lead), proof (the test count) and where to go next (the
- *  CTAs and the index of the four flagships, each a link to its scene). */
+/**
+ * The first screen (M10, Direction A): a headline and one line of range on paper, then the four products as plates
+ * — each a real capture on its own surface, each a link to its chapter. The plates rise from the bottom edge, so the
+ * page reads as a studio table the work is set on, and the T Poker plate meets the T Poker chapter's navy below it.
+ *
+ * Below 1240px the plates become a 2×2 (and on a short landscape screen they sit beside the copy), right after the
+ * copy and the primary action (docs/m10/headline-study.md has the measurements behind that order). Images only: no
+ * canvas, no WebGL, no script. Every plate image loads eagerly; the two that Lighthouse finds as the largest paint —
+ * Aegis's window on wide screens, DeveloperOS's on phones — are the two fetched at high priority.
+ */
 export function Hero() {
+  const [poker, aegis, dos, gf] = heroIndex;
   return (
-    <section id="hero" aria-labelledby="hero-title" className="hero relative flex min-h-[100svh] flex-col justify-center overflow-clip px-[clamp(20px,4vw,40px)] pt-[var(--nav-h)] pb-6">
-      <div className="relative z-10 mx-auto w-full max-w-[1240px]">
-        <h1 id="hero-title" tabIndex={-1} className="outline-none">
-          <span className="mb-8 block [@media(max-height:500px)]:mb-3">
-            <span className="label inline-block text-fg-muted">{siteMeta.name} · {siteMeta.role}</span>
-          </span>
-          <span className="block">
-            <span className="block font-semibold tracking-[-0.045em] text-fg" style={lineStyle}>I build software</span>
-          </span>
-          <span className="block">
-            <span className="block font-semibold tracking-[-0.045em] text-fg-muted" style={lineStyle}>people can actually use.</span>
-          </span>
-        </h1>
-        <div className="mt-8 [@media(max-height:500px)]:mt-3">
-          <p data-hero-lead className="max-w-[62ch] text-fg-muted" style={{ fontSize: "clamp(1.0625rem, 1.5vw, 1.3125rem)" }}>{siteMeta.heroLead}</p>
-        </div>
-        <div className="mt-10 [@media(max-height:500px)]:mt-4">
-          <div data-hero-ctas className="flex flex-col gap-3 sm:flex-row">
-            <ButtonLink href="#work" size="lg">Explore my work <ArrowDownIcon size={16} /></ButtonLink>
-            <ButtonLink href={socials.github.url} variant="secondary" size="lg" external>GitHub ↗</ButtonLink>
+    <section id="hero" aria-labelledby="hero-title" className="hero">
+      <div className="hero__copy shell">
+        <h1 id="hero-title" tabIndex={-1} className="hero__title">{siteMeta.headline}</h1>
+        <div className="hero__aside">
+          <p data-hero-lead className="hero__lead">{siteMeta.heroLead}</p>
+          <div data-hero-ctas className="hero__actions">
+            <ButtonLink href="#work" size="lg">See the work</ButtonLink>
+            <TextLink href={socials.github.url} external>GitHub</TextLink>
           </div>
         </div>
-        {/* The flagships as quiet product navigation: a name and its verified state, each linking to its scene. */}
-        <nav aria-label="Flagship projects" data-hero-index className="hero-index mt-12 [@media(max-height:500px)]:mt-5">
-          <ul className="grid grid-cols-2 gap-x-6 md:grid-cols-4">
-            {heroIndex.map((x) => (
-              <li key={x.id}>
-                <a href={x.href} className="hero-index__link group flex min-h-11 flex-col justify-center border-t border-line py-2.5 md:py-3">
-                  <span className="text-[15px] font-medium text-fg">{x.name}</span>
-                  <span className="mt-0.5 text-[13px] text-fg-subtle transition-colors duration-150 group-hover:text-fg-muted">{x.state}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-          <p data-hero-proof className="mt-4 text-[13px] text-fg-subtle">
-            <span className="font-medium text-fg-muted">{passingTests.value}</span> passing tests across {passingTests.projectsWord} projects
-          </p>
-        </nav>
-        {/* The hero's one atmospheric element (spec §5.1): the dark horizon arc, static. Anchored to the content's
-            foot, so its rim always sits at least --arc-gap below the last control at every size; it rhymes with
-            Contact's. Clipped by the section; behind nothing interactive. */}
-        <div aria-hidden="true" data-hero-arc className="hero-horizon" />
       </div>
+
+      <nav aria-label="Flagship projects" data-hero-index className="plates shell">
+        <a href={poker.href} data-map={poker.id} className="tile tile--poker">
+          <span className="tile__cap">
+            <Pic name="tpoker-icon" sizes="22px" alt="" className="tile__icon" priority />
+            <span><b>{poker.name}</b><span>{poker.state}</span></span>
+          </span>
+          <span className="tile__stage" aria-hidden="true">
+            <span className="tile__phone tile__phone--back"><Pic name="hero-poker-home" sizes="(min-width: 1240px) 12vw, (min-width: 640px) 13vw, 18vw" alt="" priority /></span>
+            <span className="tile__phone tile__phone--front"><Pic name="hero-poker-live" sizes="(min-width: 1240px) 16vw, (min-width: 640px) 16vw, 23vw" alt="" priority /></span>
+          </span>
+        </a>
+        <a href={aegis.href} data-map={aegis.id} className="tile tile--aegis">
+          <span className="tile__cap"><span><b>{aegis.name}</b><span>{aegis.state}</span></span></span>
+          <span className="tile__stage" aria-hidden="true"><span className="tile__win"><Pic name="hero-aegis" sizes="(min-width: 1240px) 24vw, (min-width: 640px) 42vw, 40vw" alt="" priority="high" /></span></span>
+        </a>
+        <a href={dos.href} data-map={dos.id} className="tile tile--dos">
+          <span className="tile__cap"><span><b>{dos.name}</b><span>{dos.state} · v1.0.0</span></span></span>
+          <span className="tile__stage" aria-hidden="true"><span className="tile__win"><Pic name="hero-dos" sizes="(min-width: 1240px) 21vw, (min-width: 640px) 42vw, 40vw" alt="" priority="high" /></span></span>
+        </a>
+        <a href={gf.href} data-map={gf.id} className="tile tile--gf">
+          <span className="tile__cap"><span><b>{gf.name}</b><span>{gf.state}</span></span></span>
+          <span className="tile__stage" aria-hidden="true"><span className="tile__phone"><Pic name="hero-gf" sizes="(min-width: 1240px) 12vw, (min-width: 640px) 16vw, 27vw" alt="" priority /></span></span>
+        </a>
+      </nav>
     </section>
   );
 }

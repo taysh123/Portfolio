@@ -1,160 +1,51 @@
 import { ImageResponse } from "next/og";
 import { siteMeta } from "@/data/socials";
-import { passingTests } from "@/data/proof";
+import { heroIndex } from "@/data/proof";
 import { brand } from "@/lib/tokens";
 
 /**
- * Social card.
+ * Social card (M10): the hero in miniature — paper, the headline, and the four products as plates in their own hues,
+ * each with the same verified state the hero shows. No figures, no tracked labels.
  *
- * Runs on the Node runtime, not edge — the previous `runtime = "edge"` is
- * unsupported alongside Cache Components, and Node makes loading a local font
- * file straightforward if the Geist woff2 is ever added to the repo.
- *
- * Note on type: Satori has NO system fonts. `fontFamily: "system-ui"` silently
- * fell back to its bundled Noto Sans, so the old card wasn't rendering in Geist
- * at all and looked like a different brand from the site. Until a real font
- * file is loaded here, the card leans on weight, scale and layout for its
- * identity rather than pretending to match the site's typeface.
- *
- * Satori is flexbox-only — no CSS grid — and every element needs an explicit
- * `display: flex`.
+ * Satori is flexbox-only (every element needs an explicit `display: flex`) and has no system fonts: next/og's
+ * default face is the Geist it bundles, at one weight, so hierarchy comes from scale and ink rather than weight.
  */
-
-/**
- * The social card's own proof points (moved here from `data/socials.ts` when the page stopped using them,
- * Plan 2 Task 23). Every figure is verifiable from the repositories. The test count is the sum of passing tests
- * across the five self-directed projects (each repository's CI at main): T Poker 6,210, DeveloperOS 363,
- * GRAVITY FLOW 221, Job Assistant 162, Aegis 105. Deliberately not a project count: the lead stat is that
- * something runs in production.
- */
-const CARD_STATS = [
-  { value: "Live", label: "In production today" },
-  { value: passingTests.value, label: "Passing tests across the work" },
-  { value: "B.Sc.", label: "Computer Science" },
-] as const;
-
-export const alt = `${siteMeta.name} — ${siteMeta.role}`;
+export const alt = `${siteMeta.name} — ${siteMeta.headline}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
+
+/** Satori measures each word on its own but draws the line with kerning, so a word with a kerned pair ("software",
+ *  "three") is followed by a visibly wider space. Joined with no-break spaces, each line is one measured run and the
+ *  spacing comes out even. */
+const run = (s: string) => s.replace(/ /g, "\u00a0");
+
+const PLATE: Record<string, { bg: string; ink: string; sub: string }> = {
+  poker: { bg: brand.platePoker, ink: "#ffffff", sub: "#a9b6cb" },
+  aegis: { bg: brand.plateAegis, ink: brand.fgLight, sub: brand.fgMutedLight },
+  developeros: { bg: brand.plateDos, ink: "#ffffff", sub: "#a2a9b6" },
+  "gravity-flow": { bg: brand.plateGf, ink: "#ffffff", sub: "#aeb8cc" },
+};
 
 export default async function OpengraphImage() {
   return new ImageResponse(
     (
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          padding: 76,
-          background: `radial-gradient(58% 60% at 12% 4%, rgba(91,156,255,0.26), transparent 62%), radial-gradient(52% 56% at 96% 10%, rgba(155,190,255,0.14), transparent 62%), ${brand.bg}`,
-          color: brand.fg,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div
-            style={{
-              width: 52,
-              height: 52,
-              borderRadius: 15,
-              border: "1px solid rgba(255,255,255,0.16)",
-              background: "rgba(255,255,255,0.05)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: 600,
-              fontSize: 21,
-              letterSpacing: 1,
-              color: brand.fg,
-            }}
-          >
-            TS
-          </div>
-          <div
-            style={{
-              display: "flex",
-              fontSize: 19,
-              letterSpacing: 5,
-              color: brand.fgSubtle,
-              textTransform: "uppercase",
-            }}
-          >
-            {siteMeta.domain}
-          </div>
+      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between",
+        padding: "64px 72px 0", background: brand.bgLight, color: brand.fgLight }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 24, color: brand.fgMutedLight }}>
+          <span style={{ display: "flex", color: brand.fgLight }}>{run(siteMeta.name)}</span>
+          <span style={{ display: "flex" }}>{run(`${siteMeta.role} · ${siteMeta.domain}`)}</span>
         </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              fontSize: 82,
-              fontWeight: 700,
-              lineHeight: 1.04,
-              letterSpacing: -2.4,
-              maxWidth: 1000,
-            }}
-          >
-            <span style={{ display: "flex" }}>I build software&nbsp;</span>
-            <span style={{ display: "flex" }}>people can&nbsp;</span>
-            <span style={{ display: "flex", color: brand.accent }}>actually use.</span>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              fontSize: 26,
-              color: brand.fgMuted,
-              maxWidth: 880,
-              lineHeight: 1.4,
-            }}
-          >
-            {siteMeta.name} — {siteMeta.role}
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "space-between",
-            borderTop: "1px solid rgba(255,255,255,0.10)",
-            paddingTop: 26,
-          }}
-        >
-          <div style={{ display: "flex", gap: 46 }}>
-            {CARD_STATS.map((s) => (
-              <div key={s.label} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <span style={{ display: "flex", fontSize: 34, fontWeight: 600 }}>
-                  {s.value}
-                </span>
-                <span
-                  style={{
-                    display: "flex",
-                    fontSize: 15,
-                    letterSpacing: 2.4,
-                    color: brand.fgSubtle,
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {s.label}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <span
-            style={{
-              display: "flex",
-              fontSize: 18,
-              letterSpacing: 2.4,
-              color: brand.fgSubtle,
-              textTransform: "uppercase",
-            }}
-          >
-            github.com/taysh123
-          </span>
+        {/* One line: the headline as a single run (see above), sized to the card's measure. */}
+        <div style={{ display: "flex", fontSize: 84, lineHeight: 1, letterSpacing: -2.5 }}>{run(siteMeta.headline)}</div>
+        <div style={{ display: "flex", gap: 12, height: 190 }}>
+          {heroIndex.map((x) => (
+            // T Poker, the shipped product, is the widest plate here as in the hero.
+            <div key={x.id} style={{ display: "flex", flexDirection: "column", flex: x.id === "poker" ? 1.15 : 1, padding: "22px 24px",
+              borderRadius: "20px 20px 0 0", background: PLATE[x.id].bg }}>
+              <span style={{ display: "flex", fontSize: 26, color: PLATE[x.id].ink }}>{run(x.name)}</span>
+              <span style={{ display: "flex", fontSize: 19, marginTop: 6, color: PLATE[x.id].sub }}>{run(x.state)}</span>
+            </div>
+          ))}
         </div>
       </div>
     ),

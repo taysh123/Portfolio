@@ -1,0 +1,14 @@
+{
+  "_comment": "The T Poker wall plaque \u2014 a separate module. Change the artwork, size or position here and re-run render.sh; nothing else in the scene depends on it. Artwork: the owner's official app icon and the wordmark cut from the official banner (see prep_brand.py). Proportions follow the banner: wordmark cap height \u2248 0.225 \u00d7 icon height, gap \u2248 0.2 \u00d7 icon height.",
+  "icon": "brand/tpoker-icon.png",
+  "wordmark": "brand/tpoker-wordmark.png",
+  "center": [
+    0.7,
+    0.79
+  ],
+  "icon_height": 0.088,
+  "wordmark_ratio": 0.225,
+  "gap_ratio": 0.2,
+  "padding": 0.02,
+  "light_watts": 0.15
+}

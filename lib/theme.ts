@@ -28,8 +28,9 @@ export const A11Y_ATTR: Record<keyof A11yPrefs, string> = {
   largeText: "data-large-text",
 };
 
+/** M10: light is the default (the editorial studio direction); dark is the visitor's choice. */
 export function parseTheme(value: string | undefined): Theme {
-  return value === "light" ? "light" : "dark";
+  return value === "dark" ? "dark" : "light";
 }
 
 export function parseA11y(value: string | undefined): A11yPrefs {

@@ -1,11 +1,5 @@
-import { encodePhone } from "@/lib/obfuscate";
-
-/** International format, used consistently wherever the number appears. */
-const PHONE_PLAIN = "+972 52 818 3479";
-
 export const socials = {
   email: "tayshofer05@gmail.com",
-  phoneEncoded: encodePhone(PHONE_PLAIN),
   github: {
     handle: "taysh123",
     url: "https://github.com/taysh123",
@@ -19,32 +13,18 @@ export const socials = {
 export const siteMeta = {
   name: "Tay Shofer",
   /*
-    "Software Developer" — your wording, and the right call.
-
-    I had chosen "Full Stack Developer" from the earlier list; you have since
-    named "Software Developer" twice, so that is what this is. The B.Sc. is
-    carried separately rather than folded into the title: it belongs in the
-    proof strip, where it sits beside numbers a reader can check, and a title
-    should be one thing.
+    "Software Engineer" (the 2026-10-12 brief): broad and product-minded rather than one specialty. It replaces
+    the earlier "Software Developer". The B.Sc. is carried separately rather than folded into the title: it
+    belongs in the proof strip, beside numbers a reader can check, and a title should be one thing.
   */
-  role: "Software Developer",
-  /*
-    Rendered by the social card, and ONLY there — the hero deliberately leads
-    with the wordmark instead.
-
-    `app/opengraph-image.tsx` repeats this sentence as three literal spans
-    rather than reading it from here, because Satori is flexbox-only and a
-    single text node will not wrap. If this line changes, that one has to
-    change with it; it is the one piece of copy in the project with two homes.
-  */
-  headline: "I build software people can actually use.",
-  /** The hero's one-sentence lead under the headline. */
-  heroLead:
-    // Every clause is a fact in data/projects.ts: T Poker (live on both stores), Aegis (live SignalR alerting),
-    // DeveloperOS (local-first), and the About copy's "from an empty repo to a running system".
-    "Computer Science graduate who takes products from an empty repo to a running system: a cross-platform app live on the App Store and Google Play, a real-time security platform and a local-first developer workspace.",
+  role: "Software Engineer",
+  /** The hero's headline (M10 headline study: docs/m10/headline-study.md). The social card repeats it. */
+  headline: "I build software end to end.",
+  /** The hero's one-sentence lead: the range, in the four kinds of product the plates below it show. */
+  heroLead: "I'm a software engineer who designs, builds and tests mobile apps, security systems, developer tools and games.",
+  /** The meta description and social-card line (≤ 160 characters). */
   tagline:
-    "Computer Science graduate building real-time platforms, developer tools, and cross-platform products — designed, tested, and shipped end to end.",
+    "Software engineer building products across interfaces, systems and interactive experiences — each one designed, built and tested end to end.",
   domain: "tayshofer.dev",
   url: "https://tayshofer.dev",
   locale: "en_US",
@@ -54,7 +34,7 @@ export const siteMeta = {
 
 export const availability = {
   open: true,
-  label: "Available for software development roles",
+  label: "Available for software engineering roles",
   detail:
-    "Open to junior software development roles — onsite, hybrid, or remote.",
+    "Open to junior software engineering roles — onsite, hybrid, or remote.",
 } as const;

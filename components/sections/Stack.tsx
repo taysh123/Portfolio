@@ -1,42 +1,48 @@
 import { skillGroups } from "@/data/skills";
-import { GroupGlyph } from "@/components/ui/GroupGlyph";
-import { PointerLight } from "@/components/ui/PointerLight";
+import { projects } from "@/data/projects";
+import { StackLens } from "./StackLens";
+import { lensProjects, projectsFor } from "@/data/stackLens";
 import "./stack.css";
 
-/** Spec §5.4, M2b: the six groups exactly as data/skills.ts has them, as a range matrix — one row per group:
- *  what it is, the tools in it, and the evidence that it's load-bearing. The two lead groups carry their figure.
- *  Rows, not cards: the breadth reads top to bottom in a few seconds, and nothing is a wall of tags. */
+const nameOf = (id: string) => projects.find((p) => p.id === id)?.name ?? id;
+const ORDER = lensProjects.map((l) => l.id);
+
+/** The filter, written from the data: choosing a project hides every tool its own text doesn't name, and every group
+ *  left with none. CSS only (`:has(:checked)`), so it works before hydration and with JavaScript off. */
+const FILTER = lensProjects.map(({ id }) =>
+  `.stack:has([data-lens-option="${id}"]:checked) [data-tool]:not([data-p~="${id}"]){display:none}` +
+  `.stack:has([data-lens-option="${id}"]:checked) .sgroup:not(:has([data-p~="${id}"])){display:none}`).join("");
+
+/**
+ * The Stack (M10): tools grouped by the work they did. Each group is one row — its name, its tools as plain text,
+ * and the projects that use them — and the lens above is a real filter of those server-rendered rows: pick T Poker
+ * and only T Poker's tools remain. No tiles, no figures, no monospace table.
+ */
 export function Stack() {
   return (
-    <section id="skills" aria-labelledby="stack-title" className="shell py-[clamp(7rem,14vh,12rem)]">
-      <div className="stack-head">
-        <div>
-          <p className="label text-fg-subtle">Stack</p>
-          <h2 id="stack-title" className="stack-head__title">The tools I build with.</h2>
+    <section id="skills" aria-labelledby="stack-title" className="stack">
+      <div className="shell">
+        <h2 id="stack-title" className="stack__title">Tools, grouped by the work they did.</h2>
+        <StackLens options={lensProjects} />
+        <style>{FILTER}</style>
+        <div className="sgroups">
+          {skillGroups.map((g) => {
+            const used = ORDER.filter((id) => g.items.some((i) => projectsFor(i.label).includes(id)));
+            return (
+              <article key={g.id} className="sgroup" data-group={g.id}>
+                <h3 className="sgroup__title">{g.title}</h3>
+                <div className="sgroup__body">
+                  <ul className="sgroup__tools" aria-label={`${g.title} tools`}>
+                    {g.items.map((i) => <li key={i.label} data-tool data-emphasis={i.emphasis ? "" : undefined} data-p={projectsFor(i.label).join(" ") || undefined}>{i.label}</li>)}
+                  </ul>
+                  <p className="sgroup__evidence">{g.evidence}</p>
+                </div>
+                <p className="sgroup__used"><span className="sr-only">Used in </span>{used.map(nameOf).join(" · ")}</p>
+              </article>
+            );
+          })}
         </div>
-        <p className="stack-head__lead">Enough range to own a product end to end.</p>
       </div>
-      <div data-pointer-light className="stack-matrix">
-        {skillGroups.map((g) => (
-          <article key={g.id} data-card data-wide={g.lead ? "" : undefined} className="stack-card stack-row">
-            <div className="stack-row__name">
-              <GroupGlyph glyph={g.glyph} />
-              <div>
-                <h3>{g.title}</h3>
-                <p className="stack-row__caption">{g.caption}</p>
-              </div>
-            </div>
-            <ul className="stack-row__items" aria-label={`${g.title} tools`}>
-              {g.items.map((i) => <li key={i.label} data-emphasis={i.emphasis ? "" : undefined}>{i.label}</li>)}
-            </ul>
-            <div className="stack-row__proof">
-              {g.lead && <p className="stack-row__lead"><span>{g.lead.value}</span><span className="label">{g.lead.unit}</span></p>}
-              <p className="stack-row__evidence">{g.evidence}</p>
-            </div>
-          </article>
-        ))}
-      </div>
-      <PointerLight />
     </section>
   );
 }

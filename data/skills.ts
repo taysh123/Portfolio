@@ -1,116 +1,66 @@
 /**
- * Toolkit content.
+ * The Stack (M10): tools grouped by the work they did. Five groups instead of six, no figures pulled out at display
+ * scale, and each group explained through the projects that use it — the evidence line names them, and the lens
+ * (data/stackLens.ts) filters the rows down to one project's tools, derived from that project's own published text.
  *
- * A note on the design: there are no per-technology brand logos here, and that
- * is deliberate. Redrawing ~35 third-party marks from memory produces subtly
- * wrong logos, which reads worse than no logo — and "guessing logo paths" is a
- * documented anti-pattern. Instead each *group* carries one purpose-drawn
- * glyph in the site's own visual language, and the technologies inside are
- * typeset chips. It stays cohesive, and the grouping does the work the icons
- * were meant to do.
- *
- * Only technologies actually used in the shipped projects appear here.
+ * No per-technology logos: redrawing third-party marks from memory produces subtly wrong logos. Only technologies
+ * actually used appear here.
  */
-
-import { passingTests } from "@/data/proof";
-
 export type SkillGroup = {
   id: string;
   title: string;
-  caption: string;
-  glyph: GlyphKey;
   items: { label: string; emphasis?: boolean }[];
-  /**
-   * Where this group is actually load-bearing, with a number or a specific
-   * behaviour. A capability list without evidence is a wish list — every line
-   * here is checkable against `data/projects.ts` and the repos it points at.
-   */
+  /** Where the group is load-bearing, by project. Every line is checkable against data/projects.ts. */
   evidence: string;
-  /**
-   * The two groups that carry the argument, given the visual weight to match.
-   *
-   * Six equally-sized modules tell a reader that six things matter equally,
-   * which is never true and is the reason skill sections read as inventory.
-   * These two are the ones this portfolio actually stands on: an architecture
-   * whose boundaries a machine enforces, and the tests that pin the behaviour
-   * inside them. Everything else is real, and supports them.
-   *
-   * `value` is pulled out at display scale, so it has to be a figure a reader
-   * can go and count.
-   */
-  lead?: { value: string; unit: string };
 };
-
-export type GlyphKey =
-  | "language"
-  | "interface"
-  | "service"
-  | "store"
-  | "delivery"
-  | "verify";
 
 export const skillGroups: SkillGroup[] = [
   {
     id: "languages",
     title: "Languages",
-    caption: "Where the thinking happens",
-    glyph: "language",
     items: [
-      { label: "C++", emphasis: true },
-      { label: "C" },
       { label: "C#", emphasis: true },
       { label: "TypeScript", emphasis: true },
       { label: "Python", emphasis: true },
+      { label: "C++", emphasis: true },
+      { label: "C" },
       { label: "Java" },
       { label: "JavaScript" },
       { label: "SQL" },
     ],
-    evidence:
-      "C# carries Aegis's and T Poker's backends, TypeScript their clients, and Python carries DeveloperOS and Job Assistant."
+    evidence: "C# carries the Aegis and T Poker backends, TypeScript their clients and GRAVITY FLOW, Python DeveloperOS and Job Assistant.",
   },
   {
     id: "interface",
-    title: "Interface",
-    caption: "What people actually touch",
-    glyph: "interface",
+    title: "Product and interface",
     items: [
       { label: "React", emphasis: true },
       { label: "Next.js", emphasis: true },
-      { label: "React Native / Expo" },
+      { label: "React Native / Expo", emphasis: true },
       { label: "Tailwind CSS" },
-      { label: "Framer Motion" },
       { label: "Phaser 3" },
       { label: "JavaFX" },
+      { label: "Framer Motion" },
     ],
-    evidence:
-      "One Expo codebase renders iOS, Android and the live web app for T Poker — designing for the narrowest target first."
+    evidence: "One Expo codebase renders iOS, Android and the web for T Poker; Phaser 3 runs GRAVITY FLOW; Next.js is Aegis's dashboard.",
   },
   {
     id: "service",
-    title: "Services & APIs",
-    caption: "The part that has to stay up",
-    glyph: "service",
+    title: "Services and APIs",
     items: [
       { label: "ASP.NET Core", emphasis: true },
-      { label: "Clean Architecture" },
-      { label: "CQRS / MediatR" },
-      { label: "REST" },
-      { label: "SignalR" },
       { label: "RabbitMQ / MassTransit", emphasis: true },
+      { label: "CQRS / MediatR" },
+      { label: "Clean Architecture" },
+      { label: "SignalR" },
+      { label: "REST" },
       { label: "JWT / RS256" },
     ],
-    evidence:
-      "Aegis moves events across 8 bounded contexts over RabbitMQ, with 0 cross-context references and a retry ladder per endpoint.",
-    // The "0 cross-context references" half of this claim lives in the
-    // evidence line beside it — repeating it here wrapped the label to three
-    // cramped lines under the figure.
-    lead: { value: "8", unit: "bounded contexts" },
+    evidence: "Aegis's event pipeline runs over RabbitMQ and streams alerts over SignalR; T Poker's API keeps commands and queries apart with MediatR.",
   },
   {
-    id: "store",
-    title: "Data & State",
-    caption: "Where the truth lives",
-    glyph: "store",
+    id: "data",
+    title: "Data and search",
     items: [
       { label: "PostgreSQL", emphasis: true },
       { label: "SQLite / FTS5", emphasis: true },
@@ -119,49 +69,31 @@ export const skillGroups: SkillGroup[] = [
       { label: "MySQL" },
       { label: "Firebase" },
     ],
-    evidence:
-      "SQLite FTS5 powers DeveloperOS’s grounded retrieval; PostgreSQL and Redis back Aegis’s partitioned events and sliding windows."
+    evidence: "SQLite FTS5 is DeveloperOS's retrieval; PostgreSQL and Redis hold Aegis's events and detection windows; PostgreSQL also backs T Poker's API.",
   },
   {
     id: "delivery",
-    title: "Delivery",
-    caption: "Getting it into hands",
-    glyph: "delivery",
+    title: "Delivery and testing",
     items: [
       { label: "Docker", emphasis: true },
       { label: "GitHub Actions", emphasis: true },
-      { label: "Vercel" },
-      { label: "Railway" },
-      { label: "Linux" },
-      { label: "Git" },
-      { label: "Capacitor" },
-      { label: "PyInstaller" },
-    ],
-    evidence:
-      // The Docker-command line lives in the Approach section's "Ship" stage;
-      // this one leads with CI instead so the two are not the same sentence.
-      "T Poker's CI runs eight jobs across two languages, each scoped to what a push changes, and Aegis's whole stack — API, frontend, PostgreSQL, Redis, RabbitMQ — comes up under one compose file."
-  },
-  {
-    id: "verify",
-    title: "Testing & Tooling",
-    caption: "How I know it works",
-    glyph: "verify",
-    items: [
-      { label: "xUnit", emphasis: true },
+      { label: "xUnit" },
       { label: "Vitest" },
       { label: "Jest" },
       { label: "pytest" },
       { label: "Testcontainers" },
       { label: "Playwright" },
-      { label: "Claude Code", emphasis: true },
+      { label: "Capacitor" },
+      { label: "PyInstaller" },
+      { label: "Vercel" },
+      { label: "Railway" },
+      { label: "Linux" },
+      { label: "Git" },
+      { label: "Claude Code" },
       { label: "Ollama" },
     ],
-    evidence:
-      // Passing tests, counted from each repository's CI at its current main (T Poker 6,210: 802 xUnit + 5,379 Jest +
-      // 29 Vitest; DeveloperOS 363; GRAVITY FLOW 221; Job Assistant 162; Aegis 105 of 106 — one RabbitMQ
-      // integration test still fails there). A count of passing tests, not of test definitions.
-      `${passingTests.value} passing tests across ${passingTests.projectsWord} projects, weighted toward settlement math, threat scoring, retrieval grounding and level progression.`,
-    lead: { value: passingTests.value, unit: `passing tests across ${passingTests.projectsWord} projects` },
+    // Only what data/projects.ts states: DeveloperOS's CI matrix and GRAVITY FLOW's CI-checked suite. Aegis has no CI
+    // yet, T Poker's is private, and Job Assistant's workflows are its old crons, so none of them is named for CI.
+    evidence: "DeveloperOS and GRAVITY FLOW run their tests in CI; Aegis comes up from one launcher script under Docker Compose.",
   },
 ];

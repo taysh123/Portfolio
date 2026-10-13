@@ -1,0 +1,81 @@
+/* ── Aegis (M10) ──────────────────────────────────────────────────────────────────────────────────────────────────
+   Steel plate (light, or a darker blue-steel in the dark theme). The product first: the Detect step's own row on the
+   real Alerts page, cropped to that row, its transcription beside it. Then the trace, which reads left to right on wide
+   screens and top to bottom on phones; the fork is drawn, not described — after Detect the line splits into two
+   branches, and the alert stream's branch carries on to Live. */
+.aegis__head { display: grid; gap: 1.5rem; margin-bottom: clamp(2rem, 4vw, 3rem); }
+@media (min-width: 900px) { .aegis__head { grid-template-columns: minmax(0, 1fr) auto; align-items: end; column-gap: 3rem; } }
+
+/* ── The evidence: console + note. Side by side from 1100px (the note never covers the row it describes). */
+.aegis__evidence { margin: 0 0 clamp(2.5rem, 5vw, 3.75rem); display: grid; gap: 1rem; }
+@media (min-width: 1100px) { .aegis__evidence { grid-template-columns: minmax(0, 1fr) minmax(0, 19rem); gap: 2rem; align-items: center; } }
+.console { position: relative; border-radius: 14px; overflow: hidden; background: #05070c; box-shadow: var(--shadow-object); border: 1px solid rgba(12, 13, 16, 0.25); }
+[data-theme="dark"] .console { border-color: rgba(255, 255, 255, 0.12); }
+.console__bar { display: flex; align-items: center; justify-content: center; position: relative; height: 32px; font-size: 0.8125rem; color: #8d95a3; background: #151922; border-bottom: 1px solid #1f2430; }
+.console__bar span { position: absolute; top: 11px; width: 10px; height: 10px; border-radius: 50%; background: #2a2f3a; }
+.console__bar span:nth-child(1) { left: 14px; } .console__bar span:nth-child(2) { left: 30px; } .console__bar span:nth-child(3) { left: 46px; }
+.console__shot { position: relative; }
+.console__shot img { display: block; width: 100%; height: auto; }
+/* The ring runs past the frame's right edge, as the row's card does: the crop ends there, the row doesn't. */
+.console__hl { position: absolute; left: var(--hl-l); top: var(--hl-t); height: var(--hl-h); right: -12px; border: 2px solid var(--alert); border-radius: 10px;
+  box-shadow: 0 0 0 9999px rgba(3, 5, 9, 0.42); pointer-events: none; }
+.console__note { display: grid; gap: 0.5rem; padding-left: 1rem; border-left: 3px solid var(--alert-mark); font-size: 0.9375rem; line-height: 1.5; color: var(--fg-muted); }
+.console__note b { font-size: 1rem; font-weight: 600; color: var(--fg); }
+.console__note q { quotes: "“" "”"; font-weight: 500; color: var(--fg); }
+@media (max-width: 639px) {
+  /* Full-bleed on phones: the capture gets every pixel of the width. */
+  .console { margin-inline: calc(var(--pad) * -1); border-radius: 0; border-inline: 0; }
+  .console__shot { aspect-ratio: 1060 / 200; }
+  .console__shot img { height: 100%; object-fit: cover; }
+  .console__hl { left: var(--hl-l-m); top: var(--hl-t-m); height: var(--hl-h-m); border-radius: 6px; }
+}
+
+/* ── The trace. */
+.trace { --rail: color-mix(in oklab, var(--fg) 22%, transparent); --mark: var(--alert-mark); --node: color-mix(in oklab, var(--fg) 45%, transparent); margin: 0; }
+.trace__title { font-size: 1.0625rem; font-weight: 600; color: var(--fg); margin-bottom: 1.5rem; }
+.trace__list, .trace__branches { list-style: none; margin: 0; padding: 0; }
+.trace__step { position: relative; }
+.trace__name { display: block; font-size: 1.0625rem; font-weight: 600; letter-spacing: -0.01em; color: var(--fg); margin-bottom: 4px; }
+.trace__body { display: block; font-size: 0.9375rem; line-height: 1.45; color: var(--fg-muted); }
+.trace__then { display: block; font-size: 0.8125rem; font-weight: 500; color: var(--fg-subtle); }
+/* The node on the rail. Detect is the step the highlighted row comes from, so it carries the alert's colour. */
+.trace__step::before { content: ""; position: absolute; width: 10px; height: 10px; border-radius: 50%; background: var(--bg); border: 2px solid var(--node); box-sizing: border-box; }
+.trace__step[data-k="detect"]::before { background: var(--mark); border-color: var(--mark); }
+
+/* Phones and tablets: a rail for the three main steps, then the fork as two branches side by side, and Live under
+   the alert stream's branch — the branch it actually follows. */
+@media (max-width: 899px) {
+  .trace__list { display: grid; gap: 1.25rem; }
+  .trace__list > .trace__step:not([data-k="live"]) { padding-left: 24px; }
+  .trace__list > .trace__step:not([data-k="live"])::before { left: 0; top: 5px; }
+  /* Each main step draws its rail down to the next item. */
+  .trace__list > .trace__step:not([data-k="live"])::after { content: ""; position: absolute; left: 4px; top: 17px; bottom: -1.25rem; width: 2px; background: var(--rail); }
+  .trace__fork { position: relative; padding-left: 24px; }
+  .trace__fork::before { content: ""; position: absolute; left: 0; top: 5px; width: 10px; height: 10px; border-radius: 50%; background: var(--bg); border: 2px solid var(--node); box-sizing: border-box; }
+  .trace__branches { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.6rem; }
+  .trace__branches .trace__step, .trace__list > .trace__step[data-k="live"] { padding: 12px; border-radius: 12px; background: color-mix(in oklab, var(--bg) 55%, var(--bg-raised)); border: 1px solid var(--border); }
+  .trace__branches .trace__step::before, .trace__list > .trace__step[data-k="live"]::before { display: none; }
+  .trace__branches .trace__name, .trace__list > .trace__step[data-k="live"] .trace__name { font-size: 0.9375rem; }
+  .trace__branches .trace__body, .trace__list > .trace__step[data-k="live"] .trace__body { font-size: 0.875rem; }
+  /* Live sits under the right-hand branch, joined to it by a short line. */
+  .trace__list > .trace__step[data-k="live"] { margin-left: calc(24px + (100% - 24px) / 2 + 0.375rem); }
+  .trace__list > .trace__step[data-k="live"]::after { content: ""; position: absolute; left: 50%; top: calc(-1.25rem - 1px); height: 1.25rem; width: 2px; background: var(--rail); }
+}
+/* Wide: five columns; the fork column holds both branches (subgrid rows), and Live sits on the lower branch's row. */
+@media (min-width: 900px) {
+  .trace__list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.12fr) minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 0; row-gap: 1.5rem; }
+  .trace__list > .trace__step { grid-row: 1; padding: 22px 24px 0 0; border-top: 2px solid var(--rail); }
+  .trace__step::before { left: 0; top: -6px; }
+  .trace__list > .trace__step[data-k="detect"] { border-top-color: var(--mark); }
+  .trace__fork { grid-column: 4; grid-row: 1 / span 2; display: grid; grid-template-rows: subgrid; position: relative; }
+  .trace__then { position: absolute; top: -1.6rem; left: 18px; }
+  .trace__branches { grid-row: 1 / span 2; display: grid; grid-template-rows: subgrid; position: relative; }
+  .trace__branches .trace__step { padding: 22px 24px 0 18px; border-top: 2px solid var(--rail); }
+  .trace__branches .trace__step::before { left: 18px; }
+  /* The split: from the main line, a vertical drops to the lower branch (the row gap included), so the line visibly
+     forks — threat scoring carries straight on, the alert stream turns down and continues to Live. */
+  .trace__branches > .trace__step:nth-child(1)::after { content: ""; position: absolute; left: 0; top: -2px; width: 2px; height: calc(100% + 1.5rem + 2px); background: var(--rail); }
+  .trace__list > .trace__step[data-k="live"] { grid-column: 5; grid-row: 2; }
+}
+
+.aegis__seam { max-width: 44em; margin-top: clamp(2rem, 4vw, 2.75rem); padding-top: 1.25rem; border-top: 1px solid var(--border); font-size: 0.9375rem; line-height: 1.55; color: var(--fg-muted); }
