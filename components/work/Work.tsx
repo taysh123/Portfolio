@@ -1,32 +1,33 @@
-import { FlagshipScene } from "./FlagshipScene";
 import { CaseStudyHost } from "./CaseStudyHost";
 import { MoreWork } from "./MoreWork";
-import { flagships, projectOf } from "@/data/work";
-import Image from "next/image";
-import "./worlds/worlds.css";
+import { PokerChapter } from "./PokerChapter";
+import { AegisChapter } from "./AegisChapter";
+import { DeveloperOSChapter } from "./DeveloperOSChapter";
+import { GravityChapter } from "./GravityChapter";
+import type { Content } from "@/lib/content";
+import "./work.css";
 
-/** Spec §5.2 "each project becomes the whole website". The flagship run is a dark stage in both themes
- *  (Plan 2 decision 1); More Work follows the site theme. */
-export function Work({ worlds = {} }: { worlds?: Partial<Record<string, React.ReactNode>> }) {
+const EARLY_CASE_STUDY = `document.addEventListener("click",function(e){if(window.__csReady)return;var b=e.target&&e.target.closest&&e.target.closest("[data-case-study]");if(b)window.__csEarly=b;},true);`;
+
+/**
+ * The work (M10): four product chapters, each on its own plate and each its own top-level section (its product name
+ * is an h2), then two more. "Work" in the header lands on the first plate.
+ */
+export function Work({ c }: { c: Content }) {
   return (
-    <section id="work" aria-labelledby="work-title">
-      {/* Hero above is dark in both themes, so no top seam; the bottom seam leads into the themed More Work. */}
-      <div data-theme="dark" className="work__stage seam-bottom-dark bg-[var(--bg)]">
-        <header className="shell pt-[clamp(7rem,14vh,12rem)] pb-10">
-          <p className="label text-fg-subtle">Work</p>
-          <h2 id="work-title" className="mt-4 text-[clamp(2.25rem,5vw,4.5rem)] font-semibold tracking-[-0.035em] text-fg">Selected work</h2>
-          <p className="mt-4 max-w-[62ch] text-fg-muted" style={{ fontSize: "var(--text-lead)" }}>Four flagship projects, and two more worth a look.</p>
-        </header>
-        {flagships.map((f) => {
-          const p = projectOf(f.id);
-          return <FlagshipScene key={f.id} f={f} world={worlds[f.id] ?? (
-            <div className="world-frame"><Image src={p.media!.image!} alt={p.media!.alt ?? ""} fill sizes="(min-width:1024px) 58vw, 100vw" className="object-contain" /></div>)} />;
-        })}
-      </div>
-      {/* More Work follows the site theme. */}
-      <MoreWork />
+    <div id="work">
+      <PokerChapter c={c} />
+      <AegisChapter c={c} />
+      <DeveloperOSChapter c={c} />
+      <GravityChapter c={c} />
+      <MoreWork c={c} />
+      {/* A "Case study" press before hydration would otherwise be lost (the host's listener isn't attached yet):
+          remember the last early opener; CaseStudyHost replays it on mount. Inline because it must run before
+          any bundle (CSP allows inline scripts, proxy.ts). */}
+      <script dangerouslySetInnerHTML={{ __html: EARLY_CASE_STUDY }} />
       <CaseStudyHost />
+      {/* The case study is a script-driven dialog; without JavaScript its trigger would do nothing, so it isn't shown. */}
       <noscript><style>{".case-study-trigger{display:none}"}</style></noscript>
-    </section>
+    </div>
   );
 }

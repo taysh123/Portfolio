@@ -1,0 +1,55 @@
+/* ── DeveloperOS (M10) ────────────────────────────────────────────────────────────────────────────────────────────
+   Violet plate. The sequence on the left (a rail of five steps, the citation and the decline marked in their own
+   colours), the evidence on the right: the search window with its file:line chips framed, then the refusal as text. */
+.dos__grid { display: grid; gap: 2rem; }
+/* Phones read title, window, actions; the grid gap less a little keeps the actions with the window they follow. */
+.dos__grid > .dos__actions { margin-top: -0.5rem; }
+/* From 900px the actions rise above the window (the window holds nothing focusable, so the keyboard order is
+   unchanged), so a jump to the chapter shows them in the first screen. */
+@media (min-width: 900px) and (max-width: 1279px) {
+  .dos__head { grid-row: 1; }
+  .dos__grid > .dos__actions { grid-row: 2; margin-top: -0.5rem; }
+  .dwin { grid-row: 3; }
+  .flow { grid-row: 4; }
+  .refusal { grid-row: 5; }
+}
+/* Two columns only where the capture stays readable beside the text (≥ 1280: about 0.5× of its pixels); below that
+   it takes the full width. Left: title, actions, sequence. Right: the window, then the refusal. */
+@media (min-width: 1280px) {
+  .dos__grid { grid-template-columns: minmax(0, 24rem) minmax(0, 1fr); grid-template-rows: auto auto 1fr auto; column-gap: clamp(3rem, 5vw, 4.5rem); row-gap: 1.75rem; align-items: start; }
+  .dos__head { grid-column: 1; grid-row: 1; }
+  .dos__grid > .dos__actions { grid-column: 1; grid-row: 2; margin-top: -0.25rem; }
+  .dwin { grid-column: 2; grid-row: 1 / span 3; }
+  .flow { grid-column: 1; grid-row: 3; }
+  .refusal { grid-column: 2; grid-row: 4; }
+}
+
+.flow { list-style: none; margin: 0; padding: 0; border-left: 1px solid #39324f; }
+.flow li { position: relative; padding: 0 0 1.25rem 1.5rem; }
+.flow li:last-child { padding-bottom: 0; }
+.flow li::before { content: ""; position: absolute; left: -5px; top: 7px; width: 9px; height: 9px; border-radius: 50%; background: var(--bg); border: 1.5px solid #8079a0; }
+.flow li b { display: block; font-size: 1.0625rem; font-weight: 600; color: var(--fg); }
+.flow li span { display: block; font-size: 0.9375rem; line-height: 1.45; color: var(--fg-muted); }
+.flow li[data-k="evidence"]::before, .flow li[data-k="cite"]::before { border-color: var(--cite); background: var(--cite); }
+.flow li[data-k="decline"]::before { border-color: #ff9a9a; background: #ff9a9a; }
+
+.dwin { margin: 0; border-radius: 12px; overflow: hidden; background: #0b0e14; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.7); }
+.dwin__bar { height: 32px; display: flex; align-items: center; justify-content: center; font-size: 0.8125rem; color: #8d95a3; background: #151922; border-bottom: 1px solid #1f2430; }
+.dwin__shot { position: relative; }
+.dwin__shot img { display: block; width: 100%; height: auto; }
+.cbox { position: absolute; left: var(--l); top: var(--t); width: var(--w); height: var(--h); border: 1.5px solid var(--cite); border-radius: 6px; background: rgba(127, 176, 255, 0.08); pointer-events: none; }
+@media (max-width: 639px) {
+  .dwin { margin-inline: calc(var(--pad) * -0.5); }
+  .dwin__shot { aspect-ratio: 820 / 612; }
+  .dwin__shot img { height: 100%; object-fit: cover; object-position: 0 0; }
+  .cbox { left: var(--l-m); top: var(--t-m); width: var(--w-m); height: var(--h-m); }
+}
+
+.refusal { margin: 0; display: grid; gap: 1rem; }
+@media (min-width: 900px) { .refusal { grid-template-columns: minmax(0, 13.5rem) minmax(0, 1fr); gap: 1.75rem; align-items: center; } }
+.refusal__cap b { display: block; font-size: 1.0625rem; font-weight: 600; line-height: 1.35; color: var(--fg); }
+.refusal__cap span { display: block; margin-top: 6px; font-size: 0.9375rem; line-height: 1.45; color: var(--fg-muted); }
+.refusal__ui { padding: 18px 20px; border-radius: 12px; background: #14171e; border: 1px solid #262b36; }
+.refusal__notice { border: 1px solid #c94a4a; background: rgba(201, 74, 74, 0.12); color: #ffb4b4; border-radius: 8px; padding: 10px 12px; font-size: 0.90625rem; line-height: 1.45; }
+.refusal__msg { margin-top: 12px; color: #e8ecf3; font-size: 0.96875rem; line-height: 1.5; }
+.refusal__msg code { font-family: var(--font-mono); font-size: 0.9em; padding: 1px 5px; border-radius: 5px; background: rgba(255, 255, 255, 0.07); }

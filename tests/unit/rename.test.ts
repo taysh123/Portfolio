@@ -3,7 +3,6 @@ import { it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import { projects, publicRepoUrl } from "@/data/projects";
-import { flagships } from "@/data/work";
 import sharp from "sharp";
 
 const files = (d: string): string[] => fs.readdirSync(d, { withFileTypes: true })
@@ -33,15 +32,23 @@ it("no display variant of the new name is used", () => {
   expect(all).not.toMatch(/AegisAI|Aegis AI|Sentinel Aegis/);
 });
 
-it("the Aegis world and case study use the new captures, all present on disk as full-width WebP", async () => {
-  const p = projects.find((x) => x.id === "aegis")!, a = flagships.find((f) => f.id === "aegis")!.worldAssets!;
-  const srcs: string[] = [p.media!.image!, ...p.media!.gallery!.map((g) => g.src), a.monitor, a.rows!.src];
-  expect(p.media!.gallery!.map((g) => g.src)).toEqual(["05-live-alerts", "06-ai-analysis", "08-incident-kanban", "09-incident-detail", "11-architecture-overview"].map((n) => `/projects/aegis/${n}.webp`));
-  for (const s of srcs) {
-    const m = await sharp(path.join("public", s)).metadata();
-    const w = m.width, h = m.height; expect(m.format, s).toBe("webp");
-    expect(`${w}x${h}`, s).toBe(s.endsWith("11-architecture-overview.webp") ? "3840x1440" : "3840x2160");
-  }
-  for (const g of p.media!.gallery!) expect(g.alt.length, g.src).toBeGreaterThan(20);
-  expect(fs.readdirSync("public/projects/aegis").sort()).toEqual(["04-dashboard.webp", "05-live-alerts.webp", "06-ai-analysis.webp", "08-incident-kanban.webp", "09-incident-detail.webp", "11-architecture-overview.webp"]);
+it("the case study shows only the clean crop of the Incidents board, and no full Aegis capture is public", async () => {
+  const p = projects.find((x) => x.id === "aegis")!;
+  expect(p.media!.image).toBe("/projects/aegis/incident-board-open.webp");
+  expect(p.media!.gallery ?? []).toEqual([]);
+  const m = await sharp(path.join("public", p.media!.image!)).metadata();
+  expect([m.format, `${m.width}x${m.height}`]).toEqual(["webp", "1108x623"]);
+  expect(p.media!.alt!).toMatch(/Privilege escalation on workstation/);
+  // The excluded captures (demo credentials, a placeholder agent ID, mock-provider text and its /100 score, the
+  // contradictory incident tags, the overstated diagram) are served at no path, under their names or any other.
+  expect(fs.readdirSync("public/projects/aegis")).toEqual(["incident-board-open.webp"]);
+  const pub = files("public").map((f) => path.basename(f));
+  for (const n of ["01-login", "02-demo-analyst", "03-google-login", "04-dashboard", "05-live-alerts", "06-ai-analysis",
+    "07-settings-ai-mode", "08-incident-kanban", "09-incident-detail", "10-realtime-updates", "11-architecture-overview"])
+    expect(pub.filter((f) => f.startsWith(n)), n).toEqual([]);
+  // Every Aegis image is cut from the captures kept outside public/ (M10_CAPTURES).
+  const script = fs.readFileSync("scripts/m10-images.mjs", "utf8");
+  expect(script).toMatch(/name: "aegis-alerts", src: capture\("aegis\/05-live-alerts\.webp"\)/);
+  expect(script).toMatch(/name: "hero-aegis", src: capture\("aegis\/08-incident-kanban\.png"\)/);
+  expect(script).not.toMatch(/\$\{P\}\/aegis\/\d/);
 });

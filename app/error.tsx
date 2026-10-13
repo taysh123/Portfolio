@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { ButtonLink } from "@/components/ui/Button";
-import { Eyebrow } from "@/components/ui/Eyebrow";
 import { socials } from "@/data/socials";
 
 export default function Error({
@@ -20,10 +19,9 @@ export default function Error({
   return (
     <main className="flex min-h-[100svh] items-center justify-center px-[var(--gutter)]">
       <div className="w-full max-w-lg text-center">
-        <Eyebrow className="justify-center">Something broke</Eyebrow>
         <h1
-          className="mt-5 font-semibold leading-[1.05] tracking-[var(--tracking-heading)] text-fg"
-          style={{ fontSize: "var(--text-h1)" }}
+          className="font-semibold leading-[1.02] tracking-[var(--tracking-display)] text-fg"
+          style={{ fontSize: "var(--text-h2)" }}
         >
           That&apos;s on me.
         </h1>
@@ -44,7 +42,7 @@ export default function Error({
           </ButtonLink>
         </div>
         {error.digest && (
-          <p className="label mt-6 text-fg-subtle">Reference: {error.digest}</p>
+          <p className="mt-6 text-sm text-fg-subtle">Reference: {error.digest}</p>
         )}
       </div>
     </main>

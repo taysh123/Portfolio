@@ -28,8 +28,9 @@ export const A11Y_ATTR: Record<keyof A11yPrefs, string> = {
   largeText: "data-large-text",
 };
 
+/** M10: light is the default (the editorial studio direction); dark is the visitor's choice. */
 export function parseTheme(value: string | undefined): Theme {
-  return value === "light" ? "light" : "dark";
+  return value === "dark" ? "dark" : "light";
 }
 
 export function parseA11y(value: string | undefined): A11yPrefs {
@@ -49,8 +50,11 @@ export function parseA11y(value: string | undefined): A11yPrefs {
   }
 }
 
-/** Client-only cookie writer (1-year, lax). Server sets cookies via render-time props instead. */
+/** Client-only cookie writer (1-year, lax, and Secure whenever the page is served over HTTPS — every deployment; a
+ *  local http server is the only exception). Server sets cookies via render-time props instead. These two cookies hold
+ *  the visitor's own display preferences and nothing else (app/privacy/page.tsx says so). */
 export function writeCookie(name: string, value: string): void {
   if (typeof document === "undefined") return;
-  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=31536000; samesite=lax`;
+  const secure = typeof location !== "undefined" && location.protocol === "https:" ? "; secure" : "";
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=31536000; samesite=lax${secure}`;
 }

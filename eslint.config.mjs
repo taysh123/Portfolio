@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored agent skills (Impeccable, etc.): third-party tooling, not site code.
+    ".claude/**",
   ]),
 ]);
 

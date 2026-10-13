@@ -1,14 +1,16 @@
-/** About (spec §5.3). Condensed from the August About copy; nothing added. */
+/** About (spec §5.3; the owner's copy, 2026-10-13): the principle once, here; the project details live in their
+ *  chapters and in Think · Build · Ship, so they are not repeated. */
 export const about = {
   title: ["Engineer by training.", "Builder by nature."] as [string, string],
   paragraphs: [
-    "I'm a Computer Science graduate, and nearly everything I build comes back to one idea: make the wrong thing hard to express. Money moves in integer cents, so a rounding error has nowhere to live. Module boundaries are compile errors, not code-review habits. A retrieval layer that can't cite a file and a line refuses to answer rather than guess.",
-    "That started in C and C++, where nothing is handed to you and the machine is honest about what you got wrong. It carries into the C#/.NET, TypeScript and Python work I do now — each taken from an empty repo to a running system. I'm looking for a junior software development role on a team that ships.",
+    "I'm a Computer Science graduate who enjoys turning complex ideas into useful, dependable software. I focus on clear data models, well-defined boundaries, and tests that make important constraints explicit.",
+    "I started with C and C++, where the machine makes mistakes hard to hide. Today, I work with C#/.NET, TypeScript, and Python, taking projects from an initial idea to working software. I'm looking for a software engineering opportunity that fits my skills and lets me contribute to useful, reliable products—from interface to infrastructure.",
   ] as [string, string],
-  facts: [
-    { value: "B.Sc.", label: "Computer Science" },
-    { value: "Full stack", label: "Web · Mobile · Backend" },
-    { value: "Israel", label: "Israel time · works in English" },
-    { value: "∞", label: "Still learning" },
-  ],
+  /** One quiet line of facts, not stat tiles. The degree alone: the site names no institution (the owner's decision). */
+  facts: ["B.Sc. in Computer Science", "Full-stack: web, mobile, and backend", "Based in Israel", "Working in English and Hebrew"],
+  /** The composition beside the copy (components/sections/AboutVisual.tsx): real captures of the four products. No
+   *  caption — the products speak for themselves — and one accessible name for the whole group. */
+  visual: {
+    label: "T Poker, Aegis, DeveloperOS and GRAVITY FLOW, side by side: the four products as they run.",
+  },
 };

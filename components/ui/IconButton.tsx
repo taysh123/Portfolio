@@ -22,7 +22,8 @@ export function IconButton({
   /** Required — this control has no visible text. */
   label: string;
   size?: "sm" | "md";
-  tone?: "default" | "solid";
+  /** `bare`: no chrome until hovered — the header's controls. */
+  tone?: "default" | "solid" | "bare";
   className?: string;
 } & ComponentPropsWithoutRef<"button">) {
   return (
@@ -30,8 +31,8 @@ export function IconButton({
       type="button"
       aria-label={label}
       className={cn(
-        "relative inline-flex shrink-0 items-center justify-center rounded-full",
-        "transition-[background-color,border-color,color] duration-[var(--dur-mid)] ease-[var(--ease-out-expo)]",
+        "relative inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full",
+        "transition-[background-color,border-color,color] duration-[160ms] ease-[var(--ease-out)]",
         // Expands the hit area to 44px without changing the visual size.
         "before:absolute before:left-1/2 before:top-1/2 before:h-11 before:w-11 before:-translate-x-1/2 before:-translate-y-1/2 before:content-['']",
         size === "sm" ? "h-9 w-9" : "h-11 w-11",
@@ -39,6 +40,8 @@ export function IconButton({
           "border border-line bg-surface-1 text-fg-muted hover:border-line-strong hover:bg-surface-2 hover:text-fg",
         tone === "solid" &&
           "bg-accent text-accent-contrast hover:bg-accent-hover",
+        tone === "bare" &&
+          "text-fg-muted hover:bg-[color-mix(in_oklab,var(--fg)_8%,transparent)] hover:text-fg",
         className,
       )}
       {...rest}

@@ -2,17 +2,22 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { clientDict as t } from "@/lib/dict-client";
+
+function Loading() {
+  return (
+    <div className="fixed inset-0 z-[60] grid place-items-center bg-[color-mix(in_oklab,var(--bg)_70%,transparent)]" data-case-study-loading>
+      <p role="status" className="label text-fg-muted">{t.cs.loading}</p>
+    </div>
+  );
+}
 
 // Not in first-load JS: the panel — and the project data it looks up by id — is requested on the first
 // "Case study" activation (budget.spec.ts).
 // While the chunk loads (first open, slow network) the click still gets immediate, announced feedback.
 const CaseStudyById = dynamic(() => import("./CaseStudyById").then((m) => m.CaseStudyById), {
   ssr: false,
-  loading: () => (
-    <div className="fixed inset-0 z-[60] grid place-items-center bg-[color-mix(in_oklab,var(--bg)_70%,transparent)]" data-case-study-loading>
-      <p role="status" className="label text-fg-muted">Loading case study…</p>
-    </div>
-  ),
+  loading: () => <Loading />,
 });
 
 /** One delegated listener for every server-rendered [data-case-study] button on the page. */
@@ -27,6 +32,10 @@ export function CaseStudyHost() {
       opener.current = b; setMounted(true); setId(b.dataset.caseStudy ?? null);
     };
     document.addEventListener("click", onClick);
+    // Replay a press that landed before this listener existed (Work.tsx's inline early-click recorder).
+    const w = window as Window & { __csReady?: boolean; __csEarly?: HTMLElement };
+    w.__csReady = true;
+    if (w.__csEarly) { const b = w.__csEarly; w.__csEarly = undefined; queueMicrotask(() => b.click()); }   // through onClick
     return () => document.removeEventListener("click", onClick);
   }, []);
   // The trap already restores focus; this covers browsers that don't focus a clicked button (Safari). It must

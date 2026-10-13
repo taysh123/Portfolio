@@ -1,5 +1,7 @@
 import { cn } from "@/lib/cn";
 import type { StoreListing } from "@/data/projects";
+import type { ClientDict } from "@/lib/dict-client";
+import { fmt } from "@/lib/fmt";
 
 /**
  * An app-store badge.
@@ -20,17 +22,18 @@ import type { StoreListing } from "@/data/projects";
  * That is the whole reason `url` is optional: it is not possible to ship a
  * badge here that promises a destination which does not exist.
  */
-export function StoreBadge({ listing, app }: { listing: StoreListing; app?: string }) {
+export function StoreBadge({ listing, app, t }: { listing: StoreListing; app?: string; t: Pick<ClientDict, "store" | "common"> }) {
   const live = listing.status === "live" && Boolean(listing.url);
   const name = listing.platform === "ios" ? "App Store" : "Google Play";
-  const overline = live ? "Download on the" : "Coming soon to";
+  // The stores' own badge wording: Apple's "Download on the App Store", Google's "Get it on Google Play".
+  const overline = live ? (listing.platform === "ios" ? t.store.ios : t.store.android) : t.store.soon;
 
   const body = (
     <>
       <span
         aria-hidden="true"
         className={cn(
-          "shrink-0 transition-colors duration-[var(--dur-mid)]",
+          "shrink-0 transition-colors duration-150",
           live ? "text-fg group-hover/store:text-accent" : "text-fg-subtle",
         )}
       >
@@ -60,7 +63,7 @@ export function StoreBadge({ listing, app }: { listing: StoreListing; app?: stri
 
   if (!live) {
     return (
-      <span className={shell} aria-label={`${app ? `${app} on ` : ""}${name} — coming soon`}>
+      <span className={shell} aria-label={fmt(t.store.soonLabel, { app: app ?? "", store: name }).trim()}>
         {body}
       </span>
     );
@@ -70,7 +73,7 @@ export function StoreBadge({ listing, app }: { listing: StoreListing; app?: stri
     <a href={listing.url} target="_blank" rel="noopener noreferrer" className={shell}>
       {body}
       {/* Which app: in a screen reader's links list "Download on the App Store" alone is ambiguous. */}
-      <span className="sr-only">{app ? ` — ${app}` : ""} (opens in a new tab)</span>
+      <span className="sr-only">{app ? ` — ${app}` : ""}{t.common.newTab}</span>
     </a>
   );
 }

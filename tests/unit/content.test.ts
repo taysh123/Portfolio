@@ -4,6 +4,7 @@ import { projects } from "@/data/projects";
 import { skillGroups } from "@/data/skills";
 import { siteMeta } from "@/data/socials";
 import { privateRepoLeaks } from "../support/private-repo";
+import { namesAny } from "../support/institution";
 
 describe("content truth", () => {
   it("no project lists a store for a platform its honest note excludes", () => {
@@ -15,9 +16,17 @@ describe("content truth", () => {
   it("the languages evidence does not claim C++ in shipped projects", () => {
     expect(skillGroups.find((g) => g.id === "languages")!.evidence).not.toMatch(/C\+\+ and C# carry/);
   });
-  it("headline and hero lead are the approved copy", () => {
-    expect(siteMeta.headline).toBe("I build software people can actually use.");
-    expect(siteMeta.heroLead).toMatch(/^Computer Science graduate building polished products/);
+  it("headline and hero lead are the M10 copy (docs/m10/headline-study.md)", () => {
+    expect(siteMeta.headline).toBe("I build software end to end.");
+    // M10 copy pass: the range, without repeating the headline's "build" or the role.
+    expect(siteMeta.heroLead).toBe("Mobile apps, security systems, developer tools, and games—from interface to infrastructure.");
+    expect(siteMeta.role).toBe("Software Engineer");
+    expect(siteMeta.tagline.length).toBeLessThanOrEqual(160);
+  });
+  it("the site names no institution: the degree is shown on its own (the owner's decision)", () => {
+    for (const d of ["components", "data", "app", "public"]) for (const f of (fs.readdirSync(d, { recursive: true }) as string[]).filter((f) => /\.(tsx?|json|webmanifest|txt|xml|svg)$/.test(f))) {
+      expect(namesAny(fs.readFileSync(`${d}/${f}`, "utf8")), `${d}/${f}`).toBe(false);
+    }
   });
   it("no banned claims appear in site source", () => {
     for (const d of ["components", "data", "app"]) for (const f of (fs.readdirSync(d, { recursive: true }) as string[]).filter((f) => /\.tsx?$/.test(f))) {

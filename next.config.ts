@@ -4,6 +4,15 @@ const nextConfig: NextConfig = {
   // Every response was leaking `X-Powered-By: Next.js`.
   poweredByHeader: false,
 
+  /**
+   * The site is English only (the owner's decision, 2026-10-13). A Hebrew page at /he existed briefly on review
+   * Previews; its address, and anything under it, lands on the one page instead of a 404. Permanent (308): there is no
+   * second language to come back to. Config redirects run before proxy.ts, so this needs nothing there.
+   */
+  async redirects() {
+    return [{ source: "/he/:path*", destination: "/", permanent: true }];
+  },
+
   images: {
     // AVIF first, WebP fallback. The project screenshots are large PNGs, so
     // this is the single biggest transfer win available.
@@ -21,11 +30,14 @@ const nextConfig: NextConfig = {
 
   experimental: {
     /**
-     * Inlines CSS as a <style> tag instead of a <link>. The Next docs
-     * recommend this specifically for atomic CSS like Tailwind — it removes a
-     * render-blocking round trip, which matters most for the hero's LCP.
+     * Off since M10. The docs recommend inlining for small atomic CSS, but this
+     * page now carries ~64 KiB of hand-written CSS, and inlining put it in the
+     * HTML twice over (the <style> tags, and again in the React Server
+     * Components payload): 317 KB of HTML instead of 148 KB. Measured with
+     * Lighthouse mobile, 5 interleaved runs each, an external stylesheet won on
+     * every metric: performance 95 vs 92, LCP 2.9 s vs 3.3 s, TBT 48 vs 96 ms.
      */
-    inlineCss: true,
+    inlineCss: false,
   },
 };
 

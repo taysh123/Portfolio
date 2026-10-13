@@ -21,7 +21,7 @@ export function Tag({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2.5 py-1 font-mono text-[0.6875rem] leading-none tracking-[0.04em]",
+        "inline-flex items-center rounded-full border px-2.5 py-1 text-[0.8125rem] leading-none",
         emphasis
           ? "border-accent-line bg-accent-soft text-fg"
           : "border-line-subtle bg-surface-1 text-fg-muted",
@@ -35,12 +35,12 @@ export function Tag({
 
 export type ProjectStatus = "live" | "released" | "rc" | "coursework" | "local";
 
-const STATUS_COPY: Record<ProjectStatus, { label: string; dot: string }> = {
-  live: { label: "Live", dot: "var(--status-live)" },
-  released: { label: "Released", dot: "var(--status-live)" },
-  rc: { label: "Release candidate", dot: "var(--status-wip)" },
-  coursework: { label: "Coursework", dot: "var(--status-idle)" },
-  local: { label: "Runs locally", dot: "var(--status-idle)" },
+const STATUS_DOT: Record<ProjectStatus, string> = {
+  live: "var(--status-live)",
+  released: "var(--status-live)",
+  rc: "var(--status-wip)",
+  coursework: "var(--status-idle)",
+  local: "var(--status-idle)",
 };
 
 /**
@@ -50,12 +50,15 @@ const STATUS_COPY: Record<ProjectStatus, { label: string; dot: string }> = {
  */
 export function StatusChip({
   status,
+  label,
   className,
 }: {
   status: ProjectStatus;
+  /** The status's label (lib/dict.ts status.*). */
+  label: string;
   className?: string;
 }) {
-  const { label, dot } = STATUS_COPY[status];
+  const dot = STATUS_DOT[status];
   return (
     <span
       className={cn(
