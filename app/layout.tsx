@@ -1,21 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist } from "next/font/google";
 import { cookies } from "next/headers";
 import "./globals.css";
 import { siteMeta } from "@/data/socials";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Providers } from "@/components/providers/Providers";
+import { EARLY_CHAT } from "@/lib/earlyChat";
 import { THEME_COOKIE, A11Y_COOKIE, parseTheme, parseA11y } from "@/lib/theme";
 import { brand } from "@/lib/tokens";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
   subsets: ["latin"],
   display: "swap",
 });
@@ -33,7 +28,6 @@ export const metadata: Metadata = {
   keywords: [
     "Tay Shofer",
     "software engineer",
-    "junior software engineer",
     "C++",
     "C#",
     ".NET",
@@ -92,7 +86,7 @@ export const viewport: Viewport = {
     { media: "(prefers-color-scheme: dark)", color: brand.bg },
     { media: "(prefers-color-scheme: light)", color: brand.bgLight },
   ],
-  colorScheme: "dark light",
+  colorScheme: "light dark",
   width: "device-width",
   initialScale: 1,
 };
@@ -117,20 +111,17 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
+      dir="ltr"
       data-theme={theme}
       data-reduced-motion={String(a11y.reducedMotion)}
       data-high-contrast={String(a11y.highContrast)}
       data-large-text={String(a11y.largeText)}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-bg text-fg">
-        {/* Without JavaScript a scroll scene would pin 200svh around a frozen frame: never pin then (Plan 2 Task 5). */}
-        <noscript>
-          <style>{`.scene{height:auto!important}.scene__stage{position:relative!important;height:auto!important}`}</style>
-        </noscript>
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:inline-flex focus:items-center focus:rounded-full focus:border focus:border-line-strong focus:bg-surface-3 focus:px-5 focus:py-3 focus:text-sm focus:text-fg"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:inline-flex focus:items-center focus:rounded-full focus:border focus:border-line-strong focus:bg-raised focus:px-5 focus:py-3 focus:text-sm focus:text-fg"
         >
           Skip to content
         </a>
@@ -138,6 +129,9 @@ export default async function RootLayout({
           {children}
         </Providers>
         <JsonLd />
+        {/* At the end of the body: an inline script waits for the stylesheets, so one at the top would hold the
+            parser — and first paint — until they arrived (measured: about 90 ms on a throttled phone). */}
+        <script dangerouslySetInnerHTML={{ __html: EARLY_CHAT }} />
       </body>
     </html>
   );

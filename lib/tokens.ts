@@ -3,36 +3,30 @@
  *
  * Only for contexts that cannot read CSS custom properties:
  *   - `app/opengraph-image.tsx` (Satori renders outside the document)
- *   - inline SVG gradient stops that need literal colours
+ *   - the browser chrome colour and the web manifest
  *
- * Everything rendered in the browser must use the CSS variables instead, so
- * theme switching keeps working. If you change a value here, change it there.
+ * Everything rendered in the browser must use the CSS variables instead, so theme switching keeps working. If you
+ * change a value here, change it there.
  */
-
 export const brand = {
-  /** Page field. Deliberately not #000 — pure black smears on OLED. */
-  bg: "#05070a",
-  bgRaised: "#0a0e14",
-  screen: "#05070a",
-  bgLight: "#f5f6f8",
-  fgLight: "#0b0e14",
-  fgSubtleRaised: "#8089a0",
+  /** Paper: the light page field, the default since M10. */
+  bgLight: "#f3f4f6",
+  fgLight: "#0c0d10",
+  fgMutedLight: "#434852",
+  fgSubtleLight: "#5a606b",
+  accentLight: "#1a4fe0",
 
+  /** The dark theme's field and inks. */
+  bg: "#0b0c0f",
   fg: "#f2f4f8",
-  fgMuted: "#9aa3b2",
-  fgSubtle: "#7b8597",
-
-  /** Interaction accent. Dark-theme value. */
+  fgMuted: "#a3abb9",
+  fgSubtle: "#8a93a3",
   accent: "#5b9cff",
-  /** Filled-button accent; white text clears 4.5:1. */
-  accentSolid: "#1d6ef5",
-  /** Interaction accent, light theme — darker so it still clears AA as text. */
-  accentLight: "#1459d9",
 
-  /** Atmospheric only: bloom behind solid objects. Never text, never a border. */
-  glow: "#5b9cff",
-
-  statusLive: "#34d399",
-  statusWip: "#fbbf24",
+  /** The four plates. */
+  platePoker: "#0a1322",
+  gold: "#d8b25c",
+  plateAegis: "#e6e9ed",
+  plateDos: "#17132a",
+  plateGf: "#04191d",
 } as const;
-

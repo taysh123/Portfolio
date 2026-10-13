@@ -3,13 +3,11 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 
 /**
- * The chat and accessibility panels, opened from the site chrome (the nav on desktop, the header and menu sheet
- * on phones) rather than from floating corner buttons: a fixed button in a bottom corner sat on top of copy and
- * tap targets at rest on every viewport narrower than ~1400px (final polish pass, scripts/fab-scan.mjs).
+ * The two panels: accessibility (opened from the site chrome — the header on desktop, the menu sheet on phones) and
+ * the portfolio assistant (opened from its floating launcher, components/chat/ChatLauncher.tsx).
  *
- * Both panels are dynamic chunks, so — as with the palette (lib/palette.ts) — a request made before a panel has
- * mounted is recorded and honoured by its initial state. The panels report their open state here so the chrome
- * buttons can expose it as aria-expanded.
+ * Both panels are dynamic chunks, so a request made before a panel has mounted is recorded and honoured by its
+ * initial state. The panels report their open state here so their triggers can expose it as aria-expanded.
  */
 export type Overlay = "chat" | "a11y";
 
@@ -21,7 +19,7 @@ const emit = () => listeners.forEach((l) => l());
 /** Open (or, if already open, close) a panel. */
 export function toggleOverlay(name: Overlay) {
   if (open[name]) { window.dispatchEvent(new CustomEvent("overlay:close", { detail: name })); return; }
-  // The two panels share one anchor under the nav: opening one closes the other rather than stacking them.
+  // One panel at a time: opening one closes the other rather than stacking them (review-final #2).
   const other: Overlay = name === "chat" ? "a11y" : "chat";
   if (open[other]) window.dispatchEvent(new CustomEvent("overlay:close", { detail: other }));
   pending[name] = true;

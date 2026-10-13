@@ -1,27 +1,60 @@
-import { skillGroups } from "@/data/skills";
-import { GroupGlyph } from "@/components/ui/GroupGlyph";
-import { PointerLight } from "@/components/ui/PointerLight";
+import { projects } from "@/data/projects";
+import { StackLens } from "./StackLens";
+import { lensProjects, projectsFor } from "@/data/stackLens";
+import type { Content } from "@/lib/content";
 import "./stack.css";
 
-/** Spec §5.4: the six groups exactly as data/skills.ts has them; the two lead groups are wide. */
-export function Stack() {
+const nameOf = (id: string) => projects.find((p) => p.id === id)?.name ?? id;
+const ORDER = lensProjects.map((l) => l.id);
+
+/** The filter, written from the data: choosing a project hides every tool its own text doesn't name, and every group
+ *  left with none. CSS only (`:has(:checked)`), so it works before hydration and with JavaScript off. */
+const FILTER = lensProjects.map(({ id }) =>
+  `.stack:has([data-lens-option="${id}"]:checked) [data-tool]:not([data-p~="${id}"]){display:none}` +
+  `.stack:has([data-lens-option="${id}"]:checked) .sgroup:not(:has([data-p~="${id}"])){display:none}`).join("");
+
+/**
+ * The Stack (M10): the tools behind the work. Each group is one row — its name, its tools as plain text (each saying
+ * which projects use it), and the projects related to the group — and the lens above is a real filter of those server-rendered rows: pick T Poker
+ * and only T Poker's tools remain. No tiles, no figures, no monospace table.
+ */
+export function Stack({ c }: { c: Content }) {
+  const { t, skillGroups } = c;
   return (
-    <section id="skills" aria-labelledby="stack-title" className="shell py-[clamp(7rem,14vh,12rem)]">
-      <p className="label text-fg-subtle">Stack</p>
-      <h2 id="stack-title" className="mt-4 text-[clamp(2.25rem,5vw,4.5rem)] font-semibold tracking-[-0.035em] text-fg">The tools I build with.</h2>
-      <p className="mt-4 text-fg-muted" style={{ fontSize: "var(--text-lead)" }}>Enough range to own a product end to end.</p>
-      <div data-pointer-light className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {skillGroups.map((g) => (
-          <article key={g.id} data-card data-wide={g.lead ? "" : undefined} className={`stack-card raised relative overflow-hidden rounded-[24px] border border-line p-7 ${g.lead ? "lg:col-span-2" : ""}`}>
-            <GroupGlyph glyph={g.glyph} />
-            <h3 className="mt-5 text-lg font-semibold text-fg">{g.title}</h3>
-            {g.lead && <p className="mt-3 flex items-baseline gap-3"><span className="text-[clamp(2.5rem,5vw,4rem)] font-semibold tracking-[-0.04em] text-fg">{g.lead.value}</span><span className="label text-fg-subtle">{g.lead.unit}</span></p>}
-            <ul className="mt-5 flex flex-wrap gap-2">{g.items.map((i) => <li key={i.label} className={`label rounded-full border px-2.5 py-1 ${i.emphasis ? "border-line-strong text-fg" : "border-line text-fg-muted"}`}>{i.label}</li>)}</ul>
-            <p className="mt-5 text-[15px] leading-relaxed text-fg-muted">{g.evidence}</p>
-          </article>
-        ))}
+    <section id="skills" aria-labelledby="stack-title" className="stack">
+      <div className="shell">
+        <h2 id="stack-title" className="stack__title">{t.stack.title}</h2>
+        <StackLens options={lensProjects} t={t} />
+        <style>{FILTER}</style>
+        <div className="sgroups">
+          {skillGroups.map((g) => {
+            const used = g.related === false ? [] : ORDER.filter((id) => g.items.some((i) => projectsFor(i.label).includes(id)));
+            return (
+              <article key={g.id} className="sgroup" data-group={g.id}>
+                <h3 className="sgroup__title">{g.title}</h3>
+                <div className="sgroup__body">
+                  <ul className="sgroup__tools">
+                    {g.items.map((i) => {
+                      // Each tool says which projects use it — on hover, and in its accessible text — so a group never
+                      // implies that every tool in it is in every project named beside it.
+                      const ps = projectsFor(i.label), where = ps.length ? ps.map(nameOf).join(", ") : i.note;
+                      return (
+                        <li key={i.label} data-tool data-emphasis={i.emphasis ? "" : undefined} data-p={ps.join(" ") || undefined} title={where}>
+                          {i.label}{where && <span className="sr-only"> ({where})</span>}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <p className="sgroup__evidence">{g.evidence}</p>
+                </div>
+                {used.length > 0 && (
+                  <p className="sgroup__used"><span className="sgroup__usedLabel">{t.stack.related}</span> <span>{used.map(nameOf).join(" · ")}</span></p>
+                )}
+              </article>
+            );
+          })}
+        </div>
       </div>
-      <PointerLight />
     </section>
   );
 }

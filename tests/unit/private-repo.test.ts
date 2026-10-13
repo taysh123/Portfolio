@@ -3,7 +3,7 @@
 import { it, expect } from "vitest";
 import fs from "node:fs";
 import { execSync } from "node:child_process";
-import { projects, publicRepoUrl, PRIVATE_REPO_LABEL } from "@/data/projects";
+import { projects, publicRepoUrl, repoLabel, PRIVATE_REPO_LABEL } from "@/data/projects";
 import { privateRepoLeaks } from "../support/private-repo";
 
 it("T Poker's repository is private: no URL in its data, and the public label", () => {
@@ -13,8 +13,14 @@ it("T Poker's repository is private: no URL in its data, and the public label", 
   expect(PRIVATE_REPO_LABEL).toBe("Private repository");
 });
 
-it("every other project keeps its public source link", () => {
-  for (const p of projects.filter((x) => x.id !== "poker")) expect(publicRepoUrl(p), p.id).toMatch(/^https:\/\/github\.com\/taysh123\/[\w.-]+$/);
+it("every project with a reachable repository keeps its public source link; an unreachable one is never linked", () => {
+  // M9: Orders & Delivery's repository no longer answers anonymous git (private or removed); it shows a plain label.
+  const orders = projects.find((p) => p.id === "orders-delivery")!;
+  expect(orders.repo).toEqual({ visibility: "unavailable" });
+  expect(publicRepoUrl(orders)).toBeUndefined();
+  expect(repoLabel(orders)).toBe("Source not publicly accessible");
+  for (const p of projects.filter((x) => x.id !== "poker" && x.id !== "orders-delivery")) expect(publicRepoUrl(p), p.id).toMatch(/^https:\/\/github\.com\/taysh123\/[\w.-]+$/);
+  expect(JSON.stringify(projects)).not.toMatch(/orders-delivery-management-system/);
 });
 
 it("the internal-repos module is gone and nothing imports it", () => {

@@ -1,30 +1,34 @@
-import { socials, siteMeta, availability } from "@/data/socials";
+import { socials, resume } from "@/data/socials";
+import type { Content } from "@/lib/content";
 import { ButtonLink } from "@/components/ui/Button";
-import { PhoneReveal } from "@/components/ui/PhoneReveal";
-import { GithubIcon, LinkedinIcon, MailIcon } from "@/components/ui/icons";
+import { TextLink } from "@/components/ui/TextLink";
 import "./contact.css";
 
-/** Spec §5.6: "Let's build / something great." over the planet-horizon light; one primary action. */
-export function Contact() {
-  const channel = "inline-flex min-h-11 items-center gap-2.5 rounded-full border border-line px-4 text-sm text-fg-muted hover:border-line-strong hover:text-fg";
+/**
+ * Contact (M10): the conclusion. One sentence of availability, one primary action (email), the two profiles, and the
+ * résumé as a quiet download beneath them.
+ */
+export function Contact({ c }: { c: Content }) {
+  const { t, availability } = c;
   return (
-    <section id="contact" aria-labelledby="contact-title" data-theme="dark" className="contact seam-top-dark seam-bottom-dark relative overflow-hidden bg-[var(--bg)]">
-      <div className="contact__horizon" aria-hidden="true" />
-      <div className="shell relative py-[clamp(8rem,18vh,14rem)] text-center">
-        {availability.open && <p className="label inline-flex items-center gap-2 text-fg-muted"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--status-live)]" />{availability.label}</p>}
-        <h2 id="contact-title" className="mt-6 text-[clamp(2.75rem,7vw,6rem)] font-semibold leading-[0.98] tracking-[-0.045em] text-fg">
-          Let&apos;s build<br /><span className="text-fg-muted">something great.</span>
-        </h2>
-        <p className="mx-auto mt-6 max-w-[52ch] text-fg-muted" style={{ fontSize: "var(--text-lead)" }}>{availability.detail}</p>
-        <div className="mt-10 flex justify-center"><ButtonLink href={`mailto:${socials.email}?subject=${encodeURIComponent("Hello Tay")}`} size="lg">Get in touch</ButtonLink></div>
-        <address className="mt-8 flex flex-wrap justify-center gap-3 not-italic">
-          <a className={channel} href={socials.github.url} target="_blank" rel="noopener noreferrer"><GithubIcon size={16} />GitHub<span className="sr-only"> (opens in a new tab)</span></a>
-          <a className={channel} href={socials.linkedin.url} target="_blank" rel="noopener noreferrer"><LinkedinIcon size={16} />LinkedIn<span className="sr-only"> (opens in a new tab)</span></a>
-          <a className={channel} href={`mailto:${socials.email}`}><MailIcon size={16} />Email</a>
-          <PhoneReveal className={channel} />
-        </address>
-        <p aria-hidden="true" className="label mt-16 text-fg-subtle">Ideas / Build / Ship / Repeat.</p>
-        <p className="sr-only">{siteMeta.name}</p>
+    <section id="contact" aria-labelledby="contact-title" className="contact">
+      <div className="shell">
+        <h2 id="contact-title" className="contact__title">{t.contact.title[0]}<br /><span>{t.contact.title[1]}</span></h2>
+        <p className="contact__lead">{availability.detail}</p>
+        <div className="contact__actions">
+          <ButtonLink href={`mailto:${socials.email}?subject=${encodeURIComponent(t.contact.subject)}`} variant="accent" size="lg">{t.contact.email}</ButtonLink>
+          {/* The two profiles wrap as a pair, so a narrow screen never strands one of them on its own line. */}
+          <span className="contact__profiles">
+            <TextLink href={socials.linkedin.url} external newTab={t.common.newTab}>{t.contact.linkedin}</TextLink>
+            <TextLink href={socials.github.url} external newTab={t.common.newTab}>{t.contact.github}</TextLink>
+          </span>
+        </div>
+        <p className="contact__resume">
+          <a href={resume.href} download={resume.fileName} type="application/pdf" data-resume>
+            {t.contact.resume}
+          </a>
+          <span>{t.contact.resumeNote.replace(" KB", "\u00a0KB")}</span>
+        </p>
       </div>
     </section>
   );
