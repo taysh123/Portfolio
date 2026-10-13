@@ -1,0 +1,67 @@
+/* ── About (M10) ── white, a reading measure, and the four products together (no photograph, no caption). */
+.about { padding-block: var(--section-y); background: var(--bg-raised); }
+.about__grid { display: grid; gap: 2rem; }
+.about__title { font-size: var(--text-h2); line-height: 1; letter-spacing: var(--tracking-display); font-weight: 620; color: var(--fg); }
+.about__title span { color: var(--fg-subtle); }
+.about__p { max-width: 34em; font-size: clamp(1.0625rem, 1rem + 0.2vw, 1.1875rem); line-height: 1.6; color: var(--fg-muted); }
+.about__p + .about__p { margin-top: 1.125rem; }
+.about__facts { list-style: none; margin: 2rem 0 0; padding: 1.25rem 0 0; border-top: 1px solid var(--border); max-width: 34em; display: flex; flex-wrap: wrap; gap: 0.25rem 0; font-size: 0.9375rem; color: var(--fg-muted); }
+.about__facts li:not(:last-child)::after { content: "·"; margin-inline: 0.6em; color: var(--fg-subtle); }
+
+/* ── The visual (AboutVisual.tsx) ── One plate; four layers placed in percentages of it, sized from the plate's own
+   width (cqw). */
+.av { container-type: inline-size; }
+.av__plate {
+  /* clip, not hidden: hidden would make the plate a scroll container, and view() would follow it instead of the page. */
+  position: relative; aspect-ratio: 5 / 4; overflow: clip; border-radius: 18px; isolation: isolate;
+  background:
+    radial-gradient(120% 90% at 18% 0%, color-mix(in oklab, var(--bg-raised) 70%, transparent), transparent 60%),
+    color-mix(in oklab, var(--fg) 6%, var(--bg-raised));
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.av__layer { position: absolute; will-change: auto; }
+.av__win, .av__phone { position: relative; overflow: hidden; background: #0b0d12; box-shadow: var(--shadow-2), 0 0 0 1px rgba(255, 255, 255, 0.06); }
+.av__win { border-radius: 1.8cqw; }
+.av__bar { display: flex; gap: 0.9cqw; align-items: center; height: 3.4cqw; padding-inline: 1.6cqw; background: #12151c; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+.av__bar i { width: 0.9cqw; height: 0.9cqw; border-radius: 50%; background: rgba(255, 255, 255, 0.18); }
+.av__phone { border-radius: 4.2cqw; padding: 0.7cqw; background: #050608; }
+.av__phone img { border-radius: 3.6cqw; }
+.av__win img, .av__phone img { display: block; width: 100%; height: auto; }
+
+/* The rest frame. Back to front: DeveloperOS, GRAVITY FLOW, Aegis, T Poker. */
+.av__layer--dos   { width: 68%; top: 7%;  inset-inline-end: 5%;  z-index: 1; }
+.av__layer--gf    { width: 18.4%; top: 9%; inset-inline-start: 6%; z-index: 2; }
+.av__layer--aegis { width: 58%; top: 46%; inset-inline-start: 5%; z-index: 3; }
+.av__layer--poker { width: 25.8%; bottom: 6%; inset-inline-end: 7%; z-index: 4; }
+
+/* Motion: where the browser has scroll timelines, the reader asked for no less motion, and the site's own switch is
+   off. Settle: from a slight spread (≤ 26px, ≤ 3°) into the rest frame as the section scrolls in. Drift: while it
+   crosses the screen, each layer moves by its depth (6–18px), the front one most. Transforms only. */
+.av__layer--dos   { --sx: 24px;  --sy: -18px; --sr: 1.5deg; --d: 6px; }
+.av__layer--gf    { --sx: -22px; --sy: -12px; --sr: -3deg;  --d: 10px; }
+.av__layer--aegis { --sx: -26px; --sy: 22px;  --sr: -1.5deg; --d: 14px; }
+.av__layer--poker { --sx: 26px;  --sy: 26px;  --sr: 3deg;   --d: 18px; }
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    html:not([data-reduced-motion="true"]) .av__layer {
+      animation: av-settle linear both, av-drift linear both;
+      animation-timeline: view(), view();
+      animation-range: entry 0% cover 40%, cover 0% cover 100%;
+    }
+  }
+}
+@keyframes av-settle {
+  from { transform: translate(var(--sx), var(--sy)) rotate(var(--sr)) scale(0.97); }
+  to { transform: none; }
+}
+@keyframes av-drift {
+  from { translate: 0 var(--d); }
+  to { translate: 0 calc(var(--d) * -1); }
+}
+
+@media (min-width: 1024px) {
+  .about__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "title body" "visual body"; column-gap: clamp(3rem, 6vw, 5rem); row-gap: 2.5rem; align-items: start; }
+  .about__title { grid-area: title; }
+  .about__body { grid-area: body; padding-top: 0.5rem; }
+  .av { grid-area: visual; }
+}
