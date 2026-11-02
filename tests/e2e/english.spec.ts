@@ -3,6 +3,8 @@
 import { test, expect } from "playwright/test";
 import { open } from "../support/page";
 
+const LEGAL = "\u05e9\u05d5\u05e4\u05e8 \u05d8\u05d0\u05d9"; // the legal business name (the owner's request, 2026-11-02)
+
 test("the page is English, left to right, in the first byte; English-only metadata, no language alternates", async ({ request }) => {
   const r = await request.get("/");
   const html = await r.text();
@@ -15,7 +17,10 @@ test("the page is English, left to right, in the first byte; English-only metada
   expect(html).not.toMatch(/\/he\/opengraph-image|twitter-image\.png/);
   const ld = JSON.parse(html.match(/<script type="application\/ld\+json">(.*?)<\/script>/)![1]);
   expect(ld["@graph"][0].inLanguage).toBe("en");
-  expect(html).not.toMatch(/[֐-׿]/);                          // no Hebrew anywhere in the document
+  // The one Hebrew string is the legal business name, server-rendered in the footer and marked as Hebrew; it may also
+  // appear in the inline RSC payload. Apart from it, no Hebrew anywhere in the document.
+  expect(html.split(`<span lang="he" dir="rtl">${LEGAL}</span>`).length - 1).toBe(1);
+  expect(html.split(LEGAL).join("")).not.toMatch(/[֐-׿]/);
   expect(r.headers()["content-security-policy"]).toBeTruthy();           // the proxy still runs
   expect(r.headers()["set-cookie"] ?? "").not.toMatch(/(^|[;,]\s*)lang=/);
 });
@@ -61,7 +66,7 @@ test("a 404 is English, left to right, and offers the way back", async ({ page }
 test("no visible Hebrew and no language switch at any width, menu open or closed", async ({ browser }) => {
   for (const vp of [[1440, 900], [390, 844], [320, 568]] as const) {
     const { ctx, page } = await open(browser, vp);
-    expect(await page.evaluate(() => /[֐-׿]/.test(document.body.innerText)), `${vp}`).toBe(false);
+    expect(await page.evaluate((legal) => /[֐-׿]/.test(document.body.innerText.split(legal).join("")), LEGAL), `${vp}`).toBe(false);
     await expect(page.locator("[data-lang-switch], .lang-switch, a[hreflang]")).toHaveCount(0);
     if (vp[0] < 1024) {
       await page.getByRole("button", { name: "Open menu" }).click();

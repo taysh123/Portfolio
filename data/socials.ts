@@ -40,6 +40,9 @@ export const siteMeta = {
   timezone: "Israel time (IST/IDT)",
 } as const;
 
+/** The legal business name, in Hebrew (the owner's request, 2026-11-02). Shown once, beside the copyright line in the footer. */
+export const legalName = "שופר טאי";
+
 export const availability = {
   open: true,
   label: "Available for software engineering roles",

@@ -6,6 +6,7 @@ import path from "node:path";
 import { dict } from "@/lib/dict";
 import { getContent } from "@/lib/content";
 import { about } from "@/data/about";
+import { legalName } from "@/data/socials";
 import { namesAny, sha256, INSTITUTION } from "../support/institution";
 
 const files = (d: string): string[] => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? files(path.join(d, e.name)) : [path.join(d, e.name)]));
@@ -14,9 +15,16 @@ const read = (f: string) => fs.readFileSync(f, "utf8");
 
 describe("English only", () => {
   it("the site's source has no Hebrew text and no second language: one page, one dictionary", () => {
-    for (const f of [...site, "proxy.ts", "next.config.ts"]) expect(read(f), f).not.toMatch(/[֐-׿]/);
+    // The one exception (the owner's request, 2026-11-02): the legal business name, defined once in data/socials.ts.
+    const strip = (f: string) => (f === path.join("data", "socials.ts") ? read(f).replace(`"${legalName}"`, '""') : read(f));
+    for (const f of [...site, "proxy.ts", "next.config.ts"]) expect(strip(f), f).not.toMatch(/[֐-׿]/);
     expect(fs.existsSync("app/he")).toBe(false);
     expect(Object.keys(dict)).not.toContain("lang");
+  });
+  it("the legal business name is exactly the owner's Hebrew string, and only the server-rendered footer uses it", () => {
+    expect(legalName).toBe("\u05e9\u05d5\u05e4\u05e8 \u05d8\u05d0\u05d9");
+    expect(site.filter((f) => /\blegalName\b/.test(read(f))).sort()).toEqual([path.join("components", "layout", "Footer.tsx"), path.join("data", "socials.ts")]);
+    expect(read("components/layout/Footer.tsx")).not.toMatch(/^["']use client["']/m);
   });
   it("the old /he address redirects to the one page, permanently", async () => {
     const { default: config } = await import("@/next.config");

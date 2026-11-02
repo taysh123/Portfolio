@@ -1,7 +1,7 @@
-import { socials, siteMeta, resume } from "@/data/socials";
+import { socials, siteMeta, resume, legalName } from "@/data/socials";
 import type { Content } from "@/lib/content";
 
-/** The footer: identity, the channels, the résumé, the privacy page, a way back up, and the copyright. */
+/** The footer: identity, the channels, the résumé, the privacy page, a way back up, and the copyright with the legal name. */
 export function Footer({ c }: { c: Content }) {
   const { t } = c;
   const year = new Date().getFullYear();
@@ -21,7 +21,7 @@ export function Footer({ c }: { c: Content }) {
           <li key={l.href}><a href={l.href} className="inline-flex min-h-11 items-center px-3 text-sm text-fg-muted transition-colors duration-150 hover:text-fg"
             {...(l.ext ? { target: "_blank", rel: "noopener noreferrer" } : {})} {...(l.download ? { download: l.download, type: "application/pdf" } : {})}>
             {l.label}{l.ext && <span className="sr-only">{t.common.newTab}</span>}</a></li>))}</ul></nav>
-        <p className="text-sm text-fg-subtle">© {year} {siteMeta.name}</p>
+        <p className="text-sm text-fg-subtle">© {year} {siteMeta.name} · <span lang="he" dir="rtl">{legalName}</span></p>
       </div>
     </footer>
   );

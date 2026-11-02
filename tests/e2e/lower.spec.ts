@@ -167,5 +167,9 @@ test("the footer concludes the page: identity and role, the channels, the résum
   await expect(f).toContainText("Tay Shofer · Software Engineer");
   await expect(f.getByRole("navigation", { name: "Footer" }).getByRole("link")).toHaveText(["Email", /^GitHub/, /^LinkedIn/, "Résumé (PDF)", "Privacy", "Back to top"]);
   await expect(f.getByRole("link", { name: "Back to top" })).toHaveAttribute("href", "#hero");
-  await expect(f).toContainText(`© ${new Date().getFullYear()} Tay Shofer`);
+  await expect(f).toContainText(`© ${new Date().getFullYear()} Tay Shofer · \u05e9\u05d5\u05e4\u05e8 \u05d8\u05d0\u05d9`);
+  const legal = f.locator('span[lang="he"]');
+  await expect(legal).toHaveText("\u05e9\u05d5\u05e4\u05e8 \u05d8\u05d0\u05d9");
+  await expect(legal).toHaveAttribute("dir", "rtl");
+  await expect(legal).toBeVisible();
 });
