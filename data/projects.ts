@@ -147,7 +147,7 @@ export const projects: Project[] = [
       problem:
         "A home poker night ends with six people, a pile of chips and an argument about who owes whom. Doing it by hand produces a tangle of small transfers and, sooner or later, an off-by-a-cent dispute. The interesting problem isn't the UI—it's keeping the money exact to the cent, including in a guest game run entirely on a phone with no signal.",
       architecture:
-        "One Expo/React Native codebase renders iOS, Android and the live web app through react-native-web. Behind it, an ASP.NET Core 8 API is split into four Clean Architecture projects with MediatR carrying commands and queries separately over EF Core and PostgreSQL. Guest mode runs an entire game on-device against AsyncStorage—schema-versioned, with corruption quarantine that never wipes existing data—and accounts add server-backed group games and lifetime stats. Billing sits behind one verifier interface with five implementations—Apple, Google Play, a dispatcher between the two, a development mock, and a fail-closed disabled mode—so the payment provider is a swappable detail rather than a dependency.",
+        "One Expo/React Native codebase renders iOS, Android and the live web app through react-native-web. Behind it, an ASP.NET Core 8 API is split into four Clean Architecture projects with MediatR carrying commands and queries separately over EF Core and PostgreSQL. Guest mode runs an entire game on-device against AsyncStorage—schema-versioned, with corruption quarantine that never wipes existing data—and accounts add server-backed group games and lifetime stats. Billing verifies Apple and Google Play purchases, and its disabled mode fails closed.",
       decisions: [
         {
           title: "Exact money, never floats",
@@ -393,7 +393,7 @@ export const projects: Project[] = [
       problem:
         "A one-touch game gives you exactly one input to work with, so everything rests on feel. Too weak and the star drifts uselessly; too strong and every level becomes a slingshot. And 150 levels is well past the point where hand-writing each one stays maintainable—the content had to become data before the count got there.",
       architecture:
-        "Holding the screen spawns an inverse-square attractor in a Matter.js world; dragging steers it and releasing lets go. Levels are pure data: a LevelConfig carries optional fields for each of the seven mechanics—gravity zones, magnets, moving platforms, hazards, portals, one-way gates—so a new level is a config entry rather than a new scene. Fifteen worlds sit over contiguous level ranges, asserted in tests. Native-only integrations are isolated behind four seams so the web bundle never ships them.",
+        "Holding the screen spawns an inverse-square attractor in a Matter.js world; dragging steers it and releasing lets go. Levels are pure data: a LevelConfig carries optional fields for each of the other six mechanics—gravity zones, magnets, moving platforms, hazards, portals, one-way gates—so a new level is a config entry rather than a new scene. Fifteen worlds sit over contiguous level ranges, asserted in tests. Native-only integrations are isolated behind four seams so the web bundle never ships them.",
       decisions: [
         {
           title: "Data-driven levels, verified structurally",
