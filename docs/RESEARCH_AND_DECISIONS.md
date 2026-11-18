@@ -38,7 +38,7 @@ Tay decides everything here.
   and the first-load JS budget (≤ 205.7 KiB gzip) in `tests/e2e/budget.spec.ts:7`.
 
 **D3 — Docs branch:** done. The M0 docs are on `docs/m0-audit`, cut from `origin/main` (`3f0c5e5`),
-pushed as **PR #4** (open, not merged).
+**PR #4, merged 2026-11-18** (merge commit `661dce1`).
 
 **D4 — Duplicate `ui-ux-pro-max`:** done. The project-local copy is gone from the working folder: it
 was never on `main`, and the leftover ignored `__pycache__` files were deleted. The user-scope plugin
@@ -47,8 +47,8 @@ untouched. Nothing references the removed path (VL).
 
 **D5 — Public git history:** leave as-is. No history rewrite, and the repo stays public.
 
-**D6 — Content fixes:** approved. On `fix/content-accuracy` (from `origin/main`), pushed as **PR #5**
-(open, not merged; commits `7bddd19`, `36f6001`, `e105917`; see N5 for the last two):
+**D6 — Content fixes:** approved and shipped. **PR #5, merged and deployed 2026-11-18** (merge commit
+`841d062`; commits `7bddd19`, `36f6001`, `e105917`; see N5 for the last two):
 - `data/projects.ts:150`: T Poker billing no longer presented as "a swappable detail". It now reads
   "Billing verifies Apple and Google Play purchases, and its disabled mode fails closed."
 - `data/projects.ts:396`: "each of the seven mechanics" → "each of the **other six** mechanics", which
@@ -77,9 +77,11 @@ Impeccable: skip. GitHub plugin: skip (`gh` covers it).
 
 ### Still open
 
-- **D8 — Branch cleanup:** local `main` (130 behind), local `feature/premium-portfolio-redesign`, and on
-  GitHub `production/no-entrance`, `feature/portfolio-polish`, five `review/m10-*` snapshots, and
-  `reference/premium-redesign-package`. Keep or prune? Nothing gets deleted without an explicit yes per branch.
+- **D8 — Branch cleanup:** local `docs/m0-audit` and `fix/content-accuracy` were deleted after merging;
+  local `main` is current. Still to decide: local `feature/premium-portfolio-redesign` and
+  `reference/premium-redesign-package`, and on GitHub `production/no-entrance`, `feature/portfolio-polish`,
+  five `review/m10-*` snapshots, `reference/premium-redesign-package`, and the merged `docs/m0-audit` /
+  `fix/content-accuracy`. Keep or prune? Nothing gets deleted without an explicit yes per branch.
 - **N1 — Reference README on `main`?** D1 relies on `design/references/README.md`, but it exists only on
   the stale branch (the rules are quoted above so the decision stands on its own). Should its text be
   copied onto `main`, for example under `docs/`? The PNG is AI-generated and probably should not be.
@@ -88,12 +90,12 @@ Impeccable: skip. GitHub plugin: skip (`gh` covers it).
   (`tests/support/institution.ts`). The tests scan site code, not docs, so docs don't fail them. Still,
   four lines written for agents spell the abbreviation out (`CLAUDE.md` standing constraints,
   `claude/START-HERE.md` standing rules, and the header comments of `docs/PROJECT_CONTEXT.md` and
-  `docs/CREATIVE_DIRECTION.md`), and they would land in the public tree when `docs/m0-audit` is pushed.
+  `docs/CREATIVE_DIRECTION.md`), and since PR #4 they are in the public tree.
   Replace them with "the institution"? Not changed: they are Tay's own wording.
 - ~~N3 — GRAVITY FLOW mechanics count~~ **Resolved:** seven is correct (game repo `MechanicId` lists 7);
   PROJECT_CONTEXT §4.4 needs no change.
-- ~~N5 — GRAVITY FLOW repo link 404s for visitors~~ **Resolved** (see N5 under Resolved; PR #5). The fix
-  reaches the live site when PR #5 merges.
+- ~~N5 — GRAVITY FLOW repo link 404s for visitors~~ **Resolved and live** (see N5 under Resolved; PR #5,
+  deployed 2026-11-18).
 - **N6 — Windows-only false failure in `tests/unit/site.test.ts:78`** (path separators). Optional one-line
   test fix; the guarded invariant holds.
 - **N4 — Why was October's entrance pulled?** This is no longer blocking (D2 = not now), but answer it

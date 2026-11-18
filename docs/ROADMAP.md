@@ -54,7 +54,7 @@ studies on a branch cut from production `main`. Release through a Vercel Preview
 
 Status key: `DONE` · `READY TO MERGE` · `IN PROGRESS` · `BLOCKED (decision)` · `DEFERRED` · `NOT STARTED`
 
-### M0 — Audit, research, canonical docs · `DONE` (PR #4 open: `docs/m0-audit`)
+### M0 — Audit, research, canonical docs · `DONE` (PR #4 merged 2026-11-18)
 
 Scope: read-only audit, tool/skill/MCP inventory, roadmap, worklog, decision log.
 
@@ -67,9 +67,9 @@ Acceptance criteria:
 - [x] Docs moved onto `docs/m0-audit`, cut from current `main` (D3).
 - [ ] Why the October entrance was pulled: moved to N4. Only needed before a future M2.
 
-Risks: none left open. PR #4 awaits Tay's review and merge.
+Risks: none left open.
 
-### M0.5 — Production hygiene (independent of the redesign) · `READY TO MERGE` (PR #5 open: `fix/content-accuracy`)
+### M0.5 — Production hygiene (independent of the redesign) · `DONE` (PR #5 merged and deployed 2026-11-18, `841d062`)
 
 Small, separately reviewable fixes on `main` that are worth doing whatever the redesign becomes.
 Each needs Tay's go-ahead; none changes the design.
@@ -88,7 +88,9 @@ Acceptance criteria:
       Not added; Tay asked for minimal diffs.
 - [x] Final tree `e105917`: typecheck exit 0, lint exit 0, `npm run build` exit 0, **Playwright 132/132**,
       unit 118/119. The one failure is pre-existing and Windows-only (N6). Details in `docs/WORKLOG.md` sessions 2–3.
-- [ ] Tay merges PR #5 (deploys to Production), then checks the live chapter, case study and résumé.
+- [x] Merged (PR #5) and deployed (`841d062`, Vercel status success 2026-11-18). Live check: no
+      `Gravity-Game` link in the page, no "swappable detail", label "two pages, 79 KB", and the served résumé
+      is byte-identical to `main`'s 80,593-byte file with no dead link.
 
 Risks: low. Content-only diffs; the existing tests already guard neighbouring claims.
 
@@ -182,8 +184,8 @@ Acceptance criteria:
 | # | Item | Why | Phase |
 |---|------|-----|-------|
 | 1 | ~~Resolve D1/D2~~ Done 2026-11-18 (evolve Product Plates; no 3D now) | — | M0 |
-| 2 | Review and merge PR #4 (`docs/m0-audit`) (Tay) | Docs-only; production CSS verified unchanged | M0 |
-| 3 | Review and merge PR #5 (`fix/content-accuracy`) (Tay) | Copy fixes + GRAVITY FLOW private + résumé link; 132/132 | M0.5 |
+| 2 | ~~Merge PR #4~~ Merged 2026-11-18 | — | M0 |
+| 3 | ~~Merge PR #5~~ Merged and live 2026-11-18 | — | M0.5 |
 | 4 | ~~N5: GRAVITY FLOW repo link~~ Fixed in PR #5 (repo stays private) | — | M0.5 |
 | 5 | Confirm `data/projects.ts:172` guest-progress claim | Possible tension with `tests/unit/work.test.ts:25` | M0.5 |
 | 6 | ~~Old content in public history~~ D5: leave as-is | — | — |

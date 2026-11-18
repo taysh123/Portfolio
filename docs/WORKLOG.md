@@ -11,6 +11,37 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-18 — M0 close-out: both PRs merged, `main` is the source of truth (Claude Code)
+
+**State at close:**
+- **Merged by Tay:** PR #4 (`docs/m0-audit` @ `814e309`, merge `661dce1`, 06:02:02Z) and PR #5
+  (`fix/content-accuracy` @ `e105917`, merge `841d062`, 06:02:13Z).
+- **Production:** deployed `841d062`, Vercel status success at 06:02:58Z.
+- **Local `main`:** at `841d062`, equal to `origin/main`. The folder works from `main` again; the stale
+  `reference/premium-redesign-package` is no longer checked out.
+
+**Live check (read-only `curl` of https://www.tayshofer.dev/), VL:**
+- No `github.com/taysh123/Gravity-Game` link in the page.
+- No "swappable detail".
+- The Contact label reads "two pages, 79 KB".
+- The Aegis and DeveloperOS repo links are still present.
+- `/resume/Tay-Shofer-Software-Engineer-Resume.pdf` is 80,593 bytes, byte-identical to `main`'s file, with
+  no `Gravity-Game` link.
+
+**Cleanup:**
+- Deleted the merged local branches `docs/m0-audit` and `fix/content-accuracy` (both tips verified as
+  ancestors of `main` first). Remote branches were left for Tay (D8).
+- Removed session scratch (the scratch PyMuPDF venv, PDF copies, logs, scripts), Playwright's ignored
+  `test-results/`, and the ignored `redesign-reference/…/next-env.d.ts` leftover from the old branch.
+- Kept: Tay's ignored `.preview/` screenshots, the empty pre-existing `New folder/`, and the `.next/`
+  build cache.
+- These final doc updates are on `docs/m0-closeout` (PR for Tay), so `main` stays clean.
+
+**Next:** M1, the Product Plates evolution (art direction, tokens, layouts, motion spec), when Tay asks.
+Open, non-blocking: D8, N1, N2, N4, N6, `data/projects.ts:172`, and the Context7 `/mcp` sign-in.
+
+---
+
 ## 2026-11-18 — Session 3: Context7, GRAVITY FLOW private, résumé link, M0 closed (Claude Code)
 
 **Scope:** Tay's go for Context7; N5 (the GRAVITY FLOW repo stays private, so fix the data); make PR #5
@@ -348,3 +379,4 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-18 | Session 3 | Context7 installed (user scope); `origin` set to `taysh123/Portfolio` | Claude Code config, `.git/config` |
 | 2026-11-18 | Session 3 | PR #5: GRAVITY FLOW repo marked private (`36f6001`); served résumé link removed, size label 79 KB (`e105917`) | `data/projects.ts:359`, `tests/unit/private-repo.test.ts`, `public/resume/*.pdf`, `lib/dict.ts`, `tests/e2e/lower.spec.ts` |
 | 2026-11-18 | Session 3 | M0 docs refreshed: N5 resolved, PRs #4/#5, Context7, résumé facts, E2E gotchas | `docs/*.md`, `claude/START-HERE.md`, `CLAUDE.md` |
+| 2026-11-18 | M0 close-out | PRs #4 and #5 merged by Tay and deployed (`841d062`); docs record the final state; merged local branches deleted | `docs/*.md`, `claude/START-HERE.md`, `CLAUDE.md` (branch `docs/m0-closeout`) |
