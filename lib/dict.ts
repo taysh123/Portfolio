@@ -46,7 +46,7 @@ const server = {
     linkedin: "LinkedIn",
     github: "GitHub",
     resume: "Download résumé (PDF)",
-    resumeNote: " · two pages, 80 KB",
+    resumeNote: " · two pages, 79 KB",
   },
   footer: {
     label: "Footer",
