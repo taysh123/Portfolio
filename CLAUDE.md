@@ -19,7 +19,7 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
 
 ## Where production code is (verified 2026-11-18)
 - **`main` is the source of truth.** Production = GitHub `taysh123/Portfolio` `main`; every merge deploys
-  via Vercel's GitHub integration (last verified: `f698c74`, 2026-11-18, PRs #8 + #9). `origin` is
+  via Vercel's GitHub integration (last verified: `8f1dd5b`, 2026-11-18, PRs #8–#10). `origin` is
   `https://github.com/taysh123/Portfolio.git` (the old name `Tay-Shofer---Portfolio` redirects). The repo
   is **public**. Changes go through a branch and a PR; Tay merges. Claude pushes or opens a PR only when the
   brief says so, and never merges.
@@ -90,6 +90,9 @@ Verified gotchas (2026-11-18):
 - Run E2E as `GROQ_API_KEY= npx playwright test`. `.env.local` holds a real key, and the chat specs expect
   the keyless offline path; a pre-set empty var stops Next loading the key.
 - Playwright 1.62.1 needs Chromium v1234 (`npx playwright install chromium`).
+- Playwright reuses any server already on :3400 (`reuseExistingServer`), so a stale `next start` there tests an
+  old build. Serve manual checks on another port. On Windows, stopping a backgrounded `npx next start` can leave
+  its `node` child holding the port: check `Get-NetTCPConnection -LocalPort <port> -State Listen` and stop that PID.
 - The Windows-only `tests/unit/site.test.ts:78` failure (N6) is fixed (`b4d5c73`, PR #7): the unit suite is
   119/119 on Windows (`main` `f698c74`). Run `npm test` from Git Bash: a test shells out `git grep … || true`,
   and cmd.exe (PowerShell's child shell) has no `true`, so it fails there spuriously.
