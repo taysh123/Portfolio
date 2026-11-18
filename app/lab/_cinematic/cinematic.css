@@ -106,6 +106,19 @@ body:has(.cine) .chat-launcher {
   --cine-field-fade: 1400ms;                  /* a live field's fade-in, once it has drawn */
   --cine-field-delay: 200ms;
 
+  /* Added by the Work slice (round 5, Tay's brief: product panels, glass stages, elevation on hover, focus and touch).
+     Each is the site's own value (globals.css) where one exists; the two values that are new are marked NEW, for
+     Tay's review. */
+  --cine-text-section: var(--text-chapter);   /* 36 → 64: a section's title (the site's chapter tier) */
+  --cine-text-name: var(--text-h2);           /* 30 → 42: a product's name (the site's section tier) */
+  --cine-section-y: var(--section-y);         /* 72 → 120: the rhythm between product panels */
+  --cine-radius-stage: 24px;                  /* a capture's glass stage (= the site's --radius-xl) */
+  --cine-radius-device: 28px;                 /* a phone capture's screen (= the site's --radius-2xl) */
+  --cine-radius-window: 12px;                 /* a desktop capture's window (= the site's --radius-sm) */
+  --cine-elevation: var(--shadow-object);     /* a capture at rest: the dark theme's object shadow */
+  --cine-lift: -4px;                          /* NEW: how far a stage rises on hover, focus or touch */
+  --cine-glow-lift: 0 0 56px -12px rgba(46, 230, 214, 0.3);   /* NEW: the cyan halo of a lifted stage */
+
   /* The shared names the site's base rules read inside the scope: the [data-theme] ink, the selection, sr-only. */
   --bg: var(--cine-abyss);
   --fg: var(--cine-ink);
