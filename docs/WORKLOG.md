@@ -199,8 +199,60 @@ rounds. So only the interleaved comparison counts, not the absolute numbers agai
     appear and stay capped, at 3 on desktop and 2 on a phone.
 - The guard files are still byte-identical to `origin/main`.
 
+### 11. Round 2 pushed; round 3, the final energy pass (Tay: "better, still a touch calm") (VL)
+- Round 2 was pushed on Tay's go (`b7092b0`). The Preview rebuilt (Vercel success; `production_environment=false`).
+  Production stayed on `a7a89fd`.
+- **Signals get more presence:**
+  - desktop cap 3 → 4 (light path stays 2);
+  - launch spacing 1.6–3.2 → 1.4–2.8 s (light path 3–5.5 → 2.6–4.6 s);
+  - about a third take one more hop (1–4);
+  - a longer, thicker tail, a larger head, a brighter ridden link.
+  - The first draft (1.2–2.4 s) was eased: by Little's law it put about 56% more signals on screen.
+  - Expected average signals at once: desktop ≈ 0.96 → 1.29 (+34%), phone ≈ 0.50 → 0.69 (+38%).
+  - 15-second samples are too noisy to judge this: the same build gave 68% and 91% of time with a signal.
+- **The sky breathes:**
+  - the two glows are now their own elements;
+  - the field's clock drifts them by transform and opacity, 5 times a second (26 s and 34 s cycles, about 3% travel,
+    6% scale, opacity 0.8–1);
+  - they pause with the loop and rest under reduced motion. Without JS they sit where they always were.
+  - Measured and rejected: a CSS animation of the same drift cost **+5.3 pp** of phone main thread (style and layout
+    2.4%: Chrome serviced it every frame). At 5 Hz the cost is about +1 pp.
+  - `will-change` on the glows was also dropped. The first `translate3d()` promotes them after first paint; with it,
+    2 of 5 desktop LCPs ran about 40 ms late.
+- **Desktop drift:** 7–18 → 8–20 px/s.
+- **CTA:** "Download CV" → "Download résumé". The link has no `aria-label`: its accessible name is the text plus the
+  sr-only note, now "Download résumé (PDF · two pages, 79 KB)". Same file and download target.
+
+**Measured.** Interleaved against `b7092b0` (scratch worktree), 5 rounds each, medians:
+
+| | before | after |
+|---|---|---|
+| desktop FPS / worst frame gap | 60.2 / 17 ms | 60.2 / 17 ms |
+| desktop INP (median, max) | 24, 56 ms | 40, 48 ms |
+| desktop main thread busy | 14.1% | 14.0% |
+| desktop LCP (h1) | 92 ms | 72 ms |
+| phone FPS / worst frame gap | 60.3 / 17 ms | 60.2 / 17 ms |
+| phone INP (median, max) | 40, 40 ms | 40, 48 ms |
+| phone main thread busy | 21.6% | 22.8% (+1.2 pp; run spreads 19.9–23.2 vs 19–25.2) |
+| phone LCP (h1) | 928 ms | 968 ms (run spreads 924–1028 vs 880–1048) |
+| CLS | 0 | 0 |
+
+- First-load JS for `/lab/hero-a`: **183.71 KiB** (+0.22; budget 205.7). `/` unchanged at 182.20.
+- axe WCAG 2.2 A/AA: 0 violations at 1440 with motion, 390 with motion, and 1440 with reduced motion.
+  - At 1440 a third need-review item: `.hxa__lede`, "partially overlaps other elements". Its box now overlaps the
+    violet glow element.
+  - It is covered by the unit floor (mist ≥ 7:1 on the violet peak). The glows' peak alphas are unchanged (0.17,
+    0.2), and their opacity only dims.
+- The contrast floors pass (7/7).
+- Validation:
+  - `npm test` **142/142**;
+  - typecheck and lint exit 0;
+  - `npm run build`, then `GROQ_API_KEY= npx playwright test`: **150/150**. The glow and signal tests were updated:
+    the cap is 4 on desktop; the glows move with the loop, stop with it and rest under reduced motion.
+- The guard files are still identical to `origin/main`.
+
 ### Waiting on Tay
-- Decide whether Concept A goes further. Pushing round 2 updates PR #18's Preview: say the word.
+- Decide whether Concept A goes further. Round 3 is committed locally, not pushed: pushing updates PR #18's Preview.
 - On `main`, the next close-out should record "D2 reopened for a measured prototype" in RESEARCH_AND_DECISIONS. This
   branch is never merged.
 
