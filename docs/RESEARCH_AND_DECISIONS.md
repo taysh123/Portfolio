@@ -102,7 +102,7 @@ against `path.join("app", "api") + path.sep`, the same pattern as lines 19 and 2
 `app/api` naming the key still fails the test. POSIX behaviour is unchanged.
 
 **`data/projects.ts:172` — corrected** on `fix/m0-followups` (`37ba41c`, not yet merged). Checked against
-`taysh123/poker-home-games` @ `91d2b97` (the local clone equals GitHub `main`):
+the private T Poker repository @ `91d2b97` (the local clone equals GitHub `main`):
 - *"an invite link opened while signed out is completed after sign-in"* overstated it.
   `apps/poker-mobile/src/utils/pendingInvite.ts` stashes the invite for 15 minutes and brings the person
   back to that invite's screen after sign-in, "never into an automatic join". Joining still takes a tap

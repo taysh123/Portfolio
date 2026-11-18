@@ -40,7 +40,7 @@ unique commits (`git cherry`). Full list in RESEARCH_AND_DECISIONS, "Resolved in
   - Green after: 20/20.
   - The new filter excludes only `app\api\chat\route.ts` (79 files scanned).
   - A temporary probe `lib/__n6probe.ts` containing `GROQ_API_KEY` made the test fail (deleted right after).
-- **`37ba41c` T Poker copy (`data/projects.ts:172`):** verified against `taysh123/poker-home-games` @
+- **`37ba41c` T Poker copy (`data/projects.ts:172`):** verified against the private T Poker repository @
   `91d2b97` (the local clone equals GitHub `main`).
   - "is completed after sign-in" became "reopens after sign-in": the app resumes onto the invite, never an
     automatic join (`utils/pendingInvite.ts`).
@@ -75,7 +75,7 @@ git push origin docs/m0-closeout     # adds this session's docs to PR #6
 gh pr edit 6 --repo taysh123/Portfolio --title "docs: M0 close-out, session 4 state, M1 visual plan" --body "Docs only. M0 close-out (PRs #4/#5 live at 841d062); session 4: D8 merged branches deleted, N6 and data/projects.ts:172 fixed on fix/m0-followups, N7 Cloudflare finding, N1/N2 recommendations; docs/M1_VISUAL_PLAN.md for approval (nothing implemented). 🤖 Generated with [Claude Code](https://claude.com/claude-code)"
 
 git push -u origin fix/m0-followups
-gh pr create --repo taysh123/Portfolio --base main --head fix/m0-followups --title "N6 Windows test fix; T Poker guest-to-account wording matches the app" --body "b4d5c73: site.test.ts:78 is path-separator agnostic (fails on Windows only before; POSIX unchanged). 37ba41c: data/projects.ts:172 verified against poker-home-games@91d2b97 (invite reopens after sign-in, no auto-join; guest progress claimed on-device, never over account data). typecheck, lint, unit 119/119, build, Playwright 132/132. 🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+gh pr create --repo taysh123/Portfolio --base main --head fix/m0-followups --title "N6 Windows test fix; T Poker guest-to-account wording matches the app" --body "b4d5c73: site.test.ts:78 is path-separator agnostic (fails on Windows only before; POSIX unchanged). 37ba41c: data/projects.ts:172 verified against the private T Poker repository @ 91d2b97 (invite reopens after sign-in, no auto-join; guest progress claimed on-device, never over account data). typecheck, lint, unit 119/119, build, Playwright 132/132. 🤖 Generated with [Claude Code](https://claude.com/claude-code)"
 ```
 Merging `fix/m0-followups` deploys to Production (the copy is visible in the T Poker case study). PR #6 is docs only.
 
