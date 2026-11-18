@@ -91,8 +91,8 @@ Acceptance criteria:
 - [x] Final tree `e105917`: typecheck exit 0, lint exit 0, `npm run build` exit 0, **Playwright 132/132**,
       unit 118/119. The one failure is pre-existing and Windows-only (N6). Details in `docs/WORKLOG.md` sessions 2–3.
 - [x] Merged (PR #5) and deployed (`841d062`, Vercel status success 2026-11-18). Live check: no
-      `Gravity-Game` link in the page, no "swappable detail", label "two pages, 79 KB", and the served résumé
-      is byte-identical to `main`'s 80,593-byte file with no dead link.
+      link to the private GRAVITY FLOW repository in the page, no "swappable detail", label "two pages, 79 KB",
+      and the served résumé is byte-identical to `main`'s 80,593-byte file with no dead link.
 
 Risks: low. Content-only diffs; the existing tests already guard neighbouring claims.
 

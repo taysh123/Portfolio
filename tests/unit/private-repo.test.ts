@@ -1,10 +1,11 @@
-// T Poker's repository is private (user decision, 2026-09-26): no public link, and no address anywhere in this
-// public repository. Leak checks use a digest of the slug (tests/support/private-repo.ts), never the name.
+// T Poker's repository is private (user decision, 2026-09-26), and so is GRAVITY FLOW's (2026-11-18): no public link,
+// and no address anywhere in this public repository. Leak checks use a digest of each slug
+// (tests/support/private-repo.ts), never the name.
 import { it, expect } from "vitest";
 import fs from "node:fs";
 import { execSync } from "node:child_process";
 import { projects, publicRepoUrl, repoLabel, PRIVATE_REPO_LABEL } from "@/data/projects";
-import { privateRepoLeaks } from "../support/private-repo";
+import { privateRepoLeaks, slugDigest, PRIVATE_SLUGS } from "../support/private-repo";
 
 it("T Poker's repository is private: no URL in its data, and the public label", () => {
   const poker = projects.find((p) => p.id === "poker")!;
@@ -37,7 +38,21 @@ it("the internal-repos module is gone and nothing imports it", () => {
   expect(execSync("git grep -l internal-repos -- app components data lib || true").toString().trim()).toBe("");
 });
 
-it("no tracked text file carries the private repository's name", () => {
+it("the guard pins both private repositories, and finds a token hashing to each, without the test naming either", () => {
+  // Two digests and no names: T Poker's and GRAVITY FLOW's.
+  expect(PRIVATE_SLUGS.size).toBe(2);
+  for (const d of PRIVATE_SLUGS) expect(d).toMatch(/^[0-9a-f]{64}$/);
+  // Detection, proven on a throwaway pair of slugs injected in their place.
+  const t = new Set([slugDigest("alpha-one"), slugDigest("beta-two")]);
+  const hit = (s: string) => `a token hashing to ${slugDigest(s).slice(0, 8)}…`;
+  expect(privateRepoLeaks("see github.com/acme/Alpha-One.git", t)).toEqual([hit("alpha-one")]);
+  expect(privateRepoLeaks("the BETA-TWO-three project", t)).toEqual([hit("beta-two")]);
+  expect(privateRepoLeaks("Alpha-One and beta-two", t)).toEqual([hit("alpha-one"), hit("beta-two")]);
+  // A spaced display name, or a longer word, is not the slug.
+  expect(privateRepoLeaks("alpha one, Beta Two, alpha-onex", t)).toEqual([]);
+});
+
+it("no tracked text file carries either private repository's name", () => {
   const tracked = execSync("git ls-files -z").toString().split("\0").filter(Boolean)
     .filter((f) => !/\.(png|jpe?g|webp|avif|gif|ico|woff2?|ttf|otf|exr|blend|zip|pdf|mp4|webm)$/i.test(f) && fs.existsSync(f));
   const leaks = tracked.flatMap((f) => privateRepoLeaks(fs.readFileSync(f, "utf8")).map((h) => `${f}: ${h}`));

@@ -70,7 +70,7 @@ Impeccable: skip. GitHub plugin: skip (`gh` covers it).
   gone from the chapter, case study, JSON-LD and assistant prompt; the case study shows "Private repository".
   `tests/unit/private-repo.test.ts` pins it.
 - `e105917`: the **served résumé PDF** (`public/resume/Tay-Shofer-Software-Engineer-Resume.pdf`) no longer
-  links `github.com/taysh123/Gravity-Game`. On page 2 the line ends "| Live web build". URI links went
+  links the private GRAVITY FLOW repository. On page 2 the line ends "| Live web build". URI links went
   13 → 12, and all other links are kept. The file is still two pages, now **80,593 bytes** (was 81,782). The
   Contact label is "two pages, **79 KB**" (`lib/dict.ts:49`), and `tests/e2e/lower.spec.ts` pins 80593 and
   "79 KB". Tay's personal résumé copies were already clean.

@@ -515,12 +515,12 @@ Merging `fix/m0-followups` deploys to Production (the copy is visible in the T P
   `reference/premium-redesign-package` is no longer checked out.
 
 **Live check (read-only `curl` of https://www.tayshofer.dev/), VL:**
-- No `github.com/taysh123/Gravity-Game` link in the page.
+- No link to the private GRAVITY FLOW repository in the page.
 - No "swappable detail".
 - The Contact label reads "two pages, 79 KB".
 - The Aegis and DeveloperOS repo links are still present.
 - `/resume/Tay-Shofer-Software-Engineer-Resume.pdf` is 80,593 bytes, byte-identical to `main`'s file, with
-  no `Gravity-Game` link.
+  no link to the private GRAVITY FLOW repository.
 
 **Cleanup:**
 - Deleted the merged local branches `docs/m0-audit` and `fix/content-accuracy` (both tips verified as
@@ -552,10 +552,10 @@ Skills used: code-review discipline and `superpowers:verification-before-complet
     `tests/unit/private-repo.test.ts` case. Red/green: it fails without the data change and passes with it.
     The chapter drops its Source link; the case study shows "Private repository"; JSON-LD and the assistant
     prompt carry no URL.
-  - `e105917`: the **served résumé PDF** loses the dead `github.com/taysh123/Gravity-Game` link and its
+  - `e105917`: the **served résumé PDF** loses the dead link to the private GRAVITY FLOW repository and its
     "· GitHub" text (Tay's PyMuPDF redaction script, run on a copy because PyMuPDF won't save over the open
     file; PyMuPDF lived in a scratch venv only). Verified against the original:
-    - URI links 13 → 12; only Gravity-Game was removed.
+    - URI links 13 → 12; only the link to the private GRAVITY FLOW repository was removed.
     - No trace of the URL in any object or stream.
     - Page 1 pixel-identical; page 2 has 923 changed pixels, all inside the two redaction boxes.
     - Text diff: only that line, now ending "| Live web build".
@@ -626,8 +626,8 @@ commit) and `superpowers:verification-before-completion`.
    7 mechanics". `LevelConfig` has six optional mechanic fields (`src/types/index.ts:99-104`); the
    seventh, the attractor, is the player's input. So `data/projects.ts:356` ("seven core mechanics"),
    `:367` (stat "7") and PROJECT_CONTEXT §4.4 are **correct**. N3 is resolved. **VL**
-2. **Broken link on the live site.** `taysh123/Gravity-Game` is now **private** (`gh api`: visibility
-   private, last push 2026-11-09). A logged-out `GET https://github.com/taysh123/Gravity-Game` returns
+2. **Broken link on the live site.** The site links what is now the private GRAVITY FLOW repository (`gh api`:
+   visibility private, last push 2026-11-09). A logged-out `GET` of that link returns
    **404**, but `data/projects.ts:359` marks it `visibility: "public"`. The site therefore shows visitors a
    GitHub link that 404s, and the assistant's prompt includes it via `publicRepoUrl()`. The Aegis,
    DeveloperOS and job-assistant links return 200. **VL.** Decision N5.
