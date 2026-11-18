@@ -6,7 +6,8 @@ import { TextLink } from "@/components/ui/TextLink";
 import { PrivateRepoLabel } from "@/components/ui/PrivateRepoLabel";
 import { publicRepoUrl, repoLabel } from "@/data/projects";
 
-/** Two smaller systems, on paper: lighter than the plates by construction — ruled rows, no surface of their own. */
+/** Two smaller systems, on paper plates under the studio light (M1 E, work.css): raised paper with no hue of its own, so
+ *  they stay quieter than the four product plates. */
 export function MoreWork({ c }: { c: Content }) {
   const { t } = c;
   return (
