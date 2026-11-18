@@ -1,0 +1,291 @@
+/* Concept A, "Cinematic hero". PROTOTYPE ONLY (D2 reopened by Tay, 2026-11-18): it lives at /lab/hero-a, is never indexed
+   or linked from the live page, and its branch is never merged.
+   - Everything is scoped under .hxa with its own dark tokens, so globals.css and the live hero are untouched.
+   - It reuses the site's Geist, lead size, display tracking, measure (.shell), gutter and motion tokens.
+   - Contrast floors for the tokens below, on the base and under the brightest glow behind text, are in
+     tests/unit/lab-hero-a.test.ts. */
+
+/* The page behind the hero matches it, so an overscroll never flashes paper. Every rule outside .hxa is conditioned on
+   :has(.hxa), so it is inert anywhere the prototype is not in the DOM (even if this sheet outlives a client navigation). */
+:root:has(.hxa), body:has(.hxa) { background-color: #04060d; }
+/* The site chrome outside the scope (the skip link, the chat launcher) rings its focus in the field's cyan: the paper
+   theme's iris is under 3:1 against this dark field. */
+body:has(.hxa) { --accent: #2ee6d6; }
+
+/* The site's chat launcher (root layout) takes the hero's dark tone here instead of the visitor's paper one. */
+body:has(.hxa) .chat-launcher {
+  --bg-raised: #0d1426;
+  --fg: #eef2fb;
+  --border-strong: rgba(238, 242, 251, 0.22);
+  --accent-line: rgba(46, 230, 214, 0.5);
+  --accent-solid: #5651f0;
+  --shadow-float: 0 6px 14px -4px rgba(0, 0, 0, 0.5), 0 40px 88px -28px rgba(0, 0, 0, 0.8);
+}
+
+.hxa[data-theme] {
+  --hxa-abyss: #04060d;
+  --hxa-navy: #0a1020;
+  --hxa-ink: #eef2fb;
+  --hxa-mist: #acb6c9;
+  --hxa-faint: #95a0b6;
+  --hxa-cyan: #2ee6d6;
+  --hxa-cyan-hover: #6cf1e5;
+  --hxa-violet: #9b6bff;
+  --hxa-hair: rgba(238, 242, 251, 0.12);
+  --hxa-ghost-edge: rgba(238, 242, 251, 0.4);
+  --hxa-display: clamp(2.25rem, 1.3rem + 4vw, 5rem);
+  /* The shared names the site's base rules read: the [data-theme] ink, the selection, sr-only text. */
+  --bg: var(--hxa-abyss);
+  --fg: var(--hxa-ink);
+  --fg-muted: var(--hxa-mist);
+  --accent: var(--hxa-cyan);
+  --accent-soft: rgba(46, 230, 214, 0.24);
+
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  overflow: clip;
+  background: var(--hxa-abyss);
+  color: var(--hxa-ink);
+  color-scheme: dark;
+}
+[data-high-contrast="true"] .hxa[data-theme] {
+  --hxa-ink: #ffffff;
+  --hxa-mist: #e3e7f0;
+  --hxa-faint: #c9cfdc;
+  --hxa-hair: rgba(255, 255, 255, 0.34);
+  --hxa-ghost-edge: rgba(255, 255, 255, 0.7);
+}
+
+/* ── The sky: two deep glows (cyan top right, violet bottom left) under a vignette. CSS only, so it is there with no
+   JavaScript and with reduced motion. ── */
+.hxa__sky {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(130% 100% at 50% 45%, transparent 52%, rgba(0, 0, 0, 0.6) 100%),
+    radial-gradient(55% 60% at 92% 4%, rgba(46, 230, 214, 0.17), transparent 70%),
+    radial-gradient(60% 65% at 4% 100%, rgba(155, 107, 255, 0.2), transparent 72%),
+    linear-gradient(180deg, var(--hxa-abyss) 0%, var(--hxa-navy) 100%);
+}
+
+/* ── The field (Constellation.tsx): behind everything, strongest where the copy isn't (the right; on phones, the top
+   and bottom edges). It fades in once it has drawn its first frame. ── */
+.hxa__field {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1400ms var(--ease-out) 200ms;
+  -webkit-mask-image: linear-gradient(100deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.42) 40%, #000 72%);
+  mask-image: linear-gradient(100deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.42) 40%, #000 72%);
+}
+.hxa__field:is([data-state="running"], [data-state="paused"], [data-state="static"]) { opacity: 1; }
+@media (max-width: 899px) {
+  .hxa__field {
+    -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.32) 24%, rgba(0, 0, 0, 0.28) 72%, rgba(0, 0, 0, 0.6) 100%);
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.32) 24%, rgba(0, 0, 0, 0.28) 72%, rgba(0, 0, 0, 0.6) 100%);
+  }
+}
+
+/* ── The top line: the wordmark and the availability pill ── */
+.hxa__top {
+  --i: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding-top: clamp(12px, 2.6vh, 28px);
+}
+.hxa__mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  color: var(--hxa-ink);
+  text-decoration: none;
+  border-radius: 10px;
+}
+.hxa__glyph { flex: none; display: block; }
+.hxa__word {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hxa-mist);
+}
+.hxa__word b { font-weight: 650; color: var(--hxa-ink); }
+.hxa__word i { font-style: normal; color: var(--hxa-faint); margin-inline: 0.2em; }
+.hxa__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 14px 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(46, 230, 214, 0.26);
+  background: rgba(46, 230, 214, 0.06);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--hxa-ink);
+}
+.hxa__dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--hxa-cyan);
+  box-shadow: 0 0 0 3px rgba(46, 230, 214, 0.16), 0 0 12px rgba(46, 230, 214, 0.55);
+}
+
+/* ── The copy ── */
+/* The last strip stays clear for the chat launcher: the same clearance the live footer keeps (components/chat/chat.css). */
+.hxa__main { flex: 1 0 auto; display: flex; flex-direction: column; padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px)); }
+@media (min-width: 1024px) { .hxa__main { padding-bottom: 4.5rem; } }
+.hxa__hero {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  max-width: 66rem;
+  padding-block: clamp(28px, 7vh, 112px) clamp(28px, 5.5vh, 80px);
+}
+.hxa__eyebrow {
+  --i: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9375rem;
+  font-weight: 550;
+  color: var(--hxa-cyan);
+}
+.hxa__eyebrow::before {
+  content: "";
+  width: 28px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--hxa-cyan), var(--hxa-violet));
+}
+.hxa__title {
+  --i: 2;
+  margin-top: 18px;
+  font-size: var(--hxa-display);
+  line-height: 1.02;
+  letter-spacing: var(--tracking-display);
+  font-weight: 620;
+  color: var(--hxa-ink);
+}
+.hxa__l1 { display: block; }
+/* The whole clause carries the gradient: an inline box whose background runs across every line it wraps to. */
+.hxa__grad {
+  background: linear-gradient(90deg, var(--hxa-cyan) 0%, var(--hxa-violet) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-box-decoration-break: slice;
+  box-decoration-break: slice;
+  color: transparent;
+}
+[data-high-contrast="true"] .hxa__grad { background: none; color: var(--hxa-ink); }
+@media (forced-colors: active) { .hxa__grad { background: none; color: CanvasText; } }
+
+.hxa__lede {
+  --i: 3;
+  margin-top: 24px;
+  max-width: 36rem;
+  font-size: var(--text-lead);
+  line-height: 1.55;
+  color: var(--hxa-mist);
+}
+.hxa__ctas { --i: 4; display: flex; flex-wrap: wrap; gap: 12px; margin-top: 36px; }
+.hxa__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 24px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+.hxa__btn > span[aria-hidden] { font-size: 1.05em; line-height: 1; }
+.hxa__btn--primary { background: var(--hxa-cyan); color: var(--hxa-abyss); }
+.hxa__btn--primary:hover { background: var(--hxa-cyan-hover); }
+.hxa__btn--ghost { color: var(--hxa-ink); border-color: var(--hxa-ghost-edge); background: rgba(238, 242, 251, 0.03); }
+.hxa__btn--ghost:hover { border-color: rgba(238, 242, 251, 0.7); background: rgba(238, 242, 251, 0.07); }
+
+/* ── Featured work: a quiet baseline under the copy ── */
+.hxa__featured { --i: 5; padding-top: 16px; border-top: 1px solid var(--hxa-hair); }
+.hxa__flabel { font-size: 0.8125rem; font-weight: 500; line-height: 1.4; color: var(--hxa-faint); }
+.hxa__flist { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px 28px; margin-top: 4px; }
+.hxa__flink {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  min-height: 44px;
+  padding: 10px 0 8px;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 8px;
+}
+.hxa__flink b { font-size: 1rem; font-weight: 600; letter-spacing: -0.01em; color: var(--hxa-ink); }
+.hxa__fkind { font-size: 0.875rem; line-height: 1.4; color: var(--hxa-mist); }
+.hxa__fstate { font-size: 0.8125rem; line-height: 1.4; color: var(--hxa-faint); }
+.hxa__flink:hover b { text-decoration: underline; text-decoration-color: var(--hxa-cyan); text-decoration-thickness: 1px; text-underline-offset: 4px; }
+
+/* ── Focus: one visible ring on every control, clear of the control's own edge (3px gap of the dark field). ── */
+.hxa :focus-visible { outline: 2px solid var(--hxa-cyan); outline-offset: 3px; }
+.hxa .hxa__btn:focus-visible { border-radius: 999px; }
+[data-high-contrast="true"] .hxa :focus-visible { outline-color: #ffffff; }
+
+/* ── The one load sequence: each block rises once, in reading order, --stagger apart. Off with reduced motion (the
+   OS or the site's switch): everything is simply there. It is CSS, so it runs, and ends visible, without JS.
+   The headline rises WITHOUT fading: it is the page's largest paint, and it is truly visible at first paint.
+   Measured on this branch (scripts/lab-hero-a.mjs): fading it in from opacity 0 left Chromium with no LCP entry
+   at all, and FCP at about 1.75 s (desktop) and 2.2 s (mobile, 4× CPU). The text is first painted inside a
+   compositor-run opacity-0 animation, and paint timing never re-reports it. Starting from opacity 0.01 would also
+   "fix" the metric, but only by counting text no reader can see yet, so it is not used. ── */
+@keyframes hxa-rise { from { opacity: 0; translate: 0 16px; } }
+@keyframes hxa-settle { from { translate: 0 16px; } }
+.hxa__top, .hxa__eyebrow, .hxa__title, .hxa__lede, .hxa__ctas, .hxa__featured {
+  animation: hxa-rise var(--dur-light) var(--ease-out-expo) calc(var(--i) * var(--stagger)) both;
+}
+.hxa__title { animation-name: hxa-settle; }
+@media (prefers-reduced-motion: reduce) {
+  .hxa__top, .hxa__eyebrow, .hxa__title, .hxa__lede, .hxa__ctas, .hxa__featured { animation: none; }
+  .hxa__field { transition: none; }
+}
+[data-reduced-motion="true"] :is(.hxa__top, .hxa__eyebrow, .hxa__title, .hxa__lede, .hxa__ctas, .hxa__featured) { animation: none; }
+[data-reduced-motion="true"] .hxa__field { transition: none; }
+
+/* ── Smaller screens ── */
+@media (max-width: 899px) {
+  .hxa__flist { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 20px; }
+}
+@media (max-width: 639px) {
+  .hxa__word { font-size: 0.75rem; letter-spacing: 0.1em; }
+  .hxa__pill { font-size: 0.75rem; padding: 5px 11px 5px 10px; }
+  .hxa__hero { padding-block: 32px 28px; }
+  .hxa__title { margin-top: 14px; }
+  .hxa__lede { margin-top: 18px; }
+  .hxa__ctas { margin-top: 28px; width: 100%; }
+  .hxa__btn { flex: 1 1 auto; min-height: 48px; padding: 0 20px; }
+}
+/* Short phones (320×568): the headline and both actions still land in the first screen. */
+@media (max-width: 639px) and (max-height: 640px) {
+  .hxa__hero { padding-block: 16px 24px; }
+  .hxa__lede { margin-top: 14px; }
+  .hxa__ctas { margin-top: 22px; }
+}
