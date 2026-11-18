@@ -4,7 +4,8 @@
 
 Concise, durable instructions for every Claude Code session in this repo.
 Detailed material lives in `docs/`; this file stays short and points to it.
-M0 (audit + decisions) closed 2026-11-18 (`docs/WORKLOG.md`). Keep refining this file with verified facts only.
+M0 (audit + decisions) closed 2026-11-18; M1 PR 1 (moves A, C, D) live 2026-11-18 (`docs/WORKLOG.md`).
+Keep refining this file with verified facts only.
 
 ## What this is
 Tay Shofer's existing, **live** software-engineering portfolio (https://www.tayshofer.dev/).
@@ -18,9 +19,10 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
 
 ## Where production code is (verified 2026-11-18)
 - **`main` is the source of truth.** Production = GitHub `taysh123/Portfolio` `main`; every merge deploys
-  via Vercel's GitHub integration (last verified: `841d062`, 2026-11-18, PRs #4 + #5). `origin` is
+  via Vercel's GitHub integration (last verified: `f698c74`, 2026-11-18, PRs #8 + #9). `origin` is
   `https://github.com/taysh123/Portfolio.git` (the old name `Tay-Shofer---Portfolio` redirects). The repo
-  is **public**. Changes go through a branch and a PR; Tay pushes and merges.
+  is **public**. Changes go through a branch and a PR; Tay merges. Claude pushes or opens a PR only when the
+  brief says so, and never merges.
 - `reference/premium-redesign-package` is **stale** (Next 16.2.6, old names, institution label, private
   repo URLs). Never build, deploy, or copy content from it. (The local `feature/premium-portfolio-redesign`,
   fully merged, was deleted 2026-11-18.)
@@ -57,14 +59,17 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
 - Direction (Tay, 2026-11-18; D1/D2 in `docs/RESEARCH_AND_DECISIONS.md`): **evolve** Product
   Plates, calm/premium, restrained cyan/violet accents; no RGB wash, holographic cube, or
   fabricated stats. **No 3D now**: don't touch the 3D-guard tests or the JS budget.
-  CREATIVE_DIRECTION's dark-cinematic/3D parts are superseded.
+  CREATIVE_DIRECTION's dark-cinematic/3D parts are superseded. M1 plan `docs/M1_VISUAL_PLAN.md`: moves A–E
+  approved, F deferred until Tay previews A–E, Geist stays; use its token values exactly.
 - Talk to Tay in English (Claude Code). Chat Claude uses Hebrew.
 - Guard tests on `main` encode Tay's decisions. Never edit one just to make a change pass;
   get explicit approval first: no `three`/`lenis`/WebGL/`<canvas>` (`tests/unit/dead-code.test.ts`,
   `tests/e2e/budget.spec.ts`, `tests/e2e/page.spec.ts`); first-load JS ≤ 205.7 KiB gzip and HTML
   ≤ 568 KB (`budget.spec.ts`); contrast floors (`tests/unit/tokens.test.ts`); institution guard
   (`tests/support/institution.ts`, hashed on purpose, so never spell the name out); English-only
-  except the footer's legal name.
+  except the footer's legal name. The private-repo guard (`tests/unit/private-repo.test.ts`) scans every
+  tracked text file, docs included: never write a private repo's slug (T Poker, GRAVITY FLOW) in docs, PR
+  bodies or commits; say "the private T Poker repository". Run `npm test` after any docs commit.
 - Project copy must agree across `data/projects.ts`, the assistant prompt rules in
   `app/api/chat/route.ts`, metadata, and `/privacy`.
 
@@ -85,7 +90,9 @@ Verified gotchas (2026-11-18):
 - Run E2E as `GROQ_API_KEY= npx playwright test`. `.env.local` holds a real key, and the chat specs expect
   the keyless offline path; a pre-set empty var stops Next loading the key.
 - Playwright 1.62.1 needs Chromium v1234 (`npx playwright install chromium`).
-- `tests/unit/site.test.ts:78` fails on Windows only (path separators, N6) until `fix/m0-followups` (`b4d5c73`) merges.
+- The Windows-only `tests/unit/site.test.ts:78` failure (N6) is fixed (`b4d5c73`, PR #7): the unit suite is
+  119/119 on Windows (`main` `f698c74`). Run `npm test` from Git Bash: a test shells out `git grep … || true`,
+  and cmd.exe (PowerShell's child shell) has no `true`, so it fails there spuriously.
 - After leaving an old branch, run `npx next typegen` before `npm run typecheck` (stale `.next/types`).
 - The résumé PDF's exact byte size is pinned in `tests/e2e/lower.spec.ts`, and its size label is in
   `lib/dict.ts` (`resumeNote`). Update both whenever the PDF changes.

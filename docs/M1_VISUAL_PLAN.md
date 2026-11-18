@@ -1,6 +1,8 @@
 # M1 — Visual plan: Product Plates, lit
 
-> **Status: PROPOSAL for Tay's approval (2026-11-18). Nothing here is implemented.** It answers the M1
+> **Status (2026-11-18, session 5): A–E approved by Tay; F deferred until Tay previews A–E; Geist kept.
+> PR 1 (A, C, D) is merged and live (PR #8, `3103bfd`). Next: PR 2 = B. Implementation notes and the few
+> calls the plan left open are in PR #8's description and `docs/WORKLOG.md` session 5.** It answers the M1
 > acceptance criteria in `docs/ROADMAP.md`, under D1 (evolve Product Plates; calm/premium; restrained
 > cyan/violet) and D2 (no 3D now; the 3D-guard tests and the JS budget are not touched). Every move below
 > is CSS and tokens only: **zero new JavaScript, zero new dependencies, no new font files.**
@@ -336,10 +338,11 @@ review before merge.
 
 ## 13. Your decisions
 
-- [ ] **A** Iris replaces cobalt (including the two `chrome.spec.ts` assertions)
-- [ ] **B** Studio light (key + cyan rim) and the hero lights-up moment
-- [ ] **C** Two heading tiers (chapters 64, paper sections 42)
-- [ ] **D** Motion tokens
-- [ ] **E** Lower half: "Two more" as lit paper plates; second title line in ink
-- [ ] **F** *(optional)* Contact on a matte-black desk plate
-- [ ] Keep Geist (recommended) or ask for a display-face study
+Tay, 2026-11-18:
+- [x] **A** Iris replaces cobalt (including the two `chrome.spec.ts` assertions). *Live, PR #8.*
+- [x] **B** Studio light (key + cyan rim) and the hero lights-up moment. *Approved; next (PR 2).*
+- [x] **C** Two heading tiers (chapters 64, paper sections 42). *Live, PR #8.*
+- [x] **D** Motion tokens. *Live, PR #8.*
+- [x] **E** Lower half: "Two more" as lit paper plates; second title line in ink. *Approved; PR 3.*
+- [ ] **F** *(optional)* Contact on a matte-black desk plate. *Deferred until Tay previews A–E.*
+- [x] Keep Geist (no display-face study)

@@ -96,7 +96,7 @@ Acceptance criteria:
 
 Risks: low. Content-only diffs; the existing tests already guard neighbouring claims.
 
-### M1 — Art direction, design system, storyboard · `IN PROGRESS` (plan written 2026-11-18; awaiting Tay's approval)
+### M1 — Art direction, design system, storyboard · `IN PROGRESS` (A–E approved 2026-11-18, F deferred; PR 1 = A/C/D live as PR #8; next B)
 
 Scope per D1: **evolve** Product Plates (calm/premium, restrained cyan/violet accents). This is not a
 replacement. The reference README's take / do-NOT-take applies (quoted in `docs/RESEARCH_AND_DECISIONS.md` §1).
