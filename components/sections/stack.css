@@ -3,7 +3,7 @@
 /* It follows About on the same white: a hairline, not a second background, marks the turn. */
 .about + .stack { padding-top: 0; }
 .about + .stack > .shell { border-top: 1px solid var(--border); padding-top: var(--section-y); }
-.stack__title { font-size: clamp(2rem, 1.4rem + 2.4vw, 3.5rem); line-height: 1.02; letter-spacing: var(--tracking-display); font-weight: 620; color: var(--fg); max-width: 18ch; }
+.stack__title { font-size: var(--text-h2); line-height: 1.05; letter-spacing: var(--tracking-heading); font-weight: 600; color: var(--fg); max-width: 18ch; }
 
 .lens { margin: 1.75rem 0 1.5rem; padding: 0; border: 0; min-width: 0; }
 .lens__label { font-size: 0.9375rem; color: var(--fg-muted); margin-bottom: 0.75rem; padding: 0; }

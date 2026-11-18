@@ -15,7 +15,7 @@ export default function NotFound() {
       <div className="w-full max-w-lg text-center">
         <h1
           className="font-semibold leading-[1.02] tracking-[var(--tracking-display)] text-fg"
-          style={{ fontSize: "var(--text-h2)" }}
+          style={{ fontSize: "var(--text-chapter)" }}
         >
           That page doesn&apos;t exist.
         </h1>

@@ -148,7 +148,7 @@ export function CaseStudyPanel({
               <h2
                 id="case-study-title"
                 className="mt-5 font-semibold leading-[1.02] tracking-[var(--tracking-display)] text-fg"
-                style={{ fontSize: "var(--text-h2)" }}
+                style={{ fontSize: "var(--text-chapter)" }}
               >
                 {project.name}
               </h2>

@@ -93,11 +93,13 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 
-  /* ── Type ── Geist; display ≤ 5rem, tracking never tighter than −0.04em */
+  /* ── Type ── Geist; display ≤ 5rem, tracking never tighter than −0.04em. Two heading tiers (M1 C): the four
+     products speak at chapter volume; every paper section shares the one --text-h2 voice (600, --tracking-heading). */
   --text-display: clamp(2.5rem, 1.6rem + 3.9vw, 5rem);
-  --text-h2: clamp(2.25rem, 1.5rem + 3vw, 4rem);
-  --text-h3: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
-  --text-lead: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
+  --text-chapter: clamp(2.25rem, 1.5rem + 3vw, 4rem);       /* 36→64: the four products (the old h2) */
+  --text-h2: clamp(1.875rem, 1.45rem + 1.7vw, 2.625rem);     /* 30→42: every paper section */
+  --text-h3: clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);       /* 20→26 */
+  --text-lead: clamp(1.125rem, 1.03rem + 0.4vw, 1.3125rem);  /* 18→21 */
   --tracking-display: -0.04em;
   --tracking-heading: -0.03em;
 
