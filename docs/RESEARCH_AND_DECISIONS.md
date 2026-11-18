@@ -47,9 +47,13 @@ untouched. Nothing references the removed path (VL).
 
 **D5 — Public git history:** leave as-is. No history rewrite, and the repo stays public.
 
-**D6 — Content fixes:** approved. Prepared on the local branch `fix/content-accuracy` (from `origin/main`):
-- `data/projects.ts:150`: T Poker billing no longer presented as "a swappable detail".
-- `data/projects.ts:396`: "seven mechanics" → "six mechanics", matching the six it lists.
+**D6 — Content fixes:** approved. Prepared on the local branch `fix/content-accuracy` (`7bddd19`, from `origin/main`):
+- `data/projects.ts:150`: T Poker billing no longer presented as "a swappable detail". It now reads
+  "Billing verifies Apple and Google Play purchases, and its disabled mode fails closed."
+- `data/projects.ts:396`: "each of the seven mechanics" → "each of the **other six** mechanics", which
+  matches its six-item list. Not a bare "six": the game has seven mechanics, the attractor plus six
+  `LevelConfig` mechanics (verified in the game repo; see WORKLOG session 2). So the "seven core mechanics"
+  copy (`:356`) and the "7" stat (`:367`) stay correct and consistent.
 - `data/projects.ts:172` ("guest progress carries into the new account") is **unchanged** and stays
   **NC** until it is checked against the T Poker repo.
 
@@ -74,8 +78,16 @@ yet. Impeccable: skip. GitHub plugin: skip (`gh` covers it).
   `claude/START-HERE.md` standing rules, and the header comments of `docs/PROJECT_CONTEXT.md` and
   `docs/CREATIVE_DIRECTION.md`), and they would land in the public tree when `docs/m0-audit` is pushed.
   Replace them with "the institution"? Not changed: they are Tay's own wording.
-- **N3 — GRAVITY FLOW mechanics count.** `docs/PROJECT_CONTEXT.md` §4.4 says "Seven core mechanics", but
-  the site now says six. Check against the Gravity-Game repo, then align whichever is wrong (NC).
+- ~~N3 — GRAVITY FLOW mechanics count~~ **Resolved:** seven is correct (game repo `MechanicId` lists 7);
+  PROJECT_CONTEXT §4.4 needs no change.
+- **N5 — GRAVITY FLOW repo link is broken for visitors (high priority).** `taysh123/Gravity-Game` is now
+  **private** and returns 404 to logged-out visitors, but `data/projects.ts:359` still marks it
+  `visibility: "public"`. The live site shows a dead GitHub link, and the assistant prompt includes the URL.
+  Options: (a) make the repo public again; (b) change `:359` to `repo: { visibility: "private" }`, which
+  shows the "Private repository" label like T Poker; existing tests may pin that link, so it needs a test
+  run. Tay's call; nothing changed.
+- **N6 — Windows-only false failure in `tests/unit/site.test.ts:78`** (path separators). Optional one-line
+  test fix; the guarded invariant holds.
 - **N4 — Why was October's entrance pulled?** This is no longer blocking (D2 = not now), but answer it
   before any future M2 prototype.
 

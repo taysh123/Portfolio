@@ -77,13 +77,16 @@ Each needs Tay's go-ahead; none changes the design.
 Acceptance criteria:
 - [x] T Poker billing sentence (`data/projects.ts:150`) reworded so it no longer presents the
       payment provider as "a swappable detail", consistent with `app/api/chat/route.ts:128`.
-- [x] GRAVITY FLOW `data/projects.ts:396`: "seven mechanics" → "six mechanics", matching its list
-      (Tay's call). Follow-up N3: PROJECT_CONTEXT §4.4 still says seven, so verify against the game repo.
+- [x] GRAVITY FLOW `data/projects.ts:396`: "the seven mechanics" → "the other six mechanics", matching
+      its list. Verified against the game repo: 7 mechanics = the attractor + 6 `LevelConfig` mechanics, so the
+      "7" stat and PROJECT_CONTEXT §4.4 stay correct.
+- [ ] N5: the GRAVITY FLOW repo link (`data/projects.ts:359`) 404s for visitors (repo now private). Tay to choose a fix.
 - [ ] "guest progress carries into the new account" (`data/projects.ts:172`): left unchanged on
       purpose; NC until checked against the T Poker repo.
 - [ ] Optional: a regression test pinning each corrected sentence (pattern in `tests/unit/work.test.ts`).
       Not added; Tay asked for minimal diffs.
-- [ ] typecheck, lint, unit tests on `fix/content-accuracy`: see `docs/WORKLOG.md` for results.
+- [x] On `fix/content-accuracy`: typecheck exit 0, lint exit 0, content/tokens/work 41/41, full unit suite
+      117/118. The one failure is pre-existing and Windows-only (N6). Details in `docs/WORKLOG.md` session 2.
 - [ ] Production build and full Playwright run before merge.
 
 Risks: low. Content-only diffs; the existing tests already guard neighbouring claims.
@@ -180,7 +183,7 @@ Acceptance criteria:
 | 1 | ~~Resolve D1/D2~~ Done 2026-11-18 (evolve Product Plates; no 3D now) | — | M0 |
 | 2 | Push `docs/m0-audit` and open its PR (Tay) | Docs are local only | M0 |
 | 3 | Push `fix/content-accuracy`, open its PR, run build plus full Playwright before merge (Tay) | Billing and mechanics copy fixed locally | M0.5 |
-| 4 | N3: confirm the GRAVITY FLOW mechanics count against the game repo; align PROJECT_CONTEXT §4.4 | Site now says six; PROJECT_CONTEXT says seven | M0.5 |
+| 4 | **N5: fix the GRAVITY FLOW repo link** (`data/projects.ts:359`): the repo is private and the link 404s on the live site | Visible broken link | M0.5 |
 | 5 | Confirm `data/projects.ts:172` guest-progress claim | Possible tension with `tests/unit/work.test.ts:25` | M0.5 |
 | 6 | ~~Old content in public history~~ D5: leave as-is | — | — |
 | 7 | Establish a measured baseline (Lighthouse mobile on the production build; field data if any exists) | `next.config.ts` notes a lab mobile LCP of 2.9 s, above the 2.5 s target | M2 prep |

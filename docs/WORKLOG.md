@@ -11,6 +11,79 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-18 — Session 2: decisions recorded, branches prepared (Claude Code)
+
+**Scope:** record Tay's decisions D1/D2/D5/D7; move the M0 docs onto `main`; remove the duplicate
+skill; prepare a content-accuracy fix; Context7 install on Tay's go. Nothing pushed, merged, or deployed.
+Skills used: code-review discipline (read before edit, minimal diffs, diff reviewed before each
+commit) and `superpowers:verification-before-completion`.
+
+### What changed
+- `git fetch origin`: `origin/main` moved `e4af9e2` → `3f0c5e5`; the remote review branches were fetched.
+- **`docs/m0-audit`** (from `origin/main` `3f0c5e5`, `--no-track`): `9f8eed1` (M0 docs + decisions) plus
+  this worklog/decision update. Docs only.
+- **`fix/content-accuracy`** (from `origin/main` `3f0c5e5`, `--no-track`): `7bddd19`, two lines in
+  `data/projects.ts`:
+  - `:150` T Poker billing: "…verifier interface with five implementations… so the payment provider is
+    a swappable detail rather than a dependency." → "Billing verifies Apple and Google Play purchases,
+    and its disabled mode fails closed." It keeps only facts the old sentence stated.
+  - `:396` GRAVITY FLOW: "each of the seven mechanics" → "each of the **other six** mechanics". See finding 1.
+  - `:172` (guest progress) is unchanged and still NC.
+- **D4:** `.claude/skills/ui-ux-pro-max` is gone from the working folder. Its tracked files left with the
+  switch to `main`; the 4 leftover ignored `__pycache__/*.pyc` files were deleted. Plugin 2.11.0 is still
+  enabled (`claude plugin list`). No file or setting references the removed path.
+  `~/.claude/settings.json` references only the plugin.
+- **Local environment** (not committed): `npm ci` installed `main`'s lockfile (package files unchanged).
+  npm 11 skipped the install scripts of `sharp` and `unrs-resolver` (not allowlisted); typecheck, lint,
+  tests, and build all worked without them. `npx next typegen` regenerated `.next/types`, which was stale
+  from an August build of the old branch and broke `tsc` by referencing the deleted `app/gl-spike` and
+  `app/render-studio`.
+
+### Verification (exact commands → results)
+| Where | Command | Result |
+|---|---|---|
+| Baseline, unmodified `main` | `npm run typecheck` | exit 2 (stale `.next/types`). After `npx next typegen`: **exit 0** |
+| Baseline | `npm run lint` | **exit 0** |
+| Baseline | `npm test` | **117/118**. 1 failure: `tests/unit/site.test.ts:78` (pre-existing, Windows-only; finding 3) |
+| `docs/m0-audit` | `npm test` | 117/118 (same single failure); `npx vitest run tests/unit/private-repo.test.ts` 4/4 with the docs tracked |
+| `docs/m0-audit` | `npm run build`, twice: with `claude/` and with it moved out | both exit 0; CSS **identical** (sha1 `558ad9ae…`, `e536a9b1…`; 74,214 bytes), so the docs don't change production CSS |
+| `fix/content-accuracy` | `npm run typecheck` / `npm run lint` | **exit 0** / **exit 0** |
+| `fix/content-accuracy` | `npx vitest run tests/unit/content.test.ts tests/unit/tokens.test.ts tests/unit/work.test.ts` | **41/41** |
+| `fix/content-accuracy` | `npm test` | 117/118 (same pre-existing failure, nothing new) |
+| Not run | `npm run build` on the fix branch, `npx playwright test` | Run both before merging the fix PR |
+
+### Findings this session
+1. **GRAVITY FLOW has seven mechanics; the old sentence was wrong, not the count.** Read-only via `gh`
+   from the game repo: `MechanicId = 'attractor' | 'zone' | 'magnet' | 'portal' | 'platform' | 'hazard' |
+   'gate'  // the 7 mechanics` (`docs/architecture/LEVEL-ENGINE.md:67-68`); README:70, "150 levels and
+   7 mechanics". `LevelConfig` has six optional mechanic fields (`src/types/index.ts:99-104`); the
+   seventh, the attractor, is the player's input. So `data/projects.ts:356` ("seven core mechanics"),
+   `:367` (stat "7") and PROJECT_CONTEXT §4.4 are **correct**. N3 is resolved. **VL**
+2. **Broken link on the live site.** `taysh123/Gravity-Game` is now **private** (`gh api`: visibility
+   private, last push 2026-11-09). A logged-out `GET https://github.com/taysh123/Gravity-Game` returns
+   **404**, but `data/projects.ts:359` marks it `visibility: "public"`. The site therefore shows visitors a
+   GitHub link that 404s, and the assistant's prompt includes it via `publicRepoUrl()`. The Aegis,
+   DeveloperOS and job-assistant links return 200. **VL.** Decision N5.
+3. **`tests/unit/site.test.ts:78` fails only on Windows.** `files()` builds paths with `path.join`
+   (backslashes), but the filter checks `f.startsWith("app/api/")`, so the route file itself is tested. It
+   passes on POSIX. The invariant it guards holds: `git grep -E 'GROQ_API_KEY|api\.groq\.com' -- app
+   components data lib ':!app/api/**'` finds nothing. Normalising separators would be a one-line fix; not
+   done (out of scope). **VL**
+4. After moving off the old branch, `.next/` still holds its build output. Run `npx next typegen` (or a
+   build) before `npm run typecheck`. **VL**
+
+### Push / PR commands (for Tay; nothing has been pushed)
+```bash
+git push -u origin docs/m0-audit
+gh pr create --repo taysh123/Portfolio --base main --head docs/m0-audit --title "docs: M0 audit, roadmap, decision log, refined agent context" --body "Documentation only (docs/, claude/START-HERE.md, CLAUDE.md); no app code. Production build verified locally: CSS byte-identical with and without the new files. 🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+
+git push -u origin fix/content-accuracy
+gh pr create --repo taysh123/Portfolio --base main --head fix/content-accuracy --title "Content: T Poker billing framing; GRAVITY FLOW mechanics wording" --body "data/projects.ts:150 drops the swappable-provider framing (matches app/api/chat/route.ts:128); :396 says 'the other six' mechanics, matching its list and the game's 7 (attractor + six LevelConfig mechanics). typecheck, lint, vitest pass locally (one pre-existing Windows-only failure, site.test.ts:78). Run npm run build and npx playwright test before merging. 🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+```
+Each push creates a Vercel Preview. Merging either PR into `main` deploys to Production.
+
+---
+
 ## 2026-11-18 — M0 read-only audit (Claude Code)
 
 **Scope:** discovery, audit, documentation. No application code changed, nothing installed,
@@ -227,3 +300,6 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | Date | Session | Change | Files |
 |---|---|---|---|
 | 2026-11-18 | M0 audit | Created roadmap, worklog, decision log; refined CLAUDE.md and START-HERE (all uncommitted, on `reference/premium-redesign-package`) | `docs/ROADMAP.md`, `docs/WORKLOG.md`, `docs/RESEARCH_AND_DECISIONS.md`, `CLAUDE.md`, `claude/START-HERE.md` |
+| 2026-11-18 | Session 2 | M0 docs + decisions D1/D2/D5/D7 committed on `docs/m0-audit` (`9f8eed1` + follow-up); PROJECT_CONTEXT §9 language fixed; CREATIVE_DIRECTION status note | `docs/*.md`, `claude/START-HERE.md`, `CLAUDE.md` |
+| 2026-11-18 | Session 2 | Content fixes on `fix/content-accuracy` (`7bddd19`) | `data/projects.ts:150`, `:396` |
+| 2026-11-18 | Session 2 | Removed leftover project-local `ui-ux-pro-max` (untracked cache only) | working folder |

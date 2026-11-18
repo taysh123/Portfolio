@@ -37,9 +37,11 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   once Tay asks. Phases and acceptance criteria are in `docs/ROADMAP.md`.
 
 ## Waiting on Tay
+- **N5 (live bug):** the GRAVITY FLOW GitHub link 404s for visitors (the repo is now private but
+  `data/projects.ts:359` says public). Either make the repo public again or mark it private in data.
 - D8 branch cleanup · N1 copy the reference README onto `main`? · N2 replace the literal institution
-  abbreviation in agent docs? · N3 GRAVITY FLOW mechanics count (six on site vs seven in
-  PROJECT_CONTEXT) · `data/projects.ts:172` guest-progress claim to verify against the T Poker repo.
+  abbreviation in agent docs? · N6 Windows-only test false failure · `data/projects.ts:172`
+  guest-progress claim to verify against the T Poker repo.
 - Then: approval of the concrete visual plan (moodboard, tokens, typography, layouts, motion spec)
   before any redesign implementation.
 
