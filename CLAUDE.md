@@ -75,6 +75,7 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
   except the footer's legal name. The private-repo guard (`tests/unit/private-repo.test.ts`) scans every
   tracked text file, docs included: never write a private repo's slug (T Poker, GRAVITY FLOW) in docs, PR
   bodies or commits; say "the private T Poker repository". Run `npm test` after any docs commit.
+  The private-repo guard pins both private repos (T Poker and GRAVITY FLOW) by digest in `tests/support/private-repo.ts`.
 - Project copy must agree across `data/projects.ts`, the assistant prompt rules in
   `app/api/chat/route.ts`, metadata, and `/privacy`.
 

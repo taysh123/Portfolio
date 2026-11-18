@@ -91,8 +91,8 @@ Acceptance criteria:
 - [x] Final tree `e105917`: typecheck exit 0, lint exit 0, `npm run build` exit 0, **Playwright 132/132**,
       unit 118/119. The one failure is pre-existing and Windows-only (N6). Details in `docs/WORKLOG.md` sessions 2–3.
 - [x] Merged (PR #5) and deployed (`841d062`, Vercel status success 2026-11-18). Live check: no
-      `Gravity-Game` link in the page, no "swappable detail", label "two pages, 79 KB", and the served résumé
-      is byte-identical to `main`'s 80,593-byte file with no dead link.
+      link to the private GRAVITY FLOW repository in the page, no "swappable detail", label "two pages, 79 KB",
+      and the served résumé is byte-identical to `main`'s 80,593-byte file with no dead link.
 
 Risks: low. Content-only diffs; the existing tests already guard neighbouring claims.
 
@@ -201,4 +201,4 @@ Acceptance criteria:
 | 9 | Consider adding `/privacy` to `app/sitemap.ts` | Currently `/` only. Minor; Tay's call | M5/M6 |
 | 10 | Consider a nonce-based CSP (`script-src` currently allows `'unsafe-inline'`) | The route is already dynamic (cookies), so nonces are feasible. Needs measurement | M6 |
 | 11 | N7: ~~Cloudflare's beacon and Email Address Obfuscation~~ turned off by Tay 2026-11-18 (verified live). Left: `/privacy` names only Vercel, though Cloudflare proxies the site | Privacy wording. Tay approves or rejects the draft (`docs/RESEARCH_AND_DECISIONS.md` N7) | any |
-| 12 | N8: GRAVITY FLOW's private repository name is still in nine doc lines (the guard hashes only T Poker's) | CLAUDE.md's rule on private repository names. A docs-only fix; Tay's call | any |
+| 12 | ~~N8: GRAVITY FLOW's private repository name in nine doc lines~~ Done in session 9 on the N8 PR: the lines say "the private GRAVITY FLOW repository", and the guard pins both private repos by digest | — | any |
