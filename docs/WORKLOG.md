@@ -11,6 +11,401 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-18 — Session 10: Concept A, the cinematic hero, as a measured prototype (prototype, D2 reopened) (Claude Code)
+
+**Scope (Tay's brief):**
+- Build Concept A, the hero only, as a **measured prototype**. This consciously reopens D2 (Tay approved, 2026-11-18).
+- Branch `proto/hero-a-cinematic` only: never merged, never deployed. The live homepage is not touched.
+- Behind a noindex route, not linked from the live site.
+- Measure it against the 205.7 KiB budget and the CWV thresholds, plus a11y, reduced motion and no-JS.
+
+Skills: `frontend-design` (design plan and self-critique from screenshots), `verification-before-completion`.
+
+### 1. Preconditions (VL)
+- `git fetch`: `origin/main` = `a7a89fd` (PR #16). PR #17 (`docs/session-9-closeout`) is still open.
+- Branch `proto/hero-a-cinematic` from `origin/main` (`--no-track`), then `npm ci`.
+
+### 2. What was built (all new files; no tracked file changed)
+- `app/lab/layout.tsx`: every `/lab` page is `noindex, nofollow, nocache`, with the root's canonical dropped.
+  - It is not a robots.txt Disallow: a blocked crawler never sees the noindex.
+  - `/lab` is not in the sitemap, and nothing on `/` links to it.
+- `app/lab/hero-a/page.tsx`: everything a reader needs is server-rendered HTML:
+  - the wordmark and the availability pill (gated on `availability.open`);
+  - the role (`siteMeta.role`), the H1 and the lede (the brief's copy);
+  - both actions ("Explore my work" to `/#work`; "Download CV" is the real résumé file);
+  - the four flagships, each with its state from `heroIndex` (`data/proof.ts`).
+- `app/lab/hero-a/featured.ts`: one tag per flagship. A unit test checks every word against that project's own
+  tagline and summary. "Physics" is not in the data, so GRAVITY FLOW is a "gravity puzzler".
+- `app/lab/hero-a/Constellation.tsx`: the one live element.
+  - A 2D canvas (no WebGL), `aria-hidden`, `pointer-events: none`.
+  - Drifting duotone nodes and proximity links; a mouse or pen gathers nearby nodes; touch is ignored.
+  - The loop runs only while the field is on screen and the tab is visible.
+  - The node count comes from the area: 40–120, or 22–48 on the light path (touch, < 640px, or ≤ 4 cores).
+  - Pixel ratio capped at 2, or 1.5 on the light path. Links batched by colour × alpha; halos from sprites.
+  - The count steps down when the draw cost stays over budget.
+  - ≤ 60 draws a second, ≤ 30 on the light path.
+  - Reduced motion (the OS or the site's own switch) draws one still frame.
+- `app/lab/hero-a/hero-a.css`: scoped under `.hxa`, with its own dark tokens.
+  - It reuses Geist, `--text-lead`, `--tracking-display`, `.shell` and the motion tokens.
+  - Every rule outside the scope is conditioned on `:has(.hxa)`, so it is inert off the route.
+  - One CSS load sequence: it runs, and ends visible, without JS, and is off with reduced motion.
+  - The chat launcher is re-toned for the dark field, and the last strip is kept clear for it.
+- `tests/unit/lab-hero-a.test.ts` (18 tests) and `tests/e2e/lab-hero-a.spec.ts` (16 tests).
+- `scripts/lab-hero-a.mjs`: a reproducible CWV and FPS measurement, `/` against `/lab/hero-a`.
+
+### 3. Guard changes: none were needed (VL)
+- Scoping the guards for the prototype was approved, but nothing needed it.
+- `git diff origin/main` on `tests/unit/dead-code.test.ts`, `tests/e2e/page.spec.ts` and `tests/e2e/budget.spec.ts` is
+  empty.
+- They still pass unchanged, because:
+  - `dead-code.test.ts` bans WebGL, `three` and `lenis` (the field is a 2D context);
+  - `page.spec.ts` and `budget.spec.ts` load only `/`, which still has no `<canvas>` and no WebGL.
+- The prototype route has its own tests, held to the same 205.7 KiB budget.
+
+### 4. Measured (VL; lab numbers from a local production server, never field data)
+First-load JS, gzip, the `budget.spec.ts` algorithm:
+
+| | JS | Scripts | HTML |
+|---|---|---|---|
+| `/lab/hero-a` (this branch) | **182.45 KiB** (budget 205.7) | 10 | 31.45 KB |
+| `/` on `origin/main` | 181.79 KiB | 9 | 156.44 KB |
+| `/` on this branch | 182.20 KiB (+0.41) | 10 | 156.51 KB |
+
+- The +0.41 KiB on `/` (this branch's build only) contains no prototype code.
+  - Turbopack split Next's own error-boundary styles into a new shared chunk (`errorStyles`, `WarningIcon`) once a
+    second route shared them.
+  - The marker test confirms no first-load script of `/` carries the field.
+
+`scripts/lab-hero-a.mjs`, median of 5 cold runs:
+- `/` was measured on a separate `origin/main` build.
+- Mobile is 390×844 @3x with 4× CPU and slow-4G figures, applied through DevTools.
+- INP is the worst of 6 interactions; FPS is frames delivered to an independent rAF counter over 3 s.
+
+| | LCP (element) | CLS | INP | FPS | Main thread busy |
+|---|---|---|---|---|---|
+| desktop `/` | 140 ms (h1) | 0 | 24 ms | 60.4 | 5% |
+| desktop `/lab/hero-a` | 84 ms (h1) | 0 | 56 ms | 60.2 | 13.6% |
+| mobile `/` | 1592 ms (h1) | 0 | 40 ms | 60.5 (min 51.4) | 9.8% |
+| mobile `/lab/hero-a` | 992 ms (h1) | 0 | 40 ms | 60.3 (min 60.1) | 23.7% |
+
+All inside "good" (LCP ≤ 2.5 s, INP ≤ 200 ms, CLS ≤ 0.1).
+
+### 5. Findings fixed on the way (VL)
+- **The reveal hid the page from LCP.** As first built, every block faded in from `opacity: 0`. Chromium then
+  reported **no LCP entry at all**, and FCP at about 1.75 s (desktop) and 2.2 s (mobile, 4×).
+  - Cause: the text is first painted inside a compositor-run opacity-0 animation, and paint timing never re-reports it.
+  - Variants were tested on 3 runs each: no reveal; fade from 0.01; the H1 rising without fading.
+  - Fix: the H1 rises without fading. LCP is then the H1, at first paint (~80 ms desktop).
+  - Rejected: fading from 0.01. It "passes" only by counting text no reader can see yet.
+  - A new e2e test pins LCP = the H1 = FCP.
+- **Mobile main thread 41% → 23.7%.** CDP breakdown on the 4× profile:
+  - the field's script is only ~5%;
+  - hiding the canvas's paint drops busy time to 11%, so raster is most of the cost; the mask is not.
+  - The light path now draws ≤ 30 a second, and INP fell from 88 to 40 ms.
+- **Contrast.** The unit test reads the floors from the CSS, on the base and under the brightest glow behind text:
+  - the muted and faint inks were lifted (`#acb6c9` ≥ 7:1, `#95a0b6` ≥ 5.4:1, the site's own floors);
+  - the brief's violet `#9b6bff` is 5.7:1 on the base and 4.2:1 over the violet glow. It is only in the 36–80px H1
+    (large text, floor 3:1).
+- **A11y bugs found by the tests:**
+  - the wordmark's accessible name ran together ("Tay ShoferPortfolio");
+  - the site chrome's paper-iris focus ring was under 3:1 on the dark field;
+  - at 390px the wordmark target was 43.99px;
+  - at 320×568 the CTAs ended below the first screen.
+  - All four are fixed.
+
+### 6. Accessibility (VL)
+- axe-core 4.11.4 (already installed through `eslint-config-next`), WCAG 2.2 A/AA: **0 violations** at 1440 with
+  motion, 390 with motion, and 1440 with reduced motion. 24 rules pass in each.
+- axe could not judge two nodes, both expected:
+  - the gradient clause (`background-clip: text`), covered by the unit contrast test;
+  - the `aria-hidden` arrow glyph.
+- Keyboard order: skip link, wordmark, both actions, the four projects, the chat launcher. Each has a solid 2px cyan
+  ring.
+- One h1; banner, main, and a labelled nav. Targets ≥ 44px at 1440, 1024, 390 and 320. No horizontal overflow.
+- Reduced motion (the OS, and the site's switch through the `a11y` cookie): a still frame, 0 rAF callbacks, no reveal.
+- No JS: everything visible, all links work, and the canvas is an empty, transparent layer.
+
+### 7. Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` | **140/140** (15 files: 122 from `main` plus 18) |
+| `npm run typecheck` | exit 0 |
+| `npm run lint` | exit 0 |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test` | **148/148** (132 from `main` plus 16) |
+
+### 8. Limitations (NC unless stated)
+- Headless Chromium's GPU is SwiftShader (VL: the WebGL renderer string), so canvas raster ran on the CPU. The mobile
+  numbers are a pessimistic bound. Not measured on a real phone.
+- INP comes from 6 scripted interactions; it is not field INP. No Lighthouse run (not installed; not added).
+- The loop runs continuously while the hero is visible and the tab is open (with the cap and the pauses above).
+- At 390×844 the hero is about 50px taller than the screen: the second row of Featured work starts below it. The H1
+  and both actions are in the first screen at 1440, 1024, 390 and 320 (tested).
+- Copy that differs from the live site, by the brief's choice:
+  - "Download CV" (the site says "résumé");
+  - an eyebrow, which `page.spec.ts` bans on `/`;
+  - "Available for opportunities", where `/` deliberately shows no availability line.
+
+### 9. Pushed for a Preview (Tay's go)
+- `proto/hero-a-cinematic` pushed at `fd93dd8`. Draft PR #18 opened against `main` (not for merge).
+- Vercel built a **Preview** deployment (GitHub: `production_environment=false`). Production stayed on `a7a89fd`.
+- The preview is behind Vercel Deployment Protection (a logged-out request gets a 302 to `vercel.com/sso-api`).
+  Vercel adds `X-Robots-Tag: noindex`.
+- No share link was made: the connector's fetch tool would create one.
+
+### 10. Round 2: more life in the field (Tay: "too calm") (VL)
+Only the field changed: `Constellation.tsx` and its tests. The copy, palette, CSS and every safeguard are the same.
+- **Desktop:** 130 nodes at 1440×900 (was 108; ≤ 140), and drift of 7–18 px/s (was 5–14). The light path's count and
+  drift are unchanged.
+- **Twinkle:** every node's radius pulses slowly (4–10 s a cycle, each on its own phase). Bright nodes' halos breathe
+  with it.
+- **Pointer:** a soft pull that fades to nothing at the centre, with no repel. Links near it brighten, nodes within
+  150px tether to it, and a faint glow (200px sprite) follows it.
+  - The first tune (pull 60, fade inside 64px) packed nodes into a tight knot. The pull went to 20: against the
+    0.8/s relax that is an inward drift of about 25 px/s, like the field's own.
+- **Signals:** a soft duotone head with a short tail rides real links, 1–3 hops. It lights the link it rides and
+  flashes the node it reaches.
+  - Desktop: up to 3 at once, one every 1.6–3.2 s. Light path: up to 2, one every 3–5.5 s.
+  - None with reduced motion (a still frame; `data-pulses` stays 0).
+- **Trims found by measuring:**
+  - In-page op knock-outs (desktop, pointer moving) put most of the first draft's added cost on image stamps (2.7 pp)
+    and strokes (2.3 pp).
+  - The glow shrank from 280 to 200px and the bright share returned to 12% (from 14%).
+  - Links under 12% of the reach (≤ 4% alpha, about a fifth of all links by area) are no longer drawn, except near
+    the pointer.
+
+**Measured.** Same session; `fd93dd8` from a scratch worktree, interleaved before / after, 5 rounds each, medians.
+The machine's load varied through the session: the identical `fd93dd8` build measured 21.7–31.8% phone busy across
+rounds. So only the interleaved comparison counts, not the absolute numbers against section 4.
+
+| | before | after |
+|---|---|---|
+| desktop FPS / worst frame gap | 60.2 / 17 ms | 60.2 / 17 ms |
+| desktop INP (median, max) | 40, 56 ms | 24, 56 ms |
+| desktop main thread busy | 12.7% | 14.1% (+1.4 pp) |
+| phone FPS / worst frame gap | 60.2 / 17 ms | 60.2 / 17 ms |
+| phone INP (median, max) | 40, 40 ms | 40, 48 ms |
+| phone main thread busy | 21.7% | 22.3% (+0.6 pp; run spread 20.7–22.8) |
+| LCP desktop / phone (h1) | 84 / 976 ms | 96 / 968 ms |
+| CLS | 0 | 0 |
+
+- First-load JS for `/lab/hero-a`: **183.49 KiB** (was 182.45; +1.04 KiB; budget 205.7). `/` is unchanged (182.20).
+- axe WCAG 2.2 A/AA: 0 violations at 1440 with motion, 390 with motion, and 1440 with reduced motion. The same 2
+  need-review items as before.
+- The contrast floors pass (no CSS change).
+- Validation:
+  - `npm test` **141/141**;
+  - typecheck and lint exit 0;
+  - `npm run build`, then `GROQ_API_KEY= npx playwright test`: **150/150**. The 2 new tests check that signals
+    appear and stay capped, at 3 on desktop and 2 on a phone.
+- The guard files are still byte-identical to `origin/main`.
+
+### 11. Round 2 pushed; round 3, the final energy pass (Tay: "better, still a touch calm") (VL)
+- Round 2 was pushed on Tay's go (`b7092b0`). The Preview rebuilt (Vercel success; `production_environment=false`).
+  Production stayed on `a7a89fd`.
+- **Signals get more presence:**
+  - desktop cap 3 → 4 (light path stays 2);
+  - launch spacing 1.6–3.2 → 1.4–2.8 s (light path 3–5.5 → 2.6–4.6 s);
+  - about a third take one more hop (1–4);
+  - a longer, thicker tail, a larger head, a brighter ridden link.
+  - The first draft (1.2–2.4 s) was eased: by Little's law it put about 56% more signals on screen.
+  - Expected average signals at once: desktop ≈ 0.96 → 1.29 (+34%), phone ≈ 0.50 → 0.69 (+38%).
+  - 15-second samples are too noisy to judge this: the same build gave 68% and 91% of time with a signal.
+- **The sky breathes:**
+  - the two glows are now their own elements;
+  - the field's clock drifts them by transform and opacity, 5 times a second (26 s and 34 s cycles, about 3% travel,
+    6% scale, opacity 0.8–1);
+  - they pause with the loop and rest under reduced motion. Without JS they sit where they always were.
+  - Measured and rejected: a CSS animation of the same drift cost **+5.3 pp** of phone main thread (style and layout
+    2.4%: Chrome serviced it every frame). At 5 Hz the cost is about +1 pp.
+  - `will-change` on the glows was also dropped. The first `translate3d()` promotes them after first paint; with it,
+    2 of 5 desktop LCPs ran about 40 ms late.
+- **Desktop drift:** 7–18 → 8–20 px/s.
+- **CTA:** "Download CV" → "Download résumé". The link has no `aria-label`: its accessible name is the text plus the
+  sr-only note, now "Download résumé (PDF · two pages, 79 KB)". Same file and download target.
+
+**Measured.** Interleaved against `b7092b0` (scratch worktree), 5 rounds each, medians:
+
+| | before | after |
+|---|---|---|
+| desktop FPS / worst frame gap | 60.2 / 17 ms | 60.2 / 17 ms |
+| desktop INP (median, max) | 24, 56 ms | 40, 48 ms |
+| desktop main thread busy | 14.1% | 14.0% |
+| desktop LCP (h1) | 92 ms | 72 ms |
+| phone FPS / worst frame gap | 60.3 / 17 ms | 60.2 / 17 ms |
+| phone INP (median, max) | 40, 40 ms | 40, 48 ms |
+| phone main thread busy | 21.6% | 22.8% (+1.2 pp; run spreads 19.9–23.2 vs 19–25.2) |
+| phone LCP (h1) | 928 ms | 968 ms (run spreads 924–1028 vs 880–1048) |
+| CLS | 0 | 0 |
+
+- First-load JS for `/lab/hero-a`: **183.71 KiB** (+0.22; budget 205.7). `/` unchanged at 182.20.
+- axe WCAG 2.2 A/AA: 0 violations at 1440 with motion, 390 with motion, and 1440 with reduced motion.
+  - At 1440 a third need-review item: `.hxa__lede`, "partially overlaps other elements". Its box now overlaps the
+    violet glow element.
+  - It is covered by the unit floor (mist ≥ 7:1 on the violet peak). The glows' peak alphas are unchanged (0.17,
+    0.2), and their opacity only dims.
+- The contrast floors pass (7/7).
+- Validation:
+  - `npm test` **142/142**;
+  - typecheck and lint exit 0;
+  - `npm run build`, then `GROQ_API_KEY= npx playwright test`: **150/150**. The glow and signal tests were updated:
+    the cap is 4 on desktop; the glows move with the loop, stop with it and rest under reduced motion.
+- The guard files are still identical to `origin/main`.
+
+### 12. Round 3 pushed; round 4, the cinematic system extracted (2026-11-19) (VL)
+- Round 3 was pushed on Tay's go (`ca81fc4`). The Preview rebuilt (Vercel success). Production stayed on `a7a89fd`.
+- **The layer:** `app/lab/_cinematic/cinematic.css`, documented in `docs/CINEMATIC_SYSTEM.md`.
+  - Extracted from the locked hero, value for value: colours (two bases, three inks, cyan / violet, the status dot as
+    the brand cyan), glass and glow surfaces, Geist type (sizes, weights, leading, tracking), spacing steps, control
+    heights, radii and motion tokens.
+  - Plus the scope chrome, the focus ring, `.cine-duotone-text` and the one reveal (`[data-reveal]`, with `settle`
+    for the largest paint).
+  - Only `app/lab/layout.tsx` imports it, and every selector needs a `.cine` root (or `:has(.cine)`).
+- **The hero is its first consumer:**
+  - root `cine hxa`;
+  - six `data-reveal` blocks (the H1 `settle`);
+  - `hero-a.css` keeps only its geometry, with no hex and no local tokens;
+  - the canvas's and the SVG mark's colours are pinned to the layer by a test.
+- **Proof the hero is unchanged.**
+  - Before and after builds compared: every element's and pseudo-element's computed style in 5 modes (reduced motion
+    1440 and 390, no JS, motion on, high contrast), and full-page pixels with the random canvas hidden.
+  - **0 of 163,871 computed values differ, and 0 pixels differ.**
+- **Found and fixed: a branch-only leak into `/`'s stylesheet.**
+  - Since round 1, a comment in `tests/unit/lab-hero-a.test.ts` held a literal utility name.
+  - Tailwind scans `tests/`, and so added one rule (21 bytes) to the global stylesheet of this branch's build.
+  - The comment is reworded. Both of `/`'s stylesheets are now byte-identical to `origin/main`'s.
+  - The doc records the rule: never write utility names in lab files; docs go in `docs/`.
+- **`/` against `origin/main`** (scratch worktree build):
+  - every source `/` imports is identical (`git diff`);
+  - both stylesheets are byte-identical;
+  - the markup is identical with script tags and chunk paths masked.
+  - What remains is round 1's bundle split: the same JavaScript in 10 chunks instead of 9 (+180 bytes raw). It comes
+    from a second route existing, and only in this branch's build.
+- **Against the branch before this task:** every script on `/` is byte-identical. The stylesheet changed only by
+  losing that stray rule.
+- Validation:
+  - `npm test` **148/148** (`tokens.test.ts` 15/15);
+  - typecheck and lint exit 0;
+  - `npm run build`, then `GROQ_API_KEY= npx playwright test`: **150/150**. axe: 0 violations with motion on and off.
+  - The guard files, `app/globals.css`, `lib/tokens.ts`, the root layout, `/` and every live source are identical to
+    `origin/main`.
+  - First-load JS for `/lab/hero-a` is unchanged at 183.71 KiB.
+
+### 13. Round 5: the Work slice in the cinematic language (2026-11-19) (VL)
+- **The route:** `/lab/work`, under the `/lab` layout (noindex, not linked).
+  - Files: `app/lab/work/{page.tsx, panels.ts, work.css}`.
+  - A server component with no client code of its own; first-load JS is the shared runtime only.
+- **Four product panels** (T Poker, Aegis, DeveloperOS, GRAVITY FLOW), recruiter-first:
+  - name and one line first;
+  - then the status, three stack chips and the links;
+  - the real capture on a glass stage, alternating sides from 1024px.
+- **Content derived from the data, nothing typed fresh** (`docs/CINEMATIC_SYSTEM.md`, "Work slice"):
+  - taglines verbatim and the site's status strings;
+  - chips from each stack;
+  - links: T Poker's web app, and the Aegis and DeveloperOS repositories; plus each chapter on the live page;
+  - "Private repository" labels for T Poker and GRAVITY FLOW, with no slug or URL anywhere;
+  - existing captures and alt text.
+- **One empty, hidden, labelled P4 demo slot per panel:** no demo, no placeholder.
+- **Behaviour:**
+  - the opening's one reveal (the title settles);
+  - stages lift on hover, keyboard focus and touch, and stay still with reduced motion;
+  - the first capture is eager and high priority, the other three lazy;
+  - static glows only.
+- **Layer additions:**
+  - seven tokens equal to the site's own values (type tiers, section rhythm, radius steps, the dark object shadow);
+  - two NEW values for Tay's review: `--cine-lift` −4px, and `--cine-glow-lift`.
+  - The hero is still unchanged: 0 of 163,871 computed values and 0 pixels differ against the round 4 baseline.
+- **Found and fixed: the Tailwind leak, again.**
+  - An object key in the new e2e spec, named like the shadow utility, put one rule (+248 bytes) into `/`'s stylesheet.
+  - Renamed. A new e2e test now pins `/`'s two stylesheets to `origin/main`'s SHA-256, so any future leak fails the
+    suite.
+  - `/` against `origin/main`: both stylesheets byte-identical; markup identical with script tags and chunk paths
+    masked; the same 9 → 10 chunk split as since round 1.
+
+**Measured** (`scripts/lab-hero-a.mjs`, 5 cold runs):
+
+| | LCP (element) | CLS | INP | FPS | main thread busy |
+|---|---|---|---|---|---|
+| desktop | 80 ms (the first capture) | 0 | 32 ms | 60.5 | 3.2% |
+| phone (4× CPU, slow 4G) | 916 ms (the first capture) | 0 | 32 ms | 60.4 | 6.6% |
+
+- First-load JS for `/lab/work`: **180.19 KiB** (budget 205.7). HTML 45.17 KB.
+- axe WCAG 2.2 A/AA: 0 violations at 1440 with motion, 390 with motion, and 1440 with reduced motion.
+  - At 390, three need-review items: the lede and two project lines, mist text whose boxes overlap the glow
+    elements.
+  - They are covered by the layer's floor: mist ≥ 7:1 on the glow peaks.
+- **Keyboard:** skip link, then per panel the product's link and its chapter link, then the launcher. Each has a solid
+  2px cyan ring, and focus lifts its own panel.
+- **No JS:** every name, line, state, chip, capture (lazy, native) and link is present and works.
+- Validation:
+  - `npm test` **168/168** (`tokens.test.ts` 15/15);
+  - typecheck and lint exit 0;
+  - `npm run build`, then `GROQ_API_KEY= npx playwright test`: **165/165** (132 `main`, 18 hero, 15 Work);
+  - the guard files are identical to `origin/main`.
+- Not verified: iOS Safari's `:active` (it needs a touch listener; a tap lifts through emulated hover instead), and
+  any real device.
+
+### 14. Round 5b: the title, and the push (2026-11-19) (VL)
+- Tay changed the title to "Four projects, built end to end." (not all four are shipped products). A unit test pins it.
+- Rounds 4, 5 and the title were pushed on Tay's go (`377ce22`). The Preview rebuilt. PR #18 is still a draft, and
+  Production stayed on `a7a89fd`.
+
+### 15. Round 6: per-project carousels, and phone proportions (2026-11-19) (VL)
+- **Galleries** in `data/projects.ts` (`PROJECT_GALLERIES`, a separate pure export), exactly as Tay listed:
+  - T Poker: home, live, settle;
+  - GRAVITY FLOW: gameplay, boss;
+  - Aegis: the alert row;
+  - DeveloperOS: the search.
+  - The alt text is the site's own: `gf-boss` is `public/projects/gravity-flow/boss.webp` re-encoded (a unit test
+    measures it), so it takes that entry's "World boss encounter".
+  - The phone crops are the live chapters'.
+- **The carousel** (`Reel.tsx`): a CSS 3D coverflow (perspective and rotateY; no WebGL), the WAI-ARIA tabbed pattern,
+  arrows, swipe, no autoplay; a flat slider with reduced motion; the first capture alone without JS. Single-capture
+  projects stay still. Details: `docs/CINEMATIC_SYSTEM.md`, "Galleries and the carousel".
+- **Phone proportions:**
+  - T Poker's capture went from 280 × 607 to 171 × 370 at 390 × 844;
+  - phone captures are capped at 190px wide and ≤ 45% of the screen tall;
+  - the spacing is tighter.
+- **Found and fixed on the way (all measured):**
+  - **`/`'s first-load chunks changed twice.**
+    - The client carousel imported the image table, and Turbopack re-cut one of `/`'s chunks.
+    - It imported the site's `ArrowLeftIcon`, and app-wide tree-shaking kept that once server-only icon in `/`'s chunk
+      (+120 bytes).
+    - Fix: the server renders each capture and hands them in, and the island draws its own arrow.
+    - After the fix, `/` is byte-identical to `377ce22`: the HTML and all 12 first-load assets.
+    - Every built chunk was hashed before and after: only the lab's three (the Work page script, its CSS, the layer
+      CSS) differ. The case-study chunk is unchanged.
+  - **Phone CLS 0.017 → 0.** A blanket `aspect-ratio: …, auto` override had dropped the box reservation that width and
+    height give. It is now limited to captures with a phone crop.
+    - A new e2e test holds the images pending and asserts every box keeps its height.
+    - Red/green: the old rule collapses two captures to 0px.
+- **Measured:**
+  - first-load JS for `/lab/work` **181.39 KiB** (the carousel's own chunk 4.72 KiB; budget 205.7);
+  - desktop LCP 88 ms, CLS 0, INP 40 ms, FPS 60.5;
+  - phone (4× CPU, slow 4G) LCP 916 ms, CLS 0, INP 48 ms, FPS 60.4 (3 runs).
+  - axe: 0 violations at 1440 with motion, 390 with motion, and 1440 with reduced motion, after the carousel has
+    moved.
+- **The hero is unchanged:** 0 of 163,871 computed values and 0 pixels.
+- **Against `origin/main`:** both of `/`'s stylesheets byte-identical (pinned by the e2e test), and the same 9 → 10
+  chunk split as since round 1.
+  - `data/projects.ts` differs by the 19-line gallery export (Tay's brief).
+  - The guard files, `globals.css`, `lib/tokens.ts`, the root layout, `/`, `components/`, `lib/` and `public/` are
+    identical.
+- Validation:
+  - `npm test` **177/177** (`tokens.test.ts` and `dead-code.test.ts` 21/21);
+  - typecheck and lint exit 0;
+  - `npm run build`, then `GROQ_API_KEY= npx playwright test`: **173/173** (132 `main`, 18 hero, 23 Work).
+- Not verified: a real phone (iOS Safari's `:active` and touch feel), and real-device carousel performance.
+
+### Waiting on Tay
+- Decide whether Concept A goes further. Round 6 is committed locally, not pushed: pushing updates PR #18's Preview.
+- Review the NEW layer values: `--cine-lift` and `--cine-glow-lift` (round 5); `--cine-flow-turn`,
+  `--cine-flow-scale` and `--cine-flow-dim` (round 6).
+- Captures to add (Aegis and DeveloperOS have one each): `docs/CINEMATIC_SYSTEM.md`, "To add a capture".
+- On `main`, the next close-out should record "D2 reopened for a measured prototype" in RESEARCH_AND_DECISIONS. This
+  branch is never merged.
+
+---
+
 ## 2026-11-18 — Session 9: N8, GRAVITY FLOW's private repository name out of the tree (Claude Code)
 
 **Scope (Tay's brief):**

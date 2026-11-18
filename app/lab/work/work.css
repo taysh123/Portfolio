@@ -1,0 +1,233 @@
+/* app/lab/work/work.css — the Work slice (PROTOTYPE, round 5; D2 reopened by Tay, 2026-11-18). Only its geometry: every
+   colour, size, step, radius and timing is a --cine-* token from app/lab/_cinematic/cinematic.css. Scoped under .wk. */
+
+.wk { position: relative; isolation: isolate; min-height: 100svh; overflow: clip; }
+
+/* ── The sky: the base gradient and two static glows, once, behind the whole section. No field, no drift: here the
+   captures are the star. ── */
+.wk__sky { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: var(--cine-sky); }
+.wk__glow { position: absolute; }
+.wk__glow--cyan { right: -18%; top: -12vh; width: 72%; height: 110vh; background: var(--cine-glow-cyan); }
+.wk__glow--violet { left: -30%; top: 38%; width: 80%; height: 120vh; background: var(--cine-glow-violet); }
+
+/* The last strip stays clear for the chat launcher (the live footer's clearance, components/chat/chat.css). */
+.wk__main { padding-bottom: calc(var(--cine-section-y) + 4.75rem + env(safe-area-inset-bottom, 0px)); }
+
+/* ── The opening: the section's one reveal (the layer's data-reveal; the title settles, never fades) ── */
+.wk__head { max-width: 52rem; padding-block: clamp(56px, 12vh, 128px) clamp(40px, 8vh, 96px); }
+.wk__eyebrow {
+  --reveal-i: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cine-space-3);
+  font-size: var(--cine-text-eyebrow);
+  font-weight: var(--cine-weight-eyebrow);
+  color: var(--cine-cyan);
+}
+.wk__eyebrow::before { content: ""; width: var(--cine-space-6); height: 1px; background: var(--cine-duotone); }
+.wk__title {
+  --reveal-i: 1;
+  margin-top: var(--cine-space-4);
+  font-size: var(--cine-text-section);
+  line-height: var(--cine-leading-display);
+  letter-spacing: var(--cine-tracking-display);
+  font-weight: var(--cine-weight-display);
+  color: var(--cine-ink);
+}
+.wk__lede {
+  --reveal-i: 2;
+  margin-top: var(--cine-space-5);
+  max-width: 36rem;
+  font-size: var(--cine-text-lead);
+  line-height: var(--cine-leading-lead);
+  color: var(--cine-mist);
+}
+
+/* ── The panels: one per product, the capture and the words side by side, alternating; stacked below 1024px with the
+   words first (the name and its one line are what a reader needs in seconds). ── */
+.wk__panels { display: grid; gap: var(--cine-section-y); }
+.wk__panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--cine-space-7); align-items: center; }
+@media (min-width: 1024px) {
+  .wk__panel { --wk-words: 5fr; --wk-capture: 7fr; column-gap: clamp(40px, 5vw, 80px); }
+  .wk__panel[data-kind="phone"] { --wk-words: 6fr; --wk-capture: 5fr; }
+  .wk__panel[data-side="right"] { grid-template-columns: minmax(0, var(--wk-words)) minmax(0, var(--wk-capture)); }
+  .wk__panel[data-side="left"] { grid-template-columns: minmax(0, var(--wk-capture)) minmax(0, var(--wk-words)); }
+  .wk__panel[data-side="left"] .wk__stage { order: -1; }
+}
+
+.wk__name {
+  font-size: var(--cine-text-name);
+  line-height: var(--cine-leading-display);
+  letter-spacing: var(--cine-tracking-display);
+  font-weight: var(--cine-weight-display);
+  color: var(--cine-ink);
+}
+.wk__line {
+  margin-top: var(--cine-space-3);
+  max-width: 34rem;
+  font-size: var(--cine-text-lead);
+  line-height: var(--cine-leading-lead);
+  color: var(--cine-mist);
+}
+.wk__status {
+  margin-top: var(--cine-space-5);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--cine-space-1) var(--cine-space-2);
+  font-size: var(--cine-text-small);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-ink);
+}
+.wk__status-k { font-size: var(--cine-text-label); font-weight: var(--cine-weight-label); color: var(--cine-faint); }
+.wk__chips { margin-top: var(--cine-space-4); display: flex; flex-wrap: wrap; gap: var(--cine-space-2); }
+.wk__chips li {
+  padding: var(--cine-space-1) var(--cine-space-3);
+  border: 1px solid var(--cine-hair);
+  border-radius: var(--cine-radius-pill);
+  background: var(--cine-glass-ink);
+  font-size: var(--cine-text-label);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-mist);
+}
+.wk__links { margin-top: var(--cine-space-5); display: flex; flex-wrap: wrap; align-items: center; gap: var(--cine-space-3) var(--cine-space-5); }
+/* The product's own destination: the hero's ghost control. */
+.wk__go {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cine-space-2);
+  min-height: var(--cine-control-h-sm);
+  padding: 0 var(--cine-space-5);
+  border: 1px solid var(--cine-edge);
+  border-radius: var(--cine-radius-pill);
+  background: var(--cine-glass-ink);
+  font-size: var(--cine-text-body);
+  font-weight: var(--cine-weight-control);
+  letter-spacing: var(--cine-tracking-control);
+  color: var(--cine-ink);
+  text-decoration: none;
+  transition: background-color var(--cine-dur-hover) var(--cine-ease), border-color var(--cine-dur-hover) var(--cine-ease);
+}
+.wk__go:hover { border-color: var(--cine-edge-hover); background: var(--cine-glass-ink-hover); }
+.wk .wk__go:focus-visible { border-radius: var(--cine-radius-pill); }
+/* Its full chapter: a text link in the accent, at control height. */
+.wk__more {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--cine-target-min);
+  font-size: var(--cine-text-body);
+  font-weight: var(--cine-weight-control);
+  color: var(--cine-cyan);
+  text-decoration: none;
+  text-underline-offset: 4px;
+}
+.wk__more:hover { text-decoration: underline; }
+.wk .wk__private { color: var(--cine-faint); min-height: var(--cine-target-min); }
+
+/* ── The stage: the real capture on glass, its glow behind it. It lifts on hover, keyboard focus anywhere in the
+   panel, and touch: a controlled step up (--cine-lift), a cyan edge and halo. With reduced motion it never moves;
+   the edge and halo still answer. ── */
+.wk__stage {
+  margin: 0;
+  display: grid;
+  place-items: center;
+  padding: clamp(20px, 3vw, 40px);
+  border: 1px solid var(--cine-hair);
+  border-radius: var(--cine-radius-stage);
+  background: var(--cine-glow-cyan), var(--cine-glass-ink);
+  transition: translate var(--cine-dur-hover) var(--cine-ease), border-color var(--cine-dur-hover) var(--cine-ease), box-shadow var(--cine-dur-hover) var(--cine-ease);
+}
+.wk__panel[data-tone="violet"] .wk__stage { background: var(--cine-glow-violet), var(--cine-glass-ink); }
+.wk__device { overflow: hidden; border: 1px solid var(--cine-hair); box-shadow: var(--cine-elevation); }
+.wk__panel[data-kind="phone"] .wk__device { width: min(300px, 72vw); border-radius: var(--cine-radius-device); }
+.wk__panel[data-kind="window"] .wk__device { width: 100%; border-radius: var(--cine-radius-window); }
+.wk__device img { display: block; width: 100%; height: auto; }
+
+/* ── The carousel (Reel.tsx): a CSS 3D coverflow. Every capture sits in the same grid cell; the front one is flat and
+   whole, its neighbours step aside, turn away and dim (2D elements in perspective: no WebGL). The stage clips them
+   sideways. Without JS only the first is shown, and the controls stay hidden (they would do nothing). ── */
+.wk__stage[data-captures]:not([data-captures="1"]) { overflow-x: clip; }
+.wk__panel[data-kind="phone"] .wk__reel .wk__device { width: min(250px, 60vw); }
+.wk__reel { --wk-flow-x: 56%; width: 100%; }
+.wk__track { display: grid; place-items: center; perspective: 1100px; touch-action: pan-y; user-select: none; }
+.wk__slide {
+  grid-area: 1 / 1;
+  transition: transform var(--cine-dur-move) var(--cine-ease-reveal), opacity var(--cine-dur-move) var(--cine-ease);
+}
+.wk__slide:not([data-shown]) { visibility: hidden; }
+.wk__slide[data-offset="0"] { z-index: 3; }
+.wk__slide[data-offset="1"] { z-index: 2; cursor: pointer; transform: translateX(var(--wk-flow-x)) rotateY(calc(-1 * var(--cine-flow-turn))) scale(var(--cine-flow-scale)); }
+.wk__slide[data-offset="-1"] { z-index: 2; cursor: pointer; transform: translateX(calc(-1 * var(--wk-flow-x))) rotateY(var(--cine-flow-turn)) scale(var(--cine-flow-scale)); }
+.wk__slide[data-offset="2"] { z-index: 1; opacity: 0; transform: translateX(calc(1.6 * var(--wk-flow-x))) scale(0.6); }
+.wk__slide[data-offset="-2"] { z-index: 1; opacity: 0; transform: translateX(calc(-1.6 * var(--wk-flow-x))) scale(0.6); }
+/* A side capture dims under a layer of the field itself (opacity only, so it composites). */
+.wk__slide .wk__device { position: relative; }
+.wk__slide .wk__device::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--cine-abyss);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--cine-dur-move) var(--cine-ease);
+}
+.wk__slide:not([data-offset="0"]) .wk__device::after { opacity: var(--cine-flow-dim); }
+
+.wk__controls { display: flex; justify-content: center; align-items: center; gap: var(--cine-space-2); margin-top: var(--cine-space-4); }
+.wk__reel:not([data-ready]) .wk__controls { visibility: hidden; }
+.wk__dots { display: flex; }
+.wk__step, .wk__dot { display: grid; place-items: center; width: var(--cine-target-min); height: var(--cine-target-min); border-radius: var(--cine-radius-pill); }
+.wk__step {
+  border: 1px solid var(--cine-edge);
+  background: var(--cine-glass-ink);
+  color: var(--cine-ink);
+  transition: background-color var(--cine-dur-hover) var(--cine-ease), border-color var(--cine-dur-hover) var(--cine-ease);
+}
+.wk__step:hover { border-color: var(--cine-edge-hover); background: var(--cine-glass-ink-hover); }
+.wk__step--next svg { scale: -1 1; }
+.wk__dot::before {
+  content: "";
+  width: var(--cine-space-2);
+  height: var(--cine-space-2);
+  border-radius: var(--cine-radius-pill);
+  background: var(--cine-faint);
+  transition: width var(--cine-dur-hover) var(--cine-ease), background-color var(--cine-dur-hover) var(--cine-ease);
+}
+.wk__dot[aria-selected="true"]::before { width: var(--cine-space-5); background: var(--cine-cyan); }
+.wk .wk__step:focus-visible, .wk .wk__dot:focus-visible { border-radius: var(--cine-radius-pill); }
+
+/* Reduced motion (the OS or the site's switch): a flat slider. Only the front capture shows; no turn, no movement. */
+@media (prefers-reduced-motion: reduce) {
+  .wk__slide, .wk__slide .wk__device::after { transition: none; }
+  .wk__slide:not([data-offset="0"]) { transform: none; visibility: hidden; }
+}
+[data-reduced-motion="true"] .wk__slide, [data-reduced-motion="true"] .wk__slide .wk__device::after { transition: none; }
+[data-reduced-motion="true"] .wk__slide:not([data-offset="0"]) { transform: none; visibility: hidden; }
+
+.wk__panel:is(:hover, :focus-within, :active) .wk__stage {
+  translate: 0 var(--cine-lift);
+  border-color: var(--cine-glass-accent-edge);
+  box-shadow: var(--cine-glow-lift);
+}
+@media (prefers-reduced-motion: reduce) {
+  .wk__panel:is(:hover, :focus-within, :active) .wk__stage { translate: none; }
+}
+[data-reduced-motion="true"] .wk__panel:is(:hover, :focus-within, :active) .wk__stage { translate: none; }
+
+/* ── Smaller screens: a phone capture is capped by the screen's width AND height (T Poker's tall screens no longer
+   take the whole view), the stage and the panel tighten, and the art-directed phone crops keep their own shape. ── */
+@media (max-width: 639px) {
+  .wk__head { padding-block: 40px 28px; }
+  .wk__panel { gap: var(--cine-space-5); }
+  .wk__line { margin-top: var(--cine-space-2); }
+  .wk__status { margin-top: var(--cine-space-4); }
+  .wk__links { margin-top: var(--cine-space-4); }
+  .wk__go { flex: 1 1 auto; justify-content: center; }
+  .wk__stage { padding: var(--cine-space-4) var(--cine-space-3); }
+  .wk__panel[data-kind="phone"] .wk__device,
+  .wk__panel[data-kind="phone"] .wk__reel .wk__device { width: min(190px, 48vw, calc(44svh * 0.46)); }
+  .wk__reel { --wk-flow-x: 50%; }
+  /* Only a capture with a phone crop carries this (Shot.tsx); every other keeps the ratio its width and height give,
+     reserved before it loads. (A blanket "auto" here dropped that reservation: CLS 0.017 on phones, measured.) */
+  .wk__device img[style] { aspect-ratio: var(--wk-ratio-phone); }
+}
