@@ -38,7 +38,7 @@ export default function WorkSlicePage() {
         <section aria-labelledby="wk-title">
           <header className="wk__head">
             <p className="wk__eyebrow" data-reveal>{dict.nav.work}</p>
-            <h1 id="wk-title" className="wk__title" data-reveal="settle">Four products, built end to end.</h1>
+            <h1 id="wk-title" className="wk__title" data-reveal="settle">Four projects, built end to end.</h1>
             <p className="wk__lede" data-reveal>{siteMeta.heroLead}</p>
           </header>
 

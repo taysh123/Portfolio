@@ -62,6 +62,10 @@ describe("honest content", () => {
     for (const t of [page, data, JSON.stringify(panels)]) expect(namesAny(t)).toBe(false);
     expect(JSON.stringify(panels)).not.toMatch(/\bAI\b|LLM|model/i);
   });
+  it("the title says projects, not products: not all four are shipped (Tay, round 5)", () => {
+    expect(page).toMatch(/<h1[^>]*>Four projects, built end to end\.<\/h1>/);
+    expect(page).not.toMatch(/Four products/);
+  });
   it("adds no figures of its own: every number shown is in the project's data", () => {
     for (const p of panels) for (const n of `${p.line} ${p.state}`.match(/\d[\d.,]*/g) ?? [])
       expect(JSON.stringify(project(p.id)), `${p.id}: ${n}`).toContain(n);
