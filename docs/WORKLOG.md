@@ -11,6 +11,85 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-18 — Session 7: M1 PR 3 (E lower half, TBS h3 tier) + the Email-me contrast guard (Claude Code)
+
+**Scope (Tay's brief):**
+- A, C, D and B are live. This session implements E; **F stays deferred and was not built.**
+- Task 1: an additive `tokens.test.ts` guard, approved. It is the only test change this session.
+- Task 2: Move E.
+- Task 3: `.tbs__word` onto the h3 tier.
+- CSS and tokens only.
+- Push a work branch and open a PR; no merge, no deploy.
+
+Skill: `superpowers:verification-before-completion`.
+
+### 1. Preconditions (VL)
+- `git fetch`: `origin/main` = **`f55fc45`**, PR #11 merged at 08:11:46Z. Production deployment `f55fc45`, status `success`.
+- Branch `feature/m1-lower-half` from `origin/main` (`--no-track`), then `npm ci`.
+
+### 2. Task 1: the guard (`4fffff5`)
+- In `tokens.test.ts`, one `it` inside the per-theme `describe.each`, so it runs in both themes.
+- It asserts that `--accent-solid` and `--accent-solid-hover` are each ≥ 3:1 against `--bg-raised` (where Contact's
+  "Email me" sits) and against `--bg`.
+- It uses the file's own `ratio()`. No existing floor was changed.
+- **Green** on `main`: 15/15 in the file.
+- **Red** with the pre-PR-#11 `globals.css` (`8f1dd5b`) swapped in temporarily: `expected 2.824454239779803 to be
+  greater than or equal to 3`. The working file was then restored with `git restore`.
+
+### 3. Task 2: Move E (`a4d0e99`)
+- **Two more:** each `.more-work__row` (class kept: `private-repo.spec.ts:51` locates it) is now a paper plate.
+  - The surface is `--bg-raised` with an 18px radius and the padding `clamp(1.5rem, 3vw, 2.25rem)`.
+  - The edges: B's key on the top edge and rim on the right, then a `--border-subtle` hairline ring. Static.
+  - It re-binds `--fg-subtle` to `--fg-subtle-raised`, as `.raised` does.
+  - The actions sit on each plate's floor (`margin-top: auto`), so the two rows line up side by side. The plates
+    stack on phones.
+  - The ruled rows' `border-top` is gone, and the grid gap is 12px, like the hero's plates.
+  - Copy and markup are unchanged. `MoreWork.tsx` changed only in its doc comment.
+- **About and Contact titles:** the `span { color: var(--fg-subtle) }` rules are deleted, so both lines are `--fg`
+  (plan §7).
+- **Measured** in Chromium:
+
+  | | Light | Dark |
+  |---|---|---|
+  | Context line and private-source label on the plate (floor 5.4) | 6.32 | 6.18 |
+  | Link on the plate | 6.82 | 8.16 |
+
+  Both title lines read `rgb(12, 13, 16)` in light and `rgb(242, 244, 248)` in dark.
+
+### 4. Task 3: Think · Build · Ship (`f9e6bed`)
+- `.tbs__word` changed from `clamp(1.75rem, 1.4rem + 1.2vw, 2.5rem)` / 1 / 620 / −0.035em to the plan's h3 tier:
+  `var(--text-h3)` / 1.2 / 600 / −0.02em.
+- **Measured:**
+
+  | Width | Title | Row words before | Row words after |
+  |---|---|---|---|
+  | 1440 | 42px | 39.68px | **26px** |
+  | 390 | 30px | 28px | **20.33px** |
+
+- **For the preview:** at 390 the word (20.33px, 600) sits close to `.tbs__line` (19px, 600). The plan's values were
+  kept, with no invention.
+
+### 5. Validation (code tree `f9e6bed`)
+| Command | Result |
+|---|---|
+| `npx next typegen` | ✓ Types generated |
+| `npm run typecheck` / `npm run lint` | exit 0 / exit 0 |
+| `npm test` (Git Bash) | **121/121** (14 files): 119 plus the new guard in two themes |
+| `npm run build` | exit 0 |
+| `GROQ_API_KEY= npx playwright test` | **132/132** (1.9 min), incl. `budget.spec.ts`, `private-repo.spec.ts`, axe in both themes at 1440/390 |
+| Budgets (`budget.spec.ts` method) | JS **181.79 KiB** gzip (= main; ≤ 205.7), HTML **156.44 KB** (= main; ≤ 568), CSS 16.75 → 16.76 KiB gzip |
+
+Before and after shots of Two more, About, Think · Build · Ship and Contact (1440/390, both themes) were taken in
+scratch and not committed.
+
+### 6. Docs
+- This entry.
+- START-HERE.
+- The status line in `docs/M1_VISUAL_PLAN.md`: E done, only F (optional) left.
+- CLAUDE.md: the state line and the last verified deployment.
+
+---
+
 ## 2026-11-18 — Session 6: M1 PR 2 (B studio light) + the dark "Email me" a11y fix (Claude Code)
 
 **Scope (Tay's brief):** Move B approved; E/F wait until B is previewed. Task 1: restore the dark "Email me" button's
