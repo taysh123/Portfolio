@@ -20,8 +20,9 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
 
 ## Where production code is (verified 2026-11-18)
 - **`main` is the source of truth.** Production = GitHub `taysh123/Portfolio` `main`; every merge deploys
-  via Vercel's GitHub integration (last verified: `536e34b`, 2026-11-18, PRs #8–#13). Cloudflare proxies the domain
-  and alters the live HTML (N7 in `docs/RESEARCH_AND_DECISIONS.md`); E2E can't see that. `origin` is
+  via Vercel's GitHub integration (last verified: `d80cb4c`, 2026-11-18, PRs #8–#14). Cloudflare proxies the domain
+  in front of Vercel (N7 in `docs/RESEARCH_AND_DECISIONS.md`). Its Web Analytics and Email Address Obfuscation are
+  off (Tay, 2026-11-18), and E2E can't see the edge, so check the live page with a browser `Accept` header. `origin` is
   `https://github.com/taysh123/Portfolio.git` (the old name `Tay-Shofer---Portfolio` redirects). The repo
   is **public**. Changes go through a branch and a PR; Tay merges. Claude pushes or opens a PR only when the
   brief says so, and never merges.
@@ -98,7 +99,7 @@ Verified gotchas (2026-11-18):
   old build. Serve manual checks on another port. On Windows, stopping a backgrounded `npx next start` can leave
   its `node` child holding the port: check `Get-NetTCPConnection -LocalPort <port> -State Listen` and stop that PID.
 - The Windows-only `tests/unit/site.test.ts:78` failure (N6) is fixed (`b4d5c73`, PR #7): the unit suite is
-  121/121 on Windows (`main` `536e34b`). Run `npm test` from Git Bash: a test shells out `git grep … || true`,
+  121/121 on Windows (`main` `d80cb4c`). Run `npm test` from Git Bash: a test shells out `git grep … || true`,
   and cmd.exe (PowerShell's child shell) has no `true`, so it fails there spuriously.
 - After leaving an old branch, run `npx next typegen` before `npm run typecheck` (stale `.next/types`).
 - The résumé PDF's exact byte size is pinned in `tests/e2e/lower.spec.ts`, and its size label is in
