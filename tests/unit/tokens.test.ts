@@ -35,6 +35,14 @@ describe.each([["dark", dark], ["light", light]] as const)("%s theme contrast fl
     expect(ratio("#ffffff", t["accent-solid"])).toBeGreaterThanOrEqual(4.5);
     expect(ratio("#ffffff", t["accent-solid-hover"])).toBeGreaterThanOrEqual(4.5);
   });
+  // WCAG 1.4.11: the solid fill is the "Email me" button's whole shape, so it must stand out from the page around it,
+  // at rest and on hover. Contact sits on --bg-raised; --bg is checked too. (Move A's dark #4f46e5 was 2.82:1 on raised.)
+  it("the solid accent stands out from the page (non-text ≥ 3:1, the Email me button)", () => {
+    for (const fill of [t["accent-solid"], t["accent-solid-hover"]]) {
+      expect(ratio(fill, t["bg-raised"])).toBeGreaterThanOrEqual(3);
+      expect(ratio(fill, t.bg)).toBeGreaterThanOrEqual(3);
+    }
+  });
 });
 
 
