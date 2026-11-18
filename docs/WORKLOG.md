@@ -11,6 +11,107 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-18 — Session 4: sync, D8 cleanup, N6, T Poker claim, M1 plan (Claude Code)
+
+**Scope (Tay's task list):** sync and verify what is live; update the state docs; delete merged branches;
+fix N6; verify `data/projects.ts:172`; recommend on N1/N2; write the M1 visual plan for approval. No push of
+work, no merge, no deploy, no guard test changed. Skills: `frontend-design` (M1),
+`superpowers:verification-before-completion` (evidence before every claim below).
+
+### 1. Sync and verify (VL)
+- `git fetch origin --prune`: local `main` = `origin/main` = **`841d062`** (merge of PR #5; `661dce1` is PR #4's merge).
+- `gh api "repos/taysh123/Portfolio/deployments?environment=Production&per_page=1"`: sha **`841d062`**,
+  created 06:02:57Z, status **`success`**. Previous: `661dce1` (06:02:29Z), `3f0c5e5` (2026-11-02).
+- `gh pr list --state all`: #4 merged 06:02:02Z (`661dce1`), #5 merged 06:02:13Z (`841d062`).
+  **#6 `docs/m0-closeout` is open** (the previous session's close-out docs). This session's doc updates are a
+  second commit on that branch, so they extend PR #6 instead of conflicting with it.
+
+### 2. D8: merged branches deleted (VL)
+Rule: tip is an ancestor of `origin/main` (`git merge-base --is-ancestor`, 0 ahead). Deleted: local
+`feature/premium-portfolio-redesign` (`3ab2cf8`); remote `docs/m0-audit` (`814e309`), `fix/content-accuracy`
+(`e105917`), `production/no-entrance` (`566904c`), `review/m10-final-preview-20261013` (`fddc36e`). All four
+remote ones are PR heads (#4, #5, #2, #3), restorable from each PR page. **Kept:**
+`reference/premium-redesign-package` (excluded), `docs/m0-closeout` (PR #6), and six remote branches with
+unique commits (`git cherry`). Full list in RESEARCH_AND_DECISIONS, "Resolved in session 4".
+
+### 3. Fixes on `fix/m0-followups` (from `origin/main` `841d062`, `--no-track`; not pushed)
+- **`b4d5c73` N6:** `tests/unit/site.test.ts:78` compares with `path.join("app", "api") + path.sep`.
+  - Red before: `npx vitest run tests/unit/site.test.ts`, 1 failed / 19 passed.
+  - Green after: 20/20.
+  - The new filter excludes only `app\api\chat\route.ts` (79 files scanned).
+  - A temporary probe `lib/__n6probe.ts` containing `GROQ_API_KEY` made the test fail (deleted right after).
+- **`37ba41c` T Poker copy (`data/projects.ts:172`):** verified against `taysh123/poker-home-games` @
+  `91d2b97` (the local clone equals GitHub `main`).
+  - "is completed after sign-in" became "reopens after sign-in": the app resumes onto the invite, never an
+    automatic join (`utils/pendingInvite.ts`).
+  - "guest progress carries into the new account" became "guest progress on that device is claimed into the
+    account—never over data the account already has" (`claimGuest{Study,Engagement,Persona,Bankroll}`).
+  - Cloud sync is gated off (`cloud_sync` is `comingSoon: true`), so `work.test.ts:25` still holds.
+  - The assistant prompt, metadata and `/privacy` don't carry this line.
+
+| Command (on `fix/m0-followups`) | Result |
+|---|---|
+| `npm run typecheck` / `npm run lint` | exit 0 / exit 0 |
+| `npm test` | **119/119** (14 files). The first fully green unit run on Windows |
+| `npm run build` | exit 0 |
+| `GROQ_API_KEY= npx playwright test` | **132/132** (1.9 min), exit 0 |
+
+### 4. New finding: N7, Cloudflare (VL)
+- For browser user agents, Cloudflare injects its Web Analytics beacon
+  (`static.cloudflareinsights.com/beacon.min.js`) into the live HTML. The CSP blocks it, and the console logs
+  the violation on every load.
+- Headers show `Server: cloudflare`, `CF-RAY …-TLV` and `x-vercel-id: fra1::iad1`. `/privacy` names only Vercel.
+- Not changed: DNS and CDN settings are Tay's. Recommendation in RESEARCH_AND_DECISIONS N7.
+
+### 5. M1 plan
+`docs/M1_VISUAL_PLAN.md`: mood, a described moodboard, an audit of the live site (screenshots at 1440 and 390
+in both themes; not committed), six independently approvable moves A–F, a token diff, contrast ratios, the
+type scale, layouts, a hero storyboard, the motion spec, and the tests each move touches. The ratios come
+from a scratch script using `tests/unit/tokens.test.ts`'s formula; every proposed pair clears its floor.
+
+### Push / PR commands (for Tay)
+```bash
+git push origin docs/m0-closeout     # adds this session's docs to PR #6
+gh pr edit 6 --repo taysh123/Portfolio --title "docs: M0 close-out, session 4 state, M1 visual plan" --body "Docs only. M0 close-out (PRs #4/#5 live at 841d062); session 4: D8 merged branches deleted, N6 and data/projects.ts:172 fixed on fix/m0-followups, N7 Cloudflare finding, N1/N2 recommendations; docs/M1_VISUAL_PLAN.md for approval (nothing implemented). 🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+
+git push -u origin fix/m0-followups
+gh pr create --repo taysh123/Portfolio --base main --head fix/m0-followups --title "N6 Windows test fix; T Poker guest-to-account wording matches the app" --body "b4d5c73: site.test.ts:78 is path-separator agnostic (fails on Windows only before; POSIX unchanged). 37ba41c: data/projects.ts:172 verified against poker-home-games@91d2b97 (invite reopens after sign-in, no auto-join; guest progress claimed on-device, never over account data). typecheck, lint, unit 119/119, build, Playwright 132/132. 🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+```
+Merging `fix/m0-followups` deploys to Production (the copy is visible in the T Poker case study). PR #6 is docs only.
+
+---
+
+## 2026-11-18 — M0 close-out: both PRs merged, `main` is the source of truth (Claude Code)
+
+**State at close:**
+- **Merged by Tay:** PR #4 (`docs/m0-audit` @ `814e309`, merge `661dce1`, 06:02:02Z) and PR #5
+  (`fix/content-accuracy` @ `e105917`, merge `841d062`, 06:02:13Z).
+- **Production:** deployed `841d062`, Vercel status success at 06:02:58Z.
+- **Local `main`:** at `841d062`, equal to `origin/main`. The folder works from `main` again; the stale
+  `reference/premium-redesign-package` is no longer checked out.
+
+**Live check (read-only `curl` of https://www.tayshofer.dev/), VL:**
+- No `github.com/taysh123/Gravity-Game` link in the page.
+- No "swappable detail".
+- The Contact label reads "two pages, 79 KB".
+- The Aegis and DeveloperOS repo links are still present.
+- `/resume/Tay-Shofer-Software-Engineer-Resume.pdf` is 80,593 bytes, byte-identical to `main`'s file, with
+  no `Gravity-Game` link.
+
+**Cleanup:**
+- Deleted the merged local branches `docs/m0-audit` and `fix/content-accuracy` (both tips verified as
+  ancestors of `main` first). Remote branches were left for Tay (D8).
+- Removed session scratch (the scratch PyMuPDF venv, PDF copies, logs, scripts), Playwright's ignored
+  `test-results/`, and the ignored `redesign-reference/…/next-env.d.ts` leftover from the old branch.
+- Kept: Tay's ignored `.preview/` screenshots, the empty pre-existing `New folder/`, and the `.next/`
+  build cache.
+- These final doc updates are on `docs/m0-closeout` (PR for Tay), so `main` stays clean.
+
+**Next:** M1, the Product Plates evolution (art direction, tokens, layouts, motion spec), when Tay asks.
+Open, non-blocking: D8, N1, N2, N4, N6, `data/projects.ts:172`, and the Context7 `/mcp` sign-in.
+
+---
+
 ## 2026-11-18 — Session 3: Context7, GRAVITY FLOW private, résumé link, M0 closed (Claude Code)
 
 **Scope:** Tay's go for Context7; N5 (the GRAVITY FLOW repo stays private, so fix the data); make PR #5
@@ -348,3 +449,7 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-18 | Session 3 | Context7 installed (user scope); `origin` set to `taysh123/Portfolio` | Claude Code config, `.git/config` |
 | 2026-11-18 | Session 3 | PR #5: GRAVITY FLOW repo marked private (`36f6001`); served résumé link removed, size label 79 KB (`e105917`) | `data/projects.ts:359`, `tests/unit/private-repo.test.ts`, `public/resume/*.pdf`, `lib/dict.ts`, `tests/e2e/lower.spec.ts` |
 | 2026-11-18 | Session 3 | M0 docs refreshed: N5 resolved, PRs #4/#5, Context7, résumé facts, E2E gotchas | `docs/*.md`, `claude/START-HERE.md`, `CLAUDE.md` |
+| 2026-11-18 | M0 close-out | PRs #4 and #5 merged by Tay and deployed (`841d062`); docs record the final state; merged local branches deleted | `docs/*.md`, `claude/START-HERE.md`, `CLAUDE.md` (branch `docs/m0-closeout`) |
+| 2026-11-18 | Session 4 | D8: one local and four remote merged branches deleted | git refs |
+| 2026-11-18 | Session 4 | N6 test fix (`b4d5c73`); T Poker guest-to-account wording (`37ba41c`) on `fix/m0-followups` | `tests/unit/site.test.ts`, `data/projects.ts:172` |
+| 2026-11-18 | Session 4 | M1 visual plan; state docs; N1/N2 recommendations; N7 Cloudflare finding | `docs/M1_VISUAL_PLAN.md`, `docs/*.md`, `claude/START-HERE.md`, `CLAUDE.md` |

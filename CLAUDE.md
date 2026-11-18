@@ -4,7 +4,7 @@
 
 Concise, durable instructions for every Claude Code session in this repo.
 Detailed material lives in `docs/`; this file stays short and points to it.
-First audit done 2026-11-18 (`docs/WORKLOG.md`). Keep refining this file with verified facts only.
+M0 (audit + decisions) closed 2026-11-18 (`docs/WORKLOG.md`). Keep refining this file with verified facts only.
 
 ## What this is
 Tay Shofer's existing, **live** software-engineering portfolio (https://www.tayshofer.dev/).
@@ -17,12 +17,13 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
 (open decisions + tool inventory).
 
 ## Where production code is (verified 2026-11-18)
-- Production = GitHub `taysh123/Portfolio` **`main`**, deployed by Vercel's GitHub integration
-  (`3f0c5e5` live since 2026-11-02). `origin` is `https://github.com/taysh123/Portfolio.git` (the old
-  name `Tay-Shofer---Portfolio` redirects). The repo is **public**. Open PRs: #4 (docs), #5 (content).
-- `reference/premium-redesign-package`, local `main` and local `feature/premium-portfolio-redesign`
-  are **stale** (Next 16.2.6, old names, institution label, private repo URLs). Never build, deploy,
-  or copy content from them.
+- **`main` is the source of truth.** Production = GitHub `taysh123/Portfolio` `main`; every merge deploys
+  via Vercel's GitHub integration (last verified: `841d062`, 2026-11-18, PRs #4 + #5). `origin` is
+  `https://github.com/taysh123/Portfolio.git` (the old name `Tay-Shofer---Portfolio` redirects). The repo
+  is **public**. Changes go through a branch and a PR; Tay pushes and merges.
+- `reference/premium-redesign-package` is **stale** (Next 16.2.6, old names, institution label, private
+  repo URLs). Never build, deploy, or copy content from it. (The local `feature/premium-portfolio-redesign`,
+  fully merged, was deleted 2026-11-18.)
 - Start live-site work from an up-to-date `origin/main` (needs `git fetch`; ask first in a read-only
   session), then `npm ci` so `node_modules/next/dist/docs` matches Next 16.3.8.
 - Check what is live, read-only: `gh api "repos/taysh123/Portfolio/deployments?environment=Production&per_page=1"`.
@@ -84,7 +85,7 @@ Verified gotchas (2026-11-18):
 - Run E2E as `GROQ_API_KEY= npx playwright test`. `.env.local` holds a real key, and the chat specs expect
   the keyless offline path; a pre-set empty var stops Next loading the key.
 - Playwright 1.62.1 needs Chromium v1234 (`npx playwright install chromium`).
-- `tests/unit/site.test.ts:78` fails on Windows only (path separators, N6).
+- `tests/unit/site.test.ts:78` fails on Windows only (path separators, N6) until `fix/m0-followups` (`b4d5c73`) merges.
 - After leaving an old branch, run `npx next typegen` before `npm run typecheck` (stale `.next/types`).
 - The résumé PDF's exact byte size is pinned in `tests/e2e/lower.spec.ts`, and its size label is in
   `lib/dict.ts` (`resumeNote`). Update both whenever the PDF changes.
