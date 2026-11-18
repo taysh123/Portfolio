@@ -24,7 +24,10 @@ export default function HeroAPage() {
   const { siteMeta, availability, heroIndex, t } = getContent();
   return (
     <div className="hxa" data-theme="dark">
-      <div className="hxa__sky" aria-hidden="true" />
+      <div className="hxa__sky" aria-hidden="true">
+        <span className="hxa__glow hxa__glow--cyan" />
+        <span className="hxa__glow hxa__glow--violet" />
+      </div>
       <Constellation />
 
       <header className="hxa__top shell">
@@ -64,7 +67,7 @@ export default function HeroAPage() {
               Explore my work<span aria-hidden="true">↗</span>
             </Link>
             <a href={resume.href} download={resume.fileName} type="application/pdf" className="hxa__btn hxa__btn--ghost">
-              Download CV<span aria-hidden="true">↓</span>
+              Download résumé<span aria-hidden="true">↓</span>
               <span className="sr-only"> (PDF{t.contact.resumeNote})</span>
             </a>
           </div>

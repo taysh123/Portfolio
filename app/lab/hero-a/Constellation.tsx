@@ -10,12 +10,17 @@ import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
  * What makes it alive (round 2, Tay's feedback: "too calm"):
  *   - every node twinkles: a slow pulse of its radius (4–10 s a cycle, each its own phase), and the bright nodes' halos
  *     breathe with it;
- *   - signals: now and then a faint duotone pulse travels along a real link, one to three hops, brightening the link
- *     it rides and flashing the node it reaches. Capped (3 at once, 2 on the light path) and rare (one every
- *     1.6–3.2 s, 3–5.5 s on the light path);
+ *   - signals: now and then a duotone pulse travels along a real link, one to three hops (a third of them one more),
+ *     brightening the link it rides and flashing the node it reaches. Capped (4 at once, 2 on the light path) and
+ *     spaced (one every 1.4–2.8 s, 2.6–4.6 s on the light path). Round 3 (Tay: "still a touch calm") gave them more
+ *     presence: more often, a longer and thicker tail, a larger head, a brighter link;
  *   - a mouse or pen softly gathers the nearby nodes (a pull that fades to nothing at the centre; nothing is pushed
  *     away), brightens the links around it and carries a faint glow. Touch is ignored, so scrolling a phone never tugs
  *     the field.
+ *
+ *   - the sky breathes (round 3): the same clock drifts the two CSS glows (.hxa__glow) by transform and opacity, five
+ *     times a second. Measured: a CSS animation of the same drift cost +5.3 pp of main thread on the 4× phone profile;
+ *     at 5 Hz it rides the loop's own frames, and it stops with the loop.
  *
  * Decoration only: aria-hidden, pointer-events: none, and the page reads the same without it.
  *
@@ -45,6 +50,7 @@ const RING = 100;          // inside this, the pull fades out (it never pushes)
 const PULL = 20;           // px/s²: against the 0.8/s relax, an inward drift of about 25 px/s, like the field's own
 const TETHER = 150;        // the pointer links to nodes this close
 const FAINT = 0.12;        // links fainter than this (1 - distance / reach) are not drawn
+const SKY_STEP = 0.2;      // s between glow updates (5 Hz)
 
 type Node = {
   x: number; y: number; vx: number; vy: number; bx: number; by: number;
@@ -88,10 +94,12 @@ export function Constellation() {
     const pulses: Pulse[] = [];
     let hue = new Uint8Array(0);
     const pointer = { x: 0, y: 0, on: false, k: 0 };
+    const [skyCyan, skyViolet] = host.querySelectorAll<HTMLElement>(".hxa__glow");
+    let skyAt = -SKY_STEP;
 
     const spawn = (): Node => {
       const a = Math.random() * Math.PI * 2;
-      const s = light ? 5 + Math.random() * 9 : 7 + Math.random() * 11;   // px a second
+      const s = light ? 5 + Math.random() * 9 : 8 + Math.random() * 12;   // px a second
       const bx = Math.cos(a) * s, by = Math.sin(a) * s;
       return { x: Math.random() * w, y: Math.random() * h, vx: bx, vy: by, bx, by, r: 0.7 + Math.random() * 1.2,
         bright: Math.random() < 0.12, phase: Math.random() * Math.PI * 2, tw: 0.6 + Math.random() * 1, flash: 0 };
@@ -133,7 +141,7 @@ export function Constellation() {
       strokes = bucket(linkMax); hotStrokes = bucket(hotMax);
       floor = light ? 22 : 40;
       target = clamp(Math.round((w * h) / (light ? 15000 : 10000)), floor, light ? 48 : 140);
-      maxPulses = light ? 2 : 3; gapMin = light ? 3 : 1.6; gapMax = light ? 5.5 : 3.2; signalSpeed = light ? 65 : 80;
+      maxPulses = light ? 2 : 4; gapMin = light ? 2.6 : 1.4; gapMax = light ? 4.6 : 2.8; signalSpeed = light ? 65 : 80;
       if (ow && oh) for (const n of nodes) { n.x *= w / ow; n.y *= h / oh; }
       fit();
     };
@@ -157,7 +165,7 @@ export function Constellation() {
         if (!light && nodes[a].x < w * 0.4 && tries < 6) continue;
         const b = neighbour(a, -1);
         if (b < 0) continue;
-        pulses.push({ path: [a, b], hop: 0, p: 0, hops: 1 + ((Math.random() * 3) | 0) });
+        pulses.push({ path: [a, b], hop: 0, p: 0, hops: 1 + ((Math.random() * 3) | 0) + (Math.random() < 0.35 ? 1 : 0) });
         setPulses();
         return;
       }
@@ -242,7 +250,7 @@ export function Constellation() {
       for (const s of pulses) {
         const ai = s.path[s.hop], bi = s.path[s.hop + 1], a = nodes[ai], b = nodes[bi];
         const env = envelope(s);
-        hot[((hue[ai] + hue[bi]) >> 1) * ALPHAS + Math.min(ALPHAS - 1, (env * 0.7 * ALPHAS) | 0)].push(a.x, a.y, b.x, b.y);
+        hot[((hue[ai] + hue[bi]) >> 1) * ALPHAS + Math.min(ALPHAS - 1, (env * 0.85 * ALPHAS) | 0)].push(a.x, a.y, b.x, b.y);
       }
       const stroke = (from: number[][], styles: string[], width: number) => {
         ctx.lineWidth = width;
@@ -290,18 +298,30 @@ export function Constellation() {
       // Signal heads: a short bright tail behind a soft head.
       for (const s of pulses) {
         const ai = s.path[s.hop], bi = s.path[s.hop + 1], a = nodes[ai], b = nodes[bi];
-        const t = ease(s.p), tail = ease(Math.max(0, s.p - 0.2));
+        const t = ease(s.p), tail = ease(Math.max(0, s.p - 0.3));
         const hx = a.x + (b.x - a.x) * t, hy = a.y + (b.y - a.y) * t;
         const k = hue[t < 0.5 ? ai : bi], env = envelope(s);
         ctx.globalAlpha = env;
         ctx.strokeStyle = hotStrokes[k * ALPHAS + ALPHAS - 1];
-        ctx.lineWidth = 1.4;
+        ctx.lineWidth = 1.7;
         ctx.beginPath(); ctx.moveTo(a.x + (b.x - a.x) * tail, a.y + (b.y - a.y) * tail); ctx.lineTo(hx, hy); ctx.stroke();
-        ctx.drawImage(sprites[k], hx - SPRITE * 0.45, hy - SPRITE * 0.45, SPRITE * 0.9, SPRITE * 0.9);
+        ctx.drawImage(sprites[k], hx - SPRITE * 0.6, hy - SPRITE * 0.6, SPRITE * 1.2, SPRITE * 1.2);
         ctx.fillStyle = fills[k];
-        ctx.beginPath(); ctx.arc(hx, hy, 1.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(hx, hy, 1.8, 0, Math.PI * 2); ctx.fill();
       }
       ctx.globalAlpha = 1;
+    };
+    /** The glows' slow drift and breathe: ping-pong, eased (a cosine), 26 s and 34 s each way. Transform and opacity
+     *  only, ≤ 5 times a second; opacity never above 1. */
+    const breathe = () => {
+      if (clock - skyAt < SKY_STEP || !skyCyan || !skyViolet) return;
+      skyAt = clock;
+      const u = 0.5 - 0.5 * Math.cos((Math.PI * clock) / 26);
+      const v = 0.5 - 0.5 * Math.cos((Math.PI * (clock + 9)) / 34);
+      skyCyan.style.transform = `translate3d(${(-3 * u).toFixed(3)}%, ${(4 * u).toFixed(3)}%, 0) scale(${(1 + 0.06 * u).toFixed(4)})`;
+      skyCyan.style.opacity = (1 - 0.2 * u).toFixed(3);
+      skyViolet.style.transform = `translate3d(${(3 * v).toFixed(3)}%, ${(-3 * v).toFixed(3)}%, 0) scale(${(1.05 - 0.05 * v).toFixed(4)})`;
+      skyViolet.style.opacity = (0.82 + 0.18 * v).toFixed(3);
     };
     /** A signal fades in on its first hop and out on its last, so it never pops. */
     const envelope = (s: Pulse) => {
@@ -316,6 +336,7 @@ export function Constellation() {
     if (still) {
       draw();
       canvas.dataset.state = "static";
+      for (const g of [skyCyan, skyViolet]) if (g) { g.style.transform = ""; g.style.opacity = ""; }   // the glows at rest
       setPulses();
       const ro = new ResizeObserver(() => { size(); draw(); });
       ro.observe(host);
@@ -331,7 +352,7 @@ export function Constellation() {
       const dt = last ? Math.min((t - last) / 1000, 0.05) : 1 / 60;
       last = t;
       const t0 = performance.now();
-      step(dt); draw();
+      step(dt); draw(); breathe();
       cost = cost * 0.9 + (performance.now() - t0) * 0.1;
       if (++frames % 90 === 0 && cost > COST_BUDGET_MS && nodes.length > floor) {
         target = Math.max(floor, Math.round(nodes.length * (5 / 6)));

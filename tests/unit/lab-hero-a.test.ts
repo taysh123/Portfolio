@@ -37,6 +37,8 @@ describe("honest content", () => {
     expect(page).toMatch(/heroIndex\.map/);
     expect(page).toMatch(/\{x\.state\}/);
     expect(page).toMatch(/href=\{resume\.href\} download=\{resume\.fileName\}/);
+    expect(page).toMatch(/Download résumé<span aria-hidden="true">↓<\/span>/);   // Tay, round 3: résumé, not CV
+    expect(page).not.toMatch(/Download CV/);
   });
 });
 
@@ -74,7 +76,8 @@ describe("progressive enhancement", () => {
   });
   it("round 2's life stays bounded: the phone frame cap, capped and rare signals, a pull that never pushes", () => {
     expect(field).toMatch(/t - last < \(light \? 30 : 12\)/);                       // ≤ ~30 draws a second on the light path
-    expect(field).toMatch(/maxPulses = light \? 2 : 3; gapMin = light \? 3 : 1\.6; gapMax = light \? 5\.5 : 3\.2;/);
+    expect(field).toMatch(/maxPulses = light \? 2 : 4; gapMin = light \? 2\.6 : 1\.4; gapMax = light \? 4\.6 : 2\.8;/);
+    expect(field).toMatch(/hops: 1 \+ \(\(Math\.random\(\) \* 3\) \| 0\) \+ \(Math\.random\(\) < 0\.35 \? 1 : 0\)/);   // ≤ 4 hops
     expect(field).toMatch(/if \(pulses\.length < maxPulses && nodes\.length > 1\) launch\(\);/);
     // The pointer's force is the pull times a non-negative fade: no repel term anywhere.
     expect(field).toMatch(/const f = \(1 - d \/ POINTER_R\) \* PULL \* soft \* soft \* pointer\.k \* dt;/);
@@ -89,6 +92,23 @@ describe("progressive enhancement", () => {
     expect(css).toMatch(/\n\.hxa__title \{ animation-name: hxa-settle; \}/);
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\n\s+\.hxa__top, [^{]+\{ animation: none; \}/);
     expect(css).toMatch(/\[data-reduced-motion="true"\] :is\(\.hxa__top,[^)]+\) \{ animation: none; \}/);
+  });
+  it("the glows drift and breathe from the field's clock: transform and opacity only, 5 Hz, never brighter, never with reduced motion", () => {
+    // No CSS animation: measured, it cost +5.3 pp of phone main thread. The loop drives them instead.
+    expect(css).not.toMatch(/@keyframes hxa-breathe|\.hxa__glow[^{]*\{[^}]*animation/);
+    expect(field).toMatch(/const SKY_STEP = 0\.2;/);
+    expect(field).toMatch(/if \(clock - skyAt < SKY_STEP \|\| !skyCyan \|\| !skyViolet\) return;/);
+    const body = field.slice(field.indexOf("const breathe = () => {"), field.indexOf("/** A signal fades in"));
+    expect([...body.matchAll(/sky\w+\.style\.(\w+) =/g)].map((m) => m[1]).sort()).toEqual(["opacity", "opacity", "transform", "transform"]);
+    // u, v ∈ [0, 1] (a raised cosine), so both opacities stay within [0.8, 1]: never above the static peak.
+    expect(body).toMatch(/skyCyan\.style\.opacity = \(1 - 0\.2 \* u\)/);
+    expect(body).toMatch(/skyViolet\.style\.opacity = \(0\.82 \+ 0\.18 \* v\)/);
+    expect(body.match(/0\.5 - 0\.5 \* Math\.cos/g)).toHaveLength(2);
+    // Only the running loop breathes; the still frame puts the glows back at rest.
+    expect(field).toMatch(/step\(dt\); draw\(\); breathe\(\);/);
+    const still = field.slice(field.indexOf("if (still) {"), field.indexOf("let raf = 0"));
+    expect(still).not.toMatch(/breathe\(/);
+    expect(still).toMatch(/g\.style\.transform = ""; g\.style\.opacity = "";/);
   });
   it("every rule outside the .hxa scope only applies while the prototype is in the page", () => {
     // Every selector, at-rule blocks included (each `selector {`), split on its top-level commas.

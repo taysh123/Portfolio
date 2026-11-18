@@ -69,7 +69,7 @@ test("without JavaScript: every word and action is in the HTML, visible, and wor
   await expect(page.getByText("Available for opportunities")).toBeVisible();
   await expect(page.getByText("Software Engineer", { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Explore my work" })).toHaveAttribute("href", "/#work");
-  const cv = page.getByRole("link", { name: /^Download CV/ });
+  const cv = page.getByRole("link", { name: /^Download résumé/ });
   await expect(cv).toHaveAttribute("href", "/resume/Tay-Shofer-Software-Engineer-Resume.pdf");
   await expect(cv).toHaveAttribute("download", "Tay-Shofer-Software-Engineer-Resume.pdf");
   const nav = page.getByRole("navigation", { name: "Featured work" });
@@ -112,6 +112,7 @@ for (const [name, opts] of [["the OS setting", { reducedMotion: "reduce" }], ["t
     await page.mouse.move(1000, 400); await page.mouse.move(1100, 450);
     expect(await rafCount(page)).toBe(0);
     expect(await page.locator(".hxa__title").evaluate((e) => e.getAnimations().length)).toBe(0);
+    expect(await page.locator(".hxa__glow").evaluateAll((gs) => gs.map((g) => g.style.transform + g.style.opacity))).toEqual(["", ""]);   // the glows rest
     expect(await page.locator(".hxa__featured").evaluate((e) => getComputedStyle(e).opacity)).toBe("1");
     await ctx.close();
   });
@@ -121,10 +122,18 @@ test("motion on: the loop runs, and stops while the tab is hidden or the field i
   const { ctx, page, errors } = await at(browser, [1440, 900], { reducedMotion: "no-preference" });
   await expect(field(page)).toHaveAttribute("data-state", "running");
   expect(await rafCount(page, 600)).toBeGreaterThan(10);
+  // The glows drift and breathe with the loop (transform and opacity, 5 Hz), and never run as a CSS animation.
+  const sky = () => page.locator(".hxa__glow").evaluateAll((gs) => gs.map((g) => `${g.style.transform}|${g.style.opacity}`));
+  const s0 = await sky(); await page.waitForTimeout(1200); const s1 = await sky();
+  expect(s0.every((x) => x.startsWith("translate3d("))).toBe(true);
+  expect(s1).not.toEqual(s0);
+  expect(await page.locator(".hxa__glow").evaluateAll((gs) => gs.map((g) => g.getAnimations().length))).toEqual([0, 0]);
+  for (const o of s1.map((x) => Number(x.split("|")[1]))) expect(o).toBeLessThanOrEqual(1);
   // Hidden tab.
   await page.evaluate(() => { Object.defineProperty(document, "hidden", { configurable: true, get: () => true }); document.dispatchEvent(new Event("visibilitychange")); });
   await expect(field(page)).toHaveAttribute("data-state", "paused");
   expect(await rafCount(page, 600)).toBe(0);
+  const held = await sky(); await page.waitForTimeout(600); expect(await sky()).toEqual(held);   // the sky stops with the loop
   await page.evaluate(() => { Object.defineProperty(document, "hidden", { configurable: true, get: () => false }); document.dispatchEvent(new Event("visibilitychange")); });
   await expect(field(page)).toHaveAttribute("data-state", "running");
   // Off screen: give the page room to scroll the hero away, then come back.
@@ -141,7 +150,7 @@ test("motion on: the loop runs, and stops while the tab is hidden or the field i
   await ctx.close();
 });
 
-for (const [vp, cap] of [[[1440, 900], 3], [[390, 844], 2]] as const) {
+for (const [vp, cap] of [[[1440, 900], 4], [[390, 844], 2]] as const) {
   test(`${vp[0]}×${vp[1]}: signals travel now and then, never more than ${cap} at once`, async ({ browser }) => {
     const { ctx, page, errors } = await at(browser, vp, { reducedMotion: "no-preference" });
     const seen = await page.evaluate(async () => {
@@ -188,7 +197,7 @@ test("keyboard: every control takes focus in reading order, each with a visible 
   for (const s of seen) expect(s.ring, s.at).toBe("solid 2px rgb(46, 230, 214)");
   // Names as assistive tech computes them, separate words included.
   await expect(page.getByRole("link", { name: "Tay Shofer Portfolio", exact: true })).toHaveCount(1);
-  await expect(page.getByRole("link", { name: "Download CV (PDF · two pages, 79 KB)", exact: true })).toHaveCount(1);
+  await expect(page.getByRole("link", { name: "Download résumé (PDF · two pages, 79 KB)", exact: true })).toHaveCount(1);
   await ctx.close();
 });
 

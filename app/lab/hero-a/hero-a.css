@@ -65,12 +65,33 @@ body:has(.hxa) .chat-launcher {
   position: absolute;
   inset: 0;
   z-index: -2;
+  overflow: hidden;
   pointer-events: none;
-  background:
-    radial-gradient(130% 100% at 50% 45%, transparent 52%, rgba(0, 0, 0, 0.6) 100%),
-    radial-gradient(55% 60% at 92% 4%, rgba(46, 230, 214, 0.17), transparent 70%),
-    radial-gradient(60% 65% at 4% 100%, rgba(155, 107, 255, 0.2), transparent 72%),
-    linear-gradient(180deg, var(--hxa-abyss) 0%, var(--hxa-navy) 100%);
+  background: linear-gradient(180deg, var(--hxa-abyss) 0%, var(--hxa-navy) 100%);
+}
+/* The vignette sits over the glows. */
+.hxa__sky::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(130% 100% at 50% 45%, transparent 52%, rgba(0, 0, 0, 0.6) 100%);
+}
+/* Each glow is its own layer: the same ellipse as before (cyan centred at 92% 4%, violet at 4% 100%). The field's
+   clock (Constellation.tsx) drifts and breathes them by transform and opacity only, five times a second: large, slow
+   and low (about 3% of travel, 6% of scale, over 26–34 s). A CSS animation was tried first and measured: Chrome
+   serviced it on the main thread every frame, +5.3 pp on the 4× phone profile. At this speed a 5 Hz step is under
+   half a pixel of a blurred edge. Opacity only ever dims (≤ 1), so the peak alpha, and the contrast floors measured
+   against it, are unchanged. With no JS, or reduced motion, they rest here, as before. No will-change: the first
+   translate3d() promotes each glow after first paint, so the first paint carries no extra layers (measured: with it,
+   2 of 5 desktop LCPs ran ~40 ms late), and a still page never gets them. */
+.hxa__glow { position: absolute; }
+.hxa__glow--cyan {
+  left: 53.5%; top: -38%; width: 77%; height: 84%;
+  background: radial-gradient(closest-side, rgba(46, 230, 214, 0.17), transparent);
+}
+.hxa__glow--violet {
+  left: -39.2%; top: 53.2%; width: 86.4%; height: 93.6%;
+  background: radial-gradient(closest-side, rgba(155, 107, 255, 0.2), transparent);
 }
 
 /* ── The field (Constellation.tsx): behind everything, strongest where the copy isn't (the right; on phones, the top
