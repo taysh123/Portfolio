@@ -251,8 +251,47 @@ rounds. So only the interleaved comparison counts, not the absolute numbers agai
     the cap is 4 on desktop; the glows move with the loop, stop with it and rest under reduced motion.
 - The guard files are still identical to `origin/main`.
 
+### 12. Round 3 pushed; round 4, the cinematic system extracted (2026-11-19) (VL)
+- Round 3 was pushed on Tay's go (`ca81fc4`). The Preview rebuilt (Vercel success). Production stayed on `a7a89fd`.
+- **The layer:** `app/lab/_cinematic/cinematic.css`, documented in `docs/CINEMATIC_SYSTEM.md`.
+  - Extracted from the locked hero, value for value: colours (two bases, three inks, cyan / violet, the status dot as
+    the brand cyan), glass and glow surfaces, Geist type (sizes, weights, leading, tracking), spacing steps, control
+    heights, radii and motion tokens.
+  - Plus the scope chrome, the focus ring, `.cine-duotone-text` and the one reveal (`[data-reveal]`, with `settle`
+    for the largest paint).
+  - Only `app/lab/layout.tsx` imports it, and every selector needs a `.cine` root (or `:has(.cine)`).
+- **The hero is its first consumer:**
+  - root `cine hxa`;
+  - six `data-reveal` blocks (the H1 `settle`);
+  - `hero-a.css` keeps only its geometry, with no hex and no local tokens;
+  - the canvas's and the SVG mark's colours are pinned to the layer by a test.
+- **Proof the hero is unchanged.**
+  - Before and after builds compared: every element's and pseudo-element's computed style in 5 modes (reduced motion
+    1440 and 390, no JS, motion on, high contrast), and full-page pixels with the random canvas hidden.
+  - **0 of 163,871 computed values differ, and 0 pixels differ.**
+- **Found and fixed: a branch-only leak into `/`'s stylesheet.**
+  - Since round 1, a comment in `tests/unit/lab-hero-a.test.ts` held a literal utility name.
+  - Tailwind scans `tests/`, and so added one rule (21 bytes) to the global stylesheet of this branch's build.
+  - The comment is reworded. Both of `/`'s stylesheets are now byte-identical to `origin/main`'s.
+  - The doc records the rule: never write utility names in lab files; docs go in `docs/`.
+- **`/` against `origin/main`** (scratch worktree build):
+  - every source `/` imports is identical (`git diff`);
+  - both stylesheets are byte-identical;
+  - the markup is identical with script tags and chunk paths masked.
+  - What remains is round 1's bundle split: the same JavaScript in 10 chunks instead of 9 (+180 bytes raw). It comes
+    from a second route existing, and only in this branch's build.
+- **Against the branch before this task:** every script on `/` is byte-identical. The stylesheet changed only by
+  losing that stray rule.
+- Validation:
+  - `npm test` **148/148** (`tokens.test.ts` 15/15);
+  - typecheck and lint exit 0;
+  - `npm run build`, then `GROQ_API_KEY= npx playwright test`: **150/150**. axe: 0 violations with motion on and off.
+  - The guard files, `app/globals.css`, `lib/tokens.ts`, the root layout, `/` and every live source are identical to
+    `origin/main`.
+  - First-load JS for `/lab/hero-a` is unchanged at 183.71 KiB.
+
 ### Waiting on Tay
-- Decide whether Concept A goes further. Round 3 is committed locally, not pushed: pushing updates PR #18's Preview.
+- Decide whether Concept A goes further. Round 4 is committed locally, not pushed: pushing updates PR #18's Preview.
 - On `main`, the next close-out should record "D2 reopened for a measured prototype" in RESEARCH_AND_DECISIONS. This
   branch is never merged.
 
