@@ -14,14 +14,14 @@ export const brand = {
   fgLight: "#0c0d10",
   fgMutedLight: "#434852",
   fgSubtleLight: "#5a606b",
-  accentLight: "#1a4fe0",
+  accentLight: "#4a3fe0",
 
   /** The dark theme's field and inks. */
   bg: "#0b0c0f",
   fg: "#f2f4f8",
   fgMuted: "#a3abb9",
   fgSubtle: "#8a93a3",
-  accent: "#5b9cff",
+  accent: "#a5a8ff",
 
   /** The four plates. */
   platePoker: "#0a1322",

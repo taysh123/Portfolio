@@ -265,12 +265,12 @@ for (const vp of [[1440, 900], [390, 844]] as const) {
   });
 }
 
-test("the focus ring is the solid accent: ink-blue on paper, light blue on a dark plate", async ({ page }) => {
+test("the focus ring is the solid accent: iris on paper, light iris on a dark plate", async ({ page }) => {
   await page.goto("/");
   const hero = page.getByRole("link", { name: "See the work" }); await hero.focus();
-  expect(await hero.evaluate((e) => getComputedStyle(e).outlineColor)).toBe("rgb(26, 79, 224)");
+  expect(await hero.evaluate((e) => getComputedStyle(e).outlineColor)).toBe("rgb(74, 63, 224)");
   const store = page.locator("#work-poker a[href*='apps.apple.com']"); await store.focus();
-  expect(await store.evaluate((e) => getComputedStyle(e).outlineColor)).toBe("rgb(143, 180, 255)");
+  expect(await store.evaluate((e) => getComputedStyle(e).outlineColor)).toBe("rgb(177, 180, 255)");
 });
 
 test("every external link opens safely and says so", async ({ page }) => {

@@ -49,14 +49,14 @@
   --border: rgba(12, 13, 16, 0.12);
   --border-strong: rgba(12, 13, 16, 0.22);
 
-  /* ── Accent (interaction) ── 5.9:1 on paper; white on the solid 6.5:1 */
-  --accent: #1a4fe0;
-  --accent-hover: #1442c2;
-  --accent-solid: #1a4fe0;
-  --accent-solid-hover: #1442c2;
-  --accent-soft: rgba(26, 79, 224, 0.10);
-  --accent-line: rgba(26, 79, 224, 0.30);
-  --accent-ring: rgba(26, 79, 224, 0.55);
+  /* ── Accent (interaction) ── iris (M1 A): what you can touch. Never decoration. */
+  --accent: #4a3fe0;              /* iris: 6.2:1 on paper, 6.8:1 on white, 5.6:1 on Aegis steel */
+  --accent-hover: #3f35c9;
+  --accent-solid: #4a3fe0;        /* white 6.8:1 */
+  --accent-solid-hover: #3f35c9;  /* white 8.2:1 */
+  --accent-soft: rgba(74, 63, 224, 0.10);
+  --accent-line: rgba(74, 63, 224, 0.30);
+  --accent-ring: rgba(74, 63, 224, 0.55);
   --accent-contrast: #ffffff;
   /* The primary button is ink on paper; on a dark plate or the dark theme it turns to paper. */
   --ink-solid: #0c0d10;
@@ -93,11 +93,13 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 
-  /* ── Type ── Geist; display ≤ 5rem, tracking never tighter than −0.04em */
+  /* ── Type ── Geist; display ≤ 5rem, tracking never tighter than −0.04em. Two heading tiers (M1 C): the four
+     products speak at chapter volume; every paper section shares the one --text-h2 voice (600, --tracking-heading). */
   --text-display: clamp(2.5rem, 1.6rem + 3.9vw, 5rem);
-  --text-h2: clamp(2.25rem, 1.5rem + 3vw, 4rem);
-  --text-h3: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
-  --text-lead: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
+  --text-chapter: clamp(2.25rem, 1.5rem + 3vw, 4rem);       /* 36→64: the four products (the old h2) */
+  --text-h2: clamp(1.875rem, 1.45rem + 1.7vw, 2.625rem);     /* 30→42: every paper section */
+  --text-h3: clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);       /* 20→26 */
+  --text-lead: clamp(1.125rem, 1.03rem + 0.4vw, 1.3125rem);  /* 18→21 */
   --tracking-display: -0.04em;
   --tracking-heading: -0.03em;
 
@@ -108,11 +110,14 @@
   --nav-h: 4rem;
   --section-y: clamp(4.5rem, 9vw, 7.5rem);
 
-  /* ── Motion ── */
+  /* ── Motion ── (M1 D) The CSS side of lib/motion.ts's DUR. */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.2, 0.9, 0.25, 1);
+  --dur-fast: 180ms;     /* = lib/motion.ts DUR.fast; the chrome's literal 180/200ms moved onto it */
   --dur-mid: 320ms;
   --dur-slow: 520ms;
+  --dur-light: 700ms;    /* the hero's lights-up, once (move B) */
+  --stagger: 70ms;       /* between the hero plates' lights (move B) */
 }
 
 [data-theme="dark"] {
@@ -137,13 +142,13 @@
   --border: rgba(255, 255, 255, 0.11);
   --border-strong: rgba(255, 255, 255, 0.2);
 
-  --accent: #5b9cff;
-  --accent-hover: #7fb0ff;
-  --accent-solid: #2563eb;        /* white 5.2:1 */
-  --accent-solid-hover: #1d4fd0;
-  --accent-soft: rgba(91, 156, 255, 0.13);
-  --accent-line: rgba(91, 156, 255, 0.34);
-  --accent-ring: rgba(91, 156, 255, 0.6);
+  --accent: #a5a8ff;              /* 9.0:1 on ink, 8.2:1 raised */
+  --accent-hover: #b1b4ff;
+  --accent-solid: #4f46e5;        /* white 6.3:1 */
+  --accent-solid-hover: #4338ca;  /* white 7.9:1 */
+  --accent-soft: rgba(165, 168, 255, 0.13);
+  --accent-line: rgba(165, 168, 255, 0.34);
+  --accent-ring: rgba(165, 168, 255, 0.6);
   --accent-contrast: #0b0c0f;
   --ink-solid: #f2f4f8;
   --ink-solid-hover: #ffffff;
@@ -175,22 +180,22 @@
 .plate[data-plate="poker"][data-plate] {
   --bg: var(--plate-poker); --bg-raised: var(--plate-poker-2); --surface-1: var(--plate-poker-2); --surface-2: var(--plate-poker-2);
   --fg: #e9eef7; --fg-muted: #a9b6cb; --fg-subtle: #8f9db4; --fg-subtle-raised: #a9b6cb;
-  --accent: #8fb4ff;
+  --accent: #b1b4ff;    /* 9.6:1 on navy */
 }
 .plate[data-plate="aegis"][data-plate] { --bg: var(--plate-aegis); }
-[data-theme="light"] .plate[data-plate="aegis"][data-plate] { --fg-muted: #434852; --fg-subtle: #555b66; --accent: #1a4fe0; }
-[data-theme="dark"] .plate[data-plate="aegis"][data-plate] { --fg: #ffffff; --fg-muted: #adb5c2; --fg-subtle: #98a2b2; --accent: #6aa5ff; --alert-mark: #ee7a30; }
+[data-theme="light"] .plate[data-plate="aegis"][data-plate] { --fg-muted: #434852; --fg-subtle: #555b66; --accent: #4a3fe0; }   /* 5.6:1 on steel */
+[data-theme="dark"] .plate[data-plate="aegis"][data-plate] { --fg: #ffffff; --fg-muted: #adb5c2; --fg-subtle: #98a2b2; --accent: #b1b4ff; --alert-mark: #ee7a30; }   /* 8.2:1 on blue steel */
 .plate[data-plate="dos"][data-plate] {
   --bg: var(--plate-dos); --bg-raised: #201b38; --surface-1: #1d1833; --surface-2: #201b38;
   --fg: #eef1f6; --fg-muted: #a2a9b6; --fg-subtle: #8d95a6; --fg-subtle-raised: #a2a9b6;
-  --accent: #8fb4ff;
+  --accent: #b1b4ff;    /* 9.3:1 on violet; distinct from --cite #7fb0ff */
 }
 /* GRAVITY FLOW's glow is part of its plate; its top edge is plain --bg (the ramp), so the seam above it meets one colour. */
 .plate[data-plate="gf"][data-plate] {
   background: linear-gradient(to bottom, var(--bg), transparent 140px), radial-gradient(1100px 640px at 30% 50%, var(--plate-gf-glow) 0%, #03181c 55%, #020c0f 100%) var(--bg);
   --bg: var(--plate-gf); --bg-raised: #082a2f; --surface-1: #072328; --surface-2: #082a2f;
   --fg: #e9eef8; --fg-muted: #aeb8cc; --fg-subtle: #93a3b5; --fg-subtle-raised: #aeb8cc;
-  --accent: #8fb4ff;
+  --accent: #b1b4ff;    /* 9.3:1 on teal */
 }
 
 /* ── Section seams ── a section on a different surface from the one above it fades up into that section across the
@@ -340,7 +345,7 @@
   --border-subtle: rgba(0, 0, 0, 0.20);
   --border: rgba(0, 0, 0, 0.34);
   --border-strong: rgba(0, 0, 0, 0.52);
-  --accent: #1238b0;
+  --accent: #2a1fa8;   /* 10.3:1 on paper */
 }
 [data-high-contrast="true"][data-theme="dark"],
 [data-high-contrast="true"] [data-theme="dark"],
@@ -352,7 +357,7 @@
   --border-subtle: rgba(255, 255, 255, 0.20);
   --border: rgba(255, 255, 255, 0.34);
   --border-strong: rgba(255, 255, 255, 0.52);
-  --accent: #a9c6ff;
+  --accent: #c9cbff;   /* 12.6:1 on ink, 11.6:1 on violet */
 }
 
 [data-large-text="true"] {
@@ -391,7 +396,7 @@
    whether the page has moved — a hairline, faded in with the page's easing. Without backdrop-filter it is solid. */
 @media (max-width: 639px) { :root { --nav-h: 3.5rem; } }
 /* The hairline is an inset shadow, not a border, so the bar is exactly --nav-h tall and an anchor lands flush beneath it. */
-.site-nav { background: var(--surface-0); box-shadow: inset 0 -1px 0 transparent; transition: box-shadow 320ms var(--ease-out); }
+.site-nav { background: var(--surface-0); box-shadow: inset 0 -1px 0 transparent; transition: box-shadow var(--dur-mid) var(--ease-out); }
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .site-nav { background: color-mix(in srgb, var(--surface-0) 88%, transparent); -webkit-backdrop-filter: saturate(1.4) blur(16px); backdrop-filter: saturate(1.4) blur(16px); }
 }
@@ -401,13 +406,13 @@
 
 /* ── Chrome motion without a library ─────────────────────────────────── */
 /* Nav: the current section's underline draws in from the centre. */
-.nav-underline { transform: scaleX(0); opacity: 0; transition: transform 200ms var(--ease-out), opacity 200ms var(--ease-out); }
+.nav-underline { transform: scaleX(0); opacity: 0; transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out); }
 [aria-current="true"] > .nav-underline { transform: scaleX(1); opacity: 1; }
 /* Theme toggle: the two glyphs cross-fade with a small turn. */
-.theme-glyph { opacity: 0; transform: rotate(-28deg) scale(0.8); transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out); }
+.theme-glyph { opacity: 0; transform: rotate(-28deg) scale(0.8); transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out); }
 .theme-glyph[data-on] { opacity: 1; transform: none; }
 /* Mobile sheet: enters with @starting-style, exits on data-state=closed (unmounted 200ms later). */
-.menu-sheet { opacity: 1; transition: opacity 180ms var(--ease-out); }
+.menu-sheet { opacity: 1; transition: opacity var(--dur-fast) var(--ease-out); }
 .menu-sheet__panel { transform: none; transition: transform 240ms var(--ease-out), opacity 240ms var(--ease-out); }
 @starting-style { .menu-sheet { opacity: 0; } .menu-sheet__panel { transform: translateY(16px); opacity: 0; } }
 .menu-sheet[data-state="closed"] { opacity: 0; pointer-events: none; transition-duration: 140ms; }

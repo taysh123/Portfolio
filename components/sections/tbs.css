@@ -1,6 +1,6 @@
 /* ── Think · Build · Ship (M10) ── paper, three ruled rows (word · principle · evidence), no pinning. */
 .tbs { padding-block: var(--section-y); background: var(--bg); }
-.tbs__title { font-size: clamp(2rem, 1.4rem + 2.4vw, 3.5rem); line-height: 1.02; letter-spacing: var(--tracking-display); font-weight: 620; color: var(--fg); }
+.tbs__title { font-size: var(--text-h2); line-height: 1.05; letter-spacing: var(--tracking-heading); font-weight: 600; color: var(--fg); }
 .tbs__rows { list-style: none; margin: clamp(2rem, 4vw, 3rem) 0 0; padding: 0; border-top: 1px solid var(--border); }
 .tbs__row { display: grid; gap: 0.6rem; padding: 1.5rem 0; border-bottom: 1px solid var(--border); }
 .tbs__word { font-size: clamp(1.75rem, 1.4rem + 1.2vw, 2.5rem); line-height: 1; font-weight: 620; letter-spacing: -0.035em; color: var(--fg); }
