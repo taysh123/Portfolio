@@ -169,7 +169,7 @@ export const projects: Project[] = [
       challenges: [
         "Keeping two implementations of the money math in agreement across two languages and two runtimes",
         "Modelling a real tournament director—editable blind structures, a pause/resume clock, rebuys and late registration—as software that survives a chaotic table",
-        "Guest → account upgrade: an invite link opened while signed out is completed after sign-in, and guest progress carries into the new account",
+        "Guest → account upgrade: an invite link opened while signed out reopens after sign-in, and guest progress on that device is claimed into the account—never over data the account already has",
         "Making a utility feel like a product, without letting the polish hide the state it's actually in",
       ],
       learned: [
