@@ -1,8 +1,10 @@
 # M1 — Visual plan: Product Plates, lit
 
-> **Status (2026-11-18, session 5): A–E approved by Tay; F deferred until Tay previews A–E; Geist kept.
-> PR 1 (A, C, D) is merged and live (PR #8, `3103bfd`). Next: PR 2 = B. Implementation notes and the few
-> calls the plan left open are in PR #8's description and `docs/WORKLOG.md` session 5.** It answers the M1
+> **Status (2026-11-18, session 6): A–E approved by Tay; F deferred; Geist kept. PR 1 (A, C, D) is merged and
+> live (PR #8, `3103bfd`). PR 2 (B, plus the dark "Email me" contrast fix) is open on `feature/m1-studio-light`
+> for Tay's preview, with two deviations from §8–§10: no plate lift, and no key on the chapter plates' top edge
+> (`docs/WORKLOG.md` session 6). E, then F if approved, follow B's preview. Implementation notes for A/C/D are in
+> PR #8's description and `docs/WORKLOG.md` session 5.** It answers the M1
 > acceptance criteria in `docs/ROADMAP.md`, under D1 (evolve Product Plates; calm/premium; restrained
 > cyan/violet) and D2 (no 3D now; the 3D-guard tests and the JS budget are not touched). Every move below
 > is CSS and tokens only: **zero new JavaScript, zero new dependencies, no new font files.**

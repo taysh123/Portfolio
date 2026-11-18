@@ -11,6 +11,99 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-18 — Session 6: M1 PR 2 (B studio light) + the dark "Email me" a11y fix (Claude Code)
+
+**Scope (Tay's brief):** Move B approved; E/F wait until B is previewed. Task 1: restore the dark "Email me" button's
+non-text contrast to ≥ 3:1 (WCAG 1.4.11). Task 2: Move B per `docs/M1_VISUAL_PLAN.md`. CSS and tokens only: no new
+JavaScript, dependencies or fonts; no guard, budget or contrast test touched. Push a work branch and open a PR; no merge,
+no deploy. Skill: `superpowers:verification-before-completion`.
+
+### 1. Preconditions (VL)
+- `git fetch`: `origin/main` = **`8f1dd5b`** (PR #10 merged 07:53:42Z). PR #8 (`3103bfd`) and PR #9 (`f698c74`) are
+  ancestors (`git merge-base --is-ancestor`). Production deployment `8f1dd5b`, status `success`.
+- Branch `feature/m1-studio-light` from `origin/main` (`--no-track`), `npm ci` (Next 16.3.8).
+- `npm test` on the untouched branch: **119/119**, `private-repo.test.ts` green.
+
+### 2. Task 1: dark "Email me" (`40412cd`)
+Measured in Chromium on `next start` (computed colours of the button and `#contact`). Ratios use the
+`tokens.test.ts` formula:
+
+| Dark theme, against raised `#16181d` | Before | After |
+|---|---|---|
+| Fill at rest (non-text, floor 3) | `#4f46e5` **2.82:1** | `#5651f0` **3.24:1** |
+| Fill on hover (non-text, floor 3) | `#4338ca` **2.25:1** | `#5e5bfa` **3.68:1** |
+| White label at rest / hover (floor 4.5) | 6.29 / 7.90 | **5.48 / 4.82** |
+| Chat launcher icon (same token) | 2.82 | 3.24 |
+
+- The new values keep `#4f46e5`'s hue and chroma and move one OKLCH lightness step up (0.511 → 0.541).
+- The hover lightens instead of darkening, as dark `--accent-hover` already does. A darker hover can't clear 3:1 here.
+- The light theme is unchanged: 6.82:1 at rest and 8.19:1 on hover, on white.
+- The plan's alternative, a 1px light ring, would keep the white label at 6.29. A fill was chosen because:
+  - the whole shape clears 3:1, not only a hairline;
+  - one token also fixes the launcher icon;
+  - no component file changes.
+
+### 3. Task 2: Move B (`b5941cf`)
+- **Tokens:** `--light-key` / `--light-rim` are set in `:root` with the plan's §5 values: `rgba(255,255,255,0.80)` and
+  `rgba(8,145,178,0.18)`. The dark pair is `rgba(255,255,255,0.09)` and `rgba(103,232,249,0.22)`. It applies on
+  `[data-theme="dark"]` and on everything dark in both themes that sits outside a dark scope:
+  - the hero's three dark plates;
+  - every phone and window.
+
+  Without that, a light-theme dark object got the 0.80 white key. A `data-theme="dark"` scope there would also re-ink
+  the hero focus ring, which sits on paper.
+- **Hero plates:** the key (top edge) and the rim (right edge) sit on a `.tile::after` layer over the plate.
+  - It fades in once: `tile-light`, 700ms `--dur-light`, `--ease-out-expo`.
+  - Each plate starts 70ms (`--stagger`) after the one before, in DOM order, which is the reading order in every
+    layout.
+  - Under OS reduced motion or the site's switch, the animation isn't declared, so the light is lit at first paint.
+  - Hover and focus fade in a second key on `::before` (opacity, 240ms).
+- **Objects:** the same pair, static.
+  - Phones (`.tile__phone`, `.pphone`, `.gf__phone`): an inset on the bezel.
+  - Windows (`.tile__win`, `.console`, `.dwin`): an `::after` layer, because the title bar and the capture cover an
+    inset. `.dwin` gains `position: relative` for this.
+- **Verified in Chromium (scratch probe):**
+  - With motion: four animations, delays 0/70/140/210ms, 700ms each, 1 iteration. All finished by 1.5s, and the
+    plate light is at opacity 1.
+  - With OS reduced motion, and with the site switch (`data-reduced-motion="true"`): no animation; opacity 1 at
+    first paint.
+  - Hover: `::before` 0 → 1.
+  - The only animations still on the page are the existing About collage (scroll-driven) and the chat launcher's
+    entrance.
+- **Two deviations from the plan, for Tay's preview:**
+  1. *No 2px plate lift on hover* (§9/§10). The hero plates meet the T Poker chapter flush, and `hero.css` already
+     lifts the device instead so that no seam opens. That lift is unchanged.
+  2. *No key on the chapter plates' top edge* (§8). It was implemented, then removed after zoomed (3×) screenshots
+     showed what it did:
+     - on Aegis/DeveloperOS/GRAVITY FLOW, a hard 1px rule at the end of each static seam;
+     - on T Poker, a hairline under the hero plates.
+
+     Both undo the seams the plan keeps. The chapters' light is on their devices and windows.
+- **Untouched:** TSX, JS, tests, fonts, dependencies, the captures. The About collage stays unchanged (plan §8).
+
+### 4. Validation (final tree `b5941cf`)
+| Command | Result |
+|---|---|
+| `npx next typegen` | ✓ Types generated |
+| `npm run typecheck` / `npm run lint` | exit 0 / exit 0 |
+| `npm test` (Git Bash) | **119/119** (14 files) |
+| `npm run build` | exit 0 |
+| `GROQ_API_KEY= npx playwright test` | **132/132** (1.9 min), incl. `budget.spec.ts`, axe in both themes at 1440 and 390 |
+| Budgets (`budget.spec.ts` method) | JS **181.79 KiB** gzip (= main; ≤ 205.7), HTML **156.44 KB** (= main; ≤ 568), CSS 16.45 → 16.75 KiB gzip |
+
+Review screenshots (1440/390, both themes, hero, chapters, contact, plus 3× edge crops) were taken in scratch, not
+committed.
+
+### 5. Docs
+- CLAUDE.md: the "last verified" deployment is now `8f1dd5b`.
+- CLAUDE.md, new gotcha: Playwright reuses a server already on :3400. On Windows, a backgrounded `npx next start` can
+  leave its `node` child on the port after the task stops.
+- CLAUDE.md N6 note: PR #10 had already rewritten the stale note the brief named (`:87`, now `:88–90`), and it is
+  accurate.
+- START-HERE: brought to this state.
+
+---
+
 ## 2026-11-18 — Session 5: M1 PR 1 (A iris, C type tiers, D motion tokens), live (Claude Code)
 
 **Scope (Tay's brief):** M1 moves A–E approved, F deferred until Tay previews A–E, keep Geist. Implement PR 1 only

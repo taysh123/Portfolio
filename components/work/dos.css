@@ -33,7 +33,10 @@
 .flow li[data-k="evidence"]::before, .flow li[data-k="cite"]::before { border-color: var(--cite); background: var(--cite); }
 .flow li[data-k="decline"]::before { border-color: #ff9a9a; background: #ff9a9a; }
 
-.dwin { margin: 0; border-radius: 12px; overflow: hidden; background: #0b0e14; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.7); }
+.dwin { position: relative; margin: 0; border-radius: 12px; overflow: hidden; background: #0b0e14; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.7); }
+/* The studio light (M1 B) on a layer over the frame: the bar and the capture would cover an inset shadow. */
+.dwin::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: inset 0 1px 0 var(--light-key), inset -1px 0 0 var(--light-rim); }
 .dwin__bar { height: 32px; display: flex; align-items: center; justify-content: center; font-size: 0.8125rem; color: #8d95a3; background: #151922; border-bottom: 1px solid #1f2430; }
 .dwin__shot { position: relative; }
 .dwin__shot img { display: block; width: 100%; height: auto; }
