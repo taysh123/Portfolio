@@ -290,8 +290,64 @@ rounds. So only the interleaved comparison counts, not the absolute numbers agai
     `origin/main`.
   - First-load JS for `/lab/hero-a` is unchanged at 183.71 KiB.
 
+### 13. Round 5: the Work slice in the cinematic language (2026-11-19) (VL)
+- **The route:** `/lab/work`, under the `/lab` layout (noindex, not linked).
+  - Files: `app/lab/work/{page.tsx, panels.ts, work.css}`.
+  - A server component with no client code of its own; first-load JS is the shared runtime only.
+- **Four product panels** (T Poker, Aegis, DeveloperOS, GRAVITY FLOW), recruiter-first:
+  - name and one line first;
+  - then the status, three stack chips and the links;
+  - the real capture on a glass stage, alternating sides from 1024px.
+- **Content derived from the data, nothing typed fresh** (`docs/CINEMATIC_SYSTEM.md`, "Work slice"):
+  - taglines verbatim and the site's status strings;
+  - chips from each stack;
+  - links: T Poker's web app, and the Aegis and DeveloperOS repositories; plus each chapter on the live page;
+  - "Private repository" labels for T Poker and GRAVITY FLOW, with no slug or URL anywhere;
+  - existing captures and alt text.
+- **One empty, hidden, labelled P4 demo slot per panel:** no demo, no placeholder.
+- **Behaviour:**
+  - the opening's one reveal (the title settles);
+  - stages lift on hover, keyboard focus and touch, and stay still with reduced motion;
+  - the first capture is eager and high priority, the other three lazy;
+  - static glows only.
+- **Layer additions:**
+  - seven tokens equal to the site's own values (type tiers, section rhythm, radius steps, the dark object shadow);
+  - two NEW values for Tay's review: `--cine-lift` −4px, and `--cine-glow-lift`.
+  - The hero is still unchanged: 0 of 163,871 computed values and 0 pixels differ against the round 4 baseline.
+- **Found and fixed: the Tailwind leak, again.**
+  - An object key in the new e2e spec, named like the shadow utility, put one rule (+248 bytes) into `/`'s stylesheet.
+  - Renamed. A new e2e test now pins `/`'s two stylesheets to `origin/main`'s SHA-256, so any future leak fails the
+    suite.
+  - `/` against `origin/main`: both stylesheets byte-identical; markup identical with script tags and chunk paths
+    masked; the same 9 → 10 chunk split as since round 1.
+
+**Measured** (`scripts/lab-hero-a.mjs`, 5 cold runs):
+
+| | LCP (element) | CLS | INP | FPS | main thread busy |
+|---|---|---|---|---|---|
+| desktop | 80 ms (the first capture) | 0 | 32 ms | 60.5 | 3.2% |
+| phone (4× CPU, slow 4G) | 916 ms (the first capture) | 0 | 32 ms | 60.4 | 6.6% |
+
+- First-load JS for `/lab/work`: **180.19 KiB** (budget 205.7). HTML 45.17 KB.
+- axe WCAG 2.2 A/AA: 0 violations at 1440 with motion, 390 with motion, and 1440 with reduced motion.
+  - At 390, three need-review items: the lede and two project lines, mist text whose boxes overlap the glow
+    elements.
+  - They are covered by the layer's floor: mist ≥ 7:1 on the glow peaks.
+- **Keyboard:** skip link, then per panel the product's link and its chapter link, then the launcher. Each has a solid
+  2px cyan ring, and focus lifts its own panel.
+- **No JS:** every name, line, state, chip, capture (lazy, native) and link is present and works.
+- Validation:
+  - `npm test` **168/168** (`tokens.test.ts` 15/15);
+  - typecheck and lint exit 0;
+  - `npm run build`, then `GROQ_API_KEY= npx playwright test`: **165/165** (132 `main`, 18 hero, 15 Work);
+  - the guard files are identical to `origin/main`.
+- Not verified: iOS Safari's `:active` (it needs a touch listener; a tap lifts through emulated hover instead), and
+  any real device.
+
 ### Waiting on Tay
-- Decide whether Concept A goes further. Round 4 is committed locally, not pushed: pushing updates PR #18's Preview.
+- Decide whether Concept A goes further. Rounds 4 and 5 are committed locally, not pushed: pushing updates PR #18's
+  Preview.
+- Review the two NEW layer values (`--cine-lift`, `--cine-glow-lift`).
 - On `main`, the next close-out should record "D2 reopened for a measured prototype" in RESEARCH_AND_DECISIONS. This
   branch is never merged.
 

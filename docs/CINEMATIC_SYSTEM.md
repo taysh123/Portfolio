@@ -15,6 +15,7 @@ its first consumer. After the extraction, its computed styles and pixels are unc
 | `app/lab/layout.tsx` | Its only importer, so only `/lab` routes load it |
 | `app/lab/hero-a/hero-a.css` | The reference consumer: the hero's own geometry, every shared value read from the layer |
 | `app/lab/hero-a/Constellation.tsx` | The reference live element: the loop contract below, in code |
+| `app/lab/work/` | The second consumer: the Work slice (below), with no client code of its own |
 | `tests/unit/lab-hero-a.test.ts` | Pins the scope, the contrast floors and the token integrity |
 | `tests/e2e/lab-hero-a.spec.ts` | Pins the behaviour: budget, axe, no-JS, reduced motion, pause |
 
@@ -53,8 +54,10 @@ its first consumer. After the extraction, its computed styles and pixels are unc
   3:1). It falls back to solid ink in high contrast and forced colours.
 - **The opening:** `data-reveal` on each opening block, with `--reveal-i` in reading order. Use `data-reveal="settle"`
   on the block that will be the largest paint (see Motion language).
-- **Don't write utility class names in lab files**, not even in comments or tests. Tailwind scans `app/`, `tests/` and
-  `scripts/`, so a literal one adds a rule to the live page's stylesheet. Round 4 found and removed one.
+- **Don't write utility class names in lab files**, not even in comments, tests or object keys. Tailwind scans `app/`,
+  `tests/` and `scripts/`, so a literal one adds a rule to the live page's stylesheet.
+  - It happened twice: a test comment (round 4) and an object key named after a shadow utility (round 5).
+  - `tests/e2e/lab-work.spec.ts` now pins `/`'s stylesheets to `origin/main`'s bytes, so a leak fails the suite.
 - **Docs go in `docs/`**, which Tailwind skips.
 
 ## The token set
@@ -110,3 +113,47 @@ edges.
    - Keep FPS, INP, LCP and CLS flat; first-load JS ≤ 205.7 KiB; axe at 0 violations with motion on and off.
 
 `Constellation.tsx` is the reference implementation of rules 4 and 5.
+
+## The Work slice (`/lab/work`, round 5)
+
+Four product panels: T Poker, Aegis, DeveloperOS, GRAVITY FLOW. In reading order, each gives the name and its one line,
+then its status, three tech chips and its links. Beside them is a large real capture on a glass stage, alternating sides
+on wide screens and below the words on phones.
+
+**Content: nothing typed fresh.** `app/lab/work/panels.ts` derives every field, and `tests/unit/lab-work.test.ts`
+checks each against its source:
+
+| Field | Source |
+|---|---|
+| One line | the project's `tagline` (`data/projects.ts`), verbatim |
+| Status | the interface's status strings, as the live hero reads them. Aegis shows "Runs locally" (its index state would repeat the link). DeveloperOS adds the version its own data states. |
+| Chips | the project's `stack`, emphasised entries first, at most three |
+| Links | the live product (T Poker's web app), else the public repository (Aegis, DeveloperOS). Each also links to its chapter on the live page. |
+| Private repositories | T Poker and GRAVITY FLOW show the "Private repository" label, never a link or a slug |
+| Captures and alt text | existing files in `public/work/` through `Pic` (real dimensions, AVIF and WebP), with alt text from `lib/dict.ts` or the project's media |
+
+The DeveloperOS alt text names three file-and-line chips that `components/work/DeveloperOSChapter.tsx` does not export.
+The slice keeps a copy, and the test holds it equal.
+
+**The P4 slot.** Each panel holds `<div className="wk__demo" data-demo-slot="<id>" hidden />`, labelled by a comment in
+`page.tsx`. A future "try it" demo mounts there.
+- Until then the slot stays empty and hidden: no placeholder, no sample data, no "coming soon".
+- The tests require all four to be empty, hidden and not rendered.
+
+**Behaviour:**
+- **Opening:** one reveal (eyebrow, the title settling, the lede). The panels hold still.
+- **Stage elevation:** each stage lifts on `:hover`, `:focus-within` (keyboard focus on any of its links) and `:active`
+  (touch): up by `--cine-lift`, with a cyan edge and the `--cine-glow-lift` halo.
+  - With reduced motion it never moves; the edge and halo still answer.
+  - iOS Safari applies `:active` only when a touch listener exists. A tap there still lifts through the browser's
+    emulated hover. Not verified on a device.
+- **Captures:** the first loads eagerly at high priority, the other three lazily.
+- **Background:** two static glows, no field: the captures are the star.
+- **JavaScript:** the page ships no client code of its own.
+
+**Tokens it added** (in the layer, marked "Added by the Work slice"):
+- **The site's own values:** `--cine-text-section` (= `--text-chapter`), `--cine-text-name` (= `--text-h2`),
+  `--cine-section-y` (= `--section-y`), `--cine-radius-stage` (24px, the site's `--radius-xl`),
+  `--cine-radius-device` (28px, `--radius-2xl`), `--cine-radius-window` (12px, `--radius-sm`), and
+  `--cine-elevation` (= the dark theme's `--shadow-object`).
+- **Two NEW values, for Tay's review:** `--cine-lift` (−4px) and `--cine-glow-lift` (a cyan halo at 30%).
