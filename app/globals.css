@@ -58,6 +58,13 @@
   --accent-line: rgba(74, 63, 224, 0.30);
   --accent-ring: rgba(74, 63, 224, 0.55);
   --accent-contrast: #ffffff;
+
+  /* ── Studio light (M1 B) ── one light for every plate and object: a key along the top edge, a cool rim down the right
+     edge. Never text, never interaction. Composed in each rule, not in a token: a custom property resolves var() where it
+     is declared, so a composed token would carry :root's light onto the dark plates. The dark tone's pair is below. */
+  --light-key: rgba(255, 255, 255, 0.80);
+  --light-rim: rgba(8, 145, 178, 0.18);
+
   /* The primary button is ink on paper; on a dark plate or the dark theme it turns to paper. */
   --ink-solid: #0c0d10;
   --ink-solid-hover: #2a2d33;
@@ -199,6 +206,17 @@
   --fg: #e9eef8; --fg-muted: #aeb8cc; --fg-subtle: #93a3b5; --fg-subtle-raised: #aeb8cc;
   --accent: #b1b4ff;    /* 9.3:1 on teal */
 }
+
+/* ── Studio light on the dark tone (M1 B) ── the dark theme and the dark plates (data-theme="dark"), and everything that
+   is dark in both themes but sits outside a dark scope: the hero's three dark plates, and every device and window (black
+   glass, dark captures). A data-theme="dark" scope there would also re-ink the focus ring that sits on the paper. */
+[data-theme="dark"],
+:is(.tile--poker, .tile--dos, .tile--gf, .tile__phone, .tile__win, .pphone, .console, .dwin, .gf__phone) {
+  --light-key: rgba(255, 255, 255, 0.09);
+  --light-rim: rgba(103, 232, 249, 0.22);
+}
+/* The chapter plates themselves carry no edge light: each one's top is a static seam (or, for T Poker, the hero's plates
+   meeting it flush), and a 1px key there drew a hard rule across the band. Their light is on their devices and windows. */
 
 /* ── Section seams ── a section on a different surface from the one above it fades up into that section across the
    last --seam of its bottom padding (every section keeps at least 72px of empty space there), so a change of tone is a

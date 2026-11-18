@@ -34,6 +34,24 @@
 .tile__phone, .tile__win { transition: translate 280ms var(--ease-out); }
 @media (hover: hover) and (pointer: fine) { .tile:hover :is(.tile__phone, .tile__win) { translate: 0 -8px; } }
 
+/* ── Studio light (M1 B) ── each plate's key (top edge) and rim (right edge) on a layer over the plate, so the light can
+   come up without touching the captures: they are painted at first paint and never fade or move. The layer lights once
+   on load, plate by plate in reading order (--dur-light, --stagger apart); with reduced motion (the OS or the site's
+   switch) it is simply on at first paint. Hover and focus add a second key (opacity only); the device lift above is
+   unchanged, and the plate itself never lifts, so no seam opens under it. Decorative: pointer-events none, no text. */
+.tile::before, .tile::after { content: ""; position: absolute; inset: 0; z-index: 2; border-radius: inherit; pointer-events: none; }
+.tile::after { box-shadow: inset 0 1px 0 var(--light-key), inset -1px 0 0 var(--light-rim); }
+.tile::before { box-shadow: inset 0 1px 0 var(--light-key); opacity: 0; transition: opacity 240ms var(--ease-out); }
+@media (hover: hover) and (pointer: fine) { .tile:hover::before { opacity: 1; } }
+.tile:focus-visible::before { opacity: 1; }
+@keyframes tile-light { from { opacity: 0; } }
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-reduced-motion="true"]) .tile::after { animation: tile-light var(--dur-light) var(--ease-out-expo) backwards; }
+  html:not([data-reduced-motion="true"]) .tile:nth-child(2)::after { animation-delay: var(--stagger); }
+  html:not([data-reduced-motion="true"]) .tile:nth-child(3)::after { animation-delay: calc(2 * var(--stagger)); }
+  html:not([data-reduced-motion="true"]) .tile:nth-child(4)::after { animation-delay: calc(3 * var(--stagger)); }
+}
+
 /* Each plate's surface and inks: the same hues as the chapters below. */
 .tile--poker { background: linear-gradient(180deg, #0d1a2e 0%, var(--plate-poker) 70%); color: #a9b6cb; }
 .tile--poker b { color: #ffffff; }
@@ -46,9 +64,11 @@
 .tile--gf { background: radial-gradient(120% 70% at 50% 60%, var(--plate-gf-glow) 0%, var(--plate-gf) 70%); color: #aeb8cc; }
 .tile--gf b { color: #ffffff; }
 
-/* A phone: black glass, the real screen, an object's shadow. */
+/* A phone: black glass, the real screen, an object's shadow, and the studio light on its frame (the dark tone's pair,
+   globals.css), static. */
 .tile__phone { position: absolute; display: block; top: 0; left: 50%; width: 74%; transform: translateX(-50%);
-  padding: 3.2%; border-radius: 17% / 7.8%; background: #0a0a0c; box-shadow: var(--shadow-object), inset 0 0 0 1.5px #2a2b30; }
+  padding: 3.2%; border-radius: 17% / 7.8%; background: #0a0a0c;
+  box-shadow: inset 0 1px 0 var(--light-key), inset -1px 0 0 var(--light-rim), var(--shadow-object), inset 0 0 0 1.5px #2a2b30; }
 .tile__phone img { display: block; width: 100%; height: auto; border-radius: 14% / 6.4%; }
 .tile--poker .tile__phone--front { left: 58%; width: 58%; z-index: 1; }
 .tile--poker .tile__phone--back { left: 27%; width: 44%; top: 30px; opacity: 0.78; }
@@ -56,6 +76,9 @@
 .tile__win { position: absolute; display: block; left: 22px; right: 22px; top: 0; max-height: calc(100% + 12px); overflow: hidden; border-radius: 12px;
   background: #0b0e14; box-shadow: var(--shadow-object); }
 .tile__win img { display: block; width: 100%; height: auto; }
+/* The capture fills the window, so its light sits on a layer above it. */
+.tile__win::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: inset 0 1px 0 var(--light-key), inset -1px 0 0 var(--light-rim); }
 .tile--aegis .tile__win { background: #070b13; border: 1px solid rgba(12, 13, 16, 0.18); }
 .tile--dos .tile__win { background: #12151c; }
 /* Aegis's second window (the alert row) joins the incidents window where the plate is tall for its width: the one-row
