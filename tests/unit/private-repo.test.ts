@@ -13,13 +13,22 @@ it("T Poker's repository is private: no URL in its data, and the public label", 
   expect(PRIVATE_REPO_LABEL).toBe("Private repository");
 });
 
+// GRAVITY FLOW's repository went private (owner decision, 2026-11-18: it stays private). Its public link had started
+// sending visitors to a 404, so it is represented exactly like T Poker: no URL, and the "Private repository" label.
+it("GRAVITY FLOW's repository is private: no URL in its data, and the public label", () => {
+  const gf = projects.find((p) => p.id === "gravity-flow")!;
+  expect(gf.repo).toEqual({ visibility: "private" });
+  expect(publicRepoUrl(gf)).toBeUndefined();
+  expect(repoLabel(gf)).toBe(PRIVATE_REPO_LABEL);
+});
+
 it("every project with a reachable repository keeps its public source link; an unreachable one is never linked", () => {
   // M9: Orders & Delivery's repository no longer answers anonymous git (private or removed); it shows a plain label.
   const orders = projects.find((p) => p.id === "orders-delivery")!;
   expect(orders.repo).toEqual({ visibility: "unavailable" });
   expect(publicRepoUrl(orders)).toBeUndefined();
   expect(repoLabel(orders)).toBe("Source not publicly accessible");
-  for (const p of projects.filter((x) => x.id !== "poker" && x.id !== "orders-delivery")) expect(publicRepoUrl(p), p.id).toMatch(/^https:\/\/github\.com\/taysh123\/[\w.-]+$/);
+  for (const p of projects.filter((x) => !["poker", "gravity-flow", "orders-delivery"].includes(x.id))) expect(publicRepoUrl(p), p.id).toMatch(/^https:\/\/github\.com\/taysh123\/[\w.-]+$/);
   expect(JSON.stringify(projects)).not.toMatch(/orders-delivery-management-system/);
 });
 

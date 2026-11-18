@@ -120,7 +120,7 @@ for (const vp of PHONES) {
     const { ctx, page } = await open(browser, vp);
     const tops = await page.locator("#contact .contact__profiles a").evaluateAll((as) => as.map((a) => Math.round(a.getBoundingClientRect().top)));
     expect(tops).toHaveLength(2); expect(tops[0]).toBe(tops[1]);
-    expect(await page.locator("#contact .contact__resume").textContent()).toContain("80\u00a0KB");
+    expect(await page.locator("#contact .contact__resume").textContent()).toContain("79\u00a0KB");
     await ctx.close();
   });
 }
@@ -147,7 +147,7 @@ test("the résumé link serves the exact supplied PDF", async ({ request }) => {
   expect(body.subarray(0, 5).toString()).toBe("%PDF-");
   const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
   expect(sha(body)).toBe(sha(fs.readFileSync("public/resume/Tay-Shofer-Software-Engineer-Resume.pdf")));
-  expect(body.length).toBe(81782);
+  expect(body.length).toBe(80593);
 });
 
 for (const vp of PHONES) {
