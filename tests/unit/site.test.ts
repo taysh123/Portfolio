@@ -75,7 +75,7 @@ describe("the restored assistant (app/api/chat, components/chat)", () => {
     expect(route).toMatch(/\.slice\(-2\)/);
   });
   it("its key never reaches the browser: no client module reads it, and nothing outside the route calls the provider", () => {
-    for (const f of site.filter((f) => !f.startsWith("app/api/"))) expect(read(f), f).not.toMatch(/GROQ_API_KEY|api\.groq\.com/);
+    for (const f of site.filter((f) => !f.startsWith(path.join("app", "api") + path.sep))) expect(read(f), f).not.toMatch(/GROQ_API_KEY|api\.groq\.com/);
   });
   it("is English only: no language parameter, no Hebrew messages or rules", () => {
     expect(route).not.toMatch(/locale|LANGUAGE_RULE|Hebrew page|[֐-׿]/);
