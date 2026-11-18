@@ -255,6 +255,7 @@ Playwright MCP, Superpowers, UI UX Pro Max, Frontend Design, the Figma plugin (c
 
 | Date | Decision | By |
 |---|---|---|
+| 2026-11-18 | M1: moves A–E approved, F deferred until A–E are previewed, keep Geist; PR 1 (A, C, D) merged (#8). Next: B plus the dark "Email me" button a11y fix | Tay |
 | 2026-11-18 | Session 4 task list: delete merged branches (D8, done), fix N6, verify and correct `data/projects.ts:172`, start M1 as a plan only; N1/N2 stay Tay's calls | Tay |
 | 2026-11-18 | N5: GRAVITY FLOW repo stays private; fixed in data (marked private) and in the served résumé PDF (dead link removed). Context7 installed (user scope) | Tay |
 | 2026-11-18 | D1 calm/premium, evolve Product Plates, restrained cyan/violet; D2 no 3D now, guards and budget untouched; D3 docs branch; D4 duplicate removed; D5 history as-is; D6 content fixes; D7 English for Claude Code, Hebrew for Chat Claude; D9 Context7 only | Tay |

@@ -11,6 +11,74 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-18 — Session 5: M1 PR 1 (A iris, C type tiers, D motion tokens), live (Claude Code)
+
+**Scope (Tay's brief):** M1 moves A–E approved, F deferred until Tay previews A–E, keep Geist. Implement PR 1 only
+(A, C, D) with the plan's exact values; the only permitted test edit is the focus-ring assertions in
+`tests/e2e/chrome.spec.ts`; push a work branch and open a PR; no merge, no deploy. Skills:
+`superpowers:executing-plans` (rulings ledger, one fresh-context reviewer at the end),
+`superpowers:verification-before-completion`.
+
+### 1. Preconditions (VL)
+`git fetch`: PR #7 (`5574007`) and PR #6 (`eb361ff`) merged into `origin/main`. Branch
+`feature/m1-iris-type-motion` from `eb361ff`, then `npm ci` (Next 16.3.8). Baseline on `main`: first-load JS
+181.79 KiB gzip, HTML 156.43 KB.
+
+### 2. PR #8: what changed (all values from `docs/M1_VISUAL_PLAN.md` §5–§7; ratios re-computed with the
+`tokens.test.ts` formula and matching §6)
+- **A `ed45701`:** `--accent` and family become iris in both themes, all five plate scopes and both
+  high-contrast blocks. The plan didn't list two other cobalt literals, and both now follow the tokens: the
+  T Poker store-badge hover glyph (`poker.css:30`) and the unused `lib/tokens.ts` mirror. Test edit:
+  `chrome.spec.ts:268-273`, the two assertions → `rgb(74, 63, 224)` / `rgb(177, 180, 255)`, plus the title's
+  colour words per §11. RED on main's CSS first (`rgb(26, 79, 224)`), then GREEN.
+- **C `6ce668a` + `2bc7f16`:** `--text-chapter` (the old h2, 36→64) for chapter titles and the case-study title
+  (now also 620 / line-height 1.0, per §7). `--text-h2` 30→42 at 600 / 1.05 / `--tracking-heading` for Two more,
+  About, Stack, Think/Build/Ship and Contact, which used three sizes before. `--text-lead` 18→21 (chapter ledes now
+  use it, per §7). `--text-h3` has a new value but no consumer yet. The privacy, 404 and error page titles were
+  re-pointed to `--text-chapter` and are pixel-identical.
+- **D `ddff7ac`:** `--dur-fast` 180ms (= `lib/motion.ts` `DUR.fast`), `--dur-light` 700ms, `--stagger` 70ms
+  (the last two are for B). The theme glyph and menu sheet moved onto `--dur-fast`, and the header onto
+  `--dur-mid`; both are unchanged. The nav underline goes 200 → 180ms, the one timing change (§5). The menu
+  panel's 240ms and the 140ms exit stay as literals.
+- A fresh-context reviewer read the whole diff. It found nothing Critical and confirmed every value. Two of
+  its points were applied in `2bc7f16`. Raised for Tay's preview:
+  - the Think · Build · Ship title barely outranks its row words (42 vs ≈40px);
+  - the dark solid iris fill is 2.82:1 against the raised page.
+
+| Command (`2bc7f16`) | Result |
+|---|---|
+| `npx next typegen` / `npm run typecheck` / `npm run lint` | ✓ / exit 0 / exit 0 |
+| `npm test` | 118/119: the one failure was pre-existing on `main` (see 3) |
+| `npm run build` | exit 0 |
+| `GROQ_API_KEY= npx playwright test` | **132/132** (1.9 min) |
+| Budgets (`budget.spec.ts` method) | JS **181.79 KiB** (= main), HTML 156.44 KB, CSS +0.02 KiB gzip |
+
+### 3. PR #9: the private-repo guard was failing on `main` (VL)
+`tests/unit/private-repo.test.ts` ("no tracked text file carries the private repository's name") failed on
+`main` since `1d81f4d` (session 4 docs, PR #6). That commit had named T Poker's private repository in
+`RESEARCH_AND_DECISIONS.md:105` and in this file at `:43` and `:78`. Fixed on `fix/docs-private-slug`
+(`747274e`): each mention now reads "the private T Poker repository". Unit 119/119; the guard test itself is
+unchanged. Lesson recorded in CLAUDE.md: docs are scanned too.
+
+### 4. Merged and live (VL, close-out)
+- Tay merged PR #8 (`3103bfd`, 07:46:54Z) and PR #9 (`f698c74`, 07:48:53Z).
+- Production deployment `f698c74`: status `success`. A `curl` of https://www.tayshofer.dev/ serves the iris,
+  `--text-chapter` and `--dur-fast` tokens.
+- `main` at `f698c74`: unit **119/119**, typecheck, lint. Its code is identical to PR #8's head (only #9's docs
+  differ), which ran Playwright 132/132.
+
+### 5. Cleanup
+- Branches deleted locally and on `origin`, each verified first as an ancestor of `origin/main`:
+  `feature/m1-iris-type-motion` (`2bc7f16`), `fix/docs-private-slug` (`747274e`), `fix/m0-followups` (`37ba41c`),
+  `docs/m0-closeout` (`1d81f4d`).
+- Kept: `reference/premium-redesign-package` and six unmerged remote branches.
+- Scratch removed: the ledger, logs, probe scripts, review screenshots and the docs-fix worktree.
+
+**Next:** M1 PR 2 = Move B, plus the dark "Email me" button a11y fix (numbers in `claude/START-HERE.md`). Then E,
+then F if approved.
+
+---
+
 ## 2026-11-18 — Session 4: sync, D8 cleanup, N6, T Poker claim, M1 plan (Claude Code)
 
 **Scope (Tay's task list):** sync and verify what is live; update the state docs; delete merged branches;
@@ -453,3 +521,6 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-18 | Session 4 | D8: one local and four remote merged branches deleted | git refs |
 | 2026-11-18 | Session 4 | N6 test fix (`b4d5c73`); T Poker guest-to-account wording (`37ba41c`) on `fix/m0-followups` | `tests/unit/site.test.ts`, `data/projects.ts:172` |
 | 2026-11-18 | Session 4 | M1 visual plan; state docs; N1/N2 recommendations; N7 Cloudflare finding | `docs/M1_VISUAL_PLAN.md`, `docs/*.md`, `claude/START-HERE.md`, `CLAUDE.md` |
+| 2026-11-18 | Session 5 | M1 PR 1: A iris, C type tiers, D motion tokens (PR #8, merged `3103bfd`, live) | `app/globals.css`, section/work CSS, `CaseStudyPanel.tsx`, page titles, `lib/tokens.ts`, `tests/e2e/chrome.spec.ts:268-273` |
+| 2026-11-18 | Session 5 | Private T Poker slug removed from the docs; `main` green again (PR #9, merged `f698c74`) | `docs/RESEARCH_AND_DECISIONS.md`, `docs/WORKLOG.md` |
+| 2026-11-18 | Session 5 | Close-out: four merged branches deleted; state docs, M1 plan status, ROADMAP, CLAUDE.md:87 note | `docs/*.md`, `claude/START-HERE.md`, `CLAUDE.md` |
