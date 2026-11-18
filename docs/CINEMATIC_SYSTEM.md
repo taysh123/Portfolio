@@ -157,3 +157,53 @@ The slice keeps a copy, and the test holds it equal.
   `--cine-radius-device` (28px, `--radius-2xl`), `--cine-radius-window` (12px, `--radius-sm`), and
   `--cine-elevation` (= the dark theme's `--shadow-object`).
 - **Two NEW values, for Tay's review:** `--cine-lift` (−4px) and `--cine-glow-lift` (a cyan halo at 30%).
+
+### Galleries and the carousel (round 6)
+
+**Each project's captures** are `PROJECT_GALLERIES` in `data/projects.ts`: image names from `data/images.ts`, in order.
+- It is a separate export, not a field of `projects`, so it reaches no bundle the live page loads. A build-to-build hash
+  of every chunk shows only the lab's own chunks changed.
+- One entry is a still capture with no carousel chrome; two or more become a carousel.
+- Today: T Poker 3 (home, live, settle) and GRAVITY FLOW 2 (gameplay, boss). Aegis (the alert row) and DeveloperOS (the
+  search) have 1 each.
+
+**To add a capture:**
+1. Encode it into `public/work/` (`scripts/m10-images.mjs`).
+2. List it in `data/images.ts`.
+3. Append its name to the project's array.
+
+- If `app/lab/work/panels.ts` has no alt text for it, write the entry as `{ image, alt }`. An entry with no alt text
+  stops the build.
+- Ready to add, with reviewed alt text already in each project's `media.gallery`:
+  - **T Poker:** podium, stats, final count;
+  - **DeveloperOS:** AI features, learning, career, refusal, dashboard;
+  - **GRAVITY FLOW:** gravity run, cosmetics, win.
+  - They are in `public/projects/`, not yet encoded into `public/work/`.
+- `public/work/hero-aegis`, the Aegis Incidents board, is a second real Aegis capture with alt text, ready now.
+
+**The carousel** (`app/lab/work/Reel.tsx`, the slice's only client code) is a CSS 3D coverflow:
+- The front capture is flat and whole. Its neighbours step aside, turn `--cine-flow-turn`, scale to `--cine-flow-scale`
+  and dim under `--cine-flow-dim` of the field. This is perspective on 2D elements: no WebGL, no canvas.
+- It follows the WAI-ARIA tabbed carousel pattern. The dots are tabs with a roving tabindex, so one carousel is three
+  tab stops: previous, the chosen dot, next.
+- Arrows, Home and End move between captures, and focus follows the dot. A sideways swipe works on touch (vertical
+  swipes still scroll), and clicking a side capture brings it forward.
+- A polite live region announces each change the reader makes. It never moves on its own.
+- **No JS:** each project's first capture alone, and no controls.
+- **Reduced motion:** a flat slider, one capture at a time, no turn, no movement.
+- **Lazy:** a neighbour mounts only after hydration and only one step from the front; every capture but the page's
+  first is `loading="lazy"`.
+- The server renders every `<picture>` (`Shot.tsx`) and hands them in. The island imports no data and no image table,
+  and it draws its own arrow.
+  - Both choices are measured. Importing the image table, or the site's `ArrowLeftIcon`, into client code changed
+    `/`'s first-load chunks: Turbopack re-cut one, and tree-shaking kept a once server-only icon.
+
+**Phone proportions:**
+- A phone capture is capped by the screen's width *and* height: `min(190px, 48vw, 44svh × 0.46)`, at most about 45% of
+  the screen tall.
+- The stage and panel spacing tighten.
+- Aegis and DeveloperOS swap in the live chapters' phone crops below 640px. Each crop's own ratio reserves its box, so
+  nothing shifts (an e2e test holds every pending capture's height).
+
+**Tokens it added:** `--cine-dur-move` (= the site's `--dur-slow`), plus three NEW values for Tay's review:
+`--cine-flow-turn` 38deg, `--cine-flow-scale` 0.78, `--cine-flow-dim` 0.55.

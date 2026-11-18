@@ -344,10 +344,63 @@ rounds. So only the interleaved comparison counts, not the absolute numbers agai
 - Not verified: iOS Safari's `:active` (it needs a touch listener; a tap lifts through emulated hover instead), and
   any real device.
 
+### 14. Round 5b: the title, and the push (2026-11-19) (VL)
+- Tay changed the title to "Four projects, built end to end." (not all four are shipped products). A unit test pins it.
+- Rounds 4, 5 and the title were pushed on Tay's go (`377ce22`). The Preview rebuilt. PR #18 is still a draft, and
+  Production stayed on `a7a89fd`.
+
+### 15. Round 6: per-project carousels, and phone proportions (2026-11-19) (VL)
+- **Galleries** in `data/projects.ts` (`PROJECT_GALLERIES`, a separate pure export), exactly as Tay listed:
+  - T Poker: home, live, settle;
+  - GRAVITY FLOW: gameplay, boss;
+  - Aegis: the alert row;
+  - DeveloperOS: the search.
+  - The alt text is the site's own: `gf-boss` is `public/projects/gravity-flow/boss.webp` re-encoded (a unit test
+    measures it), so it takes that entry's "World boss encounter".
+  - The phone crops are the live chapters'.
+- **The carousel** (`Reel.tsx`): a CSS 3D coverflow (perspective and rotateY; no WebGL), the WAI-ARIA tabbed pattern,
+  arrows, swipe, no autoplay; a flat slider with reduced motion; the first capture alone without JS. Single-capture
+  projects stay still. Details: `docs/CINEMATIC_SYSTEM.md`, "Galleries and the carousel".
+- **Phone proportions:**
+  - T Poker's capture went from 280 × 607 to 171 × 370 at 390 × 844;
+  - phone captures are capped at 190px wide and ≤ 45% of the screen tall;
+  - the spacing is tighter.
+- **Found and fixed on the way (all measured):**
+  - **`/`'s first-load chunks changed twice.**
+    - The client carousel imported the image table, and Turbopack re-cut one of `/`'s chunks.
+    - It imported the site's `ArrowLeftIcon`, and app-wide tree-shaking kept that once server-only icon in `/`'s chunk
+      (+120 bytes).
+    - Fix: the server renders each capture and hands them in, and the island draws its own arrow.
+    - After the fix, `/` is byte-identical to `377ce22`: the HTML and all 12 first-load assets.
+    - Every built chunk was hashed before and after: only the lab's three (the Work page script, its CSS, the layer
+      CSS) differ. The case-study chunk is unchanged.
+  - **Phone CLS 0.017 → 0.** A blanket `aspect-ratio: …, auto` override had dropped the box reservation that width and
+    height give. It is now limited to captures with a phone crop.
+    - A new e2e test holds the images pending and asserts every box keeps its height.
+    - Red/green: the old rule collapses two captures to 0px.
+- **Measured:**
+  - first-load JS for `/lab/work` **181.39 KiB** (the carousel's own chunk 4.72 KiB; budget 205.7);
+  - desktop LCP 88 ms, CLS 0, INP 40 ms, FPS 60.5;
+  - phone (4× CPU, slow 4G) LCP 916 ms, CLS 0, INP 48 ms, FPS 60.4 (3 runs).
+  - axe: 0 violations at 1440 with motion, 390 with motion, and 1440 with reduced motion, after the carousel has
+    moved.
+- **The hero is unchanged:** 0 of 163,871 computed values and 0 pixels.
+- **Against `origin/main`:** both of `/`'s stylesheets byte-identical (pinned by the e2e test), and the same 9 → 10
+  chunk split as since round 1.
+  - `data/projects.ts` differs by the 19-line gallery export (Tay's brief).
+  - The guard files, `globals.css`, `lib/tokens.ts`, the root layout, `/`, `components/`, `lib/` and `public/` are
+    identical.
+- Validation:
+  - `npm test` **177/177** (`tokens.test.ts` and `dead-code.test.ts` 21/21);
+  - typecheck and lint exit 0;
+  - `npm run build`, then `GROQ_API_KEY= npx playwright test`: **173/173** (132 `main`, 18 hero, 23 Work).
+- Not verified: a real phone (iOS Safari's `:active` and touch feel), and real-device carousel performance.
+
 ### Waiting on Tay
-- Decide whether Concept A goes further. Rounds 4 and 5 are committed locally, not pushed: pushing updates PR #18's
-  Preview.
-- Review the two NEW layer values (`--cine-lift`, `--cine-glow-lift`).
+- Decide whether Concept A goes further. Round 6 is committed locally, not pushed: pushing updates PR #18's Preview.
+- Review the NEW layer values: `--cine-lift` and `--cine-glow-lift` (round 5); `--cine-flow-turn`,
+  `--cine-flow-scale` and `--cine-flow-dim` (round 6).
+- Captures to add (Aegis and DeveloperOS have one each): `docs/CINEMATIC_SYSTEM.md`, "To add a capture".
 - On `main`, the next close-out should record "D2 reopened for a measured prototype" in RESEARCH_AND_DECISIONS. This
   branch is never merged.
 
