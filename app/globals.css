@@ -49,14 +49,14 @@
   --border: rgba(12, 13, 16, 0.12);
   --border-strong: rgba(12, 13, 16, 0.22);
 
-  /* ── Accent (interaction) ── 5.9:1 on paper; white on the solid 6.5:1 */
-  --accent: #1a4fe0;
-  --accent-hover: #1442c2;
-  --accent-solid: #1a4fe0;
-  --accent-solid-hover: #1442c2;
-  --accent-soft: rgba(26, 79, 224, 0.10);
-  --accent-line: rgba(26, 79, 224, 0.30);
-  --accent-ring: rgba(26, 79, 224, 0.55);
+  /* ── Accent (interaction) ── iris (M1 A): what you can touch. Never decoration. */
+  --accent: #4a3fe0;              /* iris: 6.2:1 on paper, 6.8:1 on white, 5.6:1 on Aegis steel */
+  --accent-hover: #3f35c9;
+  --accent-solid: #4a3fe0;        /* white 6.8:1 */
+  --accent-solid-hover: #3f35c9;  /* white 8.2:1 */
+  --accent-soft: rgba(74, 63, 224, 0.10);
+  --accent-line: rgba(74, 63, 224, 0.30);
+  --accent-ring: rgba(74, 63, 224, 0.55);
   --accent-contrast: #ffffff;
   /* The primary button is ink on paper; on a dark plate or the dark theme it turns to paper. */
   --ink-solid: #0c0d10;
@@ -137,13 +137,13 @@
   --border: rgba(255, 255, 255, 0.11);
   --border-strong: rgba(255, 255, 255, 0.2);
 
-  --accent: #5b9cff;
-  --accent-hover: #7fb0ff;
-  --accent-solid: #2563eb;        /* white 5.2:1 */
-  --accent-solid-hover: #1d4fd0;
-  --accent-soft: rgba(91, 156, 255, 0.13);
-  --accent-line: rgba(91, 156, 255, 0.34);
-  --accent-ring: rgba(91, 156, 255, 0.6);
+  --accent: #a5a8ff;              /* 9.0:1 on ink, 8.2:1 raised */
+  --accent-hover: #b1b4ff;
+  --accent-solid: #4f46e5;        /* white 6.3:1 */
+  --accent-solid-hover: #4338ca;  /* white 7.9:1 */
+  --accent-soft: rgba(165, 168, 255, 0.13);
+  --accent-line: rgba(165, 168, 255, 0.34);
+  --accent-ring: rgba(165, 168, 255, 0.6);
   --accent-contrast: #0b0c0f;
   --ink-solid: #f2f4f8;
   --ink-solid-hover: #ffffff;
@@ -175,22 +175,22 @@
 .plate[data-plate="poker"][data-plate] {
   --bg: var(--plate-poker); --bg-raised: var(--plate-poker-2); --surface-1: var(--plate-poker-2); --surface-2: var(--plate-poker-2);
   --fg: #e9eef7; --fg-muted: #a9b6cb; --fg-subtle: #8f9db4; --fg-subtle-raised: #a9b6cb;
-  --accent: #8fb4ff;
+  --accent: #b1b4ff;    /* 9.6:1 on navy */
 }
 .plate[data-plate="aegis"][data-plate] { --bg: var(--plate-aegis); }
-[data-theme="light"] .plate[data-plate="aegis"][data-plate] { --fg-muted: #434852; --fg-subtle: #555b66; --accent: #1a4fe0; }
-[data-theme="dark"] .plate[data-plate="aegis"][data-plate] { --fg: #ffffff; --fg-muted: #adb5c2; --fg-subtle: #98a2b2; --accent: #6aa5ff; --alert-mark: #ee7a30; }
+[data-theme="light"] .plate[data-plate="aegis"][data-plate] { --fg-muted: #434852; --fg-subtle: #555b66; --accent: #4a3fe0; }   /* 5.6:1 on steel */
+[data-theme="dark"] .plate[data-plate="aegis"][data-plate] { --fg: #ffffff; --fg-muted: #adb5c2; --fg-subtle: #98a2b2; --accent: #b1b4ff; --alert-mark: #ee7a30; }   /* 8.2:1 on blue steel */
 .plate[data-plate="dos"][data-plate] {
   --bg: var(--plate-dos); --bg-raised: #201b38; --surface-1: #1d1833; --surface-2: #201b38;
   --fg: #eef1f6; --fg-muted: #a2a9b6; --fg-subtle: #8d95a6; --fg-subtle-raised: #a2a9b6;
-  --accent: #8fb4ff;
+  --accent: #b1b4ff;    /* 9.3:1 on violet; distinct from --cite #7fb0ff */
 }
 /* GRAVITY FLOW's glow is part of its plate; its top edge is plain --bg (the ramp), so the seam above it meets one colour. */
 .plate[data-plate="gf"][data-plate] {
   background: linear-gradient(to bottom, var(--bg), transparent 140px), radial-gradient(1100px 640px at 30% 50%, var(--plate-gf-glow) 0%, #03181c 55%, #020c0f 100%) var(--bg);
   --bg: var(--plate-gf); --bg-raised: #082a2f; --surface-1: #072328; --surface-2: #082a2f;
   --fg: #e9eef8; --fg-muted: #aeb8cc; --fg-subtle: #93a3b5; --fg-subtle-raised: #aeb8cc;
-  --accent: #8fb4ff;
+  --accent: #b1b4ff;    /* 9.3:1 on teal */
 }
 
 /* ── Section seams ── a section on a different surface from the one above it fades up into that section across the
@@ -340,7 +340,7 @@
   --border-subtle: rgba(0, 0, 0, 0.20);
   --border: rgba(0, 0, 0, 0.34);
   --border-strong: rgba(0, 0, 0, 0.52);
-  --accent: #1238b0;
+  --accent: #2a1fa8;   /* 10.3:1 on paper */
 }
 [data-high-contrast="true"][data-theme="dark"],
 [data-high-contrast="true"] [data-theme="dark"],
@@ -352,7 +352,7 @@
   --border-subtle: rgba(255, 255, 255, 0.20);
   --border: rgba(255, 255, 255, 0.34);
   --border-strong: rgba(255, 255, 255, 0.52);
-  --accent: #a9c6ff;
+  --accent: #c9cbff;   /* 12.6:1 on ink, 11.6:1 on violet */
 }
 
 [data-large-text="true"] {
