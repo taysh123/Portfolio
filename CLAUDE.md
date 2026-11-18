@@ -4,8 +4,8 @@
 
 Concise, durable instructions for every Claude Code session in this repo.
 Detailed material lives in `docs/`; this file stays short and points to it.
-M0 (audit + decisions) closed 2026-11-18. M1 moves A, C, D, B are live; E is in PR review; F is deferred
-(`docs/WORKLOG.md`).
+M0 (audit + decisions) closed 2026-11-18. The M1 core (moves A–E) is live; F is deferred to Tay's call after
+previewing A–E live (`docs/WORKLOG.md`).
 Keep refining this file with verified facts only.
 
 ## What this is
@@ -20,7 +20,7 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
 
 ## Where production code is (verified 2026-11-18)
 - **`main` is the source of truth.** Production = GitHub `taysh123/Portfolio` `main`; every merge deploys
-  via Vercel's GitHub integration (last verified: `f55fc45`, 2026-11-18, PRs #8–#11). `origin` is
+  via Vercel's GitHub integration (last verified: `81cf15d`, 2026-11-18, PRs #8–#12). `origin` is
   `https://github.com/taysh123/Portfolio.git` (the old name `Tay-Shofer---Portfolio` redirects). The repo
   is **public**. Changes go through a branch and a PR; Tay merges. Claude pushes or opens a PR only when the
   brief says so, and never merges.
@@ -61,7 +61,7 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
   Plates, calm/premium, restrained cyan/violet accents; no RGB wash, holographic cube, or
   fabricated stats. **No 3D now**: don't touch the 3D-guard tests or the JS budget.
   CREATIVE_DIRECTION's dark-cinematic/3D parts are superseded. M1 plan `docs/M1_VISUAL_PLAN.md`: moves A–E
-  approved. F is deferred: don't build it until Tay says yes after previewing E. Geist stays; use the plan's token
+  are live. F is deferred: don't build it until Tay says yes after previewing A–E live. Geist stays; use the plan's token
   values exactly.
 - Talk to Tay in English (Claude Code). Chat Claude uses Hebrew.
 - Guard tests on `main` encode Tay's decisions. Never edit one just to make a change pass;
@@ -96,7 +96,7 @@ Verified gotchas (2026-11-18):
   old build. Serve manual checks on another port. On Windows, stopping a backgrounded `npx next start` can leave
   its `node` child holding the port: check `Get-NetTCPConnection -LocalPort <port> -State Listen` and stop that PID.
 - The Windows-only `tests/unit/site.test.ts:78` failure (N6) is fixed (`b4d5c73`, PR #7): the unit suite is
-  119/119 on Windows (`main` `f698c74`). Run `npm test` from Git Bash: a test shells out `git grep … || true`,
+  121/121 on Windows (`main` `81cf15d`). Run `npm test` from Git Bash: a test shells out `git grep … || true`,
   and cmd.exe (PowerShell's child shell) has no `true`, so it fails there spuriously.
 - After leaving an old branch, run `npx next typegen` before `npm run typecheck` (stale `.next/types`).
 - The résumé PDF's exact byte size is pinned in `tests/e2e/lower.spec.ts`, and its size label is in

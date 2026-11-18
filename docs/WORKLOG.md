@@ -11,6 +11,52 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-18 — Session 7 close-out: the M1 core (A–E) is live (Claude Code)
+
+**Scope (Tay's brief):** record the current state: the M1 core (A–E) is merged and live after PR #12, F is deferred
+to Tay's call after previewing A–E live, and the N1 / N2 / N7 backlog is still open. Clean up scratch, delete the
+work branches fully merged into `main` (the remote `feature/m1-studio-light` included), PR anything uncommitted, and
+confirm `main` is clean.
+
+### 1. State (VL)
+- `git fetch --prune`: `origin/main` = **`81cf15d`**, the PR #12 merge (17:41:47Z).
+- GitHub Production deployment `81cf15d`, status `success` (17:42:12Z).
+- A read-only `curl` of https://www.tayshofer.dev/ returns 200. Its CSS carries E's `.more-work__row` plate
+  (`--bg-raised`, key, rim and hairline insets) and `.tbs__word { font-size: var(--text-h3) }`.
+- `npm test` (Git Bash) on `81cf15d`: **121/121** (14 files).
+
+### 2. Branches
+Each was checked with `git merge-base --is-ancestor <branch> origin/main` before it was deleted:
+
+| Branch | Tip | PR | Deleted |
+|---|---|---|---|
+| `feature/m1-lower-half` | `010a924` | #12 | local and remote |
+| `feature/m1-studio-light` | `63073bf` | #11 | remote (local deleted in session 7) |
+| `docs/m1-pr1-closeout` | `d74db81` | #10 | remote (local deleted in session 7) |
+
+Kept, because they are not merged (D8: delete only on a per-branch yes): `feature/portfolio-polish`,
+`feature/premium-portfolio-redesign-1mqmgf`, the four `review/m10-*` branches, and `reference/premium-redesign-package`.
+
+### 3. Cleanup
+- Session 7's measuring scripts and before/after shots are gone from the scratchpad. None were in the repo.
+- No server is listening on :3400, :3411 or :3412.
+- The ignored `.preview/` folder (screenshots from June, before these sessions) was left untouched.
+
+### 4. Docs (`docs/session-7-closeout`)
+- This entry.
+- START-HERE: what's live, what's next, branches, waiting on Tay.
+- CLAUDE.md: the state line, the last verified deployment (`81cf15d`), F's condition, and the unit count.
+- `docs/M1_VISUAL_PLAN.md`: the status banner, and B and E marked live in the approval list.
+- `docs/ROADMAP.md`: the M1 heading.
+
+### 5. Waiting on Tay
+- **F** (yes/no), after previewing A–E live.
+- **N1, N2, N7**, still open (`docs/RESEARCH_AND_DECISIONS.md`).
+- The 390px Think · Build · Ship note (session 7, §4).
+- The D8 remainder.
+
+---
+
 ## 2026-11-18 — Session 7: M1 PR 3 (E lower half, TBS h3 tier) + the Email-me contrast guard (Claude Code)
 
 **Scope (Tay's brief):**

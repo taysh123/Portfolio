@@ -1,12 +1,11 @@
 # M1 — Visual plan: Product Plates, lit
 
-> **Status (2026-11-18, session 7): A–E done; only F (optional) remains, and Tay decides it after previewing E.
-> Geist kept.**
+> **Status (2026-11-18, session 7 close): the M1 core, A–E, is live. Only F (optional) remains; Tay decides it
+> after previewing A–E live. Geist kept.**
 > - A, C, D are live (PR #8).
 > - B is live (PR #11), with two deviations from §8–§10: no plate lift, and no key on the chapter plates' top edge
 >   (`docs/WORKLOG.md` session 6).
-> - E, plus `.tbs__word` on the h3 tier, is in PR 3 (`feature/m1-lower-half`) for Tay's preview (`docs/WORKLOG.md`
->   session 7).
+> - E, plus `.tbs__word` on the h3 tier, is live (PR #12, `81cf15d`; `docs/WORKLOG.md` session 7).
 >
 > Implementation notes for A/C/D are in PR #8's description and `docs/WORKLOG.md` session 5.
 >
@@ -348,9 +347,9 @@ review before merge.
 
 Tay, 2026-11-18:
 - [x] **A** Iris replaces cobalt (including the two `chrome.spec.ts` assertions). *Live, PR #8.*
-- [x] **B** Studio light (key + cyan rim) and the hero lights-up moment. *Approved; next (PR 2).*
+- [x] **B** Studio light (key + cyan rim) and the hero lights-up moment. *Live, PR #11.*
 - [x] **C** Two heading tiers (chapters 64, paper sections 42). *Live, PR #8.*
 - [x] **D** Motion tokens. *Live, PR #8.*
-- [x] **E** Lower half: "Two more" as lit paper plates; second title line in ink. *Approved; PR 3.*
+- [x] **E** Lower half: "Two more" as lit paper plates; second title line in ink. *Live, PR #12.*
 - [ ] **F** *(optional)* Contact on a matte-black desk plate. *Deferred until Tay previews A–E.*
 - [x] Keep Geist (no display-face study)
