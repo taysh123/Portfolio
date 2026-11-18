@@ -151,7 +151,7 @@ Do not represent it as a hosted cloud AI service or imply that a real LLM is cal
 ### 4.4 GRAVITY FLOW — physics puzzle game
 
 **Status:** Release candidate; not yet published in an app store.  
-**Repository URL recorded in project data:** https://github.com/taysh123/Gravity-Game
+**Repository:** private (`taysh123/Gravity-Game`; owner decision 2026-11-18: it stays private). The site marks it private like T Poker and links no source; the served résumé no longer links it (PR #5).
 
 A one-touch gravity puzzle game built using Phaser 3, Matter.js, Vite, and strict TypeScript.
 

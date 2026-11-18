@@ -11,6 +11,48 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-18 — Session 3: Context7, GRAVITY FLOW private, résumé link, M0 closed (Claude Code)
+
+**Scope:** Tay's go for Context7; N5 (the GRAVITY FLOW repo stays private, so fix the data); make PR #5
+merge-ready; fix the served résumé; refresh these docs. Nothing merged or deployed; Tay pushes.
+Skills used: code-review discipline and `superpowers:verification-before-completion`.
+
+### What changed
+- **Context7:** `claude plugin install context7@claude-plugins-official --scope user` → installed
+  (`e6143c9807a0`, enabled). `claude mcp list`: `plugin:context7:context7 … (HTTP) - ! Needs
+  authentication`. Tay completes it with `/mcp` → context7 → sign in.
+- **Remote:** `git remote set-url origin https://github.com/taysh123/Portfolio.git`. No more "repository moved" warning.
+- **`fix/content-accuracy` → PR #5** (Tay pushed; title and body updated via `gh pr edit`):
+  - `36f6001`: `data/projects.ts:359` → `repo: { visibility: "private" }` (like T Poker), plus a new
+    `tests/unit/private-repo.test.ts` case. Red/green: it fails without the data change and passes with it.
+    The chapter drops its Source link; the case study shows "Private repository"; JSON-LD and the assistant
+    prompt carry no URL.
+  - `e105917`: the **served résumé PDF** loses the dead `github.com/taysh123/Gravity-Game` link and its
+    "· GitHub" text (Tay's PyMuPDF redaction script, run on a copy because PyMuPDF won't save over the open
+    file; PyMuPDF lived in a scratch venv only). Verified against the original:
+    - URI links 13 → 12; only Gravity-Game was removed.
+    - No trace of the URL in any object or stream.
+    - Page 1 pixel-identical; page 2 has 923 changed pixels, all inside the two redaction boxes.
+    - Text diff: only that line, now ending "| Live web build".
+    - Still two pages; 81,782 → **80,593 bytes**. The page doesn't reflow, so a blank line-height gap
+      remains where "GitHub" was.
+    - Label `lib/dict.ts:49` → "two pages, **79 KB**" (78.7 KiB, same KiB rounding as the old 79.9 → 80).
+      `tests/e2e/lower.spec.ts` pins **80593** bytes and checks "79 KB".
+- **Local environment:** `npx playwright install chromium` (Playwright 1.62.1 needs Chromium v1234; only
+  1243/1248 were present, so the first run failed 124 tests at browser launch).
+
+### Verification (final tree `e105917`)
+| Command | Result |
+|---|---|
+| `npm run typecheck` / `npm run lint` / `npm run build` | exit 0 / exit 0 / exit 0 |
+| `GROQ_API_KEY= npx playwright test` | **132/132**, exit 0. Before the résumé fix: 131/132; `private-repo.spec.ts:9` caught the PDF link |
+| `npm test` | 118/119; the only failure is N6 (`site.test.ts:78`, Windows-only, pre-existing) |
+
+The empty `GROQ_API_KEY` keeps the real key in `.env.local` from loading, so the chat specs take the
+offline path they are written for and nothing calls Groq.
+
+---
+
 ## 2026-11-18 — Session 2: decisions recorded, branches prepared (Claude Code)
 
 **Scope:** record Tay's decisions D1/D2/D5/D7; move the M0 docs onto `main`; remove the duplicate
@@ -72,7 +114,7 @@ commit) and `superpowers:verification-before-completion`.
 4. After moving off the old branch, `.next/` still holds its build output. Run `npx next typegen` (or a
    build) before `npm run typecheck`. **VL**
 
-### Push / PR commands (for Tay; nothing has been pushed)
+### Push / PR commands (for Tay). Done: pushed as PR #4 and PR #5
 ```bash
 git push -u origin docs/m0-audit
 gh pr create --repo taysh123/Portfolio --base main --head docs/m0-audit --title "docs: M0 audit, roadmap, decision log, refined agent context" --body "Documentation only (docs/, claude/START-HERE.md, CLAUDE.md); no app code. Production build verified locally: CSS byte-identical with and without the new files. 🤖 Generated with [Claude Code](https://claude.com/claude-code)"
@@ -303,3 +345,6 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-18 | Session 2 | M0 docs + decisions D1/D2/D5/D7 committed on `docs/m0-audit` (`9f8eed1` + follow-up); PROJECT_CONTEXT §9 language fixed; CREATIVE_DIRECTION status note | `docs/*.md`, `claude/START-HERE.md`, `CLAUDE.md` |
 | 2026-11-18 | Session 2 | Content fixes on `fix/content-accuracy` (`7bddd19`) | `data/projects.ts:150`, `:396` |
 | 2026-11-18 | Session 2 | Removed leftover project-local `ui-ux-pro-max` (untracked cache only) | working folder |
+| 2026-11-18 | Session 3 | Context7 installed (user scope); `origin` set to `taysh123/Portfolio` | Claude Code config, `.git/config` |
+| 2026-11-18 | Session 3 | PR #5: GRAVITY FLOW repo marked private (`36f6001`); served résumé link removed, size label 79 KB (`e105917`) | `data/projects.ts:359`, `tests/unit/private-repo.test.ts`, `public/resume/*.pdf`, `lib/dict.ts`, `tests/e2e/lower.spec.ts` |
+| 2026-11-18 | Session 3 | M0 docs refreshed: N5 resolved, PRs #4/#5, Context7, résumé facts, E2E gotchas | `docs/*.md`, `claude/START-HERE.md`, `CLAUDE.md` |

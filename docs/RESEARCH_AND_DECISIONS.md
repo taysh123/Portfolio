@@ -37,8 +37,8 @@ Tay decides everything here.
   bans in `tests/unit/dead-code.test.ts`, `tests/e2e/budget.spec.ts:47` and `tests/e2e/page.spec.ts`,
   and the first-load JS budget (≤ 205.7 KiB gzip) in `tests/e2e/budget.spec.ts:7`.
 
-**D3 — Docs branch:** done. The M0 docs are committed locally on `docs/m0-audit`, cut from `origin/main`
-(`3f0c5e5`). Tay pushes and opens the PR.
+**D3 — Docs branch:** done. The M0 docs are on `docs/m0-audit`, cut from `origin/main` (`3f0c5e5`),
+pushed as **PR #4** (open, not merged).
 
 **D4 — Duplicate `ui-ux-pro-max`:** done. The project-local copy is gone from the working folder: it
 was never on `main`, and the leftover ignored `__pycache__` files were deleted. The user-scope plugin
@@ -47,7 +47,8 @@ untouched. Nothing references the removed path (VL).
 
 **D5 — Public git history:** leave as-is. No history rewrite, and the repo stays public.
 
-**D6 — Content fixes:** approved. Prepared on the local branch `fix/content-accuracy` (`7bddd19`, from `origin/main`):
+**D6 — Content fixes:** approved. On `fix/content-accuracy` (from `origin/main`), pushed as **PR #5**
+(open, not merged; commits `7bddd19`, `36f6001`, `e105917`; see N5 for the last two):
 - `data/projects.ts:150`: T Poker billing no longer presented as "a swappable detail". It now reads
   "Billing verifies Apple and Google Play purchases, and its disabled mode fails closed."
 - `data/projects.ts:396`: "each of the seven mechanics" → "each of the **other six** mechanics", which
@@ -60,8 +61,19 @@ untouched. Nothing references the removed path (VL).
 **D7 — Language:** Claude Code talks to Tay in **English**; Chat Claude (claude.ai) talks to Tay in
 **Hebrew**. `docs/PROJECT_CONTEXT.md` §9 is updated to match.
 
-**D9 — Tool installs:** Context7 MCP only, after Tay's in-session go (§3.1). Web-design-guidelines: not
-yet. Impeccable: skip. GitHub plugin: skip (`gh` covers it).
+**D9 — Tool installs:** Context7 **installed** on Tay's go (§3.1). Web-design-guidelines: not yet.
+Impeccable: skip. GitHub plugin: skip (`gh` covers it).
+
+**N5 — GRAVITY FLOW repository: stays private (Tay).** The fix is in the data, not by exposing code. PR #5:
+- `36f6001`: `data/projects.ts:359` is `repo: { visibility: "private" }`, like T Poker. The dead link is
+  gone from the chapter, case study, JSON-LD and assistant prompt; the case study shows "Private repository".
+  `tests/unit/private-repo.test.ts` pins it.
+- `e105917`: the **served résumé PDF** (`public/resume/Tay-Shofer-Software-Engineer-Resume.pdf`) no longer
+  links `github.com/taysh123/Gravity-Game`. On page 2 the line ends "| Live web build". URI links went
+  13 → 12, and all other links are kept. The file is still two pages, now **80,593 bytes** (was 81,782). The
+  Contact label is "two pages, **79 KB**" (`lib/dict.ts:49`), and `tests/e2e/lower.spec.ts` pins 80593 and
+  "79 KB". Tay's personal résumé copies were already clean.
+- Verified on the final tree: build ✓, typecheck ✓, lint ✓, Playwright **132/132**, unit 118/119 (N6 only).
 
 ### Still open
 
@@ -80,12 +92,8 @@ yet. Impeccable: skip. GitHub plugin: skip (`gh` covers it).
   Replace them with "the institution"? Not changed: they are Tay's own wording.
 - ~~N3 — GRAVITY FLOW mechanics count~~ **Resolved:** seven is correct (game repo `MechanicId` lists 7);
   PROJECT_CONTEXT §4.4 needs no change.
-- **N5 — GRAVITY FLOW repo link is broken for visitors (high priority).** `taysh123/Gravity-Game` is now
-  **private** and returns 404 to logged-out visitors, but `data/projects.ts:359` still marks it
-  `visibility: "public"`. The live site shows a dead GitHub link, and the assistant prompt includes the URL.
-  Options: (a) make the repo public again; (b) change `:359` to `repo: { visibility: "private" }`, which
-  shows the "Private repository" label like T Poker; existing tests may pin that link, so it needs a test
-  run. Tay's call; nothing changed.
+- ~~N5 — GRAVITY FLOW repo link 404s for visitors~~ **Resolved** (see N5 under Resolved; PR #5). The fix
+  reaches the live site when PR #5 merges.
 - **N6 — Windows-only false failure in `tests/unit/site.test.ts:78`** (path separators). Optional one-line
   test fix; the guarded invariant holds.
 - **N4 — Why was October's entrance pulled?** This is no longer blocking (D2 = not now), but answer it
@@ -105,7 +113,7 @@ Environment: `claude` 2.1.327 · Node v24.18.0 · npm 11.16.0 · Windows 11.
 | Vercel web-design-guidelines (High) | MISSING, **not yet** (D9) | none | Later, on Tay's go (§3.2) |
 | Superpowers (High) | **INSTALLED** | `superpowers@superpowers-marketplace` 7.0.0, user | **Do not** also install `superpowers@claude-plugins-official` (duplicate) |
 | Playwright MCP (High) | **INSTALLED, connected** | `playwright@claude-plugins-official` plugin, runs `npx @playwright/mcp@latest` | **Do not** run `claude mcp add playwright …` (duplicate). Note: `@latest` is unpinned |
-| Context7 (High) | MISSING, **approved pending go** (D9) | Available in the already-configured official marketplace (`external_plugins/context7`) | §3.1 |
+| Context7 (High) | **INSTALLED** 2026-11-18 (D9) | `context7@claude-plugins-official` e6143c9807a0, user scope, enabled; MCP `plugin:context7:context7` (HTTP) shows "Needs authentication" | Tay: run `/mcp` → context7 → sign in once |
 | GitHub (High) | PARTIAL, plugin **skipped** | `gh` CLI authenticated, scopes `repo`, `read:org`, `gist` | Use `gh` |
 | Figma (Conditional) | **CONNECTED** | claude.ai Figma connector (MCP connected) | **Do not** install the Figma plugin unless you want its bundled skills |
 | Vercel (Optional) | **CONNECTED** | claude.ai Vercel connector, with **write-capable** tools (deployments, env, domains, rollback) | Use read-only tools only; never write without your explicit ask |
@@ -121,7 +129,11 @@ The working folder has no project `.claude/` directory any more (D4).
 
 Commands are as the official sources state them on 2026-11-18. Re-check on install day, per TOOLS_AND_SKILLS policy.
 
-### 3.1 Context7: version-specific docs (Next 16.3, React 19, Motion; three/GSAP later if M2 happens). APPROVED, pending go
+### 3.1 Context7: version-specific docs (Next 16.3, React 19, Motion; three/GSAP later if M2 happens). INSTALLED 2026-11-18
+
+Result: `claude plugin install context7@claude-plugins-official --scope user` succeeded. `claude plugin list`
+shows it enabled (user scope); `claude mcp list` shows `plugin:context7:context7 … (HTTP) - ! Needs
+authentication`. A one-time browser sign-in via `/mcp` completes it. The plan as approved follows.
 
 - **Command:** `claude plugin install context7@claude-plugins-official --scope user`. The scope options
   are `user` (default, `~/.claude/settings.json`, all projects), `project` (`.claude/settings.json`,
@@ -183,6 +195,7 @@ Playwright MCP, Superpowers, UI UX Pro Max, Frontend Design, the Figma plugin (c
 
 | Date | Decision | By |
 |---|---|---|
+| 2026-11-18 | N5: GRAVITY FLOW repo stays private; fixed in data (marked private) and in the served résumé PDF (dead link removed). Context7 installed (user scope) | Tay |
 | 2026-11-18 | D1 calm/premium, evolve Product Plates, restrained cyan/violet; D2 no 3D now, guards and budget untouched; D3 docs branch; D4 duplicate removed; D5 history as-is; D6 content fixes; D7 English for Claude Code, Hebrew for Chat Claude; D9 Context7 only | Tay |
 | 2026-11-18 | Institution not named; featured projects T Poker, Aegis, DeveloperOS, GRAVITY FLOW; names Aegis and GRAVITY FLOW | Tay (per PROJECT_CONTEXT header) |
 | 2026-10-13 | English-only site; `/he` → `/` (308); assistant restored on Groq | Tay (M10, per commit `fddc36e`) |

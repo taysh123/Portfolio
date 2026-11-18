@@ -18,8 +18,8 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
 
 ## Where production code is (verified 2026-11-18)
 - Production = GitHub `taysh123/Portfolio` **`main`**, deployed by Vercel's GitHub integration
-  (`3f0c5e5` live since 2026-11-02). The local remote `taysh123/Tay-Shofer---Portfolio` is the same
-  repo (renamed). The repo is **public**.
+  (`3f0c5e5` live since 2026-11-02). `origin` is `https://github.com/taysh123/Portfolio.git` (the old
+  name `Tay-Shofer---Portfolio` redirects). The repo is **public**. Open PRs: #4 (docs), #5 (content).
 - `reference/premium-redesign-package`, local `main` and local `feature/premium-portfolio-redesign`
   are **stale** (Next 16.2.6, old names, institution label, private repo URLs). Never build, deploy,
   or copy content from them.
@@ -73,11 +73,19 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
 - Never print or commit secrets. Keep `GROQ_API_KEY` server-side only.
 - Do not install tools/skills/MCPs or add dependencies without Tay's approval. Already installed
   (user scope; don't reinstall): frontend-design, superpowers, ui-ux-pro-max, playwright MCP,
-  typescript-lsp; claude.ai connectors incl. Figma and Vercel. The Vercel connector can write
+  typescript-lsp, context7 (needs a one-time `/mcp` sign-in); claude.ai connectors incl. Figma and Vercel. The Vercel connector can write
   (deploy/env/domains), so use only its read-only tools unless Tay asks. See RESEARCH_AND_DECISIONS §2.
 
 ## Validation commands (verified on `main` 2026-11-18; the stale branch has only dev/build/start/lint)
 `npm ci` · `npm run dev` · `npm run build` · `npm start` · `npm run typecheck` · `npm run lint` ·
 `npm test` (Vitest, `tests/unit`) · `npm run test:e2e` = `npx playwright test` (`tests/e2e`).
 E2E runs `next start` on :3400, so `npm run build` first; Chromium via Playwright or `PW_CHROMIUM`.
+Verified gotchas (2026-11-18):
+- Run E2E as `GROQ_API_KEY= npx playwright test`. `.env.local` holds a real key, and the chat specs expect
+  the keyless offline path; a pre-set empty var stops Next loading the key.
+- Playwright 1.62.1 needs Chromium v1234 (`npx playwright install chromium`).
+- `tests/unit/site.test.ts:78` fails on Windows only (path separators, N6).
+- After leaving an old branch, run `npx next typegen` before `npm run typecheck` (stale `.next/types`).
+- The résumé PDF's exact byte size is pinned in `tests/e2e/lower.spec.ts`, and its size label is in
+  `lib/dict.ts` (`resumeNote`). Update both whenever the PDF changes.
 Also `npm run measure` / `scan:controls` / `shoot` (scripts/). Prefer targeted tests while iterating.
