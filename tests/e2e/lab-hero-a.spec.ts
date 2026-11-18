@@ -107,6 +107,8 @@ for (const [name, opts] of [["the OS setting", { reducedMotion: "reduce" }], ["t
     await page.goto(ROUTE, { waitUntil: "networkidle" });
     await expect(field(page)).toHaveAttribute("data-state", "static");
     expect(Number(await field(page).getAttribute("data-nodes"))).toBeGreaterThan(0);
+    await page.waitForTimeout(2500);   // past the first signal's launch time, had the loop been running
+    await expect(field(page)).toHaveAttribute("data-pulses", "0");
     await page.mouse.move(1000, 400); await page.mouse.move(1100, 450);
     expect(await rafCount(page)).toBe(0);
     expect(await page.locator(".hxa__title").evaluate((e) => e.getAnimations().length)).toBe(0);
@@ -138,6 +140,21 @@ test("motion on: the loop runs, and stops while the tab is hidden or the field i
   expect(errors).toEqual([]);
   await ctx.close();
 });
+
+for (const [vp, cap] of [[[1440, 900], 3], [[390, 844], 2]] as const) {
+  test(`${vp[0]}×${vp[1]}: signals travel now and then, never more than ${cap} at once`, async ({ browser }) => {
+    const { ctx, page, errors } = await at(browser, vp, { reducedMotion: "no-preference" });
+    const seen = await page.evaluate(async () => {
+      const c = document.querySelector<HTMLCanvasElement>("canvas.hxa__field")!, out: number[] = [];
+      for (let i = 0; i < 100; i++) { out.push(Number(c.dataset.pulses ?? 0)); await new Promise((r) => setTimeout(r, 100)); }
+      return out;
+    });
+    expect(Math.max(...seen), "capped").toBeLessThanOrEqual(cap);
+    expect(seen.some((n) => n > 0), "at least one signal in 10 s").toBe(true);
+    expect(errors).toEqual([]);
+    await ctx.close();
+  });
+}
 
 for (const vp of [[1440, 900], [1024, 768], [390, 844], [320, 568]] as const) {
   test(`${vp[0]}×${vp[1]}: no horizontal overflow, targets ≥ 44px, the lighter field on phones`, async ({ browser }) => {

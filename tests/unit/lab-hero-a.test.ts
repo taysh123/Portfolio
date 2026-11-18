@@ -72,6 +72,16 @@ describe("progressive enhancement", () => {
     expect(field).toMatch(/new IntersectionObserver/);
     expect(field).toMatch(/cancelAnimationFrame/);
   });
+  it("round 2's life stays bounded: the phone frame cap, capped and rare signals, a pull that never pushes", () => {
+    expect(field).toMatch(/t - last < \(light \? 30 : 12\)/);                       // ≤ ~30 draws a second on the light path
+    expect(field).toMatch(/maxPulses = light \? 2 : 3; gapMin = light \? 3 : 1\.6; gapMax = light \? 5\.5 : 3\.2;/);
+    expect(field).toMatch(/if \(pulses\.length < maxPulses && nodes\.length > 1\) launch\(\);/);
+    // The pointer's force is the pull times a non-negative fade: no repel term anywhere.
+    expect(field).toMatch(/const f = \(1 - d \/ POINTER_R\) \* PULL \* soft \* soft \* pointer\.k \* dt;/);
+    expect(field).not.toMatch(/-\(1 - d \/ RING\)/);
+    // The still frame draws no signals: none exist until the loop's clock reaches the first launch.
+    expect(field).toMatch(/if \(still\) \{\n\s+draw\(\);\n\s+canvas\.dataset\.state = "static";/);
+  });
   it("the reveal is CSS that ends visible, and is switched off with reduced motion", () => {
     expect(css).toMatch(/@keyframes hxa-rise \{ from \{ opacity: 0;[^}]*\} \}/);   // a `from` only: it ends on the real values
     // The headline (the largest paint) never starts invisible: an opacity-0 start left Chromium with no LCP at all.
