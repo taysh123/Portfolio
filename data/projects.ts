@@ -356,7 +356,7 @@ export const projects: Project[] = [
       "Press and hold to spawn an inverse-square gravity well and pull a lost star home. 150 data-driven levels across 15 worlds build on seven core mechanics, alongside a deterministic seeded endless mode and a cosmetics economy whose items are visual only: no purchase changes gameplay. Built on Phaser 3 with strict TypeScript, and a Vitest suite over progression, saves and purchases.",
     context: "Solo build",
     status: "rc",
-    repo: { url: "https://github.com/taysh123/Gravity-Game", visibility: "public" },
+    repo: { visibility: "private" },
     stores: [
       { platform: "android", status: "soon" },
     ],
