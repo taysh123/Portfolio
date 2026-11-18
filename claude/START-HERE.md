@@ -9,7 +9,7 @@ Tay Shofer's live software-engineering portfolio at https://www.tayshofer.dev/.
 Goal: get Tay interviews for junior/entry software roles. Next.js 16 / React 19 / TypeScript /
 Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONTEXT.md`.
 
-## What's live now (verified 2026-11-18, session 8 close)
+## What's live now (verified 2026-11-18, session 9)
 - The current site is the calm, light **"Product Plates"** editorial design (M10), now with the whole **M1 core,
   moves A–E**:
   - **A**, the iris accent: `#4a3fe0` light, `#a5a8ff` dark, `#b1b4ff` on the dark plates.
@@ -22,10 +22,11 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 
   The site has no WebGL, and tests on `main` enforce that. `tokens.test.ts` now also guards the "Email me" fill
   (≥ 3:1 against `--bg-raised` and `--bg`, both themes).
-- Production = GitHub `taysh123/Portfolio` **`main`**, the source of truth. Deployed **`d80cb4c`** on 2026-11-18
-  (PR #14, the session 8 docs: N1, N2, the N7 findings; the site code is still PR #12's). GitHub's Production deployment
-  status is `success`. `main` is green: unit 121/121 (re-run on `d80cb4c` at the session 8 close), typecheck and lint;
-  Playwright 132/132 on PR #12's code. First-load JS is 181.79 KiB gzip (budget 205.7), HTML 156.44 KB (budget 568).
+- Production = GitHub `taysh123/Portfolio` **`main`**, the source of truth. Deployed **`b6f0bb6`** on 2026-11-18
+  (PR #15, the session 8 close-out docs, on top of PR #14; the site code is still PR #12's). GitHub's Production
+  deployment status is `success`. `main` is green: unit 121/121 (re-run on `b6f0bb6` at the start of session 9),
+  typecheck and lint; Playwright 132/132 on PR #12's code. First-load JS is 181.79 KiB gzip (budget 205.7), HTML
+  156.44 KB (budget 568).
 - **Cloudflare proxies the site in front of Vercel** (N7). Tay turned its two HTML changes off on 2026-11-18: Web
   Analytics is Disabled and Email Address Obfuscation is Off. Verified live at the close: no beacon, no decode
   script, and plain `mailto:` links on `/` and `/privacy`.
@@ -57,23 +58,25 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - N2: the agent docs say "the institution" instead of its abbreviation.
 - **N7, the Cloudflare toggles** (Tay, 2026-11-18): Web Analytics is Disabled and Email Address Obfuscation is Off.
   The `/privacy` wording is still open (below).
+- **N8** (Tay's brief, session 9; on the N8 PR): GRAVITY FLOW's private repository name is out of the docs. The
+  private-repo guard now pins both private repos, T Poker and GRAVITY FLOW, by SHA-256 digest.
 
 ## What's next
 - **Tay previews A–E live** on https://www.tayshofer.dev/, then **decides on Move F**, the optional desk plate under
   Contact (plan §4, §8). If yes, F needs one additive floor case in `tokens.test.ts` (plan §11), and that is the only
   test change it needs.
 - If F is a no, M1 closes with A–E; the next phase is in `docs/ROADMAP.md`.
-- N1 and N2 are merged (PR #14). N7's dashboard steps are done; its `/privacy` wording waits on Tay. **N8 is planned
-  for the next session**, on Tay's go.
+- N1 and N2 are merged (PR #14). N7's dashboard steps are done; its `/privacy` wording waits on Tay. N8 is done on
+  the N8 PR, which waits for Tay's review.
 - Phases and acceptance criteria: `docs/ROADMAP.md`.
 
-## Open PRs / branches (session 8 close, 2026-11-18)
-- **`docs/session-8-closeout`** (local, from `d80cb4c`): this close-out's state docs. Tay pushes it and opens the PR
-  (no push was asked for).
-- **`docs/session-7-closeout`** (local and remote) is merged (PR #13; its tip `7a235a3` is an ancestor of `main`). It
-  is kept: deleting it is not authorized.
+## Open PRs / branches (session 9, 2026-11-18)
+- **`fix/n8-gravity-flow-slug`** → one PR into `main`: N8 and these state docs. It changes one guard test
+  (`tests/support/private-repo.ts` now pins both private repos), so the PR asks for Tay's explicit approval at merge.
+  Tay merges.
 - Merged and deleted (local and remote, each checked with `git merge-base --is-ancestor` first):
-  `docs/backlog-n1-n2-n7` (#14, tip `ee96fc3`, at the session 8 close), `feature/m1-lower-half` (#12), `feature/m1-studio-light` (#11; session 8 re-checked: tip `63073bf` is in `main`, and
+  `docs/session-8-closeout` (#15, tip `f1f147a`) and `docs/session-7-closeout` (#13, tip `7a235a3`), both in
+  session 9; `docs/backlog-n1-n2-n7` (#14, tip `ee96fc3`, at the session 8 close), `feature/m1-lower-half` (#12), `feature/m1-studio-light` (#11; session 8 re-checked: tip `63073bf` is in `main`, and
   GitHub returns 404 for the branch), `docs/m1-pr1-closeout` (#10). Earlier: `feature/m1-iris-type-motion` (#8),
   `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
@@ -85,8 +88,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   the draft is in `docs/RESEARCH_AND_DECISIONS.md` N7 and in PR #14's description. If approved, a separate code PR
   ships it, with an approved edit to `tests/e2e/privacy.spec.ts` (it pins 2 outbound links). With both toggles off,
   "loads no third-party scripts" holds again, so only the hosting paragraph is in question.
-- **N8, next session:** whether to scrub GRAVITY FLOW's private repository name from the nine doc lines that still
-  carry it. Recommendation in `docs/RESEARCH_AND_DECISIONS.md`.
+- **Review and merge the N8 PR**, approving its one guard-test change: `tests/support/private-repo.ts` now pins both
+  private repos' digests. Details in `docs/RESEARCH_AND_DECISIONS.md` N8 and `docs/WORKLOG.md` session 9.
 - D8 remainder: six unmerged remote branches kept (`feature/portfolio-polish`,
   `feature/premium-portfolio-redesign-1mqmgf`, four `review/m10-*`) plus `reference/premium-redesign-package`;
   delete only on a per-branch yes.

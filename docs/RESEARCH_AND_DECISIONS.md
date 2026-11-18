@@ -213,14 +213,19 @@ the private T Poker repository @ `91d2b97` (the local clone equals GitHub `main`
       (this adds a third) and the copied phrases.
     - It also needs a new "Last updated" date, and an update to the comment at `app/privacy/page.tsx:26` ("The two
       provider pages").
-- **N8 — GRAVITY FLOW's private repository name in the docs (new, session 8).**
-  - CLAUDE.md says no private repository's name goes in the docs. Nine lines in `docs/` still name GRAVITY FLOW's:
-    PROJECT_CONTEXT §4.4, RESEARCH_AND_DECISIONS N5, ROADMAP M0.5, and six in the WORKLOG.
-  - `npm test` passes because the private-repo guard hashes only T Poker's name.
-  - The site linked that repository publicly until PR #5, so the name is already in public history (D5).
-  - **Recommendation:** replace it with "the private GRAVITY FLOW repository" in a docs PR. Adding a second digest to
-    the guard would be a test change and needs Tay's yes.
-  - Not changed: it is outside this session's N1/N2 scope.
+- ~~N8 — GRAVITY FLOW's private repository name in the docs~~ **Resolved in session 9** (Tay's brief; on the N8 PR,
+  which Tay merges).
+  - Logged in session 8: nine lines in `docs/` named GRAVITY FLOW's repository (PROJECT_CONTEXT §4.4,
+    RESEARCH_AND_DECISIONS N5, ROADMAP M0.5, and six in the WORKLOG), and the guard hashed only T Poker's name.
+  - Now each of the nine says "the private GRAVITY FLOW repository", with its meaning kept. `git grep` finds the slug
+    nowhere in the tree.
+  - **The guard pins both** (`tests/support/private-repo.ts`): `PRIVATE_SLUGS` holds the SHA-256 digests of both
+    lower-cased slugs, T Poker's unchanged. `privateRepoLeaks` tests every candidate token against the set. Only the
+    digests are stored.
+  - `tests/unit/private-repo.test.ts` checks that exactly two digests are pinned. It also proves detection on an
+    injected throwaway pair, the way the institution self-test does, so neither real slug is written.
+  - This is a guard-test change, so the PR flags it for Tay's explicit approval at merge.
+  - The name is still in public git history from before PR #5 (D5: history left as is).
 - ~~N3 — GRAVITY FLOW mechanics count~~ **Resolved:** seven is correct (game repo `MechanicId` lists 7);
   PROJECT_CONTEXT §4.4 needs no change.
 - ~~N5 — GRAVITY FLOW repo link 404s for visitors~~ **Resolved and live** (see N5 under Resolved; PR #5,
@@ -326,6 +331,7 @@ Playwright MCP, Superpowers, UI UX Pro Max, Frontend Design, the Figma plugin (c
 
 | Date | Decision | By |
 |---|---|---|
+| 2026-11-18 | Session 9: N8. GRAVITY FLOW's private repository name is out of the docs, and the private-repo guard pins both private repos by digest (a guard-test change for Tay's approval at merge). `docs/session-7-closeout` and `docs/session-8-closeout` deleted | Tay (brief) |
 | 2026-11-18 | Session 8 close: PR #14 (N1, N2) merged (`d80cb4c`). N7: Cloudflare Web Analytics set to Disable and Email Address Obfuscation set to Off. Still open: the `/privacy` wording; N8 goes to the next session | Tay |
 | 2026-11-18 | Session 8: N1 (copy the reference README's text) and N2 (the abbreviation out of the agent docs) done; N7 investigated only, its two dashboard toggles and the `/privacy` wording wait on Tay | Tay (brief) |
 | 2026-11-18 | M1: moves A–E approved, F deferred until A–E are previewed, keep Geist; PR 1 (A, C, D) merged (#8). Next: B plus the dark "Email me" button a11y fix | Tay |

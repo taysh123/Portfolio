@@ -11,6 +11,87 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-18 — Session 9: N8, GRAVITY FLOW's private repository name out of the tree (Claude Code)
+
+**Scope (Tay's brief):**
+- N8 only. Scrub GRAVITY FLOW's repository slug from `docs/`, and pin it in the private-repo guard next to T Poker's.
+- Files: `docs/*`, `tests/support/private-repo.ts`, `tests/unit/private-repo.test.ts`, and the state docs
+  (`claude/START-HERE.md`, one line in `CLAUDE.md`).
+- No site code, styles, other guards, `/privacy` copy or budgets. A slug found outside `docs/` means stop and ask.
+- Delete `docs/session-7-closeout` and `docs/session-8-closeout`, local and remote, after the ancestry check.
+- One PR into `main` with the state docs inside it. No merge, no deploy.
+
+Skills: `superpowers:test-driven-development` (the guard), `superpowers:verification-before-completion`.
+
+### 1. Preconditions (VL)
+- `git fetch`: `origin/main` = **`b6f0bb6`** (PR #15 merged, on top of PR #14).
+- Production deployment `b6f0bb6`, GitHub status `success`.
+- Local `main` fast-forwarded to `b6f0bb6`. Branch `fix/n8-gravity-flow-slug` from `origin/main` (`--no-track`), then
+  `npm ci`.
+- `npm test` on the untouched branch: **121/121** (14 files).
+
+### 2. The docs scrub (VL)
+- `git grep -i -I` over every tracked file found the hyphenated slug on exactly **9 lines, all in `docs/`**:
+  PROJECT_CONTEXT §4.4 (1), RESEARCH_AND_DECISIONS N5 (1), ROADMAP M0.5 (1), and the WORKLOG's session 3 and M0 audit
+  entries (6).
+- Nothing turned up in `app`, `components`, `data`, `lib`, `public` or `tests`. No binary file matched, and no other
+  spelling (underscore, dotted, joined) exists.
+- Each line now says "the private GRAVITY FLOW repository" (or "a link to" it), and keeps its meaning.
+- The display-name correction notes are untouched: the same 4 lines before and after.
+- A scratch script made the edits. It required each old string to match exactly once and kept the files' line endings.
+
+### 3. The guard: a test change for Tay's approval at merge (VL)
+- `tests/support/private-repo.ts`: the single `PRIVATE_SLUG` digest becomes `PRIVATE_SLUGS`, a set of the SHA-256
+  digests of both lower-cased slugs. T Poker's digest is unchanged, and GRAVITY FLOW's (`2157fcbe…`) is added. Only the
+  digests are stored.
+- `privateRepoLeaks(text, slugs = PRIVATE_SLUGS)` tests every candidate token, and each of its hyphen-prefixes, against
+  the set. `slugDigest` is exported so the self-test can build throwaway digests.
+- The one-argument callers are unchanged and now check both slugs: `content.test.ts`, the tracked-file scan, and
+  `tests/e2e/private-repo.spec.ts`.
+- **TDD:** the new self-test failed first (`PRIVATE_SLUGS` undefined), then passed.
+- **The new digest catches the slug:** the new guard reports one hit (`2157fcbe…`) in each of `origin/main`'s four
+  pre-scrub docs, and 0 on this branch.
+
+### 4. The self-test (`tests/unit/private-repo.test.ts`)
+- Exactly 2 digests are pinned, each 64 hex characters.
+- On an injected throwaway pair of slugs, a token hashing to each is found: inside a URL path with `.git`, in upper
+  case, with a hyphen suffix, and both in one text. A spaced name or a longer word is not a hit.
+- Like the institution self-test, it names neither real slug. The tracked-file test is now titled "either private
+  repository's name".
+
+### 5. Branches (VL)
+- `docs/session-7-closeout` (`7a235a3`, PR #13) and `docs/session-8-closeout` (`f1f147a`, PR #15): the local and remote
+  tips are all ancestors of `origin/main` (`git merge-base --is-ancestor`).
+- Both were deleted with `git branch -d` and `git push origin --delete`. GitHub returns 404 for both.
+- **Kept:** `reference/premium-redesign-package` (local and remote), `feature/portfolio-polish`,
+  `feature/premium-portfolio-redesign-1mqmgf`, and the four `review/m10-*` branches.
+
+### 6. Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` | **122/122** (14 files): the 121 from before plus the new self-test |
+| `npm run typecheck` | exit 0 |
+| `npm run lint` | exit 0 |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test tests/e2e/private-repo.spec.ts` | 4/4 (pages, scripts, source maps, résumé PDF) |
+| Scratch script: the guards' own `privateRepoLeaks` and `namesAny` over every tracked text file | 0 private-repo hits, 0 institution hits (139 files) |
+| `git grep -i -I` for the slug | 0 lines |
+| The same scan over both commit messages and the PR description | 0 hits each |
+
+- Not run: the full Playwright suite. No site code changed; only the private-repo spec's check got wider.
+
+### 7. State docs
+- This entry and the change log.
+- START-HERE.
+- CLAUDE.md: one line, saying the guard pins both private repos.
+- `docs/RESEARCH_AND_DECISIONS.md`: N8 resolved, and a history row.
+- `docs/ROADMAP.md`: backlog row 12.
+
+### Waiting on Tay
+- Review the N8 PR, and approve its guard change at merge.
+- Unchanged: decide F; the N7 `/privacy` wording.
+
+---
+
 ## 2026-11-18 — Session 8 close-out: PR #14 merged, N7's Cloudflare toggles done (Claude Code)
 
 **Scope (Tay's brief):**
@@ -884,3 +965,4 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-18 | Session 8 | N2: the abbreviation replaced with "the institution" | `CLAUDE.md`, `claude/START-HERE.md`, `docs/PROJECT_CONTEXT.md`, `docs/CREATIVE_DIRECTION.md` |
 | 2026-11-18 | Session 8 | N7 investigated (beacon + Email Address Obfuscation at the Cloudflare edge; draft `/privacy` wording); N8 logged; state docs | `docs/RESEARCH_AND_DECISIONS.md`, `docs/ROADMAP.md`, `docs/WORKLOG.md`, `claude/START-HERE.md`, `CLAUDE.md` |
 | 2026-11-18 | Session 8 close | PR #14 merged (`d80cb4c`, live); N7 Cloudflare toggles done by Tay, verified live; `docs/backlog-n1-n2-n7` deleted; state docs | `docs/WORKLOG.md`, `claude/START-HERE.md`, `CLAUDE.md`, `docs/RESEARCH_AND_DECISIONS.md`, `docs/ROADMAP.md` |
+| 2026-11-18 | Session 9 | N8: GRAVITY FLOW's private repository name scrubbed from 9 doc lines; the private-repo guard pins both private repos by digest (guard change for Tay's approval); `docs/session-7-closeout` and `docs/session-8-closeout` deleted; state docs | `docs/*.md`, `tests/support/private-repo.ts`, `tests/unit/private-repo.test.ts`, `claude/START-HERE.md`, `CLAUDE.md` |

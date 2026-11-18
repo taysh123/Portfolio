@@ -201,4 +201,4 @@ Acceptance criteria:
 | 9 | Consider adding `/privacy` to `app/sitemap.ts` | Currently `/` only. Minor; Tay's call | M5/M6 |
 | 10 | Consider a nonce-based CSP (`script-src` currently allows `'unsafe-inline'`) | The route is already dynamic (cookies), so nonces are feasible. Needs measurement | M6 |
 | 11 | N7: ~~Cloudflare's beacon and Email Address Obfuscation~~ turned off by Tay 2026-11-18 (verified live). Left: `/privacy` names only Vercel, though Cloudflare proxies the site | Privacy wording. Tay approves or rejects the draft (`docs/RESEARCH_AND_DECISIONS.md` N7) | any |
-| 12 | N8: GRAVITY FLOW's private repository name is still in nine doc lines (the guard hashes only T Poker's) | CLAUDE.md's rule on private repository names. A docs-only fix; Tay's call | any |
+| 12 | ~~N8: GRAVITY FLOW's private repository name in nine doc lines~~ Done in session 9 on the N8 PR: the lines say "the private GRAVITY FLOW repository", and the guard pins both private repos by digest | — | any |
