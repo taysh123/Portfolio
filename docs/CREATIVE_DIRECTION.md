@@ -2,8 +2,8 @@
 CREATIVE DIRECTION — proposed target experience. This is a design brief, NOT
 authorization to redesign or deploy. Prototype-first: build and measure a 3D hero
 proof-of-concept with a performance budget and a non-3D fallback before touching the
-live site. Resolved (2026-11-18): institution NOT named (no HIT); featured projects =
-T Poker, Aegis, DeveloperOS, GRAVITY FLOW. Reference images (reference-01..04) are
+live site. Resolved (2026-11-18): the institution is NOT named, not even abbreviated;
+featured projects = T Poker, Aegis, DeveloperOS, GRAVITY FLOW. Reference images (reference-01..04) are
 AI-generated mood/direction only — never copy them into production assets.
 -->
 

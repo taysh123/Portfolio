@@ -105,7 +105,8 @@ zero new JS.
 
 Acceptance criteria:
 - [ ] One approved mood statement for the evolution, with any reference images it relies on committed
-      (the `reference-01..04` images are not in the repo; the README lives only on the stale branch, see N1).
+      (the `reference-01..04` images are not in the repo; the reference README's text is on `main` as
+      `docs/references/premium-redesign-README.md`, N1).
       *Drafted:* plan §1–§2 (a described moodboard; no images needed).
 - [ ] Token proposal (colour, type, spacing, motion) expressed as a diff against `app/globals.css`,
       with contrast ratios computed against the existing floors in `tests/unit/tokens.test.ts`.
@@ -199,4 +200,5 @@ Acceptance criteria:
 | 8 | Prune stale remote branches (with Tay) | Merged ones deleted in session 4 (D8). Six unmerged ones remain, each needing its own yes | any |
 | 9 | Consider adding `/privacy` to `app/sitemap.ts` | Currently `/` only. Minor; Tay's call | M5/M6 |
 | 10 | Consider a nonce-based CSP (`script-src` currently allows `'unsafe-inline'`) | The route is already dynamic (cookies), so nonces are feasible. Needs measurement | M6 |
-| 11 | N7: Cloudflare Web Analytics beacon injected into the live page (CSP blocks it); `/privacy` names only Vercel | Console error on every load; privacy wording. Tay's call (Cloudflare settings) | any |
+| 11 | N7: Cloudflare's proxy injects its Web Analytics beacon (CSP blocks it) and rewrites the email links with Email Address Obfuscation (its same-origin decode script runs); `/privacy` names only Vercel. Investigated in session 8 | A console error on every load; a Cloudflare script runs; the privacy wording. Tay: two dashboard toggles, then approve or reject the drafted `/privacy` wording (`docs/RESEARCH_AND_DECISIONS.md` N7) | any |
+| 12 | N8: GRAVITY FLOW's private repository name is still in nine doc lines (the guard hashes only T Poker's) | CLAUDE.md's rule on private repository names. A docs-only fix; Tay's call | any |

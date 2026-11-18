@@ -20,7 +20,8 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
 
 ## Where production code is (verified 2026-11-18)
 - **`main` is the source of truth.** Production = GitHub `taysh123/Portfolio` `main`; every merge deploys
-  via Vercel's GitHub integration (last verified: `81cf15d`, 2026-11-18, PRs #8–#12). `origin` is
+  via Vercel's GitHub integration (last verified: `536e34b`, 2026-11-18, PRs #8–#13). Cloudflare proxies the domain
+  and alters the live HTML (N7 in `docs/RESEARCH_AND_DECISIONS.md`); E2E can't see that. `origin` is
   `https://github.com/taysh123/Portfolio.git` (the old name `Tay-Shofer---Portfolio` redirects). The repo
   is **public**. Changes go through a branch and a PR; Tay merges. Claude pushes or opens a PR only when the
   brief says so, and never merges.
@@ -49,7 +50,8 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
 - Preserve the current design, content hierarchy, responsive behavior, accessibility,
   privacy, SEO, security headers/CSP, and performance budgets. Do not weaken them without a
   measured reason.
-- The academic institution is intentionally **not named**. Do not add HIT or any institution.
+- The academic institution is intentionally **not named**. Do not add the institution, by name or abbreviation,
+  or any other institution.
 - Featured projects: T Poker, Aegis, DeveloperOS, GRAVITY FLOW. Correct names: Aegis (not
   SentinelAI), GRAVITY FLOW (not Gravity Game).
 - Do not invent features, metrics, users, revenue, downloads, test counts, screenshots, or
@@ -96,7 +98,7 @@ Verified gotchas (2026-11-18):
   old build. Serve manual checks on another port. On Windows, stopping a backgrounded `npx next start` can leave
   its `node` child holding the port: check `Get-NetTCPConnection -LocalPort <port> -State Listen` and stop that PID.
 - The Windows-only `tests/unit/site.test.ts:78` failure (N6) is fixed (`b4d5c73`, PR #7): the unit suite is
-  121/121 on Windows (`main` `81cf15d`). Run `npm test` from Git Bash: a test shells out `git grep … || true`,
+  121/121 on Windows (`main` `536e34b`). Run `npm test` from Git Bash: a test shells out `git grep … || true`,
   and cmd.exe (PowerShell's child shell) has no `true`, so it fails there spuriously.
 - After leaving an old branch, run `npx next typegen` before `npm run typecheck` (stale `.next/types`).
 - The résumé PDF's exact byte size is pinned in `tests/e2e/lower.spec.ts`, and its size label is in
