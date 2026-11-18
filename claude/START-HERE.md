@@ -9,7 +9,7 @@ Tay Shofer's live software-engineering portfolio at https://www.tayshofer.dev/.
 Goal: get Tay interviews for junior/entry software roles. Next.js 16 / React 19 / TypeScript /
 Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONTEXT.md`.
 
-## What's live now (verified 2026-11-18, session 7 close)
+## What's live now (verified 2026-11-18, session 8)
 - The current site is the calm, light **"Product Plates"** editorial design (M10), now with the whole **M1 core,
   moves A–E**:
   - **A**, the iris accent: `#4a3fe0` light, `#a5a8ff` dark, `#b1b4ff` on the dark plates.
@@ -22,10 +22,12 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 
   The site has no WebGL, and tests on `main` enforce that. `tokens.test.ts` now also guards the "Email me" fill
   (≥ 3:1 against `--bg-raised` and `--bg`, both themes).
-- Production = GitHub `taysh123/Portfolio` **`main`**, the source of truth. Deployed **`81cf15d`** on 2026-11-18
-  (PR #12 = E, the TBS tier and the guard; GitHub Production deployment status `success`). `main` is green: unit
-  121/121 (re-run on `81cf15d` at the close), typecheck and lint; Playwright 132/132 on PR #12's code. First-load JS
-  is 181.79 KiB gzip (budget 205.7), HTML 156.44 KB (budget 568).
+- Production = GitHub `taysh123/Portfolio` **`main`**, the source of truth. Deployed **`536e34b`** on 2026-11-18
+  (PR #13, the session 7 docs close-out; the site code is PR #12's; GitHub Production deployment status `success`).
+  `main` is green: unit 121/121 (re-run on `536e34b` in session 8), typecheck and lint; Playwright 132/132 on PR #12's
+  code. First-load JS is 181.79 KiB gzip (budget 205.7), HTML 156.44 KB (budget 568).
+- **Cloudflare sits in front of Vercel** and changes the live HTML; the app doesn't (N7): a Web Analytics beacon that
+  the CSP blocks, and Email Address Obfuscation, whose same-origin decode script runs. E2E can't see either.
 - Flagship projects shown: **T Poker, Aegis, DeveloperOS, GRAVITY FLOW**; plus Job Assistant
   and Orders & Delivery. Statuses/limitations: see PROJECT_CONTEXT §4. T Poker and GRAVITY FLOW
   repos are private ("Private repository" label).
@@ -34,8 +36,9 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 
 ## Decided (Tay, 2026-11-18; details in `docs/RESEARCH_AND_DECISIONS.md` §1)
 - **D1 Direction: calm / premium. Evolve Product Plates; don't replace it.** Restrained cyan/violet
-  accents. Follow the reference README's take / do-NOT-take: no RGB wash, no holographic cube,
-  no fabricated on-screen stats. CREATIVE_DIRECTION's dark-cinematic/3D art direction is superseded.
+  accents. Follow the reference README's take / do-NOT-take (its text: `docs/references/premium-redesign-README.md`):
+  no RGB wash, no holographic cube, no fabricated on-screen stats. CREATIVE_DIRECTION's dark-cinematic/3D art
+  direction is superseded.
 - **D2 3D: not now.** A future, separate, measured prototype only. Do not modify the
   `three`/`lenis`/WebGL/`<canvas>` guard tests or the first-load JS budget.
 - **D5** Public git history left as-is (no rewrite, repo stays public).
@@ -48,29 +51,42 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 - **M1** (`docs/M1_VISUAL_PLAN.md`): the core, moves **A–E**, is approved and **live** (PRs #8, #11, #12). **F**
   (desk plate) stays **deferred**: Tay decides after previewing A–E live. Do not build F without that yes. **Keep
   Geist** (no display-face study). Use the plan's token values exactly; invent none.
+- **N1, N2** (Tay's brief, session 8; on the session 8 PR):
+  - N1: the reference README's text, byte for byte, is in `docs/references/`, with no image.
+  - N2: the agent docs say "the institution" instead of its abbreviation.
 
 ## What's next
 - **Tay previews A–E live** on https://www.tayshofer.dev/, then **decides on Move F**, the optional desk plate under
   Contact (plan §4, §8). If yes, F needs one additive floor case in `tokens.test.ts` (plan §11), and that is the only
   test change it needs.
 - If F is a no, M1 closes with A–E; the next phase is in `docs/ROADMAP.md`.
-- The N1 / N2 / N7 backlog is still open (below).
+- N1 and N2 are done on the session 8 PR. N7 waits on Tay, and N8 is new (both below).
 - Phases and acceptance criteria: `docs/ROADMAP.md`.
 
-## Open PRs / branches (session 7 close, 2026-11-18)
-- **`docs/session-7-closeout`** → a docs-only PR into `main`: these state updates. Tay merges.
+## Open PRs / branches (session 8, 2026-11-18)
+- **`docs/backlog-n1-n2-n7`** → a docs-only PR into `main`: N1, N2, the N7 findings, and these state updates. Its
+  description carries the draft `/privacy` wording. Tay merges.
+- **`docs/session-7-closeout`** (local and remote) is merged (PR #13; its tip `7a235a3` is an ancestor of `main`). It
+  can be deleted on Tay's yes; the session 8 brief didn't name it.
 - Merged and deleted (local and remote, each checked with `git merge-base --is-ancestor` first):
-  `feature/m1-lower-half` (#12), `feature/m1-studio-light` (#11), `docs/m1-pr1-closeout` (#10). Earlier:
-  `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
+  `feature/m1-lower-half` (#12), `feature/m1-studio-light` (#11; session 8 re-checked: tip `63073bf` is in `main`, and
+  GitHub returns 404 for the branch), `docs/m1-pr1-closeout` (#10). Earlier: `feature/m1-iris-type-motion` (#8),
+  `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
 - **Decide F** (yes/no) after previewing A–E live.
 - A note from session 7's preview shots: at 390px the TBS row word (20.3px, 600) is close to the row's lead line
   `.tbs__line` (19px, 600). It follows the plan exactly, and no change was made. Worth a look while previewing.
-- **N1** (copy the reference README text onto `main`?) and **N2** (replace the literal institution
-  abbreviation in the agent docs?): recommendations in `docs/RESEARCH_AND_DECISIONS.md`.
-- **N7** (new): Cloudflare injects its Web Analytics beacon into the live page (the CSP blocks it), and
-  `/privacy` names only Vercel although Cloudflare proxies the site. See `docs/RESEARCH_AND_DECISIONS.md`.
+- **Review and merge the session 8 PR** (docs only: N1, N2, the N7 findings).
+- **N7, three manual steps** (details and dashboard paths in `docs/RESEARCH_AND_DECISIONS.md` N7):
+  1. In the Cloudflare dashboard, disable **Web Analytics** for the site.
+  2. In the Cloudflare dashboard, turn **Email Address Obfuscation** off.
+  3. **Approve or reject the drafted `/privacy` wording**, which names Cloudflare next to Vercel. If approved, a
+     separate code PR ships it, with an approved edit to `tests/e2e/privacy.spec.ts`.
+
+  The alternative to steps 1–2 is DNS-only records. Nothing in the repo or the live config was changed.
+- **N8** (new): GRAVITY FLOW's private repository name is still in nine doc lines. Replace it? Recommendation in
+  `docs/RESEARCH_AND_DECISIONS.md`.
 - D8 remainder: six unmerged remote branches kept (`feature/portfolio-polish`,
   `feature/premium-portfolio-redesign-1mqmgf`, four `review/m10-*`) plus `reference/premium-redesign-package`;
   delete only on a per-branch yes.
@@ -79,7 +95,7 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 - Live production site: no deploy/push/merge/secret/DNS change without Tay's explicit ask.
 - Don't break working features. Keep accessibility, privacy, SEO, security headers, and
   performance budgets intact.
-- Institution not named (no HIT). Honest project facts only — no invented metrics/claims.
+- The institution is not named, not even by abbreviation. Honest project facts only — no invented metrics/claims.
 - Evidence before conclusions; don't claim done before verified.
 
 ## Handoff / state doc

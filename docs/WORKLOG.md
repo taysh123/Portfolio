@@ -11,6 +11,99 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-18 — Session 8: the deferred backlog. N1 and N2 done, N7 investigated (Claude Code)
+
+**Scope (Tay's brief):**
+- Docs and content only. No change to the live site's code, styles, `/privacy` copy, guard tests or budgets.
+- N1: copy the reference README's text. N2: take the institution's abbreviation out of the agent docs. N7: investigate
+  and propose only.
+- Delete the remote `feature/m1-studio-light` once its tip is verified in `main`.
+- Push a work branch and open a PR. No merge, no deploy.
+
+Skill: `superpowers:verification-before-completion`.
+
+### 1. Preconditions (VL)
+- `git fetch --prune`: `origin/main` = **`536e34b`** (PR #13 merged). PR #12's merge `81cf15d` is an ancestor.
+  Production deployment `536e34b`, Vercel status `success`.
+- Local `main` fast-forwarded to `536e34b`. Branch `docs/backlog-n1-n2-n7` from `origin/main` (`--no-track`), then
+  `npm ci` (Next 16.3.8).
+- `npm test` on the untouched branch: **121/121** (14 files).
+
+### 2. N1: the reference README's text
+- New `docs/references/premium-redesign-README.md`: a provenance header, then the stale branch's
+  `design/references/README.md`, appended with `git show` so the bytes can't drift.
+- **Byte-identical:** `git hash-object` of the 52 lines under the header is `1a39ff2…`, the source blob. The staged file
+  is LF, like the rest of the repo's blobs.
+- No image. The PNG it describes stays on the stale branch.
+- D1 (`docs/RESEARCH_AND_DECISIONS.md`), ROADMAP M1 and START-HERE now point to it.
+
+### 3. N2: "the institution"
+- Four lines spelled the abbreviation out: `CLAUDE.md:52`, `claude/START-HERE.md:82`, `docs/PROJECT_CONTEXT.md:3` and
+  `docs/CREATIVE_DIRECTION.md:5`.
+- Each now says "the institution" plus "not even abbreviated", or "by name or abbreviation".
+- **The guard doesn't scan docs.** `content.test.ts` and `site.test.ts` read only `app`, `components`, `data`, `lib` and
+  `public`. So a scratch script (not committed, no test changed) ran the guards' own `namesAny` and `privateRepoLeaks`
+  over every tracked and new text file:
+  - before the edit: exactly those 4 files hit the institution check;
+  - after: 0 institution hits and 0 private-repo hits (139 files);
+  - `git grep -w` finds the abbreviation in 0 files.
+
+### 4. N7: Cloudflare (investigated; nothing changed)
+Full findings, Tay's dashboard steps and the draft `/privacy` wording are in `docs/RESEARCH_AND_DECISIONS.md` N7.
+- **Repo (VL):**
+  - `git grep` finds no Cloudflare reference outside these docs.
+  - The source emits plain `mailto:` links.
+  - A local `next start -p 3410` of `536e34b`, fetched with browser headers, has no beacon and no external
+    `<script src>` on `/` or `/privacy`.
+  - The server was stopped afterwards; ports 3410 and 3400 are free.
+- **Live (VL):**
+  - Cloudflare nameservers and Cloudflare addresses; `Server: cloudflare` and `CF-RAY` in front of `x-vercel-id`.
+  - The beacon is injected only into requests that accept HTML. It was in 3/3 fetches with browser headers, and in none
+    with curl's default `Accept`. That explains a plain `curl` missing it.
+  - Chromium (Playwright MCP) visited the live home page:
+    - the beacon is blocked by the CSP (console error, request `FAILED csp`, no `__cfBeacon`);
+    - **new:** `/cdn-cgi/scripts/…/email-decode.min.js` loads with 200 and runs;
+    - Email Address Obfuscation rewrites all three `mailto:` links on `/` and `/privacy` to
+      `/cdn-cgi/l/email-protection#…`, and the decode script turns them back.
+  - No `Set-Cookie` on either page.
+- **The origin can't be checked directly:** the Vercel deployment URL answers 302 to Vercel Authentication. The local
+  build stands in.
+- **Dashboard paths (VD):** read from developers.cloudflare.com by a web-fetch subagent. The `/privacy` draft stays within
+  Cloudflare's privacy policy §2 and §6.
+- `/privacy` and `tests/e2e/privacy.spec.ts` were not touched.
+
+### 5. Branches
+- **`feature/m1-studio-light`:** nothing to delete. Its tip `63073bf` (PR #11's head) is an ancestor of `origin/main`.
+  GitHub answers 404 for the branch, and `git ls-remote` doesn't list it: session 7's close already deleted it.
+- **`docs/session-7-closeout`** (local and remote): merged (PR #13; tip `7a235a3` is an ancestor). Kept, because the
+  brief didn't name it. It waits on Tay's yes.
+- Kept as before: `reference/premium-redesign-package` and the six unmerged remote branches.
+
+### 6. New: N8
+The private-repo guard hashes only T Poker's name. GRAVITY FLOW's private repository name is still in nine doc lines.
+Logged in `docs/RESEARCH_AND_DECISIONS.md` with a recommendation; not changed (out of scope).
+
+### 7. Validation (final tree)
+| Command | Result |
+|---|---|
+| `npm test` (Git Bash) | **121/121** (14 files) |
+| `npx vitest run tests/unit/private-repo.test.ts tests/unit/content.test.ts tests/unit/site.test.ts` | 30/30 (the institution and private-repo guards) |
+| `npx next typegen` · `npm run typecheck` · `npm run lint` | ✓ · exit 0 · exit 0 |
+| Scratch scan with `namesAny` + `privateRepoLeaks`, docs included | 0 · 0 |
+| `npm run build` | exit 0 (for the N7 local check) |
+
+Playwright was not run: the diff is docs only, and no app file changed.
+
+### 8. Docs
+- New: `docs/references/premium-redesign-README.md`.
+- `docs/RESEARCH_AND_DECISIONS.md`: the D1 pointer; N1 and N2 resolved; N7 rewritten; N8; a history row.
+- `docs/ROADMAP.md`: the M1 criterion and backlog rows 11–12.
+- This entry, START-HERE, and CLAUDE.md (the N2 line, the last verified deployment, a Cloudflare note, the unit-count
+  commit).
+- The N2 header comments in `docs/PROJECT_CONTEXT.md` and `docs/CREATIVE_DIRECTION.md`.
+
+---
+
 ## 2026-11-18 — Session 7 close-out: the M1 core (A–E) is live (Claude Code)
 
 **Scope (Tay's brief):** record the current state: the M1 core (A–E) is merged and live after PR #12, F is deferred
@@ -742,3 +835,6 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-18 | Session 5 | M1 PR 1: A iris, C type tiers, D motion tokens (PR #8, merged `3103bfd`, live) | `app/globals.css`, section/work CSS, `CaseStudyPanel.tsx`, page titles, `lib/tokens.ts`, `tests/e2e/chrome.spec.ts:268-273` |
 | 2026-11-18 | Session 5 | Private T Poker slug removed from the docs; `main` green again (PR #9, merged `f698c74`) | `docs/RESEARCH_AND_DECISIONS.md`, `docs/WORKLOG.md` |
 | 2026-11-18 | Session 5 | Close-out: four merged branches deleted; state docs, M1 plan status, ROADMAP, CLAUDE.md:87 note | `docs/*.md`, `claude/START-HERE.md`, `CLAUDE.md` |
+| 2026-11-18 | Session 8 | N1: the reference README's text copied byte for byte, with no image | `docs/references/premium-redesign-README.md`, `docs/RESEARCH_AND_DECISIONS.md` (D1) |
+| 2026-11-18 | Session 8 | N2: the abbreviation replaced with "the institution" | `CLAUDE.md`, `claude/START-HERE.md`, `docs/PROJECT_CONTEXT.md`, `docs/CREATIVE_DIRECTION.md` |
+| 2026-11-18 | Session 8 | N7 investigated (beacon + Email Address Obfuscation at the Cloudflare edge; draft `/privacy` wording); N8 logged; state docs | `docs/RESEARCH_AND_DECISIONS.md`, `docs/ROADMAP.md`, `docs/WORKLOG.md`, `claude/START-HERE.md`, `CLAUDE.md` |

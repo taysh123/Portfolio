@@ -1,6 +1,6 @@
 <!--
 CANONICAL CONTEXT — verified facts, source of truth for project claims.
-Resolved decisions (2026-11-18): institution NOT named on the site (no HIT);
+Resolved decisions (2026-11-18): the institution is NOT named on the site, not even abbreviated;
 featured projects = T Poker, Aegis, DeveloperOS, GRAVITY FLOW. Correct names:
 Aegis (not SentinelAI), GRAVITY FLOW (not Gravity Game). Re-validate every fact
 against the actual local repo before publishing it on the site.

@@ -14,8 +14,9 @@ Tay decides everything here.
 **D1 — Design direction: CALM / PREMIUM, evolving Product Plates (not a full replacement).**
 - Evolve the existing "Product Plates" design (M10) rather than replace it. Use **restrained**
   cyan/violet accents.
-- Follow the reference README's "take / do NOT take" exactly. That file exists only on the stale branch:
-  `git show reference/premium-redesign-package:design/references/README.md`. Its rules:
+- Follow the reference README's "take / do NOT take" exactly. Its text is on `main` as
+  `docs/references/premium-redesign-README.md` (N1): a byte-for-byte copy of the stale branch's
+  `design/references/README.md`, with no image. Its rules:
   - **Take:** the dual-monitor composition (large primary square to camera, smaller secondary angled
     in); the camera just above desk height; the desk layout; the portfolio itself on the primary screen
     and real engineering surfaces on the secondary; "the product-photograph feeling — an object staged
@@ -120,36 +121,98 @@ the private T Poker repository @ `91d2b97` (the local clone equals GitHub `main`
   summary, not `challenges`, and its rule "Do not claim cross-device sync on reconnect" agrees. Metadata
   and `/privacy` don't mention it. **VL**
 
+### Resolved in session 8 (2026-11-18, Tay's brief)
+
+**N1 — Reference README text on `main`: done.**
+- `docs/references/premium-redesign-README.md` holds the stale branch's `design/references/README.md` (blob
+  `1a39ff2`, last changed in `4df968d`, 2026-08-05) under a short provenance header.
+- The 52 lines below the header are byte-identical: `git hash-object` of the body equals the source blob. **VL**
+- Text only. The AI-generated PNG and every other image stay out.
+- Both guard functions (`namesAny`, `privateRepoLeaks`) scan the file clean. D1 now points to it.
+
+**N2 — The institution abbreviation is out of the agent docs: done.**
+- The four lines that spelled it out now say "the institution", plus "not even abbreviated", so the rule still covers
+  the abbreviation:
+  - `CLAUDE.md` standing constraints;
+  - `claude/START-HERE.md` standing rules;
+  - the header comments of `docs/PROJECT_CONTEXT.md` and `docs/CREATIVE_DIRECTION.md`.
+- `git grep -w` finds it in no tracked file. The guard's own `namesAny`, run over every tracked and new text file
+  (docs included), finds no hit. Before the edit it found exactly those four files. **VL**
+- History keeps the old lines (D5).
+- The guard itself still scans only site code (`app`, `components`, `data`, `lib`, `public`). Widening it to the docs
+  would be a test change, so it was not made.
+
 ### Still open
 
-- **N1 — Reference README on `main`?** D1 relies on `design/references/README.md`, but it exists only on
-  the stale branch (the rules are quoted above so the decision stands on its own). Should its text be
-  copied onto `main`, for example under `docs/`? The PNG is AI-generated and probably should not be.
-  **Recommendation (session 4): yes, the text only,** as `docs/references/arrival-reference-README.md`
-  with a one-line header saying it is historical and quoted by D1. Then the stale branch can someday be
-  pruned without losing D1's source. Leave the PNG out.
-- **N2 — Literal institution abbreviation in docs.** Production's guard deliberately stores the
-  institution as hashes "because review snapshots of this repository are public"
-  (`tests/support/institution.ts`). The tests scan site code, not docs, so docs don't fail them. Still,
-  four lines written for agents spell the abbreviation out (`CLAUDE.md` standing constraints,
-  `claude/START-HERE.md` standing rules, and the header comments of `docs/PROJECT_CONTEXT.md` and
-  `docs/CREATIVE_DIRECTION.md`), and since PR #4 they are in the public tree.
-  Replace them with "the institution"? Not changed: they are Tay's own wording.
-  **Recommendation (session 4): yes.** "Do not name any institution" works without the name, and it
-  matches why the guard is hashed. History keeps the old lines (D5), so this only stops new copies.
-- **N7 — Cloudflare in front of the site (new, session 4).** **VL:**
-  - For browser user agents, the live HTML carries `<script … src="https://static.cloudflareinsights.com/beacon.min.js/…">`.
-    That is Cloudflare Web Analytics, injected by Cloudflare's proxy rather than by the app.
-  - The site's CSP blocks it ("violates … script-src 'self' 'unsafe-inline'"), so no analytics run, and
-    `/privacy`'s "no analytics or tracking" still holds. But every page load logs a console error.
-  - E2E can't see this, because it runs `next start` locally.
-  - Responses also show `Server: cloudflare` and `CF-RAY` in front of Vercel (`x-vercel-id`), while
-    `/privacy` ("Hosting and logs") names only Vercel.
+- **N7 — Cloudflare in front of the site.** Found in session 4 and investigated in session 8. Nothing was changed:
+  two dashboard toggles and one `/privacy` decision wait on Tay.
+  - **Nothing in the code (VL).**
+    - No tracked file mentions Cloudflare except these docs.
+    - The app ships plain `mailto:` links: `app/error.tsx:37`, `app/privacy/page.tsx:103`,
+      `components/layout/Footer.tsx:9` and `components/sections/Contact.tsx:19`.
+    - A local `next start` of `536e34b`, fetched with browser headers, has no beacon and no external
+      `<script src>` on `/` or on `/privacy`.
+  - **At the edge (VL).**
+    - `tayshofer.dev` uses Cloudflare nameservers, and `www` resolves to Cloudflare addresses.
+    - Responses carry `Server: cloudflare` and `CF-RAY` in front of Vercel's `x-vercel-id`.
+    - Cloudflare's proxy changes the HTML in two ways, and only for requests that accept HTML. A plain `curl` gets
+      neither change.
+  - **1. The Web Analytics beacon.** The page gets `<script type="module"
+    src="https://static.cloudflareinsights.com/beacon.min.js/…" data-cf-beacon=…>`.
+    - Chromium blocks it under the CSP: the console logs "violates … script-src 'self' 'unsafe-inline'", the request
+      fails with `csp`, and `window.__cfBeacon` is undefined.
+    - So no analytics run, but every page load logs an error.
+  - **2. Email Address Obfuscation (new in session 8).**
+    - Every `mailto:` link is rewritten to `/cdn-cgi/l/email-protection#…`: 2 on `/`, 1 on `/privacy`.
+    - The page also gets `/cdn-cgi/scripts/…/cloudflare-static/email-decode.min.js`. It comes from the site's own
+      origin, so the CSP's `'self'` allows it, and **it runs**.
+    - After load, "Email me" and "Email" are `mailto:` links again. The script is 1,239 bytes and calls no network
+      or storage API.
+    - Without JavaScript, though, the email links go to a Cloudflare page instead of the mail app (**NC**: what that
+      page shows).
+    - And a Cloudflare script now runs on a site whose `/privacy` says it "loads no third-party scripts".
+  - No `Set-Cookie` on `/` or `/privacy`, so "Visiting sets no cookies" still holds.
+  - E2E can't see any of this, because it runs `next start` locally.
+  - **Tay's manual steps in the Cloudflare dashboard.** The paths are **VD**, from the official docs read on
+    2026-11-18:
+    1. **Web Analytics:** on the **Web Analytics** page, find the site, then **Manage site** → **Disable**.
+       The docs: "The JS Snippet will not be injected"
+       (developers.cloudflare.com/web-analytics/get-started/).
+    2. **Email Address Obfuscation:** on the zone's Security **Settings** page (filter: **Client-side abuse**),
+       switch **Email Address Obfuscation** to **Off**. It is on by default
+       (developers.cloudflare.com/waf/tools/scrape-shield/email-address-obfuscation/).
 
-  **Recommendation:** turn off Web Analytics for this site in the Cloudflare dashboard (exact menu path
-  **NC**), and keep the CSP as is. Whether `/privacy` should also name Cloudflare as a proxy is Tay's call.
-  The alternative is a DNS-only (grey-cloud) record, which removes Cloudflare from the request path. No
-  change made: DNS and CDN settings are Tay's.
+    The alternative is DNS-only (grey-cloud) records. They take Cloudflare out of the request path, and then
+    `/privacy` needs no change. Either way, keep the CSP as is.
+  - App-side workarounds exist: a `no-transform` Cache-Control (stops the beacon, per the Web Analytics FAQ) and
+    `<!--email_off-->` markers. Both are code changes, so neither was made. The two toggles make them unnecessary.
+  - **`/privacy`: Tay's call, not edited.** If Cloudflare stays a proxy (orange cloud), the "Hosting and logs"
+    paragraph should name it. Draft, kept within Cloudflare's privacy policy (§2 "End Users": "IP addresses, traffic
+    routing data, system configuration information, and other information about traffic to and from Customers'
+    websites"; §6: a data processor "on behalf of its Customers"):
+
+    > The site is hosted on Vercel. As with any web host, Vercel's infrastructure processes ordinary request
+    > information — such as your IP address, the approximate location derived from it, your browser and the page
+    > requested — to deliver the site and keep it secure, and may keep it in short-lived logs: [Vercel's privacy
+    > notice]. Requests reach Vercel through Cloudflare, which sits in front of the site as its network proxy and
+    > processes information about that traffic, such as your IP address, on the site's behalf: [Cloudflare's privacy
+    > policy](https://www.cloudflare.com/privacypolicy/). The site's own code logs only technical errors, never chat
+    > messages.
+
+    - If Email Address Obfuscation stays on, "loads no third-party scripts or fonts" also needs a change.
+    - If the records go DNS-only, no change is needed.
+    - Shipping the draft needs an approved edit to `tests/e2e/privacy.spec.ts`: it pins exactly **2** outbound links
+      (this adds a third) and the copied phrases.
+    - It also needs a new "Last updated" date, and an update to the comment at `app/privacy/page.tsx:26` ("The two
+      provider pages").
+- **N8 — GRAVITY FLOW's private repository name in the docs (new, session 8).**
+  - CLAUDE.md says no private repository's name goes in the docs. Nine lines in `docs/` still name GRAVITY FLOW's:
+    PROJECT_CONTEXT §4.4, RESEARCH_AND_DECISIONS N5, ROADMAP M0.5, and six in the WORKLOG.
+  - `npm test` passes because the private-repo guard hashes only T Poker's name.
+  - The site linked that repository publicly until PR #5, so the name is already in public history (D5).
+  - **Recommendation:** replace it with "the private GRAVITY FLOW repository" in a docs PR. Adding a second digest to
+    the guard would be a test change and needs Tay's yes.
+  - Not changed: it is outside this session's N1/N2 scope.
 - ~~N3 — GRAVITY FLOW mechanics count~~ **Resolved:** seven is correct (game repo `MechanicId` lists 7);
   PROJECT_CONTEXT §4.4 needs no change.
 - ~~N5 — GRAVITY FLOW repo link 404s for visitors~~ **Resolved and live** (see N5 under Resolved; PR #5,
@@ -255,6 +318,7 @@ Playwright MCP, Superpowers, UI UX Pro Max, Frontend Design, the Figma plugin (c
 
 | Date | Decision | By |
 |---|---|---|
+| 2026-11-18 | Session 8: N1 (copy the reference README's text) and N2 (the abbreviation out of the agent docs) done; N7 investigated only, its two dashboard toggles and the `/privacy` wording wait on Tay | Tay (brief) |
 | 2026-11-18 | M1: moves A–E approved, F deferred until A–E are previewed, keep Geist; PR 1 (A, C, D) merged (#8). Next: B plus the dark "Email me" button a11y fix | Tay |
 | 2026-11-18 | Session 4 task list: delete merged branches (D8, done), fix N6, verify and correct `data/projects.ts:172`, start M1 as a plan only; N1/N2 stay Tay's calls | Tay |
 | 2026-11-18 | N5: GRAVITY FLOW repo stays private; fixed in data (marked private) and in the served résumé PDF (dead link removed). Context7 installed (user scope) | Tay |
