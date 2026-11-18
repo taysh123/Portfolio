@@ -37,6 +37,8 @@ import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
  * change) say what it is doing, for the tests.
  */
 
+// A canvas cannot read CSS custom properties: these mirror --cine-cyan and --cine-violet
+// (app/lab/_cinematic/cinematic.css), and tests/unit/lab-hero-a.test.ts holds them equal.
 const CYAN = [46, 230, 214] as const;
 const VIOLET = [155, 107, 255] as const;
 const HUES = 6;            // colour buckets from cyan (0) to violet (HUES - 1)

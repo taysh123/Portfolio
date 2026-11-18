@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+// The cinematic design language (tokens, surfaces, focus, the one reveal): imported here and nowhere else, so only
+// /lab routes load it, and it applies only inside a `.cine` root. docs/CINEMATIC_SYSTEM.md.
+import "./_cinematic/cinematic.css";
 
 /**
  * /lab: measured prototypes only (Concept A, D2 reopened by Tay on 2026-11-18). Never indexed, never in the sitemap,

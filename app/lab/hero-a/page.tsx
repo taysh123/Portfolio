@@ -12,10 +12,15 @@ export const metadata: Metadata = { title: "Lab: Concept A hero" };
  * Concept A, "Cinematic hero": a MEASURED PROTOTYPE of the hero only (D2 reopened by Tay, 2026-11-18). It lives here,
  * behind the noindex /lab segment, and never replaces the live hero (components/sections/Hero.tsx).
  *
+ * The cinematic design language it was extracted into (app/lab/_cinematic/cinematic.css, docs/CINEMATIC_SYSTEM.md)
+ * applies inside the `.cine` root: tokens, surfaces, focus, the duotone clause, and the one reveal (`data-reveal`, the
+ * headline `settle`).
+ *
  * Progressive enhancement: everything a reader needs (the copy, both actions and the four projects) is server-rendered
  * HTML. The sky is CSS. The one live element, the constellation, is a client island on a 2D canvas that is aria-hidden
  * and pointer-events: none, so without JavaScript, or with reduced motion, the page reads and works the same. The
- * load reveal is one CSS sequence (hero-a.css), which also runs without JavaScript and is off with reduced motion.
+ * load reveal is one CSS sequence (the layer's [data-reveal]), which also runs without JavaScript and is off with
+ * reduced motion.
  *
  * Honest by construction: the role, the availability and each project's state come from the same data as the live
  * site, and each project's one-line tag is checked against its own data (tests/unit/lab-hero-a.test.ts).
@@ -23,14 +28,14 @@ export const metadata: Metadata = { title: "Lab: Concept A hero" };
 export default function HeroAPage() {
   const { siteMeta, availability, heroIndex, t } = getContent();
   return (
-    <div className="hxa" data-theme="dark">
+    <div className="cine hxa" data-theme="dark">
       <div className="hxa__sky" aria-hidden="true">
         <span className="hxa__glow hxa__glow--cyan" />
         <span className="hxa__glow hxa__glow--violet" />
       </div>
       <Constellation />
 
-      <header className="hxa__top shell">
+      <header className="hxa__top shell" data-reveal>
         <Link href="/" prefetch={false} className="hxa__mark">
           <svg className="hxa__glyph" viewBox="0 0 32 32" width="34" height="34" aria-hidden="true" focusable="false">
             <defs>
@@ -53,16 +58,16 @@ export default function HeroAPage() {
 
       <main id="main" className="hxa__main shell">
         <section aria-labelledby="hxa-title" className="hxa__hero">
-          <p className="hxa__eyebrow">{siteMeta.role}</p>
-          <h1 id="hxa-title" className="hxa__title">
+          <p className="hxa__eyebrow" data-reveal>{siteMeta.role}</p>
+          <h1 id="hxa-title" className="hxa__title" data-reveal="settle">
             <span className="hxa__l1">Building software.</span>{" "}
-            <span className="hxa__grad">Turning ideas into products.</span>
+            <span className="cine-duotone-text">Turning ideas into products.</span>
           </h1>
-          <p className="hxa__lede">
+          <p className="hxa__lede" data-reveal>
             I build end to end — mobile apps, security systems, developer tools and games, from the interface down to the
             infrastructure.
           </p>
-          <div className="hxa__ctas">
+          <div className="hxa__ctas" data-reveal>
             <Link href="/#work" prefetch={false} className="hxa__btn hxa__btn--primary">
               Explore my work<span aria-hidden="true">↗</span>
             </Link>
@@ -73,7 +78,7 @@ export default function HeroAPage() {
           </div>
         </section>
 
-        <nav aria-labelledby="hxa-featured" className="hxa__featured">
+        <nav aria-labelledby="hxa-featured" className="hxa__featured" data-reveal>
           <h2 id="hxa-featured" className="hxa__flabel">Featured work</h2>
           <ul className="hxa__flist">
             {heroIndex.map((x) => (
