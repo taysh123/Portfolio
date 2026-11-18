@@ -10,10 +10,17 @@
 /* ── Two more ── */
 .more-work { padding-block: var(--section-y); background: var(--bg); }
 .more-work__title { font-size: var(--text-h2); line-height: 1.05; letter-spacing: var(--tracking-heading); font-weight: 600; color: var(--fg); }
-.more-work__list { display: grid; gap: 0 2rem; margin-top: 2rem; }
+/* M1 E: two paper plates under the studio light — raised paper (no hue of its own, so they stay quieter than the four
+   product plates), the key along the top edge and the cyan rim down the right (move B's pair), a hairline ring for the
+   rest. Static: the hero's lights-up is the page's one orchestrated moment. A raised surface re-binds the subtle ink
+   (as .raised does), so the context line and the private-source label keep ≥ 5.4:1. Copy and markup unchanged. */
+.more-work__list { display: grid; gap: 12px; margin-top: 2rem; }
 @media (min-width: 900px) { .more-work__list { grid-template-columns: 1fr 1fr; } }
-.more-work__row { padding: 1.75rem 0; border-top: 1px solid var(--border); }
+.more-work__row { display: flex; flex-direction: column; padding: clamp(1.5rem, 3vw, 2.25rem); border-radius: 18px;
+  background: var(--bg-raised); --fg-subtle: var(--fg-subtle-raised);
+  box-shadow: inset 0 1px 0 var(--light-key), inset -1px 0 0 var(--light-rim), inset 0 0 0 1px var(--border-subtle); }
 .more-work__name { font-size: 1.375rem; font-weight: 600; letter-spacing: -0.02em; color: var(--fg); }
 .more-work__context { margin-top: 2px; font-size: 0.875rem; color: var(--fg-subtle); }
 .more-work__summary { margin-top: 0.75rem; max-width: 38em; font-size: 1rem; line-height: 1.55; color: var(--fg-muted); }
-.more-work__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.5rem; margin-top: 1.25rem; }
+/* The actions sit on each plate's floor, so side by side the two rows of actions line up. */
+.more-work__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.5rem; margin-top: auto; padding-top: 1.25rem; }

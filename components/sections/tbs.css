@@ -3,7 +3,8 @@
 .tbs__title { font-size: var(--text-h2); line-height: 1.05; letter-spacing: var(--tracking-heading); font-weight: 600; color: var(--fg); }
 .tbs__rows { list-style: none; margin: clamp(2rem, 4vw, 3rem) 0 0; padding: 0; border-top: 1px solid var(--border); }
 .tbs__row { display: grid; gap: 0.6rem; padding: 1.5rem 0; border-bottom: 1px solid var(--border); }
-.tbs__word { font-size: clamp(1.75rem, 1.4rem + 1.2vw, 2.5rem); line-height: 1; font-weight: 620; letter-spacing: -0.035em; color: var(--fg); }
+/* The row words take the h3 tier (M1, plan §7: 20→26, 1.2, 600 / −0.02em), so the 42px section title clearly outranks them. */
+.tbs__word { font-size: var(--text-h3); line-height: 1.2; font-weight: 600; letter-spacing: -0.02em; color: var(--fg); }
 .tbs__line { font-size: 1.1875rem; font-weight: 600; letter-spacing: -0.01em; color: var(--fg); }
 .tbs__summary { margin-top: 0.35rem; font-size: 1rem; line-height: 1.55; color: var(--fg-muted); max-width: 32em; }
 .tbs__example { font-size: 0.96875rem; line-height: 1.55; color: var(--fg-muted); max-width: 34em; }

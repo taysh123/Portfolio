@@ -4,7 +4,8 @@
 
 Concise, durable instructions for every Claude Code session in this repo.
 Detailed material lives in `docs/`; this file stays short and points to it.
-M0 (audit + decisions) closed 2026-11-18; M1 PR 1 (moves A, C, D) live 2026-11-18 (`docs/WORKLOG.md`).
+M0 (audit + decisions) closed 2026-11-18. M1 moves A, C, D, B are live; E is in PR review; F is deferred
+(`docs/WORKLOG.md`).
 Keep refining this file with verified facts only.
 
 ## What this is
@@ -19,7 +20,7 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
 
 ## Where production code is (verified 2026-11-18)
 - **`main` is the source of truth.** Production = GitHub `taysh123/Portfolio` `main`; every merge deploys
-  via Vercel's GitHub integration (last verified: `8f1dd5b`, 2026-11-18, PRs #8–#10). `origin` is
+  via Vercel's GitHub integration (last verified: `f55fc45`, 2026-11-18, PRs #8–#11). `origin` is
   `https://github.com/taysh123/Portfolio.git` (the old name `Tay-Shofer---Portfolio` redirects). The repo
   is **public**. Changes go through a branch and a PR; Tay merges. Claude pushes or opens a PR only when the
   brief says so, and never merges.
@@ -60,7 +61,8 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
   Plates, calm/premium, restrained cyan/violet accents; no RGB wash, holographic cube, or
   fabricated stats. **No 3D now**: don't touch the 3D-guard tests or the JS budget.
   CREATIVE_DIRECTION's dark-cinematic/3D parts are superseded. M1 plan `docs/M1_VISUAL_PLAN.md`: moves A–E
-  approved, F deferred until Tay previews A–E, Geist stays; use its token values exactly.
+  approved. F is deferred: don't build it until Tay says yes after previewing E. Geist stays; use the plan's token
+  values exactly.
 - Talk to Tay in English (Claude Code). Chat Claude uses Hebrew.
 - Guard tests on `main` encode Tay's decisions. Never edit one just to make a change pass;
   get explicit approval first: no `three`/`lenis`/WebGL/`<canvas>` (`tests/unit/dead-code.test.ts`,

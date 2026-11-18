@@ -9,15 +9,19 @@ Tay Shofer's live software-engineering portfolio at https://www.tayshofer.dev/.
 Goal: get Tay interviews for junior/entry software roles. Next.js 16 / React 19 / TypeScript /
 Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONTEXT.md`.
 
-## What's live now (verified 2026-11-18, session 6)
-- The current site is the calm, light **"Product Plates"** editorial design (M10), now with **M1 PR 1**:
-  **A** iris accent (`#4a3fe0` light, `#a5a8ff` dark, `#b1b4ff` on the dark plates), **C** two heading tiers
-  (`--text-chapter` 36→64 for the four products; `--text-h2` 30→42 for every paper section), **D** motion tokens
-  (`--dur-fast` 180ms, `--dur-light`, `--stagger`). It has no WebGL, and tests on `main` enforce that.
-- Production = GitHub `taysh123/Portfolio` **`main`**, the source of truth. Deployed **`8f1dd5b`** on
-  2026-11-18 (PR #8 = M1 A/C/D, PR #9 = docs leak fix, PR #10 = session 5 docs; GitHub Production deployment
-  status `success`). `main` is green: unit 119/119 (re-run at session 6 start), typecheck, lint; Playwright
-  132/132 on the same code; first-load JS 181.79 KiB gzip (budget 205.7), HTML 156.44 KB (budget 568).
+## What's live now (verified 2026-11-18, session 7)
+- The current site is the calm, light **"Product Plates"** editorial design (M10), now with M1 **A, C, D and B**:
+  - **A**, the iris accent: `#4a3fe0` light, `#a5a8ff` dark, `#b1b4ff` on the dark plates.
+  - **C**, two heading tiers: `--text-chapter` 36→64 for the four products; `--text-h2` 30→42 for every paper section.
+  - **D**, the motion tokens.
+  - **B**, the studio light: a key and a cyan rim on the hero plates (they light up once) and on every phone and window.
+  - The dark "Email me" contrast fix.
+
+  The site has no WebGL, and tests on `main` enforce that.
+- Production = GitHub `taysh123/Portfolio` **`main`**, the source of truth. Deployed **`f55fc45`** on 2026-11-18
+  (PR #11 = B and the Email-me fix; GitHub Production deployment status `success`). `main` is green: unit 119/119,
+  typecheck and lint; Playwright 132/132 on PR #11's code. First-load JS is 181.79 KiB gzip (budget 205.7), HTML
+  156.44 KB (budget 568).
 - Flagship projects shown: **T Poker, Aegis, DeveloperOS, GRAVITY FLOW**; plus Job Assistant
   and Orders & Delivery. Statuses/limitations: see PROJECT_CONTEXT §4. T Poker and GRAVITY FLOW
   repos are private ("Private repository" label).
@@ -37,34 +41,33 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   Impeccable skipped.
 - **N5** GRAVITY FLOW repo **stays private**; the site marks it private like T Poker, and the dead link
   is removed from the served résumé PDF (PR #5, live).
-- **M1** (`docs/M1_VISUAL_PLAN.md`): moves **A–E approved**; B approved again for PR 2 (session 6); **E and F
-  wait until Tay has previewed B**; F (desk plate) is a separate yes/no; **keep Geist** (no display-face study).
-  Use the plan's token values exactly; invent none.
+- **M1** (`docs/M1_VISUAL_PLAN.md`): moves **A–E approved** and, with PR 3, implemented. **F** (desk plate) stays
+  **deferred**: Tay decides after previewing E. Do not build F without that yes. **Keep Geist** (no display-face
+  study). Use the plan's token values exactly; invent none.
 
 ## What's next
-- **M1 PR 2 is open for Tay's preview** (branch `feature/m1-studio-light`, session 6). Nothing merged or deployed:
-  - **Dark "Email me" a11y fix:** dark `--accent-solid` `#4f46e5` → `#5651f0` (3.24:1 on raised `#16181d`, was
-    2.82; white 5.48:1), hover `#4338ca` → `#5e5bfa` (3.68:1, was 2.25; white 4.82:1). Hover lightens in the dark
-    theme. The chat launcher icon shares the token (now 3.24:1). Light theme unchanged.
-  - **Move B:** `--light-key` / `--light-rim` (plan §5 values); key + cyan rim on the hero plates (they light up
-    once, 700ms, 70ms stagger; reduced motion = lit at first paint) and on every phone and window (static).
-  - Two deviations from the plan, both to keep the static seams: no 2px plate lift (the device lift stays), and no
-    key on the chapter plates' top edge (it drew a hard rule across each seam). Details: `docs/WORKLOG.md`, session 6.
-- After Tay's preview and merge: **PR 3: Move E** (lower half), then **F** if Tay approves it.
+- **M1 PR 3 is open for Tay's preview** (branch `feature/m1-lower-half`, session 7). Nothing is merged or deployed.
+  - **Guard (approved):** `tokens.test.ts` asserts `--accent-solid` and its hover are ≥ 3:1 against `--bg-raised`
+    and `--bg` in both themes. It is green on `main` and red on the pre-PR-#11 CSS (2.82:1).
+  - **Move E:** "Two more" is now two lit paper plates: raised paper, B's key and cyan rim, and a hairline ring.
+    The second line of the About and Contact titles is now ink, not muted.
+  - **Think · Build · Ship:** `.tbs__word` is on the plan's h3 tier (`--text-h3` 20→26, 1.2, 600, −0.02em).
+    The 42px title is now over 26px words (they were 39.68px).
+- **After that preview, Tay decides on Move F**, the optional desk plate (§4, §8). F needs one additive floor case
+  in `tokens.test.ts` (plan §11).
 - Phases and acceptance criteria: `docs/ROADMAP.md`.
 
-## Open PRs / branches (session 6, 2026-11-18)
-- **`feature/m1-studio-light`** → PR into `main` (M1 PR 2: B + the dark Email-me fix + these docs). Tay previews,
+## Open PRs / branches (session 7, 2026-11-18)
+- **`feature/m1-lower-half`** → a PR into `main`: M1 PR 3, the guard + E + the TBS tier + these docs. Tay previews,
   then merges; merging deploys to Production.
-- Merged and deleted earlier: `docs/m1-pr1-closeout` (#10), `feature/m1-iris-type-motion` (#8),
-  `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
+- Merged and deleted earlier: `feature/m1-studio-light` (#11), `docs/m1-pr1-closeout` (#10),
+  `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
+  The remote branch `feature/m1-studio-light` is merged (#11) and can be deleted.
 
 ## Waiting on Tay
-- **Preview M1 PR 2** (B + Email-me). Then decide E (approved, sequenced after B) and F (optional).
-- **Optional guard for the Email-me fix:** one additive `tokens.test.ts` case (`--accent-solid` and its hover ≥ 3:1
-  against `--bg-raised`, both themes). Not added: it edits a contrast-floor test, which needs your OK.
-- **Open from PR #8's preview (no decision recorded):** the Think · Build · Ship title (42px) barely outranks
-  its row words `.tbs__word` (28→40px, 620). Plan-consistent option: `.tbs__word` onto `--text-h3` (20→26).
+- **Preview M1 PR 3**, then **decide F** (yes/no).
+- A note from session 7's preview shots: at 390px the TBS row word (20.3px, 600) is close to the row's lead line
+  `.tbs__line` (19px, 600). It follows the plan exactly, and no change was made.
 - **N1** (copy the reference README text onto `main`?) and **N2** (replace the literal institution
   abbreviation in the agent docs?): recommendations in `docs/RESEARCH_AND_DECISIONS.md`.
 - **N7** (new): Cloudflare injects its Web Analytics beacon into the live page (the CSP blocks it), and

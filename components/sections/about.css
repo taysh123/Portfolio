@@ -1,8 +1,8 @@
 /* ── About (M10) ── white, a reading measure, and the four products together (no photograph, no caption). */
 .about { padding-block: var(--section-y); background: var(--bg-raised); }
 .about__grid { display: grid; gap: 2rem; }
+/* Both lines in ink (M1 E): the line break alone carries the rhythm. */
 .about__title { font-size: var(--text-h2); line-height: 1.05; letter-spacing: var(--tracking-heading); font-weight: 600; color: var(--fg); }
-.about__title span { color: var(--fg-subtle); }
 .about__p { max-width: 34em; font-size: clamp(1.0625rem, 1rem + 0.2vw, 1.1875rem); line-height: 1.6; color: var(--fg-muted); }
 .about__p + .about__p { margin-top: 1.125rem; }
 .about__facts { list-style: none; margin: 2rem 0 0; padding: 1.25rem 0 0; border-top: 1px solid var(--border); max-width: 34em; display: flex; flex-wrap: wrap; gap: 0.25rem 0; font-size: 0.9375rem; color: var(--fg-muted); }

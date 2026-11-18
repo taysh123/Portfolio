@@ -1,7 +1,7 @@
 /* ── Contact (M10) ── white, left-aligned like the rest of the page, one accent action. */
 .contact { padding-block: var(--section-y); background: var(--bg-raised); }
+/* Both lines in ink (M1 E): the line break alone carries the rhythm. */
 .contact__title { font-size: var(--text-h2); line-height: 1.05; letter-spacing: var(--tracking-heading); font-weight: 600; color: var(--fg); }
-.contact__title span { color: var(--fg-subtle); }
 .contact__lead { margin-top: 1.25rem; max-width: 34em; font-size: var(--text-lead); line-height: 1.5; color: var(--fg-muted); }
 .contact__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.75rem; margin-top: 2rem; }
 .contact__profiles { display: inline-flex; align-items: center; gap: 1.75rem; }
