@@ -82,8 +82,10 @@ Acceptance criteria:
       "7" stat and PROJECT_CONTEXT §4.4 stay correct.
 - [x] N5: GRAVITY FLOW repo stays private (Tay). `data/projects.ts:359` is marked private like T Poker
       (`36f6001`), and the served résumé PDF no longer links it (`e105917`; 80,593 bytes, label "two pages, 79 KB").
-- [ ] "guest progress carries into the new account" (`data/projects.ts:172`): left unchanged on
-      purpose; NC until checked against the T Poker repo.
+- [x] `data/projects.ts:172` (guest → account upgrade): checked against the T Poker repo in session 4 and
+      corrected on `fix/m0-followups` (`37ba41c`): the invite *reopens* after sign-in (no automatic join), and
+      guest progress is claimed *on that device*, never over the account's own data. Merges with that branch.
+- [x] N6 (`tests/unit/site.test.ts:78`, Windows-only): fixed on `fix/m0-followups` (`b4d5c73`); unit 119/119 on Windows.
 - [ ] Optional: a regression test pinning each corrected sentence (pattern in `tests/unit/work.test.ts`).
       Not added; Tay asked for minimal diffs.
 - [x] Final tree `e105917`: typecheck exit 0, lint exit 0, `npm run build` exit 0, **Playwright 132/132**,
@@ -94,18 +96,22 @@ Acceptance criteria:
 
 Risks: low. Content-only diffs; the existing tests already guard neighbouring claims.
 
-### M1 — Art direction, design system, storyboard · `NOT STARTED` (unblocked by D1)
+### M1 — Art direction, design system, storyboard · `IN PROGRESS` (plan written 2026-11-18; awaiting Tay's approval)
 
 Scope per D1: **evolve** Product Plates (calm/premium, restrained cyan/violet accents). This is not a
 replacement. The reference README's take / do-NOT-take applies (quoted in `docs/RESEARCH_AND_DECISIONS.md` §1).
+The plan is **`docs/M1_VISUAL_PLAN.md`**: six independently approvable moves, A–F, all CSS and tokens, with
+zero new JS.
 
 Acceptance criteria:
 - [ ] One approved mood statement for the evolution, with any reference images it relies on committed
       (the `reference-01..04` images are not in the repo; the README lives only on the stale branch, see N1).
+      *Drafted:* plan §1–§2 (a described moodboard; no images needed).
 - [ ] Token proposal (colour, type, spacing, motion) expressed as a diff against `app/globals.css`,
       with contrast ratios computed against the existing floors in `tests/unit/tokens.test.ts`.
+      *Drafted:* plan §5 (diff) and §6 (ratios computed with the test's own formula; all floors pass).
 - [ ] Page layouts for desktop and phone; hero storyboard (frame-by-frame); motion spec stating
-      what reduced motion replaces each movement with.
+      what reduced motion replaces each movement with. *Drafted:* plan §8–§10.
 - [ ] Tay signs off on the visual plan in writing (CREATIVE_DIRECTION §9: "No major implementation
       begins until…").
 
@@ -187,9 +193,10 @@ Acceptance criteria:
 | 2 | ~~Merge PR #4~~ Merged 2026-11-18 | — | M0 |
 | 3 | ~~Merge PR #5~~ Merged and live 2026-11-18 | — | M0.5 |
 | 4 | ~~N5: GRAVITY FLOW repo link~~ Fixed in PR #5 (repo stays private) | — | M0.5 |
-| 5 | Confirm `data/projects.ts:172` guest-progress claim | Possible tension with `tests/unit/work.test.ts:25` | M0.5 |
+| 5 | ~~Confirm `data/projects.ts:172`~~ Checked and corrected on `fix/m0-followups` (session 4) | — | M0.5 |
 | 6 | ~~Old content in public history~~ D5: leave as-is | — | — |
 | 7 | Establish a measured baseline (Lighthouse mobile on the production build; field data if any exists) | `next.config.ts` notes a lab mobile LCP of 2.9 s, above the 2.5 s target | M2 prep |
-| 8 | Prune stale remote review branches (with Tay) | Nine remote branches, most review snapshots | any |
+| 8 | Prune stale remote branches (with Tay) | Merged ones deleted in session 4 (D8). Six unmerged ones remain, each needing its own yes | any |
 | 9 | Consider adding `/privacy` to `app/sitemap.ts` | Currently `/` only. Minor; Tay's call | M5/M6 |
 | 10 | Consider a nonce-based CSP (`script-src` currently allows `'unsafe-inline'`) | The route is already dynamic (cookies), so nonces are feasible. Needs measurement | M6 |
+| 11 | N7: Cloudflare Web Analytics beacon injected into the live page (CSP blocks it); `/privacy` names only Vercel | Console error on every load; privacy wording. Tay's call (Cloudflare settings) | any |

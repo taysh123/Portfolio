@@ -13,8 +13,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 - The current site is the calm, light **"Product Plates"** editorial design (M10). It has no WebGL, and
   tests on `main` enforce that.
 - Production = GitHub `taysh123/Portfolio` **`main`**, the source of truth. Deployed `841d062` on
-  2026-11-18 (PRs #4 + #5 merged), verified live: no GRAVITY FLOW repo link, résumé 80,593 bytes with no
-  dead link, label "two pages, 79 KB".
+  2026-11-18 (PRs #4 + #5 merged; GitHub Production deployment status `success`, re-checked in session 4),
+  verified live: no GRAVITY FLOW repo link, résumé 80,593 bytes with no dead link, label "two pages, 79 KB".
 - Flagship projects shown: **T Poker, Aegis, DeveloperOS, GRAVITY FLOW**; plus Job Assistant
   and Orders & Delivery. Statuses/limitations: see PROJECT_CONTEXT §4. T Poker and GRAVITY FLOW
   repos are private ("Private repository" label).
@@ -36,15 +36,25 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   is removed from the served résumé PDF (PR #5, live).
 
 ## What's next
-- **M0 and M0.5 are done** (2026-11-18). Next is **M1** (art direction, tokens, layouts, motion spec for
-  the Product Plates evolution), starting when Tay asks. Phases and acceptance criteria are in `docs/ROADMAP.md`.
+- **M0 and M0.5 are done** (2026-11-18). **M1 is active:** the visual plan is written
+  (`docs/M1_VISUAL_PLAN.md`, six moves A–F) and waits for Tay's approval. Nothing is implemented. Approved
+  moves become M3/M4 PRs. Phases and acceptance criteria are in `docs/ROADMAP.md`.
+
+## Open PRs / branches (session 4, 2026-11-18)
+- **PR #6** `docs/m0-closeout`: M0 close-out docs, plus the session 4 commit (this file, worklog, M1 plan).
+- **`fix/m0-followups`** (local, not pushed): N6 test fix (`b4d5c73`) and the T Poker guest-to-account
+  wording (`37ba41c`). Verified: unit 119/119 on Windows, typecheck, lint, build, Playwright 132/132.
 
 ## Waiting on Tay
-- D8 branch cleanup · N1 copy the reference README onto `main`? · N2 replace the literal institution
-  abbreviation in agent docs? · N6 Windows-only test false failure · `data/projects.ts:172`
-  guest-progress claim to verify against the T Poker repo.
-- Then: approval of the concrete visual plan (moodboard, tokens, typography, layouts, motion spec)
-  before any redesign implementation.
+- **Approve or decline M1 moves A–F** (`docs/M1_VISUAL_PLAN.md` §13). Move A needs an explicit OK to update
+  two e2e assertions that pin today's focus-ring colour (`tests/e2e/chrome.spec.ts:271,273`).
+- Push `fix/m0-followups` and open its PR; push `docs/m0-closeout` to update PR #6 (commands in
+  `docs/WORKLOG.md`, session 4).
+- **N1** (copy the reference README text onto `main`?) and **N2** (replace the literal institution
+  abbreviation in the agent docs?): recommendations in `docs/RESEARCH_AND_DECISIONS.md`.
+- **N7** (new): Cloudflare injects its Web Analytics beacon into the live page (the CSP blocks it), and
+  `/privacy` names only Vercel although Cloudflare proxies the site. See `docs/RESEARCH_AND_DECISIONS.md`.
+- D8 remainder: six unmerged remote branches kept (list in RESEARCH_AND_DECISIONS); delete only on a per-branch yes.
 
 ## Standing rules
 - Live production site: no deploy/push/merge/secret/DNS change without Tay's explicit ask.

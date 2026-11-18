@@ -55,8 +55,8 @@ untouched. Nothing references the removed path (VL).
   matches its six-item list. Not a bare "six": the game has seven mechanics, the attractor plus six
   `LevelConfig` mechanics (verified in the game repo; see WORKLOG session 2). So the "seven core mechanics"
   copy (`:356`) and the "7" stat (`:367`) stay correct and consistent.
-- `data/projects.ts:172` ("guest progress carries into the new account") is **unchanged** and stays
-  **NC** until it is checked against the T Poker repo.
+- `data/projects.ts:172` (guest → account upgrade): **checked against the T Poker repo in session 4 and
+  corrected** on `fix/m0-followups` (`37ba41c`, not yet merged). Details under "Resolved in session 4" below.
 
 **D7 — Language:** Claude Code talks to Tay in **English**; Chat Claude (claude.ai) talks to Tay in
 **Hebrew**. `docs/PROJECT_CONTEXT.md` §9 is updated to match.
@@ -75,16 +75,59 @@ Impeccable: skip. GitHub plugin: skip (`gh` covers it).
   "79 KB". Tay's personal résumé copies were already clean.
 - Verified on the final tree: build ✓, typecheck ✓, lint ✓, Playwright **132/132**, unit 118/119 (N6 only).
 
+### Resolved in session 4 (2026-11-18, Tay's task list)
+
+**D8 — Branch cleanup: merged branches deleted.** Rule: a branch is deleted only if its tip is an ancestor
+of `origin/main` (`git merge-base --is-ancestor`, 0 commits ahead). Verified per branch, then deleted:
+- local `feature/premium-portfolio-redesign` (`3ab2cf8`), with `git branch -d`;
+- on GitHub: `docs/m0-audit` (`814e309`, PR #4 head), `fix/content-accuracy` (`e105917`, PR #5 head),
+  `production/no-entrance` (`566904c`, PR #2 head), `review/m10-final-preview-20261013` (`fddc36e`, PR #3
+  head), with `git push origin --delete`. Each can be restored with the PR page's "Restore branch" button,
+  or `git push origin <sha>:refs/heads/<name>`.
+
+**Kept (not fully merged, or excluded):** `reference/premium-redesign-package` (local and remote; Tay
+excluded it); `docs/m0-closeout` (open PR #6); and six remote branches with commits not in `main`
+(`git cherry` shows all of them as unique):
+- `feature/portfolio-polish` (+4: the October polish plan, hero, chapters and rhythm work);
+- `feature/premium-portfolio-redesign-1mqmgf` (+4: entrance v2/v3, the M2 prior art);
+- `review/m10-premium-preview` (+5: the same four commits plus a snapshot);
+- `review/m10-bilingual-chat-preview-20261013`, `review/m10-english-chat-fix-20261013`, and
+  `review/m10-premium-preview-final-20261013` (+1 each: a review-only snapshot commit).
+
+Deleting any of these loses commits, so each needs its own yes.
+
+**N6 — fixed** on `fix/m0-followups` (`b4d5c73`, not yet merged). `tests/unit/site.test.ts:78` now compares
+against `path.join("app", "api") + path.sep`, the same pattern as lines 19 and 26. Red/green on Windows:
+1 failed → 20/20. On Windows the filter excludes exactly `app\api\chat\route.ts`, and a probe file outside
+`app/api` naming the key still fails the test. POSIX behaviour is unchanged.
+
+**`data/projects.ts:172` — corrected** on `fix/m0-followups` (`37ba41c`, not yet merged). Checked against
+`taysh123/poker-home-games` @ `91d2b97` (the local clone equals GitHub `main`):
+- *"an invite link opened while signed out is completed after sign-in"* overstated it.
+  `apps/poker-mobile/src/utils/pendingInvite.ts` stashes the invite for 15 minutes and brings the person
+  back to that invite's screen after sign-in, "never into an automatic join". Joining still takes a tap
+  (pinned by `AppNavigator.inviteResume.test.tsx`).
+- *"guest progress carries into the new account"* is true but needed scoping. `claimGuestStudy`,
+  `claimGuestEngagement`, `claimGuestPersona` and `claimGuestBankroll` copy the guest bucket into the account
+  **on the same device**, automatically, and **never over the account's own data**. Study progress and XP
+  are claimed once per device. Nothing is uploaded: the cloud sync for local games exists in code but is
+  hard-gated off (`cloud_sync` is `comingSoon: true`; `cloudSyncEnabled()` blocks any network call). So
+  `tests/unit/work.test.ts:25` ("guest games never reach the server and nothing syncs on reconnect") still
+  holds.
+- New line: "Guest → account upgrade: an invite link opened while signed out reopens after sign-in, and
+  guest progress on that device is claimed into the account—never over data the account already has".
+- Consistency: this line renders only in the lazy case-study panel. The assistant prompt uses tagline and
+  summary, not `challenges`, and its rule "Do not claim cross-device sync on reconnect" agrees. Metadata
+  and `/privacy` don't mention it. **VL**
+
 ### Still open
 
-- **D8 — Branch cleanup:** local `docs/m0-audit` and `fix/content-accuracy` were deleted after merging;
-  local `main` is current. Still to decide: local `feature/premium-portfolio-redesign` and
-  `reference/premium-redesign-package`, and on GitHub `production/no-entrance`, `feature/portfolio-polish`,
-  five `review/m10-*` snapshots, `reference/premium-redesign-package`, and the merged `docs/m0-audit` /
-  `fix/content-accuracy`. Keep or prune? Nothing gets deleted without an explicit yes per branch.
 - **N1 — Reference README on `main`?** D1 relies on `design/references/README.md`, but it exists only on
   the stale branch (the rules are quoted above so the decision stands on its own). Should its text be
   copied onto `main`, for example under `docs/`? The PNG is AI-generated and probably should not be.
+  **Recommendation (session 4): yes, the text only,** as `docs/references/arrival-reference-README.md`
+  with a one-line header saying it is historical and quoted by D1. Then the stale branch can someday be
+  pruned without losing D1's source. Leave the PNG out.
 - **N2 — Literal institution abbreviation in docs.** Production's guard deliberately stores the
   institution as hashes "because review snapshots of this repository are public"
   (`tests/support/institution.ts`). The tests scan site code, not docs, so docs don't fail them. Still,
@@ -92,12 +135,27 @@ Impeccable: skip. GitHub plugin: skip (`gh` covers it).
   `claude/START-HERE.md` standing rules, and the header comments of `docs/PROJECT_CONTEXT.md` and
   `docs/CREATIVE_DIRECTION.md`), and since PR #4 they are in the public tree.
   Replace them with "the institution"? Not changed: they are Tay's own wording.
+  **Recommendation (session 4): yes.** "Do not name any institution" works without the name, and it
+  matches why the guard is hashed. History keeps the old lines (D5), so this only stops new copies.
+- **N7 — Cloudflare in front of the site (new, session 4).** **VL:**
+  - For browser user agents, the live HTML carries `<script … src="https://static.cloudflareinsights.com/beacon.min.js/…">`.
+    That is Cloudflare Web Analytics, injected by Cloudflare's proxy rather than by the app.
+  - The site's CSP blocks it ("violates … script-src 'self' 'unsafe-inline'"), so no analytics run, and
+    `/privacy`'s "no analytics or tracking" still holds. But every page load logs a console error.
+  - E2E can't see this, because it runs `next start` locally.
+  - Responses also show `Server: cloudflare` and `CF-RAY` in front of Vercel (`x-vercel-id`), while
+    `/privacy` ("Hosting and logs") names only Vercel.
+
+  **Recommendation:** turn off Web Analytics for this site in the Cloudflare dashboard (exact menu path
+  **NC**), and keep the CSP as is. Whether `/privacy` should also name Cloudflare as a proxy is Tay's call.
+  The alternative is a DNS-only (grey-cloud) record, which removes Cloudflare from the request path. No
+  change made: DNS and CDN settings are Tay's.
 - ~~N3 — GRAVITY FLOW mechanics count~~ **Resolved:** seven is correct (game repo `MechanicId` lists 7);
   PROJECT_CONTEXT §4.4 needs no change.
 - ~~N5 — GRAVITY FLOW repo link 404s for visitors~~ **Resolved and live** (see N5 under Resolved; PR #5,
   deployed 2026-11-18).
-- **N6 — Windows-only false failure in `tests/unit/site.test.ts:78`** (path separators). Optional one-line
-  test fix; the guarded invariant holds.
+- ~~N6 — Windows-only false failure in `tests/unit/site.test.ts:78`~~ **Fixed** on `fix/m0-followups`
+  (see "Resolved in session 4"); it reaches `main` when that branch merges.
 - **N4 — Why was October's entrance pulled?** This is no longer blocking (D2 = not now), but answer it
   before any future M2 prototype.
 
@@ -197,6 +255,7 @@ Playwright MCP, Superpowers, UI UX Pro Max, Frontend Design, the Figma plugin (c
 
 | Date | Decision | By |
 |---|---|---|
+| 2026-11-18 | Session 4 task list: delete merged branches (D8, done), fix N6, verify and correct `data/projects.ts:172`, start M1 as a plan only; N1/N2 stay Tay's calls | Tay |
 | 2026-11-18 | N5: GRAVITY FLOW repo stays private; fixed in data (marked private) and in the served résumé PDF (dead link removed). Context7 installed (user scope) | Tay |
 | 2026-11-18 | D1 calm/premium, evolve Product Plates, restrained cyan/violet; D2 no 3D now, guards and budget untouched; D3 docs branch; D4 duplicate removed; D5 history as-is; D6 content fixes; D7 English for Claude Code, Hebrew for Chat Claude; D9 Context7 only | Tay |
 | 2026-11-18 | Institution not named; featured projects T Poker, Aegis, DeveloperOS, GRAVITY FLOW; names Aegis and GRAVITY FLOW | Tay (per PROJECT_CONTEXT header) |
