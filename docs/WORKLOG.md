@@ -11,6 +11,148 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-18 — Session 10: Concept A, the cinematic hero, as a measured prototype (prototype, D2 reopened) (Claude Code)
+
+**Scope (Tay's brief):**
+- Build Concept A, the hero only, as a **measured prototype**. This consciously reopens D2 (Tay approved, 2026-11-18).
+- Branch `proto/hero-a-cinematic` only: never merged, never deployed. The live homepage is not touched.
+- Behind a noindex route, not linked from the live site.
+- Measure it against the 205.7 KiB budget and the CWV thresholds, plus a11y, reduced motion and no-JS.
+
+Skills: `frontend-design` (design plan and self-critique from screenshots), `verification-before-completion`.
+
+### 1. Preconditions (VL)
+- `git fetch`: `origin/main` = `a7a89fd` (PR #16). PR #17 (`docs/session-9-closeout`) is still open.
+- Branch `proto/hero-a-cinematic` from `origin/main` (`--no-track`), then `npm ci`.
+
+### 2. What was built (all new files; no tracked file changed)
+- `app/lab/layout.tsx`: every `/lab` page is `noindex, nofollow, nocache`, with the root's canonical dropped.
+  - It is not a robots.txt Disallow: a blocked crawler never sees the noindex.
+  - `/lab` is not in the sitemap, and nothing on `/` links to it.
+- `app/lab/hero-a/page.tsx`: everything a reader needs is server-rendered HTML:
+  - the wordmark and the availability pill (gated on `availability.open`);
+  - the role (`siteMeta.role`), the H1 and the lede (the brief's copy);
+  - both actions ("Explore my work" to `/#work`; "Download CV" is the real résumé file);
+  - the four flagships, each with its state from `heroIndex` (`data/proof.ts`).
+- `app/lab/hero-a/featured.ts`: one tag per flagship. A unit test checks every word against that project's own
+  tagline and summary. "Physics" is not in the data, so GRAVITY FLOW is a "gravity puzzler".
+- `app/lab/hero-a/Constellation.tsx`: the one live element.
+  - A 2D canvas (no WebGL), `aria-hidden`, `pointer-events: none`.
+  - Drifting duotone nodes and proximity links; a mouse or pen gathers nearby nodes; touch is ignored.
+  - The loop runs only while the field is on screen and the tab is visible.
+  - The node count comes from the area: 40–120, or 22–48 on the light path (touch, < 640px, or ≤ 4 cores).
+  - Pixel ratio capped at 2, or 1.5 on the light path. Links batched by colour × alpha; halos from sprites.
+  - The count steps down when the draw cost stays over budget.
+  - ≤ 60 draws a second, ≤ 30 on the light path.
+  - Reduced motion (the OS or the site's own switch) draws one still frame.
+- `app/lab/hero-a/hero-a.css`: scoped under `.hxa`, with its own dark tokens.
+  - It reuses Geist, `--text-lead`, `--tracking-display`, `.shell` and the motion tokens.
+  - Every rule outside the scope is conditioned on `:has(.hxa)`, so it is inert off the route.
+  - One CSS load sequence: it runs, and ends visible, without JS, and is off with reduced motion.
+  - The chat launcher is re-toned for the dark field, and the last strip is kept clear for it.
+- `tests/unit/lab-hero-a.test.ts` (18 tests) and `tests/e2e/lab-hero-a.spec.ts` (16 tests).
+- `scripts/lab-hero-a.mjs`: a reproducible CWV and FPS measurement, `/` against `/lab/hero-a`.
+
+### 3. Guard changes: none were needed (VL)
+- Scoping the guards for the prototype was approved, but nothing needed it.
+- `git diff origin/main` on `tests/unit/dead-code.test.ts`, `tests/e2e/page.spec.ts` and `tests/e2e/budget.spec.ts` is
+  empty.
+- They still pass unchanged, because:
+  - `dead-code.test.ts` bans WebGL, `three` and `lenis` (the field is a 2D context);
+  - `page.spec.ts` and `budget.spec.ts` load only `/`, which still has no `<canvas>` and no WebGL.
+- The prototype route has its own tests, held to the same 205.7 KiB budget.
+
+### 4. Measured (VL; lab numbers from a local production server, never field data)
+First-load JS, gzip, the `budget.spec.ts` algorithm:
+
+| | JS | Scripts | HTML |
+|---|---|---|---|
+| `/lab/hero-a` (this branch) | **182.45 KiB** (budget 205.7) | 10 | 31.45 KB |
+| `/` on `origin/main` | 181.79 KiB | 9 | 156.44 KB |
+| `/` on this branch | 182.20 KiB (+0.41) | 10 | 156.51 KB |
+
+- The +0.41 KiB on `/` (this branch's build only) contains no prototype code.
+  - Turbopack split Next's own error-boundary styles into a new shared chunk (`errorStyles`, `WarningIcon`) once a
+    second route shared them.
+  - The marker test confirms no first-load script of `/` carries the field.
+
+`scripts/lab-hero-a.mjs`, median of 5 cold runs:
+- `/` was measured on a separate `origin/main` build.
+- Mobile is 390×844 @3x with 4× CPU and slow-4G figures, applied through DevTools.
+- INP is the worst of 6 interactions; FPS is frames delivered to an independent rAF counter over 3 s.
+
+| | LCP (element) | CLS | INP | FPS | Main thread busy |
+|---|---|---|---|---|---|
+| desktop `/` | 140 ms (h1) | 0 | 24 ms | 60.4 | 5% |
+| desktop `/lab/hero-a` | 84 ms (h1) | 0 | 56 ms | 60.2 | 13.6% |
+| mobile `/` | 1592 ms (h1) | 0 | 40 ms | 60.5 (min 51.4) | 9.8% |
+| mobile `/lab/hero-a` | 992 ms (h1) | 0 | 40 ms | 60.3 (min 60.1) | 23.7% |
+
+All inside "good" (LCP ≤ 2.5 s, INP ≤ 200 ms, CLS ≤ 0.1).
+
+### 5. Findings fixed on the way (VL)
+- **The reveal hid the page from LCP.** As first built, every block faded in from `opacity: 0`. Chromium then
+  reported **no LCP entry at all**, and FCP at about 1.75 s (desktop) and 2.2 s (mobile, 4×).
+  - Cause: the text is first painted inside a compositor-run opacity-0 animation, and paint timing never re-reports it.
+  - Variants were tested on 3 runs each: no reveal; fade from 0.01; the H1 rising without fading.
+  - Fix: the H1 rises without fading. LCP is then the H1, at first paint (~80 ms desktop).
+  - Rejected: fading from 0.01. It "passes" only by counting text no reader can see yet.
+  - A new e2e test pins LCP = the H1 = FCP.
+- **Mobile main thread 41% → 23.7%.** CDP breakdown on the 4× profile:
+  - the field's script is only ~5%;
+  - hiding the canvas's paint drops busy time to 11%, so raster is most of the cost; the mask is not.
+  - The light path now draws ≤ 30 a second, and INP fell from 88 to 40 ms.
+- **Contrast.** The unit test reads the floors from the CSS, on the base and under the brightest glow behind text:
+  - the muted and faint inks were lifted (`#acb6c9` ≥ 7:1, `#95a0b6` ≥ 5.4:1, the site's own floors);
+  - the brief's violet `#9b6bff` is 5.7:1 on the base and 4.2:1 over the violet glow. It is only in the 36–80px H1
+    (large text, floor 3:1).
+- **A11y bugs found by the tests:**
+  - the wordmark's accessible name ran together ("Tay ShoferPortfolio");
+  - the site chrome's paper-iris focus ring was under 3:1 on the dark field;
+  - at 390px the wordmark target was 43.99px;
+  - at 320×568 the CTAs ended below the first screen.
+  - All four are fixed.
+
+### 6. Accessibility (VL)
+- axe-core 4.11.4 (already installed through `eslint-config-next`), WCAG 2.2 A/AA: **0 violations** at 1440 with
+  motion, 390 with motion, and 1440 with reduced motion. 24 rules pass in each.
+- axe could not judge two nodes, both expected:
+  - the gradient clause (`background-clip: text`), covered by the unit contrast test;
+  - the `aria-hidden` arrow glyph.
+- Keyboard order: skip link, wordmark, both actions, the four projects, the chat launcher. Each has a solid 2px cyan
+  ring.
+- One h1; banner, main, and a labelled nav. Targets ≥ 44px at 1440, 1024, 390 and 320. No horizontal overflow.
+- Reduced motion (the OS, and the site's switch through the `a11y` cookie): a still frame, 0 rAF callbacks, no reveal.
+- No JS: everything visible, all links work, and the canvas is an empty, transparent layer.
+
+### 7. Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` | **140/140** (15 files: 122 from `main` plus 18) |
+| `npm run typecheck` | exit 0 |
+| `npm run lint` | exit 0 |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test` | **148/148** (132 from `main` plus 16) |
+
+### 8. Limitations (NC unless stated)
+- Headless Chromium's GPU is SwiftShader (VL: the WebGL renderer string), so canvas raster ran on the CPU. The mobile
+  numbers are a pessimistic bound. Not measured on a real phone.
+- INP comes from 6 scripted interactions; it is not field INP. No Lighthouse run (not installed; not added).
+- The loop runs continuously while the hero is visible and the tab is open (with the cap and the pauses above).
+- At 390×844 the hero is about 50px taller than the screen: the second row of Featured work starts below it. The H1
+  and both actions are in the first screen at 1440, 1024, 390 and 320 (tested).
+- Copy that differs from the live site, by the brief's choice:
+  - "Download CV" (the site says "résumé");
+  - an eyebrow, which `page.spec.ts` bans on `/`;
+  - "Available for opportunities", where `/` deliberately shows no availability line.
+
+### Waiting on Tay
+- Decide whether Concept A goes further. If a Vercel Preview is wanted, say so first: pushing this branch would
+  likely trigger one through the GitHub integration (NC).
+- On `main`, the next close-out should record "D2 reopened for a measured prototype" in RESEARCH_AND_DECISIONS. This
+  branch is never merged.
+
+---
+
 ## 2026-11-18 — Session 9: N8, GRAVITY FLOW's private repository name out of the tree (Claude Code)
 
 **Scope (Tay's brief):**
