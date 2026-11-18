@@ -144,8 +144,16 @@ the private T Poker repository @ `91d2b97` (the local clone equals GitHub `main`
 
 ### Still open
 
-- **N7 — Cloudflare in front of the site.** Found in session 4 and investigated in session 8. Nothing was changed:
-  two dashboard toggles and one `/privacy` decision wait on Tay.
+- **N7 — Cloudflare in front of the site.** Found in session 4, investigated in session 8, then partly resolved:
+  - **Dashboard toggles: done** (Tay, 2026-11-18). Web Analytics is set to Disable, and Email Address Obfuscation is
+    Off.
+  - **Verified live at the session 8 close (VL):** with browser headers, `/` and `/privacy` have no beacon, no
+    `email-protection` link and no decode script. The plain `mailto:` links are back (2 and 1). Cloudflare still
+    proxies (`Server: cloudflare`).
+  - So "loads no third-party scripts" holds again.
+  - **Still open: the `/privacy` wording** (draft below), Tay's call.
+
+  The findings that led here:
   - **Nothing in the code (VL).**
     - No tracked file mentions Cloudflare except these docs.
     - The app ships plain `mailto:` links: `app/error.tsx:37`, `app/privacy/page.tsx:103`,
@@ -173,7 +181,7 @@ the private T Poker repository @ `91d2b97` (the local clone equals GitHub `main`
     - And a Cloudflare script now runs on a site whose `/privacy` says it "loads no third-party scripts".
   - No `Set-Cookie` on `/` or `/privacy`, so "Visiting sets no cookies" still holds.
   - E2E can't see any of this, because it runs `next start` locally.
-  - **Tay's manual steps in the Cloudflare dashboard.** The paths are **VD**, from the official docs read on
+  - **Tay's manual steps in the Cloudflare dashboard (both done 2026-11-18).** The paths are **VD**, from the official docs read on
     2026-11-18:
     1. **Web Analytics:** on the **Web Analytics** page, find the site, then **Manage site** → **Disable**.
        The docs: "The JS Snippet will not be injected"
@@ -318,6 +326,7 @@ Playwright MCP, Superpowers, UI UX Pro Max, Frontend Design, the Figma plugin (c
 
 | Date | Decision | By |
 |---|---|---|
+| 2026-11-18 | Session 8 close: PR #14 (N1, N2) merged (`d80cb4c`). N7: Cloudflare Web Analytics set to Disable and Email Address Obfuscation set to Off. Still open: the `/privacy` wording; N8 goes to the next session | Tay |
 | 2026-11-18 | Session 8: N1 (copy the reference README's text) and N2 (the abbreviation out of the agent docs) done; N7 investigated only, its two dashboard toggles and the `/privacy` wording wait on Tay | Tay (brief) |
 | 2026-11-18 | M1: moves A–E approved, F deferred until A–E are previewed, keep Geist; PR 1 (A, C, D) merged (#8). Next: B plus the dark "Email me" button a11y fix | Tay |
 | 2026-11-18 | Session 4 task list: delete merged branches (D8, done), fix N6, verify and correct `data/projects.ts:172`, start M1 as a plan only; N1/N2 stay Tay's calls | Tay |

@@ -11,6 +11,51 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-18 — Session 8 close-out: PR #14 merged, N7's Cloudflare toggles done (Claude Code)
+
+**Scope (Tay's brief):**
+- Record the state.
+- Clean up scratch.
+- Delete the merged `docs/backlog-n1-n2-n7`, only after the ancestry check.
+- Keep `reference/*`, the six unmerged branches and `docs/session-7-closeout`; deleting that one is not authorized.
+- No new task.
+
+### State (VL)
+- `git fetch --prune`: `origin/main` = **`d80cb4c`**, the PR #14 merge (merged 18:19:52Z; head `ee96fc3`).
+- Production deployment `d80cb4c`, GitHub status `success` (18:20:17Z).
+- `npm test` (Git Bash) on `d80cb4c`: **121/121** (14 files).
+- **N7, both dashboard toggles done by Tay:** Cloudflare Web Analytics set to Disable, and Email Address Obfuscation
+  set to Off.
+- Checked live with browser headers, two fetches each of `/` and `/privacy`:
+  - 0 beacon tags, 0 `email-protection` links, 0 decode scripts;
+  - plain `mailto:` links again (2 and 1);
+  - `Server: cloudflare` (still proxied).
+- **Still pending Tay:**
+  - the `/privacy` wording (draft in `docs/RESEARCH_AND_DECISIONS.md` N7);
+  - N8, whether to scrub GRAVITY FLOW's private repository name from the docs (next session).
+
+### Branches
+- **`docs/backlog-n1-n2-n7`:** the local and remote tips (`ee96fc3`) are both ancestors of `origin/main`
+  (`git merge-base --is-ancestor`). Deleted with `git push origin --delete` and `git branch -d`.
+- **Kept:**
+  - `docs/session-7-closeout` (local and remote);
+  - `reference/premium-redesign-package` (local and remote);
+  - `feature/portfolio-polish`, `feature/premium-portfolio-redesign-1mqmgf`, and the four `review/m10-*` branches.
+- **New, local only:** `docs/session-8-closeout` (from `d80cb4c`) holds these docs. Tay pushes it.
+
+### Cleanup
+- The session's scratchpad files are deleted: the guard-scan script, the PR body draft, the commit-message scratch file
+  and the `next start` log.
+- `.playwright-mcp/` had already been removed before PR #14's commits. Port 3410 is free.
+
+### Docs
+- This entry and START-HERE.
+- CLAUDE.md: the last verified deployment `d80cb4c`, the Cloudflare note, the unit-count commit.
+- `docs/RESEARCH_AND_DECISIONS.md`: N7 status and a history row.
+- `docs/ROADMAP.md`: backlog row 11.
+
+---
+
 ## 2026-11-18 — Session 8: the deferred backlog. N1 and N2 done, N7 investigated (Claude Code)
 
 **Scope (Tay's brief):**
@@ -838,3 +883,4 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-18 | Session 8 | N1: the reference README's text copied byte for byte, with no image | `docs/references/premium-redesign-README.md`, `docs/RESEARCH_AND_DECISIONS.md` (D1) |
 | 2026-11-18 | Session 8 | N2: the abbreviation replaced with "the institution" | `CLAUDE.md`, `claude/START-HERE.md`, `docs/PROJECT_CONTEXT.md`, `docs/CREATIVE_DIRECTION.md` |
 | 2026-11-18 | Session 8 | N7 investigated (beacon + Email Address Obfuscation at the Cloudflare edge; draft `/privacy` wording); N8 logged; state docs | `docs/RESEARCH_AND_DECISIONS.md`, `docs/ROADMAP.md`, `docs/WORKLOG.md`, `claude/START-HERE.md`, `CLAUDE.md` |
+| 2026-11-18 | Session 8 close | PR #14 merged (`d80cb4c`, live); N7 Cloudflare toggles done by Tay, verified live; `docs/backlog-n1-n2-n7` deleted; state docs | `docs/WORKLOG.md`, `claude/START-HERE.md`, `CLAUDE.md`, `docs/RESEARCH_AND_DECISIONS.md`, `docs/ROADMAP.md` |
