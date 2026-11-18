@@ -144,8 +144,10 @@
 
   --accent: #a5a8ff;              /* 9.0:1 on ink, 8.2:1 raised */
   --accent-hover: #b1b4ff;
-  --accent-solid: #4f46e5;        /* white 6.3:1 */
-  --accent-solid-hover: #4338ca;  /* white 7.9:1 */
+  /* The solid fill is a component's whole shape (WCAG 1.4.11): ≥ 3:1 against the raised page it sits on, white ≥ 4.5:1.
+     Hover lightens here, like --accent-hover. */
+  --accent-solid: #5651f0;        /* white 5.5:1 · 3.2:1 on raised #16181d */
+  --accent-solid-hover: #5e5bfa;  /* white 4.8:1 · 3.7:1 on raised */
   --accent-soft: rgba(165, 168, 255, 0.13);
   --accent-line: rgba(165, 168, 255, 0.34);
   --accent-ring: rgba(165, 168, 255, 0.6);
