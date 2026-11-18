@@ -27,7 +27,7 @@
 /* Store badges read as badges here: white on navy, like the stores' own. */
 .poker .poker__stores a, .poker .poker__stores > li > span { --surface-2: #ffffff; --surface-1: #f1f3f7; --fg: #0a0a0a; --fg-subtle: #3d4350; --border: transparent; --accent-line: transparent; }
 /* The plate's light accent stays the focus ring around the badge; on the white badge itself the glyph hovers to iris
-   (the paper accent, 6.8:1 on white). */
+   (the paper accent: 6.1:1 on the hovered badge's #f1f3f7, 6.8:1 on white). */
 .poker .poker__stores a:hover > span[aria-hidden] { color: #4a3fe0; }
 
 /* ── The stage: three phones in CSS 3D (perspective and a turn). One stands in front; the other two stand back and
