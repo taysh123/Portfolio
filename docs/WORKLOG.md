@@ -145,9 +145,62 @@ All inside "good" (LCP ≤ 2.5 s, INP ≤ 200 ms, CLS ≤ 0.1).
   - an eyebrow, which `page.spec.ts` bans on `/`;
   - "Available for opportunities", where `/` deliberately shows no availability line.
 
+### 9. Pushed for a Preview (Tay's go)
+- `proto/hero-a-cinematic` pushed at `fd93dd8`. Draft PR #18 opened against `main` (not for merge).
+- Vercel built a **Preview** deployment (GitHub: `production_environment=false`). Production stayed on `a7a89fd`.
+- The preview is behind Vercel Deployment Protection (a logged-out request gets a 302 to `vercel.com/sso-api`).
+  Vercel adds `X-Robots-Tag: noindex`.
+- No share link was made: the connector's fetch tool would create one.
+
+### 10. Round 2: more life in the field (Tay: "too calm") (VL)
+Only the field changed: `Constellation.tsx` and its tests. The copy, palette, CSS and every safeguard are the same.
+- **Desktop:** 130 nodes at 1440×900 (was 108; ≤ 140), and drift of 7–18 px/s (was 5–14). The light path's count and
+  drift are unchanged.
+- **Twinkle:** every node's radius pulses slowly (4–10 s a cycle, each on its own phase). Bright nodes' halos breathe
+  with it.
+- **Pointer:** a soft pull that fades to nothing at the centre, with no repel. Links near it brighten, nodes within
+  150px tether to it, and a faint glow (200px sprite) follows it.
+  - The first tune (pull 60, fade inside 64px) packed nodes into a tight knot. The pull went to 20: against the
+    0.8/s relax that is an inward drift of about 25 px/s, like the field's own.
+- **Signals:** a soft duotone head with a short tail rides real links, 1–3 hops. It lights the link it rides and
+  flashes the node it reaches.
+  - Desktop: up to 3 at once, one every 1.6–3.2 s. Light path: up to 2, one every 3–5.5 s.
+  - None with reduced motion (a still frame; `data-pulses` stays 0).
+- **Trims found by measuring:**
+  - In-page op knock-outs (desktop, pointer moving) put most of the first draft's added cost on image stamps (2.7 pp)
+    and strokes (2.3 pp).
+  - The glow shrank from 280 to 200px and the bright share returned to 12% (from 14%).
+  - Links under 12% of the reach (≤ 4% alpha, about a fifth of all links by area) are no longer drawn, except near
+    the pointer.
+
+**Measured.** Same session; `fd93dd8` from a scratch worktree, interleaved before / after, 5 rounds each, medians.
+The machine's load varied through the session: the identical `fd93dd8` build measured 21.7–31.8% phone busy across
+rounds. So only the interleaved comparison counts, not the absolute numbers against section 4.
+
+| | before | after |
+|---|---|---|
+| desktop FPS / worst frame gap | 60.2 / 17 ms | 60.2 / 17 ms |
+| desktop INP (median, max) | 40, 56 ms | 24, 56 ms |
+| desktop main thread busy | 12.7% | 14.1% (+1.4 pp) |
+| phone FPS / worst frame gap | 60.2 / 17 ms | 60.2 / 17 ms |
+| phone INP (median, max) | 40, 40 ms | 40, 48 ms |
+| phone main thread busy | 21.7% | 22.3% (+0.6 pp; run spread 20.7–22.8) |
+| LCP desktop / phone (h1) | 84 / 976 ms | 96 / 968 ms |
+| CLS | 0 | 0 |
+
+- First-load JS for `/lab/hero-a`: **183.49 KiB** (was 182.45; +1.04 KiB; budget 205.7). `/` is unchanged (182.20).
+- axe WCAG 2.2 A/AA: 0 violations at 1440 with motion, 390 with motion, and 1440 with reduced motion. The same 2
+  need-review items as before.
+- The contrast floors pass (no CSS change).
+- Validation:
+  - `npm test` **141/141**;
+  - typecheck and lint exit 0;
+  - `npm run build`, then `GROQ_API_KEY= npx playwright test`: **150/150**. The 2 new tests check that signals
+    appear and stay capped, at 3 on desktop and 2 on a phone.
+- The guard files are still byte-identical to `origin/main`.
+
 ### Waiting on Tay
-- Decide whether Concept A goes further. If a Vercel Preview is wanted, say so first: pushing this branch would
-  likely trigger one through the GitHub integration (NC).
+- Decide whether Concept A goes further. Pushing round 2 updates PR #18's Preview: say the word.
 - On `main`, the next close-out should record "D2 reopened for a measured prototype" in RESEARCH_AND_DECISIONS. This
   branch is never merged.
 
