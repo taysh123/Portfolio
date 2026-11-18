@@ -143,6 +143,67 @@
 .wk__panel[data-kind="window"] .wk__device { width: 100%; border-radius: var(--cine-radius-window); }
 .wk__device img { display: block; width: 100%; height: auto; }
 
+/* ── The carousel (Reel.tsx): a CSS 3D coverflow. Every capture sits in the same grid cell; the front one is flat and
+   whole, its neighbours step aside, turn away and dim (2D elements in perspective: no WebGL). The stage clips them
+   sideways. Without JS only the first is shown, and the controls stay hidden (they would do nothing). ── */
+.wk__stage[data-captures]:not([data-captures="1"]) { overflow-x: clip; }
+.wk__panel[data-kind="phone"] .wk__reel .wk__device { width: min(250px, 60vw); }
+.wk__reel { --wk-flow-x: 56%; width: 100%; }
+.wk__track { display: grid; place-items: center; perspective: 1100px; touch-action: pan-y; user-select: none; }
+.wk__slide {
+  grid-area: 1 / 1;
+  transition: transform var(--cine-dur-move) var(--cine-ease-reveal), opacity var(--cine-dur-move) var(--cine-ease);
+}
+.wk__slide:not([data-shown]) { visibility: hidden; }
+.wk__slide[data-offset="0"] { z-index: 3; }
+.wk__slide[data-offset="1"] { z-index: 2; cursor: pointer; transform: translateX(var(--wk-flow-x)) rotateY(calc(-1 * var(--cine-flow-turn))) scale(var(--cine-flow-scale)); }
+.wk__slide[data-offset="-1"] { z-index: 2; cursor: pointer; transform: translateX(calc(-1 * var(--wk-flow-x))) rotateY(var(--cine-flow-turn)) scale(var(--cine-flow-scale)); }
+.wk__slide[data-offset="2"] { z-index: 1; opacity: 0; transform: translateX(calc(1.6 * var(--wk-flow-x))) scale(0.6); }
+.wk__slide[data-offset="-2"] { z-index: 1; opacity: 0; transform: translateX(calc(-1.6 * var(--wk-flow-x))) scale(0.6); }
+/* A side capture dims under a layer of the field itself (opacity only, so it composites). */
+.wk__slide .wk__device { position: relative; }
+.wk__slide .wk__device::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--cine-abyss);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--cine-dur-move) var(--cine-ease);
+}
+.wk__slide:not([data-offset="0"]) .wk__device::after { opacity: var(--cine-flow-dim); }
+
+.wk__controls { display: flex; justify-content: center; align-items: center; gap: var(--cine-space-2); margin-top: var(--cine-space-4); }
+.wk__reel:not([data-ready]) .wk__controls { visibility: hidden; }
+.wk__dots { display: flex; }
+.wk__step, .wk__dot { display: grid; place-items: center; width: var(--cine-target-min); height: var(--cine-target-min); border-radius: var(--cine-radius-pill); }
+.wk__step {
+  border: 1px solid var(--cine-edge);
+  background: var(--cine-glass-ink);
+  color: var(--cine-ink);
+  transition: background-color var(--cine-dur-hover) var(--cine-ease), border-color var(--cine-dur-hover) var(--cine-ease);
+}
+.wk__step:hover { border-color: var(--cine-edge-hover); background: var(--cine-glass-ink-hover); }
+.wk__step--next svg { scale: -1 1; }
+.wk__dot::before {
+  content: "";
+  width: var(--cine-space-2);
+  height: var(--cine-space-2);
+  border-radius: var(--cine-radius-pill);
+  background: var(--cine-faint);
+  transition: width var(--cine-dur-hover) var(--cine-ease), background-color var(--cine-dur-hover) var(--cine-ease);
+}
+.wk__dot[aria-selected="true"]::before { width: var(--cine-space-5); background: var(--cine-cyan); }
+.wk .wk__step:focus-visible, .wk .wk__dot:focus-visible { border-radius: var(--cine-radius-pill); }
+
+/* Reduced motion (the OS or the site's switch): a flat slider. Only the front capture shows; no turn, no movement. */
+@media (prefers-reduced-motion: reduce) {
+  .wk__slide, .wk__slide .wk__device::after { transition: none; }
+  .wk__slide:not([data-offset="0"]) { transform: none; visibility: hidden; }
+}
+[data-reduced-motion="true"] .wk__slide, [data-reduced-motion="true"] .wk__slide .wk__device::after { transition: none; }
+[data-reduced-motion="true"] .wk__slide:not([data-offset="0"]) { transform: none; visibility: hidden; }
+
 .wk__panel:is(:hover, :focus-within, :active) .wk__stage {
   translate: 0 var(--cine-lift);
   border-color: var(--cine-glass-accent-edge);
@@ -153,8 +214,20 @@
 }
 [data-reduced-motion="true"] .wk__panel:is(:hover, :focus-within, :active) .wk__stage { translate: none; }
 
-/* ── Smaller screens ── */
+/* ── Smaller screens: a phone capture is capped by the screen's width AND height (T Poker's tall screens no longer
+   take the whole view), the stage and the panel tighten, and the art-directed phone crops keep their own shape. ── */
 @media (max-width: 639px) {
-  .wk__head { padding-block: 40px 32px; }
+  .wk__head { padding-block: 40px 28px; }
+  .wk__panel { gap: var(--cine-space-5); }
+  .wk__line { margin-top: var(--cine-space-2); }
+  .wk__status { margin-top: var(--cine-space-4); }
+  .wk__links { margin-top: var(--cine-space-4); }
   .wk__go { flex: 1 1 auto; justify-content: center; }
+  .wk__stage { padding: var(--cine-space-4) var(--cine-space-3); }
+  .wk__panel[data-kind="phone"] .wk__device,
+  .wk__panel[data-kind="phone"] .wk__reel .wk__device { width: min(190px, 48vw, calc(44svh * 0.46)); }
+  .wk__reel { --wk-flow-x: 50%; }
+  /* Only a capture with a phone crop carries this (Shot.tsx); every other keeps the ratio its width and height give,
+     reserved before it loads. (A blanket "auto" here dropped that reservation: CLS 0.017 on phones, measured.) */
+  .wk__device img[style] { aspect-ratio: var(--wk-ratio-phone); }
 }

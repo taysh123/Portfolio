@@ -119,6 +119,13 @@ body:has(.cine) .chat-launcher {
   --cine-lift: -4px;                          /* NEW: how far a stage rises on hover, focus or touch */
   --cine-glow-lift: 0 0 56px -12px rgba(46, 230, 214, 0.3);   /* NEW: the cyan halo of a lifted stage */
 
+  /* Added by the carousel (round 6, Tay's brief: a CSS 3D coverflow, "dimmed, smaller sides"). The movement's timing is
+     the site's own; the coverflow's three shapes are NEW, for Tay's review. */
+  --cine-dur-move: var(--dur-slow);           /* 520ms: a capture moving to or from the front */
+  --cine-flow-turn: 38deg;                    /* NEW: how far a side capture turns away (rotateY) */
+  --cine-flow-scale: 0.78;                    /* NEW: a side capture's size, against the front one */
+  --cine-flow-dim: 0.55;                      /* NEW: how much of the field covers a side capture */
+
   /* The shared names the site's base rules read inside the scope: the [data-theme] ink, the selection, sr-only. */
   --bg: var(--cine-abyss);
   --fg: var(--cine-ink);

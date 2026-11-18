@@ -1,4 +1,5 @@
 import type { ProjectStatus } from "@/components/ui/Tag";
+import type { ImageName } from "@/data/images";
 
 /**
  * Project content.
@@ -566,3 +567,21 @@ export function repoLabel(p: Pick<Project, "repo">): string | undefined {
 export function publicRepoUrl(p: Pick<Project, "repo">): string | undefined {
   return p.repo.visibility === "public" ? p.repo.url : undefined;
 }
+
+/**
+ * Each flagship's gallery: its real captures in public/work/ (data/images.ts names), in the order a gallery shows them.
+ * PROTOTYPE (proto/hero-a-cinematic): only the lab's Work slice reads it (app/lab/work/panels.ts). Nothing on the live
+ * page does, and it is a separate export, not a field of `projects`, so it stays out of every bundle that imports them
+ * (the case study's among them).
+ *
+ * To add a capture: encode it into public/work/ (scripts/m10-images.mjs), list it in data/images.ts, then append its
+ * name here. Give it its alt text in the same entry ({ image, alt }), unless app/lab/work/panels.ts already has one.
+ * One entry is a single still capture; two or more become a carousel.
+ */
+export type GalleryEntry = ImageName | { image: ImageName; alt: string };
+export const PROJECT_GALLERIES: Record<"poker" | "aegis" | "developeros" | "gravity-flow", readonly GalleryEntry[]> = {
+  poker: ["poker-home", "poker-live", "poker-settle"],
+  aegis: ["aegis-alerts"],
+  developeros: ["dos-search"],
+  "gravity-flow": ["gf-gameplay", "gf-boss"],
+};

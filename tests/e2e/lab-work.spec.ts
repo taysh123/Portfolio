@@ -1,4 +1,4 @@
-// tests/e2e/lab-work.spec.ts — the Work slice in the cinematic language (PROTOTYPE, round 5; D2 reopened by Tay,
+// tests/e2e/lab-work.spec.ts — the Work slice in the cinematic language (PROTOTYPE, rounds 5–6; D2 reopened by Tay,
 // 2026-11-18). Branch proto/hero-a-cinematic only, never merged. main's guards still run against /, unchanged.
 import { test, expect, type Browser, type BrowserContextOptions, type Page } from "playwright/test";
 import zlib from "node:zlib";
@@ -21,19 +21,29 @@ async function at(browser: Browser, [w, h]: readonly [number, number], opts: Bro
   await page.goto(ROUTE, { waitUntil: "networkidle" });
   return { ctx, page, errors };
 }
-const stage = (page: Page, id: string) => page.locator(`[data-panel="${id}"] .wk__stage`);
+const panel = (page: Page, id: string) => page.locator(`[data-panel="${id}"]`);
+const stage = (page: Page, id: string) => panel(page, id).locator(".wk__stage");
 const lift = (page: Page, id: string) => stage(page, id).evaluate((e) => { const cs = getComputedStyle(e); return { translate: cs.translate, halo: cs.boxShadow, edge: cs.borderTopColor }; });
+/** Each slide of a panel's carousel: its offset from the front, whether it is drawn, and its computed placement. */
+const slides = (page: Page, id: string) => panel(page, id).locator(".wk__slide").evaluateAll((ss) => ss.map((s) => {
+  const cs = getComputedStyle(s), dim = getComputedStyle(s.querySelector(".wk__device")!, "::after");
+  return { offset: s.getAttribute("data-offset"), shown: s.hasAttribute("data-shown"), seen: cs.visibility === "visible", placed: cs.getPropertyValue("transform"), dim: dim.opacity, img: !!s.querySelector("img") };
+}));
+const selected = (page: Page, id: string) => panel(page, id).locator('[role="tab"]').evaluateAll((ts) => ts.findIndex((t) => t.getAttribute("aria-selected") === "true"));
+const scrollAll = async (page: Page) => { for (const img of await page.locator(".wk__stage").all()) { await img.scrollIntoViewIfNeeded(); await page.waitForTimeout(120); } };
 
-test("budget: first-load JS ≤ 205.7 KB gzip and HTML ≤ 568 KB; no canvas, no WebGL, and no client code of its own", async ({ request, baseURL, page }) => {
+test("budget: first-load JS ≤ 205.7 KB gzip and HTML ≤ 568 KB; the carousel is the only client code; no canvas, no WebGL", async ({ request, baseURL, page }) => {
   const html = await (await request.get(ROUTE)).text();
   const srcs = [...new Set([...html.matchAll(/<script[^>]+src="([^"]+)"/g)].map((m) => m[1]))];
   const bodies = await Promise.all(srcs.map(async (s) => (await request.get(new URL(s, baseURL).toString())).body()));
   const gz = bodies.reduce((a, b) => a + zlib.gzipSync(b).length, 0);
-  console.log(`/lab/work JS ${(gz / 1024).toFixed(2)} KiB over ${srcs.length} scripts, HTML ${(Buffer.byteLength(html) / 1024).toFixed(2)} KB`);
+  const own = bodies.filter((b) => b.toString().includes("wk__reel"));
+  console.log(`/lab/work JS ${(gz / 1024).toFixed(2)} KiB over ${srcs.length} scripts (the carousel's own: ${(own.reduce((a, b) => a + zlib.gzipSync(b).length, 0) / 1024).toFixed(2)} KiB), HTML ${(Buffer.byteLength(html) / 1024).toFixed(2)} KB`);
   expect(gz / 1024).toBeLessThanOrEqual(205.7);
   expect(Buffer.byteLength(html) / 1024).toBeLessThanOrEqual(568);
-  // Nothing in its scripts is the slice's own: its class names appear in no script (all of it is server-rendered).
-  expect(bodies.some((b) => b.toString().includes("wk__panel"))).toBe(false);
+  expect(own).toHaveLength(1);
+  // The project data stays on the server: no script carries a tagline or the panel markup.
+  for (const b of bodies) { expect(b.toString()).not.toContain("A poker study platform"); expect(b.toString()).not.toContain("wk__panel"); }
   await page.addInitScript(COUNT_WEBGL);
   await page.goto(ROUTE);
   await expect(page.locator("canvas")).toHaveCount(0);
@@ -48,8 +58,8 @@ test("never indexed, and no private repository leaks into what the browser gets"
   expect(await (await request.get("/")).text()).not.toMatch(/href="\/lab/);
 });
 
-// Tailwind scans app/, tests/ and scripts/ for class-name candidates, comments and object keys included, so a word in a
-// lab file can add a rule to the live page's stylesheet. It happened twice on this branch (a utility name in a test
+// Tailwind scans app/, data/, tests/ and scripts/ for class-name candidates, comments and object keys included, so a word
+// in a lab file can add a rule to the live page's stylesheet. It happened twice on this branch (a utility name in a test
 // comment, then an object key in this file). This pins /'s stylesheets to origin/main's bytes (a7a89fd): any leak fails
 // here. (If main's CSS changes, rebase this branch and re-pin.)
 test("the live page's stylesheets are byte-identical to origin/main's: nothing from the lab leaks into /", async ({ request, baseURL }) => {
@@ -62,61 +72,154 @@ test("the live page's stylesheets are byte-identical to origin/main's: nothing f
   ]);
 });
 
-test("without JavaScript: every name, line, state, chip, capture and link is there and works", async ({ browser }) => {
+test("without JavaScript: every word and link, and each project's first real capture alone, with no dead controls", async ({ browser }) => {
   const { ctx, page } = await at(browser, [1440, 900], { javaScriptEnabled: false });
   await expect(page.locator(".wk__name")).toHaveText(NAMES);
   for (const [i, el] of (await page.locator(".wk__panel").all()).entries()) {
     await expect(el.locator(".wk__line")).not.toBeEmpty();
     await expect(el.locator(".wk__status")).toContainText("Status");
     expect(await el.locator(".wk__chips li").count(), NAMES[i]).toBeGreaterThanOrEqual(2);
+    await expect(el.locator("img")).toHaveCount(1);                                   // the first capture only
     await expect(el.locator("img")).toHaveAttribute("alt", /.{20,}/);
     await expect(el.locator("[data-more]")).toHaveAttribute("href", /^\/#work-/);
   }
+  expect(await page.locator(".wk__panel img").evaluateAll((is) => is.map((i) => (i as HTMLImageElement).src.split("/").pop()!.replace(/-\d+\.\w+$/, ""))))
+    .toEqual(["poker-home", "aegis-alerts", "dos-search", "gf-gameplay"]);
+  // The carousels' controls would do nothing without script, so they are not shown.
+  for (const c of await page.locator(".wk__controls").all()) expect(await c.evaluate((e) => getComputedStyle(e).visibility)).toBe("hidden");
   expect(await page.locator("[data-primary]").evaluateAll((as) => as.map((a) => a.getAttribute("href")))).toEqual([
     "https://app.tpoker.app/", "https://github.com/taysh123/aegis", "https://github.com/taysh123/DeveloperOS"]);
   await expect(page.locator("[data-private-repo]")).toHaveCount(2);
-  // Every capture arrives without script once it is near the viewport (native lazy loading). Scrolled from outside the
-  // page: with JavaScript off, the page's own timers never run.
-  for (const img of await page.locator(".wk img").all()) { await img.scrollIntoViewIfNeeded(); await page.waitForTimeout(150); }
+  // Every first capture arrives without script once near the viewport (native lazy loading; scrolled from outside).
+  await scrollAll(page);
   await expect.poll(() => page.locator(".wk img").evaluateAll((is) => is.every((i) => (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0)), { timeout: 15000 }).toBe(true);
-  // The opening ends visible without JS.
   for (const sel of [".wk__eyebrow", ".wk__title", ".wk__lede"]) expect(await page.locator(sel).evaluate((e) => getComputedStyle(e).opacity), sel).toBe("1");
   await ctx.close();
 });
 
-test("captures: the first is eager and high priority; the rest are lazy, and wait until they are near the viewport", async ({ browser }) => {
+test("captures: the page's first is eager and high priority; every other capture is lazy and waits until it is near", async ({ browser }) => {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await ctx.newPage();
   const fetched: string[] = [];
   page.on("request", (r) => { if (/\/work\/[\w-]+-\d+\.(avif|webp)$/.test(r.url())) fetched.push(r.url().split("/").pop()!); });
-  // Headless Chromium starts a lazy image well before it nears the viewport (its margin covers this whole 3.3k px page),
-  // so the deferral is shown on the same markup pushed 6000px down: the lazy captures must wait for the scroll.
+  // Headless Chromium starts a lazy image well before it nears the viewport (its margin covers this whole page), so the
+  // deferral is shown on the same markup pushed 6000px down: the lazy captures must wait for the scroll.
   await page.route(ROUTE, async (r) => { const res = await r.fetch(); await r.fulfill({ response: res, body: (await res.text()).replace("</head>", "<style>.wk__head{padding-top:6000px}</style></head>") }); });
   await page.goto(ROUTE, { waitUntil: "networkidle" });
-  expect(await page.locator(".wk img").evaluateAll((is) => is.map((i) => [i.getAttribute("loading"), i.getAttribute("fetchpriority")]))).toEqual([
-    ["eager", "high"], ["lazy", null], ["lazy", null], ["lazy", null]]);
-  expect(fetched.some((f) => f.startsWith("poker-live")), fetched.join(", ")).toBe(true);                       // eager: fetched anyway
-  expect(fetched.filter((f) => /^(hero-aegis|dos-search|gf-gameplay)/.test(f)), "lazy, far away").toEqual([]);
-  await page.locator('[data-panel="gravity-flow"]').scrollIntoViewIfNeeded();
+  const attrs = await page.locator(".wk img").evaluateAll((is) => is.map((i) => [i.getAttribute("loading"), i.getAttribute("fetchpriority")]));
+  expect(attrs[0]).toEqual(["eager", "high"]);
+  for (const a of attrs.slice(1)) expect(a).toEqual(["lazy", null]);
+  expect(fetched.some((f) => f.startsWith("poker-home")), fetched.join(", ")).toBe(true);                     // eager: fetched anyway
+  expect(fetched.filter((f) => /^(poker-live|poker-settle|aegis-alerts|dos-search|gf-gameplay|gf-boss)/.test(f)), "lazy, far away").toEqual([]);
+  await panel(page, "gravity-flow").scrollIntoViewIfNeeded();
   await expect.poll(() => fetched.some((f) => f.startsWith("gf-gameplay"))).toBe(true);
   await ctx.close();
 });
 
-test("keyboard: every link in reading order, each with a solid 2px cyan ring; focus lifts its panel", async ({ browser }) => {
+test("the coverflow: the front capture flat and whole, its neighbours turned in 3D, smaller and dimmed", async ({ browser }) => {
+  const { ctx, page, errors } = await at(browser, [1440, 900], { reducedMotion: "no-preference" });
+  await expect.poll(async () => (await slides(page, "poker")).every((s) => s.shown && s.img)).toBe(true);
+  const [front, right, left] = await slides(page, "poker");
+  expect([front.offset, right.offset, left.offset]).toEqual(["0", "1", "-1"]);
+  expect(front.placed).toBe("none");
+  expect(front.dim).toBe("0");
+  for (const side of [right, left]) {
+    expect(side.placed, "a 3D turn").toMatch(/^matrix3d\(/);
+    expect(Number(side.dim), "dimmed").toBeGreaterThan(0.4);
+  }
+  // Two captures: one neighbour. One capture: no carousel at all.
+  expect((await slides(page, "gravity-flow")).map((s) => s.offset)).toEqual(["0", "1"]);
+  for (const id of ["aegis", "developeros"]) { await expect(panel(page, id).locator(".wk__reel, .wk__controls, [role=tab]")).toHaveCount(0); await expect(panel(page, id).locator("img")).toHaveCount(1); }
+  // It never moves on its own.
+  await page.waitForTimeout(3000);
+  expect(await selected(page, "poker")).toBe(0);
+  expect(await page.evaluate(() => (window as unknown as { __gl: number }).__gl)).toBe(0);
+  expect(errors).toEqual([]);
+  await ctx.close();
+});
+
+test("the carousel answers the keyboard (arrows, Home, End, focus following), its buttons, a side capture, and says so", async ({ browser }) => {
   const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: "no-preference" });
-  const seen: { at: string; ring: string; panel: string | null }[] = [];
-  for (let i = 0; i < 9; i++) {
+  const tab = (i: number) => panel(page, "poker").locator('[role="tab"]').nth(i);
+  await tab(0).focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(tab(1)).toBeFocused();
+  expect(await selected(page, "poker")).toBe(1);
+  expect((await slides(page, "poker")).map((s) => s.offset)).toEqual(["-1", "0", "1"]);
+  await expect(panel(page, "poker").locator('[aria-live="polite"]')).toHaveText(/^T Poker: capture 2 of 3\. T Poker live tournament dashboard/);
+  await page.keyboard.press("End"); await expect(tab(2)).toBeFocused();
+  await page.keyboard.press("ArrowRight"); await expect(tab(0)).toBeFocused();   // wraps around
+  await page.keyboard.press("Home"); expect(await selected(page, "poker")).toBe(0);
+  await panel(page, "poker").getByRole("button", { name: "Next capture" }).click(); expect(await selected(page, "poker")).toBe(1);
+  await panel(page, "poker").getByRole("button", { name: "Previous capture" }).click(); expect(await selected(page, "poker")).toBe(0);
+  await panel(page, "poker").locator('.wk__slide[data-offset="-1"]').click({ position: { x: 20, y: 200 } });   // the left neighbour
+  expect(await selected(page, "poker")).toBe(2);
+  // The front slide is the one assistive tech reads; the others are hidden from it.
+  expect(await panel(page, "poker").locator(".wk__slide").evaluateAll((ss) => ss.map((s) => s.getAttribute("aria-hidden")))).toEqual(["true", "true", null]);
+  await ctx.close();
+});
+
+test("touch: a sideways swipe moves the carousel; a vertical one scrolls the page instead", async ({ browser }) => {
+  const { ctx, page } = await at(browser, [390, 844], { reducedMotion: "no-preference" });
+  const track = panel(page, "poker").locator(".wk__track");
+  await track.scrollIntoViewIfNeeded();
+  const box = (await track.boundingBox())!;
+  const cdp = await ctx.newCDPSession(page);
+  const swipe = async (dx: number, dy: number) => {
+    const x = box.x + box.width / 2, y = box.y + box.height / 2;
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+    for (let k = 1; k <= 6; k++) await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: x + (dx * k) / 6, y: y + (dy * k) / 6 }] });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await page.waitForTimeout(200);
+  };
+  await swipe(-140, 0); expect(await selected(page, "poker")).toBe(1);
+  await swipe(140, 0); expect(await selected(page, "poker")).toBe(0);
+  await swipe(0, -120); expect(await selected(page, "poker")).toBe(0);
+  expect(await track.evaluate((e) => getComputedStyle(e).touchAction)).toBe("pan-y");
+  await ctx.close();
+});
+
+for (const [label, opts, cookie] of [["the OS setting", { reducedMotion: "reduce" as const }, false], ["the site's own switch", {}, true]] as const) {
+  test(`reduced motion (${label}): a flat slider, one capture at a time, no turn and no movement`, async ({ browser }) => {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, ...opts });
+    if (cookie) await ctx.addCookies([{ name: "a11y", value: encodeURIComponent(JSON.stringify({ reducedMotion: true, highContrast: false, largeText: false })), url: "http://localhost:3400" }]);
+    const page = await ctx.newPage();
+    await page.goto(ROUTE, { waitUntil: "networkidle" });
+    const still = async () => {
+      const s = await slides(page, "poker");
+      expect(s.filter((x) => x.seen).length, "one capture shown").toBe(1);
+      for (const x of s) expect(x.placed, "no turn").toBe("none");
+      for (const d of await panel(page, "poker").locator(".wk__slide").evaluateAll((ss) => ss.map((e) => getComputedStyle(e).transitionDuration)))
+        expect(parseFloat(d), "no movement").toBeLessThan(0.01);
+    };
+    await still();
+    await panel(page, "poker").getByRole("button", { name: "Next capture" }).click();
+    expect(await selected(page, "poker")).toBe(1);
+    await still();
+    expect((await slides(page, "poker"))[1].seen).toBe(true);
+    expect(await page.locator(".wk__title").evaluate((e) => e.getAnimations().length)).toBe(0);
+    await ctx.close();
+  });
+}
+
+test("keyboard: every control in reading order, each with a solid 2px cyan ring; focus lifts its panel", async ({ browser }) => {
+  const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: "no-preference" });
+  const seen: { at: string; ring: string }[] = [];
+  for (let i = 0; i < 15; i++) {
     await page.keyboard.press("Tab");
     seen.push(await page.evaluate(() => {
       const e = document.activeElement as HTMLElement, cs = getComputedStyle(e);
-      return { at: e.getAttribute("href") ?? e.getAttribute("aria-label") ?? "", ring: `${cs.outlineStyle} ${cs.outlineWidth} ${cs.outlineColor}`, panel: e.closest("[data-panel]")?.getAttribute("data-panel") ?? null };
+      return { at: e.getAttribute("href") ?? e.getAttribute("aria-label") ?? "", ring: `${cs.outlineStyle} ${cs.outlineWidth} ${cs.outlineColor}` };
     }));
   }
-  expect(seen.map((s) => s.at)).toEqual(["#main", "https://app.tpoker.app/", "/#work-poker", "https://github.com/taysh123/aegis", "/#work-aegis",
-    "https://github.com/taysh123/DeveloperOS", "/#work-developeros", "/#work-gravity-flow", "Chat with the assistant"]);
+  expect(seen.map((s) => s.at)).toEqual(["#main",
+    "https://app.tpoker.app/", "/#work-poker", "Previous capture", "Capture 1 of 3", "Next capture",
+    "https://github.com/taysh123/aegis", "/#work-aegis",
+    "https://github.com/taysh123/DeveloperOS", "/#work-developeros",
+    "/#work-gravity-flow", "Previous capture", "Capture 1 of 2", "Next capture",
+    "Chat with the assistant"]);
   for (const s of seen) expect(s.ring, s.at).toBe("solid 2px rgb(46, 230, 214)");
-  // Focus on Aegis's link lifts Aegis's stage, and only it.
-  await page.locator('[data-panel="aegis"] [data-more]').focus();
+  await panel(page, "aegis").locator("[data-more]").focus();
   await page.waitForTimeout(300);
   expect((await lift(page, "aegis")).translate).toBe("0px -4px");
   expect((await lift(page, "aegis")).halo).not.toBe("none");
@@ -126,9 +229,9 @@ test("keyboard: every link in reading order, each with a solid 2px cyan ring; fo
 
 test("hover and touch lift a stage too; reduced motion keeps it still (the edge and halo still answer)", async ({ browser }) => {
   const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: "no-preference" });
-  await stage(page, "poker").hover();
+  await stage(page, "aegis").hover();
   await page.waitForTimeout(300);
-  expect((await lift(page, "poker")).translate).toBe("0px -4px");
+  expect((await lift(page, "aegis")).translate).toBe("0px -4px");
   await ctx.close();
   const phone = await at(browser, [390, 844], { reducedMotion: "no-preference" });
   await stage(phone.page, "aegis").scrollIntoViewIfNeeded();
@@ -137,37 +240,68 @@ test("hover and touch lift a stage too; reduced motion keeps it still (the edge 
   expect((await lift(phone.page, "aegis")).translate).toBe("0px -4px");
   await phone.ctx.close();
   const calm = await at(browser, [1440, 900], { reducedMotion: "reduce" });
-  const rest = await lift(calm.page, "poker");
-  await stage(calm.page, "poker").hover();
-  const hovered = await lift(calm.page, "poker");
+  const rest = await lift(calm.page, "aegis");
+  await stage(calm.page, "aegis").hover();
+  const hovered = await lift(calm.page, "aegis");
   expect(hovered.translate).toBe("none");
   expect(hovered.edge).not.toBe(rest.edge);
   expect(hovered.halo).not.toBe("none");
-  // …and no opening animation runs at all.
-  expect(await calm.page.locator(".wk__title").evaluate((e) => e.getAnimations().length)).toBe(0);
   await calm.ctx.close();
 });
+
+test("phones reserve every capture's box before a byte of it arrives (no layout shift)", async ({ browser }) => {
+  // A blanket aspect-ratio rule once dropped the reservation that width and height give (CLS 0.017 on phones,
+  // measured). With every capture still on its way (held, not failed: a failed image draws its alt text, which has a
+  // height of its own), each image must already hold its height.
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "no-preference" });
+  const page = await ctx.newPage();
+  let release!: () => void;
+  const held = new Promise<void>((r) => { release = r; });
+  await page.route(/\/work\/[\w-]+-\d+\.(avif|webp)$/, async (r) => { await held; await r.abort().catch(() => {}); });
+  await page.goto(ROUTE, { waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(800);
+  const boxes = await page.locator(".wk__slide[data-offset='0'] img, .wk__stage > .wk__device img").evaluateAll((is) => is.map((i) => ({ src: i.getAttribute("srcset")!.split(" ")[0].split("/").pop(), h: i.getBoundingClientRect().height, loaded: (i as HTMLImageElement).naturalWidth > 0 })));
+  expect(boxes).toHaveLength(4);
+  for (const b of boxes) { expect(b.loaded, b.src).toBe(false); expect(b.h, b.src).toBeGreaterThan(40); }
+  release();
+  await ctx.close();
+});
+
+for (const vp of [[390, 844], [320, 568]] as const) {
+  test(`${vp[0]}×${vp[1]}: a phone capture is capped (at most 45% of the screen tall, 190px wide)`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp, { reducedMotion: "no-preference" });
+    for (const id of ["poker", "gravity-flow"]) {
+      const r = (await panel(page, id).locator('.wk__slide[data-offset="0"] .wk__device').boundingBox())!;
+      expect(r.width, `${id} width`).toBeLessThanOrEqual(190.5);
+      expect(r.height, `${id} height`).toBeLessThanOrEqual(vp[1] * 0.45 + 1);
+    }
+    await ctx.close();
+  });
+}
 
 for (const vp of [[1440, 900], [1024, 768], [390, 844], [320, 568]] as const) {
   test(`${vp[0]}×${vp[1]}: no horizontal overflow, targets ≥ 44px, every capture decodes, no console errors`, async ({ browser }) => {
     const { ctx, page, errors } = await at(browser, vp, { reducedMotion: "no-preference" });
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(vp[0]);
-    const small = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>(".wk a[href]")]
-      .map((el) => ({ t: el.textContent!.trim().slice(0, 24), h: el.getBoundingClientRect().height })).filter((r) => r.h < 44));
+    const small = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>(".wk a[href], .wk button")]
+      .map((el) => ({ t: (el.textContent || el.getAttribute("aria-label") || "").trim().slice(0, 24), h: el.getBoundingClientRect().height, w: el.getBoundingClientRect().width }))
+      .filter((r) => r.h < 44 || r.w < 44));
     expect(small).toEqual([]);
-    await page.evaluate(async () => { for (let y = 0; y < document.documentElement.scrollHeight; y += 300) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 60)); } });
+    await scrollAll(page);
     await expect.poll(() => page.locator(".wk img").evaluateAll((is) => is.every((i) => (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0)), { timeout: 15000 }).toBe(true);
     expect(errors).toEqual([]);
     await ctx.close();
   });
 }
 
-test("structure: one h1, four product h2s, a landmark, and four empty hidden P4 demo slots", async ({ page }) => {
+test("structure: one h1, four product h2s, a landmark, two carousels, and four empty hidden P4 demo slots", async ({ page }) => {
   await page.goto(ROUTE);
   await expect(page.locator("h1")).toHaveCount(1);
   await expect(page.locator("article h2")).toHaveText(NAMES);
   await expect(page.getByRole("main")).toHaveCount(1);
   for (const n of NAMES) await expect(page.getByRole("article", { name: n })).toHaveCount(1);
+  await expect(page.getByRole("region", { name: "T Poker: captures" })).toHaveCount(1);
+  await expect(page.getByRole("region", { name: "GRAVITY FLOW: captures" })).toHaveCount(1);
   const slots = await page.locator("[data-demo-slot]").evaluateAll((s) => s.map((e) => ({ id: e.getAttribute("data-demo-slot"), hidden: (e as HTMLElement).hidden, empty: e.childNodes.length === 0, shown: (e as HTMLElement).offsetParent !== null })));
   expect(slots).toEqual(["poker", "aegis", "developeros", "gravity-flow"].map((id) => ({ id, hidden: true, empty: true, shown: false })));
 });
@@ -177,9 +311,11 @@ for (const [label, vp, opts] of [
   ["390, motion on", [390, 844], { reducedMotion: "no-preference" }],
   ["1440, reduced motion", [1440, 900], { reducedMotion: "reduce" }],
 ] as const) {
-  test(`axe (WCAG 2.2 A/AA): no violations — ${label}`, async ({ browser }) => {
+  test(`axe (WCAG 2.2 A/AA): no violations, after the carousel has moved — ${label}`, async ({ browser }) => {
     const { ctx, page } = await at(browser, vp, opts);
-    await page.evaluate(async () => { for (let y = 0; y < document.documentElement.scrollHeight; y += 300) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 60)); } scrollTo(0, 0); });
+    await scrollAll(page);
+    await panel(page, "poker").getByRole("button", { name: "Next capture" }).click();
+    await page.evaluate(() => scrollTo(0, 0));
     await page.waitForTimeout(1400);
     await page.addScriptTag({ path: AXE });
     const r = await page.evaluate(() => (window as unknown as { axe: { run: (c: unknown, o: unknown) => Promise<{ violations: { id: string; nodes: unknown[] }[]; incomplete: { id: string; nodes: unknown[] }[]; passes: unknown[] }> } })
