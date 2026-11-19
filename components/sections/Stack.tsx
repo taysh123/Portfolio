@@ -1,60 +1,38 @@
-import { projects } from "@/data/projects";
-import { StackLens } from "./StackLens";
-import { lensProjects, projectsFor } from "@/data/stackLens";
-import type { Content } from "@/lib/content";
-import "./stack.css";
-
-const nameOf = (id: string) => projects.find((p) => p.id === id)?.name ?? id;
-const ORDER = lensProjects.map((l) => l.id);
-
-/** The filter, written from the data: choosing a project hides every tool its own text doesn't name, and every group
- *  left with none. CSS only (`:has(:checked)`), so it works before hydration and with JavaScript off. */
-const FILTER = lensProjects.map(({ id }) =>
-  `.stack:has([data-lens-option="${id}"]:checked) [data-tool]:not([data-p~="${id}"]){display:none}` +
-  `.stack:has([data-lens-option="${id}"]:checked) .sgroup:not(:has([data-p~="${id}"])){display:none}`).join("");
+import { stackBlock as s } from "./stackBlock";
+import { StackFilter } from "./StackFilter";
 
 /**
- * The Stack (M10): the tools behind the work. Each group is one row — its name, its tools as plain text (each saying
- * which projects use it), and the projects related to the group — and the lens above is a real filter of those server-rendered rows: pick T Poker
- * and only T Poker's tools remain. No tiles, no figures, no monospace table.
+ * Stack (P3.4), under About: the tools behind the work, as the live Stack showed them (product-plates-final:
+ * components/sections/Stack.tsx), in the cinematic layer. One row per group: its name, its tools on one wrapping line, and the group's evidence
+ * sentence under them. Each tool carries its flagships the live way: `data-p` for the filter, and the names in its
+ * accessible text and hover title.
+ *
+ * Above the groups, "Filter by project" (StackFilter.tsx, the one client island here): pressing a project lights its
+ * tools and dims the rest. Server-rendered otherwise; without JavaScript the full list shows. Nothing in it moves.
  */
-export function Stack({ c }: { c: Content }) {
-  const { t, skillGroups } = c;
+export function Stack() {
   return (
-    <section id="skills" aria-labelledby="stack-title" className="stack">
-      <div className="shell">
-        <h2 id="stack-title" className="stack__title">{t.stack.title}</h2>
-        <StackLens options={lensProjects} t={t} />
-        <style>{FILTER}</style>
-        <div className="sgroups">
-          {skillGroups.map((g) => {
-            const used = g.related === false ? [] : ORDER.filter((id) => g.items.some((i) => projectsFor(i.label).includes(id)));
-            return (
-              <article key={g.id} className="sgroup" data-group={g.id}>
-                <h3 className="sgroup__title">{g.title}</h3>
-                <div className="sgroup__body">
-                  <ul className="sgroup__tools">
-                    {g.items.map((i) => {
-                      // Each tool says which projects use it — on hover, and in its accessible text — so a group never
-                      // implies that every tool in it is in every project named beside it.
-                      const ps = projectsFor(i.label), where = ps.length ? ps.map(nameOf).join(", ") : i.note;
-                      return (
-                        <li key={i.label} data-tool data-emphasis={i.emphasis ? "" : undefined} data-p={ps.join(" ") || undefined} title={where}>
-                          {i.label}{where && <span className="sr-only"> ({where})</span>}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                  <p className="sgroup__evidence">{g.evidence}</p>
-                </div>
-                {used.length > 0 && (
-                  <p className="sgroup__used"><span className="sgroup__usedLabel">{t.stack.related}</span> <span>{used.map(nameOf).join(" · ")}</span></p>
-                )}
-              </article>
-            );
-          })}
-        </div>
-      </div>
+    <section id="skills" aria-labelledby="wk-stack-title" className="wk__stack" data-stack>
+      <p className="wk__stack-eyebrow">{s.eyebrow}</p>
+      <h2 id="wk-stack-title" className="wk__stack-title">{s.title}</h2>
+      <style>{s.filter.css}</style>
+      <StackFilter label={s.filter.label} all={s.filter.all} options={s.filter.options.map(({ id, name, status }) => ({ id, name, status }))}>
+        {s.groups.map((g) => (
+          <div key={g.id} className="wk__stack-group" data-group={g.id}>
+            <h3 id={`wk-stack-${g.id}`} className="wk__stack-name">{g.title}</h3>
+            <div className="wk__stack-body">
+              <ul className="wk__stack-tools" aria-labelledby={`wk-stack-${g.id}`}>
+                {g.tools.map((t) => (
+                  <li key={t.label} data-tool data-p={t.projects.join(" ") || undefined} title={t.names ?? undefined}>
+                    {t.label}{t.names && <span className="sr-only"> ({t.names})</span>}
+                  </li>
+                ))}
+              </ul>
+              <p className="wk__stack-evidence">{g.evidence}</p>
+            </div>
+          </div>
+        ))}
+      </StackFilter>
     </section>
   );
 }

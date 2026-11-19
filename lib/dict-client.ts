@@ -1,5 +1,5 @@
 /**
- * The interface strings client components read (the header and its theme control, the case study, the Stack's
+ * The interface strings client components read (the header, the case study, the Stack's
  * filter status, the assistant). They ship in the JavaScript rather than in each page's serialized props, so the HTML a
  * visitor waits for stays small. The rest of the interface, rendered on the server, is in lib/dict.ts, which merges
  * this table in.
@@ -17,8 +17,6 @@ export const clientDict = {
     openMenu: "Open menu",
     closeMenu: "Close menu",
     menu: "Navigation",
-    toLight: "Switch to light mode",
-    toDark: "Switch to dark mode",
   },
   common: {
     newTab: " (opens in a new tab)",

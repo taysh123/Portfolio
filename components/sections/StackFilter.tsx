@@ -7,9 +7,9 @@ const noop = () => () => {};
 type Option = { id: string; name: string; status: string };
 
 /**
- * Stack's "Filter by project" (PROTOTYPE, the lab's Work slice): All and the four flagships, as toggle buttons
+ * Stack's "Filter by project" (Concept A): All and the four flagships, as toggle buttons
  * (aria-pressed), one pressed at a time. Pressing a project sets `data-lens` on the groups (`children`, rendered on the
- * server); the filtering itself is CSS written from the same options (stack.ts), the way the live Stack filters: only
+ * server); the filtering itself is CSS written from the same options (stackBlock.ts), the way the live Stack filters: only
  * that project's tools remain, and a polite line says so, in the live Stack's words.
  *
  * - The buttons stay mounted, so focus stays on the one pressed.

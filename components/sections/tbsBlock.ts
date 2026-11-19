@@ -3,8 +3,8 @@ import { projects } from "@/data/projects";
 import { dict } from "@/lib/dict";
 
 /**
- * Think · Build · Ship under Stack (PROTOTYPE, P3.5; D1 reopened by Tay, 2026-11-18; D2 not reopened, so no WebGL).
- * Nothing is retyped from the live section (components/sections/ThinkBuildShip.tsx): its title comes from lib/dict.ts,
+ * Think · Build · Ship under Stack (Concept A, P3.5; D1 reopened by Tay, 2026-11-18; D2 not reopened, so no WebGL).
+ * Nothing is retyped from the Product Plates section (product-plates-final:components/sections/ThinkBuildShip.tsx): its title comes from lib/dict.ts,
  * and each row's word, line, summary and example from data/approach.ts, word for word. One line is new, so all four
  * flagships appear: DeveloperOS's, under Build, in Tay's wording (session 14), joined from two places in its own data.
  * tests/unit/lab-work.test.ts holds every string to its source.

@@ -1,22 +1,23 @@
-/* app/lab/_cinematic/cinematic.css — the cinematic design language (Concept A). PROTOTYPE, lab only (D1 reopened by
-   Tay, 2026-11-18; D2 not reopened, so no WebGL; branch proto/hero-a-cinematic, never merged).
+/* app/cinematic.css — the cinematic design language (Concept A; D1 reopened by Tay, 2026-11-18; D2 not reopened, so no
+   WebGL). The release (R1): it was the prototype's lab-only layer (proto/hero-a-cinematic, frozen, never merged), and
+   is now the home page's.
 
-   Extracted from the locked hero (app/lab/hero-a), value for value: nothing here was invented. The hero is its first
-   consumer. docs/CINEMATIC_SYSTEM.md says how a section reuses it.
+   Extracted from the locked hero (components/sections/Hero.tsx), value for value: nothing here was invented. The hero
+   is its first consumer. docs/CINEMATIC_SYSTEM.md says how a section reuses it.
 
    Scope, twice over:
-   - only app/lab/layout.tsx imports this sheet, so only /lab routes ever load it;
-   - every selector needs a `.cine` root (`<div className="cine" data-theme="dark">`), or `:has(.cine)` outside it, so
-     even a sheet that outlives a client navigation is inert on the live page.
-   The live paper theme (app/globals.css) is untouched: this layer re-binds the shared names (--bg, --fg, --accent…)
-   only inside the scope. Contrast floors for every ink here: tests/unit/lab-hero-a.test.ts. */
+   - only the home page (app/page.tsx) imports this sheet; /privacy, the 404 and the error page never load it;
+   - every selector needs a `.cine` root (`<div className="cine" data-theme="dark">`), or `:has(.cine)` outside it.
+   The site's own theme (app/globals.css, dark only since R3) is untouched: this layer re-binds the shared names (--bg,
+   --fg, --accent…) only inside the scope, so the footer and the overlays outside it keep the site's dark theme.
+   Contrast floors for every ink here: tests/unit/lab-hero-a.test.ts. */
 
 /* ── Scope chrome: the page around a cinematic root ───────────────────────────────────────────────────────────── */
 /* The page behind matches the field, so an overscroll never flashes paper. */
 :root:has(.cine), body:has(.cine) { background-color: #04060d; }
-/* Site chrome outside the root (the skip link, the chat launcher) rings its focus in the field's cyan: the paper
-   theme's iris is under 3:1 against this dark field. */
-body:has(.cine) { --accent: #2ee6d6; }
+/* The two pieces of site chrome that sit straight on the field, outside the root (the skip link, the chat launcher),
+   ring their focus in the field's cyan, like everything inside it. The overlays keep the site's own dark accent (R3). */
+body:has(.cine) > a[href="#main"], body:has(.cine) .chat-launcher { --accent: #2ee6d6; }
 /* The site's chat launcher (root layout) takes the dark tone instead of the visitor's paper one. */
 body:has(.cine) .chat-launcher {
   --bg-raised: #0d1426;
@@ -145,6 +146,36 @@ body:has(.cine) .chat-launcher {
   --cine-hair: rgba(255, 255, 255, 0.34);
   --cine-edge: rgba(255, 255, 255, 0.7);
 }
+
+/* ── The site header inside the root (components/layout/Navbar.tsx, R2) ────────────────────────────────────────────
+   At the top of the page it shows no surface, so the first screen reads as the locked hero. Once the page has moved
+   it is the field, frosted, with its hairline (globals.css), and it never changes with the section beneath. The
+   surface appears at once, never eased: one colour on every frame of a scroll. */
+.cine .site-nav { background: var(--cine-abyss); }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .cine .site-nav { background: color-mix(in srgb, var(--cine-abyss) 88%, transparent); }
+}
+.cine .site-nav:not([data-scrolled]) { background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.cine .site-nav[data-scrolled] { box-shadow: inset 0 -1px 0 var(--cine-hair); }
+.cine .nav-underline { background: var(--cine-cyan); }
+/* "Get in touch": the hero's ghost control at the header's size, with no fill of its own (the bar is its ground). */
+.cine .site-nav__cta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  margin-inline-start: var(--cine-space-2);
+  padding: 0 var(--cine-space-4);
+  border: 1px solid var(--cine-edge);
+  border-radius: var(--cine-radius-pill);
+  font-size: var(--cine-text-small);
+  font-weight: var(--cine-weight-control);
+  letter-spacing: var(--cine-tracking-control);
+  color: var(--cine-ink);
+  text-decoration: none;
+  transition: border-color var(--cine-dur-hover) var(--cine-ease);
+}
+.cine .site-nav__cta:hover { border-color: var(--cine-edge-hover); }
+.cine .site-nav__cta:focus-visible { border-radius: var(--cine-radius-pill); }
 
 /* ── Focus: one visible ring on every control, clear of its edge (a 3px gap of the dark field) ─────────────────── */
 .cine :focus-visible { outline: 2px solid var(--cine-cyan); outline-offset: 3px; }

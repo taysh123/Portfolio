@@ -4,9 +4,9 @@ import { captureOf, captureSrcSet as srcSet, captureFallback as fallback, type C
 export const ratioOf = (name: CaptureName) => `${captureOf(name).w} / ${captureOf(name).h}`;
 
 /**
- * One real capture (PROTOTYPE, the lab's Work slice): AVIF first, WebP for the rest, every encoded width, and the
- * image's real dimensions, so its box is reserved before it loads. Where the live chapter swaps in a phone crop below
- * 640px (Aegis's alert row, DeveloperOS's search: components/work/AegisChapter.tsx, DeveloperOSChapter.tsx), so does
+ * One real capture (Concept A, Work): AVIF first, WebP for the rest, every encoded width, and the
+ * image's real dimensions, so its box is reserved before it loads. Where the Product Plates chapter swapped in a phone crop below
+ * 640px (Aegis's alert row, DeveloperOS's search: product-plates-final:components/work/AegisChapter.tsx, DeveloperOSChapter.tsx), so does
  * this. `priority` is for the first capture on the page only: eager and first in the fetch queue. Everything else is
  * lazy. Shared by the still panels (server) and the carousel (client).
  */

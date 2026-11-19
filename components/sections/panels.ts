@@ -6,7 +6,7 @@ import { dict } from "@/lib/dict";
 import { fmt } from "@/lib/fmt";
 
 /**
- * The Work slice's four product panels (PROTOTYPE, round 5). Every word a reader sees comes from the site's own data:
+ * Work's four product panels (Concept A, round 5). Every word a reader sees comes from the site's own data:
  * the name and the one line (`tagline`) from data/projects.ts, the state from the interface's status table (as the
  * live hero reads it), the chips from the project's own stack, the links from its own URLs, the captures from the
  * project's gallery (data/projects.ts PROJECT_GALLERIES), their alt text from lib/dict.ts or the project's media.
@@ -26,8 +26,6 @@ export type Panel = {
   primary?: { href: string; label: string };
   /** T Poker and GRAVITY FLOW: shown as a label, never a link (no slug, no URL, anywhere). */
   privateRepo: boolean;
-  /** Its full chapter on the live page. */
-  more: { href: string; label: string };
   /** The project's real captures, in order. One is a still capture; two or more are a carousel. */
   gallery: Slide[];
   /** Phone screens or desktop windows (every capture in a gallery is the same kind). */
@@ -38,7 +36,7 @@ export type Panel = {
 };
 
 /** The three file:line chips on the DeveloperOS search capture, as the live chapter names them in its alt text
- *  (components/work/DeveloperOSChapter.tsx, CHIPS: not exported, so the unit test keeps this copy equal). */
+ *  (product-plates-final:components/work/DeveloperOSChapter.tsx, CHIPS: not exported, so the unit test kept this copy equal). */
 export const DOS_CHIPS = ["devos/providers/ollama.py:1-50", "tests/test_ollama.py:1-50", "devos/providers/__init__.py:1-5"];
 
 const project = (id: string): Project => projects.find((p) => p.id === id)!;
@@ -75,7 +73,7 @@ const ALT: Partial<Record<CaptureName, string>> = {
   "gf-cosmetics": mediaAlt("gravity-flow", "cosmetics.webp"),
   "gf-win": mediaAlt("gravity-flow", "win.webp"),
 };
-/** The phone crops the live chapters use below 640px (the unit test reads them from the chapters). */
+/** The phone crops the Product Plates chapters used below 640px (product-plates-final:components/work/). */
 export const PHONE_CROP: Partial<Record<CaptureName, CaptureName>> = { "aegis-alerts": "aegis-alerts-phone", "dos-search": "dos-search-phone" };
 const KIND: Record<WorldKey, Panel["kind"]> = { poker: "phone", aegis: "window", developeros: "window", "gravity-flow": "phone" };
 
@@ -117,7 +115,6 @@ export const panels: Panel[] = flagships.map((f, i) => {
     chips: chipsOf(p),
     primary: primaryOf(p),
     privateRepo: p.repo.visibility === "private",
-    more: { href: `/#work-${p.id}`, label: `More on ${p.name}` },
     gallery: galleryOf(f.id),
     kind: KIND[f.id],
     side: i % 2 === 0 ? "left" : "right",

@@ -1,10 +1,9 @@
 /**
- * Single source of truth for theme + accessibility preferences, persisted in
- * cookies so the server can render the correct `data-*` attributes on `<html>`
- * and match the client's first render exactly (no hydration mismatch, no flash).
+ * Single source of truth for the accessibility preferences, persisted in a cookie so the server can render the correct
+ * `data-*` attributes on `<html>` and match the client's first render exactly (no hydration mismatch, no flash). The
+ * site is dark only (Concept A, R3): nothing reads or writes the theme cookie any more. Its name stays here only while
+ * /privacy still describes it; that page's cookie paragraph changes in S21+S22 (R13).
  */
-
-export type Theme = "dark" | "light";
 
 export type A11yPrefs = {
   reducedMotion: boolean;
@@ -27,11 +26,6 @@ export const A11Y_ATTR: Record<keyof A11yPrefs, string> = {
   highContrast: "data-high-contrast",
   largeText: "data-large-text",
 };
-
-/** M10: light is the default (the editorial studio direction); dark is the visitor's choice. */
-export function parseTheme(value: string | undefined): Theme {
-  return value === "dark" ? "dark" : "light";
-}
 
 export function parseA11y(value: string | undefined): A11yPrefs {
   if (!value) return DEFAULT_A11Y;

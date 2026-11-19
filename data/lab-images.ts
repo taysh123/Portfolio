@@ -1,13 +1,13 @@
 import { IMAGES, type ImageName } from "@/data/images";
 
 /**
- * PROTOTYPE (proto/hero-a-cinematic): the captures only the lab's Work carousels show, in the shape data/images.ts
+ * The captures only the Work carousels show (first added for the Concept A prototype), in the shape data/images.ts
  * uses (each name, its encoded widths, its largest size). scripts/m10-images.mjs writes them into public/work/ like
  * every other capture; tests/unit/lab-work.test.ts checks this list against the files on disk.
  *
- * They are listed here and not in data/images.ts on purpose: the live About visual (components/sections/AboutVisual.tsx)
- * is client code that imports that file's IMAGES whole, so one more entry there ships in the live page's first-load
- * JavaScript. Nothing the live page loads imports this file.
+ * They were listed here and not in data/images.ts because the Product Plates About visual (client code, retired in
+ * the release) imported that file's IMAGES whole, so one more entry there would have shipped in first-load
+ * JavaScript. Only server code imports this file.
  */
 export const LAB_IMAGES = {
   "poker-podium": { widths: [320, 480, 640], w: 640, h: 1387 },

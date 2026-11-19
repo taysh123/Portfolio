@@ -6,7 +6,7 @@ import { siteMeta } from "@/data/socials";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Providers } from "@/components/providers/Providers";
 import { EARLY_CHAT } from "@/lib/earlyChat";
-import { THEME_COOKIE, A11Y_COOKIE, parseTheme, parseA11y } from "@/lib/theme";
+import { A11Y_COOKIE, parseA11y } from "@/lib/theme";
 import { brand } from "@/lib/tokens";
 
 const geistSans = Geist({
@@ -95,9 +95,9 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   /**
-   * Theme and accessibility preferences come from cookies so the server
-   * renders the exact `data-*` attributes the client will hydrate to — no
-   * flash, no hydration mismatch, and no blocking inline script.
+   * The site is dark only (Concept A, R3): `data-theme` is fixed, whatever cookie a visitor still has. The
+   * accessibility preferences come from a cookie so the server renders the exact `data-*` attributes the client will
+   * hydrate to — no flash, no hydration mismatch, and no blocking inline script.
    *
    * The tradeoff is that reading cookies opts the route out of static
    * generation. That is a deliberate choice: correctness of the first paint
@@ -105,14 +105,13 @@ export default async function RootLayout({
    * static rendering if TTFB ever becomes the bottleneck.
    */
   const store = await cookies();
-  const theme = parseTheme(store.get(THEME_COOKIE)?.value);
   const a11y = parseA11y(store.get(A11Y_COOKIE)?.value);
 
   return (
     <html
       lang="en"
       dir="ltr"
-      data-theme={theme}
+      data-theme="dark"
       data-reduced-motion={String(a11y.reducedMotion)}
       data-high-contrast={String(a11y.highContrast)}
       data-large-text={String(a11y.largeText)}
@@ -125,7 +124,7 @@ export default async function RootLayout({
         >
           Skip to content
         </a>
-        <Providers initialTheme={theme} initialA11y={a11y}>
+        <Providers initialA11y={a11y}>
           {children}
         </Providers>
         <JsonLd />

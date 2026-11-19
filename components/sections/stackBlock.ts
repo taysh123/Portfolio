@@ -6,8 +6,9 @@ import { dict } from "@/lib/dict";
 import { fmt } from "@/lib/fmt";
 
 /**
- * The Stack section under About (PROTOTYPE, P3.4; D1 reopened by Tay, 2026-11-18; D2 not reopened, so no WebGL). It
- * works like the live Stack (components/sections/Stack.tsx), restyled in the lab's layer, and nothing is typed fresh:
+ * The Stack section under About (Concept A, P3.4; D1 reopened by Tay, 2026-11-18; D2 not reopened, so no WebGL). It
+ * works like the Product Plates Stack (product-plates-final:components/sections/Stack.tsx), in the cinematic layer, and nothing is
+ * typed fresh:
  * - the groups, their tools and each group's evidence sentence are the live Stack's (data/skills.ts), word for word;
  * - which flagship uses each tool is the live mapping (projectsFor in data/stackLens.ts), kept to the four this page
  *   shows. Each tool carries it the live way: `data-p` for the filter, and the names in its accessible text;

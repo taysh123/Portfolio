@@ -15,7 +15,7 @@ const Arrow = () => (
 );
 
 /**
- * A product's real captures as a carousel (PROTOTYPE, the lab's Work slice): a CSS 3D coverflow. The active capture is
+ * A product's real captures as a carousel (Concept A, Work): a CSS 3D coverflow. The active capture is
  * in front; its neighbours sit either side, turned, smaller and dimmed (perspective and rotateY on 2D elements: no
  * WebGL, no canvas). The WAI-ARIA "tabbed carousel": the dots are tabs, so one carousel is three tab stops (previous,
  * the chosen dot, next), and the arrow keys, Home and End move between captures. Touch: a sideways swipe. A side
@@ -24,9 +24,9 @@ const Arrow = () => (
  * - Without JavaScript, and until hydration: exactly the first capture, and no controls (they would do nothing).
  * - Reduced motion (the OS or the site's switch): a flat slider, one capture at a time, no turn, no movement.
  * - Lazy: a neighbour's capture is only mounted after hydration and only while it is one step from the front (never
- *   with reduced motion); every capture but the page's first is loading="lazy" as well.
+ *   with reduced motion); every capture is loading="lazy" as well (the hero fills the first screen).
  * - Server-rendered captures: the page renders each <picture> (Shot.tsx) on the server and hands them in as `shots`;
- *   this island only chooses which to mount. It imports no image data, so the live page's bundles are untouched (a
+ *   this island only chooses which to mount. It imports no image data, so the page's first-load bundles stay small (a
  *   first version that imported the image table made Turbopack re-cut two of /'s first-load chunks, measured).
  * - Every slide keeps its capture's box, mounted or not (`boxes`: each capture's ratio, and its phone crop's, from the
  *   server). So a gallery of mixed shapes (Aegis's alert row and its board) is as tall as its tallest capture from the

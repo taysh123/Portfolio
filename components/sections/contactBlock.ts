@@ -2,8 +2,8 @@ import { availability, resume, socials } from "@/data/socials";
 import { dict } from "@/lib/dict";
 
 /**
- * Contact under Think · Build · Ship (PROTOTYPE, P3.6; D1 reopened by Tay, 2026-11-18; D2 not reopened, so no WebGL).
- * Nothing is retyped from the live section (components/sections/Contact.tsx): its title, lead, labels and links come
+ * Contact under Think · Build · Ship (Concept A, P3.6; D1 reopened by Tay, 2026-11-18; D2 not reopened, so no WebGL).
+ * Nothing is retyped from the Product Plates section (product-plates-final:components/sections/Contact.tsx): its title, lead, labels and links come
  * from lib/dict.ts and data/socials.ts, word for word and target for target. Tay approved the copy (session 15): the
  * live title, the live Contact's mailto with its subject, the nav's "Contact" as the eyebrow (as About and Stack take
  * theirs), and the lead shown only while the site says it is open. tests/unit/lab-work.test.ts holds every string to
@@ -14,7 +14,7 @@ export const contactBlock = {
   eyebrow: dict.nav.contact,
   /** Both halves of the live title, each on its own line. */
   title: dict.contact.title,
-  /** The live lead, only while the site says it is open (About's availability line follows the same switch). */
+  /** The live lead, only while the site says it is open. */
   lead: availability.open ? availability.detail : null,
   /** The live primary action: a plain mailto with the live subject, in the same tab. */
   email: { href: `mailto:${socials.email}?subject=${encodeURIComponent(dict.contact.subject)}`, label: dict.contact.email },

@@ -1,27 +1,36 @@
-import type { Content } from "@/lib/content";
-import "./tbs.css";
+import { tbsBlock as t } from "./tbsBlock";
 
-/** Think · Build · Ship (M10): three principles as ruled rows — the word, the principle, and its evidence from a real
- *  project. Unpinned: it reads at the visitor's pace, like the rest of the page. */
-export function ThinkBuildShip({ c }: { c: Content }) {
-  const { t, pillars } = c;
+/**
+ * Think · Build · Ship (P3.5), under Stack: the live section's three principles, each with its evidence from the four
+ * flagships. The live title, then three ruled rows, as the live section has them. From 1024px each row's word and line
+ * take one side and the summary and evidence the other, on About's and Stack's grid; stacked on phones. Each piece of
+ * evidence opens with its project's name, set apart in ink so a reader can find the four at a glance.
+ *
+ * Server-rendered, with no client code, no link and no control. It holds still: the page's one opening reveal stays the
+ * only one (docs/CINEMATIC_SYSTEM.md, "Motion language").
+ */
+export function ThinkBuildShip() {
   return (
-    <section id="approach" aria-labelledby="approach-title" className="tbs">
-      <div className="shell">
-        <h2 id="approach-title" className="tbs__title">{t.tbs.title}</h2>
-        <ol className="tbs__rows">
-          {pillars.map((p) => (
-            <li key={p.word} className="tbs__row">
-              <h3 className="tbs__word">{p.word}<span className="sr-only">:</span></h3>
-              <div className="tbs__principle">
-                <p className="tbs__line">{p.line}</p>
-                <p className="tbs__summary">{p.summary}</p>
-              </div>
-              <p className="tbs__example">{p.example}</p>
-            </li>
-          ))}
-        </ol>
-      </div>
+    <section id="approach" aria-labelledby="wk-tbs-title" className="wk__tbs" data-tbs>
+      <h2 id="wk-tbs-title" className="wk__tbs-title">{t.title}</h2>
+      <ol className="wk__tbs-rows">
+        {t.rows.map((r) => (
+          <li key={r.word} className="wk__tbs-row">
+            <div className="wk__tbs-head">
+              <h3 className="wk__tbs-word">{r.word}<span className="sr-only">:</span></h3>
+              <p className="wk__tbs-line">{r.line}</p>
+            </div>
+            <div className="wk__tbs-body">
+              <p className="wk__tbs-summary">{r.summary}</p>
+              {r.evidence.map((e) => (
+                <p key={e.name} className="wk__tbs-example" data-project={e.name}>
+                  <span className="wk__tbs-project">{e.name}</span>{e.rest}
+                </p>
+              ))}
+            </div>
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }
