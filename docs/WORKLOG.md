@@ -11,6 +11,193 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-19 — Session 17: the release branch, the unchanged copy, and production's baseline (Claude Code)
+
+**Scope (Tay's brief, S17 only):**
+- Tag `443a1f9` as `product-plates-final` and push the tag.
+- Cut `release/concept-a` from an up-to-date `origin/main`, and copy the prototype over unchanged in one commit.
+- Prove the copy is clean, with `/` byte-identical to `main`'s build.
+- Production's baseline: Lighthouse mobile (median of 5), first-load JS and HTML bytes.
+- #16: measure the chat launcher over links on phones. Report only; fix nothing.
+- CLAUDE.md for the release track.
+- Push the branch (no PR, no merge, no deploy), and close out.
+
+### 1. Preconditions (VL)
+- `git fetch`, then `main` checked out and pulled: `main` = `origin/main` = **`443a1f9`**, clean.
+- Production (`gh api …/deployments?environment=Production`): `443a1f9`, status success (2026-11-19 03:20Z).
+- `proto/hero-a-cinematic` at **`92b08fd`**; PR #18 is still a draft.
+
+### 2. Tay's answers (S17)
+- **R12's "still to name" test changes are approved as a group** (the h1/h2 strings, the focus ring's colour, the Tab
+  order's labels, the headline pins, the two `work.test.ts` cases that read deleted files). Each change still goes in its
+  own commit. Recorded in `docs/RESEARCH_AND_DECISIONS.md`, R12 (`2efac00`). None is made in S17.
+- **Lighthouse:** it was installed nowhere (not in the repo, the npx cache or globally). Tay approved
+  `npx --yes lighthouse@13.6.0` (stable, published 2026-10-27). It runs from the npx cache: `package.json` and the
+  lockfile are unchanged.
+- **The five docs that changed on both sides** come over by a three-way merge, in their own commit (§4).
+
+### 3. The tag (R15) (VL)
+- `product-plates-final`: an annotated tag, object **`8f0a96a`**, pointing at **`443a1f9`**. Pushed:
+  `git ls-remote` shows it, with `^{}` = `443a1f9`.
+- R15 put this in S24; Tay's brief brought it forward. S24 now only checks it.
+
+### 4. The release branch and the copy (VL)
+- `release/concept-a` from `origin/main` `443a1f9` (`--no-track`).
+- The branch point is **`a7a89fd`**. Since then, `main` has had 7 commits (PRs #17, #19, #20), all docs, touching 5 files.
+- `git diff --name-only main...proto/hero-a-cinematic` lists **82 paths** (75 added, 7 modified). **5 of them changed
+  on `main` too:** `CLAUDE.md`, `claude/START-HERE.md`, `docs/RESEARCH_AND_DECISIONS.md`, `docs/ROADMAP.md`,
+  `docs/WORKLOG.md`. No code path did.
+- **`8b77de1`:** the other **77 paths**, byte for byte (`git checkout 92b08fd -- <paths>`). The staged blobs equal
+  `92b08fd`'s for every path (`git diff --cached --quiet 92b08fd -- <paths>`, exit 0).
+- **`b4fd805`:** the 5 docs, merged three ways (`git merge-file`; base `a7a89fd`, `main`, the prototype), with every
+  conflict resolved by hand and nothing dropped from either side:
+  - **CLAUDE.md and START-HERE:** the prototype's copies. Every line only `main` had was an older snapshot of the same
+    facts.
+  - **RESEARCH_AND_DECISIONS:** D1 keeps `main`'s bullets and gains the session 16 note. D2 keeps both sides. N7 keeps
+    `main`'s deferral and adds R13. The history has both sides' rows.
+  - **ROADMAP:** D2's R12 exception, plus `main`'s "Concept A is not M2". Backlog #11 has `main`'s deferral and R13's
+    schedule, #12 `main`'s merged state, and #13–#16 the prototype's rows.
+  - **WORKLOG:** the prototype's sessions 10–16 in full, plus `main`'s summary of sessions 10–11 and its session 9
+    close-out, each in date order. The change log has both sides' rows.
+
+### 5. The copy is clean (VL, at `8b77de1`, Git Bash)
+| Command | Result |
+|---|---|
+| `npx next typegen`, then `npm test` | **216/216** (16 files) |
+| `npm run typecheck` | exit 0 |
+| `npm run lint` | exit 0 |
+| `npm run build` | exit 0 (12 routes; `/lab/hero-a` and `/lab/work` among them) |
+| `GROQ_API_KEY= npx playwright test` | **213/213** (1.9 min), the stylesheet pin and the budget test among them |
+
+**`/` against `main`'s build.** `main` (`443a1f9`) was built in a scratch worktree with its own `npm ci`. Both builds
+were served with `next start` (`:3402` and `:3401`) and compared over HTTP, `/privacy` too:
+- **Stylesheets: byte-identical.** The same two files, `0qut0t360w_q7.css` (44,530 B) and `04srp7qcwoz8q.css`
+  (31,805 B), with equal SHA-256.
+- **Markup: identical with the build ID masked**, except for one extra `<script>` tag and the chunk file names.
+- **Scripts: not byte-identical.**
+  - `/` loads **10 files instead of 9**: 600,362 → 600,542 B raw (+180), and 186,150 → 186,569 B gzip
+    (181.79 → 182.20 KiB, budget 205.7).
+  - **It is the same code.** Parsed with `acorn`, both sides carry the same **177 modules**. 100 are byte-identical. The
+    other 77 match token for token once identifiers and chunk file names are masked: minifier renaming, and the names
+    of the lazily loaded chunks.
+  - The Turbopack runtime differs only in its chunk list and names.
+  - The cause is the split sessions 10–11 recorded: Turbopack cuts the same JavaScript differently once a second route
+    exists. It goes away with `/lab` in the swap (S18+S19).
+  - So the brief's "`/` byte-identical" holds for the stylesheets and the markup, not for the script bytes.
+- `/privacy` behaves the same way: 8 → 9 scripts, 173 modules of the same shape, and the same stylesheet.
+
+### 6. CLAUDE.md for the release track (`0a889bf`)
+- Move F retired (R14). The release track: R1–R15, S17–S24, `release/concept-a` (the copy, what `/` ships until the
+  swap, the rollback, the tag). The prototype branch is the frozen record.
+- Also: D1's release approval; D2 unchanged on all three branches; R12's list and the one canvas exception; the unit
+  count on this branch; Lighthouse via npx; `npm ci`'s allow-scripts warning.
+- **Rebuilt clean.** The first rebuild compiled in 0.5 s from Turbopack's cache (`.next/cache/turbopack`), so the cache
+  was cleared and the build run again (2.9 s, uncached).
+- `/`'s two stylesheets are still byte-identical to `main`'s build, and the markup and the 177 modules are as in §5.
+  `GROQ_API_KEY= npx playwright test tests/e2e/lab-work.spec.ts -g "byte-identical"`: **1/1**.
+
+### 7. The release baseline: production `/` (VL, 2026-11-19 18:38–18:41Z, `443a1f9`)
+**Lighthouse 13.6.0, mobile.** Default settings: simulated throttling (150 ms RTT, 1.6 Mbps, 4× CPU) and a 412×823
+screen. The host's HeadlessChrome is 158.0.0.0, benchmark index 3,971–4,036. Five runs in a row, with nothing else
+running:
+
+| Run | Perf | A11y | BP | SEO | FCP | LCP | TBT | CLS | SI | Bytes |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 98 | 100 | 100 | 100 | 1,341 ms | 2,391 ms | 16 ms | 0 | 2,648 ms | 345,031 |
+| 2 | 98 | 100 | 100 | 100 | 1,175 ms | 2,263 ms | 33 ms | 0 | 1,439 ms | 345,109 |
+| 3 | 98 | 100 | 100 | 100 | 1,140 ms | 2,275 ms | 35 ms | 0 | 1,520 ms | 339,930 |
+| 4 | 98 | 100 | 100 | 100 | 1,139 ms | 2,288 ms | 49 ms | 0 | 1,376 ms | 339,889 |
+| 5 | 98 | 100 | 100 | 100 | 1,130 ms | 2,330 ms | 37 ms | 0 | 1,351 ms | 345,204 |
+| **Median** | **98** | **100** | **100** | **100** | **1,140 ms** | **2,288 ms** | **35 ms** | **0** | **1,439 ms** | **345,031** |
+
+- The median-score run is run 4.
+- The LCP element is a hero index tile's image (`span.tile__stage > span.tile__win > picture > img`).
+- No run warnings.
+- LCP 2.29 s is inside the 2.5 s target, with 0.21 s to spare. **This is R11's yardstick:** ROADMAP #13 ships only if
+  phone LCP would otherwise be worse than this.
+
+**Bytes** (`tests/e2e/budget.spec.ts`'s algorithm, fetched with a browser's headers through Cloudflare;
+`Server: cloudflare`, with an `x-vercel-id`):
+
+| | Production `/` | A local build of `443a1f9` |
+|---|---|---|
+| First-load JS (gzip, budget 205.7 KiB) | **182.04 KiB** (9 scripts, 600,941 B raw) | 181.79 KiB (9, 600,362 B) |
+| HTML (budget 568 KB) | **160,584 B** (156.82 KB) | 160,194 B |
+| Stylesheets | 44,530 B + 31,805 B | 44,530 B + 31,805 B |
+
+Vercel's build differs a little from a local one: its chunks live under `/_next/static/immutable/`, and the Tailwind
+sheet's digest differs as known, though not its size. **Compare later production numbers with production, and local
+before/after numbers with a local build of `main`.**
+
+### 8. #16: the chat launcher over links on phones (VL; report only, nothing changed)
+**Method:**
+- The probe is a scratch script, not committed.
+- Pages: the live `https://www.tayshofer.dev/` and `/lab/work`. `/lab/work` came from this branch's production build
+  on `:3401`, which is the prototype's code `1369b00`.
+- Sizes: 320×568, 360×780, 375×667, 390×844, 414×896 and 430×932. Headless Chromium, mobile and touch, DPR 2.
+- The launcher was measured in both states, full and tucked, set through its `data-compact` attribute, with its own
+  transitions off.
+- Targets: every visible link, button and tab outside the launcher, `aria-hidden` and closed dialogs.
+- Each page was swept every 16px from top to bottom. Each target's largest covered share was recorded, plus the rest
+  positions (the top, every in-page anchor jump, the page's end) and a Tab walk from the top. The Tab walk leaves the
+  launcher in whatever state the page's own script sets.
+
+**The launcher on phones:**
+- Full ("Ask AI"): 97.5×50px. Tucked: 50×50px.
+- 12px from the right and bottom edges, so it spans x = W−109.5…W−12 when full and W−62…W−12 when tucked.
+
+**Results:**
+
+| | Live `/` | `/lab/work` |
+|---|---|---|
+| Targets ever under it mid-scroll | 3–8 full, 0–5 tucked (of 50) | 12–18 full, 6–11 tucked (of 44) |
+| **LinkedIn** | Only the footer's, at 320: 14% full, 0 tucked. Contact's LinkedIn never | **About's**, at every width: 23–54% full, 11–26% tucked. Contact's LinkedIn never (its GitHub, on the pair's right, does: 20–70%) |
+| Wholly covered at some point (full label) | The footer's "Privacy" at 430 (tucked: 65%) | T Poker's "Capture 5 of 5" dot at 320. "Next capture" (T Poker, GRAVITY FLOW) at 414 and 430 (tucked: 20–39%) |
+| Covered at rest | **At the top on load:** the hero index's "GRAVITY FLOW" tile, 19/2/13% full at 320/360/375 (9/1/6% tucked). After the `#contact` jump at 375: the footer's "Résumé (PDF)", 65% full, 23% tucked. After `#work-developeros` at 375: its "Source on GitHub", 24% full | Nothing at the top or the end. The page has no in-page anchors |
+| At the page's end | Nothing (the footer's clear strip) | Nothing (as session 15 measured) |
+| Tab focus partly under it | The "GRAVITY FLOW" tile, at 320/360/375: 19/2/13% (full) | At 390–430, over two walks: "More on Aegis" 28–82%; Stack's "DeveloperOS" filter 53%; "Next capture" 5–37%; DeveloperOS "Source on GitHub" 6–8%. Which stops hit varies with the label's state, which follows scroll timing |
+| Tab focus wholly under it | None | None |
+
+**Reading it:**
+- Mid-scroll passes are inherent to a fixed control. #16's planned fix (S21+S22, `docs/ROADMAP.md`) is about focus and
+  rest: `scroll-padding-bottom`, and the Tab test's "unobscured" check extended to the launcher.
+- No focused target was ever entirely hidden (WCAG 2.4.11, AA). Several were partly hidden, which 2.4.12 (AAA) counts.
+- **Tay's case, LinkedIn mid-scroll, is About's LinkedIn on `/lab/work`.** R10 removes About's links in S21+S22.
+- On the live `/`, the hero index's last tile sits partly under the full label at 320–375 on load. It is pre-existing,
+  on production.
+- Tucking cuts every overlap. At 414 on the live page, nothing passes under the tucked launcher.
+
+**Limitations (NC):**
+- Emulation, not a real phone. Safe-area insets are 0 here; on an iPhone the launcher sits higher by the bottom inset.
+- The Tab walk follows one scroll path per size.
+- `/lab/work` was measured on a local production build, not the Preview. The composed page (S18+S19) will differ:
+  the header, Two more, the footer, and About without links.
+
+### 9. Close-out (VL, Git Bash)
+- **START-HERE, ROADMAP (#16 measured; P5/P6 in progress) and this log updated** (this commit).
+- `npm test` after each docs commit: **216/216**.
+- **The final tree, rebuilt clean** after the START-HERE edit (Turbopack cache cleared; 2.8 s uncached):
+  - against `main`'s build, `/`'s and `/privacy`'s stylesheets are byte-identical;
+  - the markup differs only by the one extra script tag;
+  - all 177 modules match, as in §5.
+  - `GROQ_API_KEY= npx playwright test tests/e2e/lab-work.spec.ts -g "byte-identical"`: **1/1**.
+- `release/concept-a` pushed with its upstream set: branch only, no PR, no merge.
+- Clean-up:
+  - the scratch worktree of `443a1f9` removed (`git worktree remove`), and the scratch files deleted;
+  - ports 3400–3402 are free;
+  - `main` is clean and level with `origin/main`.
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production, tagged `product-plates-final`. Untouched this session.
+- `release/concept-a`: the copy, the merged docs, R12/R15, CLAUDE.md and this close-out. Pushed.
+- `proto/hero-a-cinematic` = `92b08fd`, frozen; PR #18 a draft.
+
+### Waiting on Tay
+- **S18+S19** in a new session, on `release/concept-a`: compose `/`, with the case studies and Two more.
+- In S21+S22, approve N7's final `/privacy` wording. In S23, the GRAVITY FLOW image and the review on his phone.
+
+---
+
 ## 2026-11-19 — Session 16: the P5 (integration) and P6 (release) plan, approved (Claude Code)
 
 **Scope (Tay's brief):**
@@ -2747,3 +2934,4 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-19 | Session 15 | Contact (P3.6) ends `/lab/work`, from the live Contact's own words and links (`56e3dea`); `StackFilter.tsx`'s header comment fixed (`bbd9d55`, comment only); #14 re-measured (the tall-screen case shrinks, the end case unchanged); About's repetition logged for P5 (ROADMAP #15) | `app/lab/work/{contact.ts,ContactBlock.tsx,page.tsx,work.css,StackFilter.tsx}`, `tests/{unit,e2e}/lab-work.*`, `docs/{CINEMATIC_SYSTEM,ROADMAP,WORKLOG}.md`, `claude/START-HERE.md` |
 | 2026-11-19 | Session 15 close | Contact approved, with its two columns from 1100px (`1369b00`); P3 complete (all six sections approved); Contact's LCP cost kept and added to ROADMAP #13; the hold kept (#14); baseline worktree removed, scratch cleaned | `app/lab/work/work.css`, `tests/{unit,e2e}/lab-work.*`, `CLAUDE.md`, `claude/START-HERE.md`, `docs/{WORKLOG,ROADMAP,CINEMATIC_SYSTEM}.md` |
 | 2026-11-19 | Session 16 | The P5/P6 plan (gap audit, the tests the release touches, the backlog, the mechanism), approved by Tay as R1–R15; the S17–S24 plan, S18+S19 and S21+S22 paired; the P4 restore record for the four explainers; the backlog's new #16. Docs only | `docs/{RESEARCH_AND_DECISIONS,ROADMAP,WORKLOG}.md`, `claude/START-HERE.md` |
+| 2026-11-19 | Session 17 | `product-plates-final` (`8f0a96a`) on `443a1f9`, pushed. `release/concept-a` cut from `origin/main`: the prototype's 77 untouched paths copied unchanged (`8b77de1`), the 5 state docs merged three ways (`b4fd805`); unit 216/216, Playwright 213/213, `/`'s stylesheets and markup equal `main`'s build (its scripts the same 177 modules in 10 files instead of 9). R12's "still to name" group approved (`2efac00`). CLAUDE.md for the release track (`0a889bf`). Production baseline: Lighthouse mobile median 98, LCP 2,288 ms; first-load JS 182.04 KiB, HTML 160,584 B. #16 measured | `CLAUDE.md`, `claude/START-HERE.md`, `docs/*.md`, the copied paths |
