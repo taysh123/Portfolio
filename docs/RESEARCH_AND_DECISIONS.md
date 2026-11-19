@@ -144,14 +144,16 @@ the private T Poker repository @ `91d2b97` (the local clone equals GitHub `main`
 
 ### Still open
 
-- **N7 — Cloudflare in front of the site.** Found in session 4, investigated in session 8, then partly resolved:
+- **N7 — Cloudflare in front of the site.** Found in session 4, investigated in session 8, then partly resolved. The
+  `/privacy` wording is **deferred to the end of the build** (Tay, 2026-11-18):
   - **Dashboard toggles: done** (Tay, 2026-11-18). Web Analytics is set to Disable, and Email Address Obfuscation is
     Off.
   - **Verified live at the session 8 close (VL):** with browser headers, `/` and `/privacy` have no beacon, no
     `email-protection` link and no decode script. The plain `mailto:` links are back (2 and 1). Cloudflare still
     proxies (`Server: cloudflare`).
   - So "loads no third-party scripts" holds again.
-  - **Still open: the `/privacy` wording** (draft below), Tay's call.
+  - **The `/privacy` wording: deferred to the end of the build.** Tay decided this at the session 9 close
+    (2026-11-18). It is not a now-task, so don't raise it as pending. The draft below is kept for then.
 
   The findings that led here:
   - **Nothing in the code (VL).**
@@ -194,8 +196,8 @@ the private T Poker repository @ `91d2b97` (the local clone equals GitHub `main`
     `/privacy` needs no change. Either way, keep the CSP as is.
   - App-side workarounds exist: a `no-transform` Cache-Control (stops the beacon, per the Web Analytics FAQ) and
     `<!--email_off-->` markers. Both are code changes, so neither was made. The two toggles make them unnecessary.
-  - **`/privacy`: Tay's call, not edited.** If Cloudflare stays a proxy (orange cloud), the "Hosting and logs"
-    paragraph should name it. Draft, kept within Cloudflare's privacy policy (§2 "End Users": "IP addresses, traffic
+  - **`/privacy`: deferred to the end of the build (Tay, 2026-11-18), not edited.** If Cloudflare stays a proxy
+    (orange cloud), the "Hosting and logs" paragraph should name it. Draft, kept within Cloudflare's privacy policy (§2 "End Users": "IP addresses, traffic
     routing data, system configuration information, and other information about traffic to and from Customers'
     websites"; §6: a data processor "on behalf of its Customers"):
 
@@ -213,8 +215,8 @@ the private T Poker repository @ `91d2b97` (the local clone equals GitHub `main`
       (this adds a third) and the copied phrases.
     - It also needs a new "Last updated" date, and an update to the comment at `app/privacy/page.tsx:26` ("The two
       provider pages").
-- ~~N8 — GRAVITY FLOW's private repository name in the docs~~ **Resolved in session 9** (Tay's brief; on the N8 PR,
-  which Tay merges).
+- ~~N8 — GRAVITY FLOW's private repository name in the docs~~ **Resolved in session 9** (Tay's brief). Merged in PR #16,
+  with the guard change approved, and live at `a7a89fd`.
   - Logged in session 8: nine lines in `docs/` named GRAVITY FLOW's repository (PROJECT_CONTEXT §4.4,
     RESEARCH_AND_DECISIONS N5, ROADMAP M0.5, and six in the WORKLOG), and the guard hashed only T Poker's name.
   - Now each of the nine says "the private GRAVITY FLOW repository", with its meaning kept. `git grep` finds the slug
@@ -331,6 +333,7 @@ Playwright MCP, Superpowers, UI UX Pro Max, Frontend Design, the Figma plugin (c
 
 | Date | Decision | By |
 |---|---|---|
+| 2026-11-18 | Session 9 close: PR #16 (N8) merged (`a7a89fd`, live). The N7 `/privacy` wording is deferred to the end of the build. Move F is to be built on a preview branch next session | Tay |
 | 2026-11-18 | Session 9: N8. GRAVITY FLOW's private repository name is out of the docs, and the private-repo guard pins both private repos by digest (a guard-test change for Tay's approval at merge). `docs/session-7-closeout` and `docs/session-8-closeout` deleted | Tay (brief) |
 | 2026-11-18 | Session 8 close: PR #14 (N1, N2) merged (`d80cb4c`). N7: Cloudflare Web Analytics set to Disable and Email Address Obfuscation set to Off. Still open: the `/privacy` wording; N8 goes to the next session | Tay |
 | 2026-11-18 | Session 8: N1 (copy the reference README's text) and N2 (the abbreviation out of the agent docs) done; N7 investigated only, its two dashboard toggles and the `/privacy` wording wait on Tay | Tay (brief) |

@@ -96,7 +96,7 @@ Acceptance criteria:
 
 Risks: low. Content-only diffs; the existing tests already guard neighbouring claims.
 
-### M1 — Art direction, design system, storyboard · `IN PROGRESS` (core A–E live 2026-11-18: A/C/D #8, B #11, E #12; F deferred to Tay's call after previewing A–E live)
+### M1 — Art direction, design system, storyboard · `IN PROGRESS` (core A–E live 2026-11-18: A/C/D #8, B #11, E #12; F to be built on a preview branch next session, per Tay at the session 9 close)
 
 Scope per D1: **evolve** Product Plates (calm/premium, restrained cyan/violet accents). This is not a
 replacement. The reference README's take / do-NOT-take applies (quoted in `docs/RESEARCH_AND_DECISIONS.md` §1).
@@ -200,5 +200,5 @@ Acceptance criteria:
 | 8 | Prune stale remote branches (with Tay) | Merged ones deleted in session 4 (D8). Six unmerged ones remain, each needing its own yes | any |
 | 9 | Consider adding `/privacy` to `app/sitemap.ts` | Currently `/` only. Minor; Tay's call | M5/M6 |
 | 10 | Consider a nonce-based CSP (`script-src` currently allows `'unsafe-inline'`) | The route is already dynamic (cookies), so nonces are feasible. Needs measurement | M6 |
-| 11 | N7: ~~Cloudflare's beacon and Email Address Obfuscation~~ turned off by Tay 2026-11-18 (verified live). Left: `/privacy` names only Vercel, though Cloudflare proxies the site | Privacy wording. Tay approves or rejects the draft (`docs/RESEARCH_AND_DECISIONS.md` N7) | any |
-| 12 | ~~N8: GRAVITY FLOW's private repository name in nine doc lines~~ Done in session 9 on the N8 PR: the lines say "the private GRAVITY FLOW repository", and the guard pins both private repos by digest | — | any |
+| 11 | N7: ~~Cloudflare's beacon and Email Address Obfuscation~~ turned off by Tay 2026-11-18 (verified live). Left: `/privacy` names only Vercel, though Cloudflare proxies the site | Privacy wording. **Deferred to the end of the build** (Tay, session 9 close); the draft is in `docs/RESEARCH_AND_DECISIONS.md` N7 | end of build |
+| 12 | ~~N8: GRAVITY FLOW's private repository name in nine doc lines~~ Done in session 9, merged in PR #16 (live `a7a89fd`): the lines say "the private GRAVITY FLOW repository", and the guard pins both private repos by digest | — | any |

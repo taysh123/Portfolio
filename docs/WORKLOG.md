@@ -11,6 +11,51 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-18 — Session 9 close-out: PR #16 merged and live, N8 done (Claude Code)
+
+**Scope (Tay's brief):**
+- Record the state, and delete the merged N8 branch after the ancestry check.
+- Keep `reference/*` and the six review/feature branches.
+- Record two decisions.
+- CLAUDE.md: fix the two stale deployment lines only.
+- One docs commit, pushed as a close-out PR. No merge, and no start on Move F.
+
+### State (VL)
+- `git fetch --prune`: `origin/main` = **`a7a89fd`**, the PR #16 merge (merged 19:05:19Z; head `5a9d8a3`).
+- Production deployment `a7a89fd`, GitHub status `success` (19:05:42Z).
+- Local `main` fast-forwarded to `a7a89fd`: clean, and equal to `origin/main`.
+- `npm test` (Git Bash) on `a7a89fd`: **122/122** (14 files).
+- **N8 is done and live.** The docs carry neither private repo's name, and the private-repo guard pins both by digest.
+  Tay approved the guard change at merge.
+
+### Decisions (Tay, 2026-11-18)
+- **The N7 `/privacy` wording is deferred to the end of the build.** It is not a now-task and shouldn't be raised as
+  pending. The draft stays in `docs/RESEARCH_AND_DECISIONS.md` N7.
+- **Move F is to be built on a preview branch next session.** It was not started in this session.
+
+### Branches
+- **`fix/n8-gravity-flow-slug`:** the local and remote tips (`5a9d8a3`) are both ancestors of `origin/main`
+  (`git merge-base --is-ancestor`). Deleted with `git branch -d` and `git push origin --delete`; GitHub returns 404.
+- **Kept:** `reference/premium-redesign-package` (local and remote), `feature/portfolio-polish`,
+  `feature/premium-portfolio-redesign-1mqmgf`, and the four `review/m10-*` branches.
+- **New:** `docs/session-9-closeout` (from `a7a89fd`) holds these docs, and goes up as a close-out PR.
+
+### Docs
+- This entry and the change log.
+- START-HERE: live `a7a89fd`, the F plan, `/privacy` deferred and not pending, N8 merged, and the branches.
+- CLAUDE.md, the two stale lines only: the last verified deployment (`a7a89fd`, PRs #8–#16), and the Windows unit
+  count (122/122 on `a7a89fd`).
+- `docs/RESEARCH_AND_DECISIONS.md`: N7 marked "deferred to the end of the build", N8 merged, and a history row.
+- `docs/ROADMAP.md`: the M1 heading (F's plan), backlog row 11 (`/privacy` deferred), and row 12 (merged).
+- **Left as is:** CLAUDE.md lines 7 and 67 still say F is deferred until Tay's yes, because the brief limited CLAUDE.md
+  to the two deployment lines. The next session's brief is that yes.
+
+### Cleanup
+- The scratchpad was empty; session 9's scratch files were deleted before PR #16. No `.playwright-mcp/` exists, and
+  port 3400 is free.
+
+---
+
 ## 2026-11-18 — Session 9: N8, GRAVITY FLOW's private repository name out of the tree (Claude Code)
 
 **Scope (Tay's brief):**
@@ -966,3 +1011,4 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-18 | Session 8 | N7 investigated (beacon + Email Address Obfuscation at the Cloudflare edge; draft `/privacy` wording); N8 logged; state docs | `docs/RESEARCH_AND_DECISIONS.md`, `docs/ROADMAP.md`, `docs/WORKLOG.md`, `claude/START-HERE.md`, `CLAUDE.md` |
 | 2026-11-18 | Session 8 close | PR #14 merged (`d80cb4c`, live); N7 Cloudflare toggles done by Tay, verified live; `docs/backlog-n1-n2-n7` deleted; state docs | `docs/WORKLOG.md`, `claude/START-HERE.md`, `CLAUDE.md`, `docs/RESEARCH_AND_DECISIONS.md`, `docs/ROADMAP.md` |
 | 2026-11-18 | Session 9 | N8: GRAVITY FLOW's private repository name scrubbed from 9 doc lines; the private-repo guard pins both private repos by digest (guard change for Tay's approval); `docs/session-7-closeout` and `docs/session-8-closeout` deleted; state docs | `docs/*.md`, `tests/support/private-repo.ts`, `tests/unit/private-repo.test.ts`, `claude/START-HERE.md`, `CLAUDE.md` |
+| 2026-11-18 | Session 9 close | PR #16 merged (`a7a89fd`, live); `fix/n8-gravity-flow-slug` deleted; `/privacy` wording deferred to the end of the build; Move F to be built on a preview branch next session; state docs | `docs/WORKLOG.md`, `claude/START-HERE.md`, `CLAUDE.md`, `docs/RESEARCH_AND_DECISIONS.md`, `docs/ROADMAP.md` |
