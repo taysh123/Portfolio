@@ -110,26 +110,106 @@ test("captures: the page's first is eager and high priority; every other capture
   expect(attrs[0]).toEqual(["eager", "high"]);
   for (const a of attrs.slice(1)) expect(a).toEqual(["lazy", null]);
   expect(fetched.some((f) => f.startsWith("poker-home")), fetched.join(", ")).toBe(true);                     // eager: fetched anyway
-  expect(fetched.filter((f) => /^(poker-live|poker-settle|aegis-alerts|dos-search|gf-gameplay|gf-boss)/.test(f)), "lazy, far away").toEqual([]);
+  expect(fetched.filter((f) => /^(poker-live|poker-settle|poker-podium|poker-stats|aegis-alerts|hero-aegis|dos-search|dos-learning|dos-career|dos-dashboard|gf-gameplay|gf-boss|gf-gravity-run|gf-cosmetics|gf-win)-/.test(f)), "lazy, far away").toEqual([]);
   await panel(page, "gravity-flow").scrollIntoViewIfNeeded();
   await expect.poll(() => fetched.some((f) => f.startsWith("gf-gameplay"))).toBe(true);
   await ctx.close();
 });
 
+test("lazy at any count: a carousel mounts only the front capture and its two neighbours; the rest load only when they come next to the front", async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "no-preference" });
+  const page = await ctx.newPage();
+  const fetched: string[] = [];
+  page.on("request", (r) => { if (/\/work\/[\w-]+-\d+\.(avif|webp)$/.test(r.url())) fetched.push(r.url().split("/").pop()!); });
+  await page.goto(ROUTE, { waitUntil: "networkidle" });
+  await scrollAll(page);
+  await page.waitForLoadState("networkidle");
+  const mounted = (id: string) => panel(page, id).locator(".wk__slide").evaluateAll((ss) => ss.map((s) => !!s.querySelector("img")));
+  // Circular: the front (0), the next (1) and the last (the left neighbour).
+  expect(await mounted("poker")).toEqual([true, true, false, false, true]);
+  expect(await mounted("aegis")).toEqual([true, true]);
+  expect(await mounted("developeros")).toEqual([true, true, false, true]);
+  expect(await mounted("gravity-flow")).toEqual([true, true, false, false, true]);
+  const away = ["poker-settle", "poker-podium", "dos-career", "gf-gravity-run", "gf-cosmetics"];
+  expect(fetched.filter((f) => away.some((n) => f.startsWith(`${n}-`))), "two steps from the front: never fetched").toEqual([]);
+  await panel(page, "poker").getByRole("button", { name: "Next capture" }).click();
+  await expect.poll(() => fetched.some((f) => f.startsWith("poker-settle-"))).toBe(true);   // now beside the front
+  expect(fetched.some((f) => f.startsWith("poker-podium-"))).toBe(false);                    // still two away
+  await ctx.close();
+});
+
+test("mixed shapes never shift the page: every track holds its tallest capture's box from the first paint, with or without JS, through every move", async ({ browser }) => {
+  const heights = (page: Page) => page.locator(".wk__track").evaluateAll((ts) => ts.map((t) => Math.round(t.getBoundingClientRect().height * 10) / 10));
+  for (const vp of [[1440, 900], [390, 844]] as const) {
+    const off = await at(browser, vp, { javaScriptEnabled: false });
+    const still = await heights(off.page);
+    await off.ctx.close();
+    const ctx = await browser.newContext({ viewport: { width: vp[0], height: vp[1] }, isMobile: vp[0] < 900, hasTouch: vp[0] < 900, reducedMotion: "no-preference" });
+    // Shifts are split by where they happen. The site's own chat launcher (components/chat, shared with /) folds its
+    // label as the page scrolls and unfolds it at the top: about 0.0076 here, the same on the build before this change
+    // (session 11, measured). The slice's own boxes must not move at all.
+    // Locally the carousels hydrate before the first paint, which would hide a hydration shift (measured: with the box
+    // reservation removed, the Aegis track grows 89 → 281px at 89 ms, first paint at 100 ms, CLS 0). So the scripts are
+    // held back 1.2 s, as on a slow phone, and the page opens at Aegis, the mixed-shape gallery, in view. Red/green: with
+    // the reservation removed this reads 0.064 at Aegis (0.068 at DeveloperOS, pushed down by Aegis).
+    await ctx.route(/\/_next\/static\/chunks\/.*\.js$/, async (r) => { await new Promise((res) => setTimeout(res, 1200)); await r.continue(); });
+    await ctx.addInitScript(() => {
+      const w = window as unknown as { __wk: number; __other: number }; w.__wk = 0; w.__other = 0;
+      new PerformanceObserver((l) => l.getEntries().forEach((e) => {
+        const s = e as PerformanceEntry & { value: number; hadRecentInput: boolean; sources?: { node?: Node | null }[] };
+        if (s.hadRecentInput) return;
+        const ours = !s.sources?.length || s.sources.some((x) => !x.node || (x.node as Element).closest?.(".wk"));
+        if (ours) w.__wk += s.value; else w.__other += s.value;
+      })).observe({ type: "layout-shift", buffered: true });
+    });
+    const page = await ctx.newPage();
+    await page.goto(`${ROUTE}#wk-aegis`, { waitUntil: "networkidle" });
+    await expect(page.locator(".wk__reel[data-ready]")).toHaveCount(4);   // hydrated, after the first paint
+    await page.waitForTimeout(300);
+    await scrollAll(page);
+    await page.evaluate(() => scrollTo(0, 0));
+    await page.waitForTimeout(500);
+    const cls = await page.evaluate(() => { const w = window as unknown as { __wk: number; __other: number }; return { wk: w.__wk, other: w.__other }; });
+    console.log(`CLS ${vp[0]}: the slice ${cls.wk}, the site's chat launcher ${cls.other.toFixed(4)}`);
+    expect(cls.wk, `${vp[0]}: CLS inside the slice through load, hydration and every capture arriving`).toBe(0);
+    // Within a pixel: an empty slide reserves its box from the largest encode's exact ratio (900 × 506), while a loaded
+    // smaller one keeps its own whole-pixel size (600 × 337), 0.27px shorter at 1440 (measured). Sub-pixel, and the same for
+    // every capture since round 6; the slice's CLS above stays 0.
+    const near = (a: number[], b: number[]) => a.every((x, j) => Math.abs(x - b[j]) < 1);
+    expect(near(await heights(page), still), `${vp[0]}: hydrated ${await heights(page)} = without JS ${still}`).toBe(true);
+    for (const [i, id] of ["poker", "aegis", "developeros", "gravity-flow"].entries()) {
+      const n = await panel(page, id).locator('[role="tab"]').count();
+      for (let k = 1; k <= n; k++) {
+        await panel(page, id).getByRole("button", { name: "Next capture" }).click();
+        expect(Math.abs((await heights(page))[i] - still[i]), `${vp[0]} ${id}, step ${k}`).toBeLessThan(1);
+      }
+    }
+    // Aegis's track is its board's height (900 × 506), not the alert row's in front of it.
+    const aegis = await panel(page, "aegis").locator(".wk__slide").first().evaluate((s) => s.getBoundingClientRect().width);
+    expect(Math.abs(still[1] - ((aegis - 2) * 506) / 900 - 2), `${vp[0]}: Aegis holds the board's box`).toBeLessThan(1);
+    await ctx.close();
+  }
+});
+
 test("the coverflow: the front capture flat and whole, its neighbours turned in 3D, smaller and dimmed", async ({ browser }) => {
   const { ctx, page, errors } = await at(browser, [1440, 900], { reducedMotion: "no-preference" });
-  await expect.poll(async () => (await slides(page, "poker")).every((s) => s.shown && s.img)).toBe(true);
-  const [front, right, left] = await slides(page, "poker");
-  expect([front.offset, right.offset, left.offset]).toEqual(["0", "1", "-1"]);
+  await expect.poll(async () => (await slides(page, "poker")).filter((s) => s.shown && s.img).length).toBe(3);
+  const s = await slides(page, "poker");
+  const [front, right, left] = [s[0], s[1], s[4]];
+  expect(s.map((x) => x.offset)).toEqual(["0", "1", "2", "-2", "-1"]);
   expect(front.placed).toBe("none");
   expect(front.dim).toBe("0");
   for (const side of [right, left]) {
     expect(side.placed, "a 3D turn").toMatch(/^matrix3d\(/);
     expect(Number(side.dim), "dimmed").toBeGreaterThan(0.4);
   }
-  // Two captures: one neighbour. One capture: no carousel at all.
-  expect((await slides(page, "gravity-flow")).map((s) => s.offset)).toEqual(["0", "1"]);
-  for (const id of ["aegis", "developeros"]) { await expect(panel(page, id).locator(".wk__reel, .wk__controls, [role=tab]")).toHaveCount(0); await expect(panel(page, id).locator("img")).toHaveCount(1); }
+  for (const away of [s[2], s[3]]) { expect(away.shown, "two steps away").toBe(false); expect(away.seen).toBe(false); expect(away.img).toBe(false); }
+  // Every project is a carousel now: five, two, four and five captures. Two captures: one neighbour.
+  for (const [id, n] of [["poker", 5], ["aegis", 2], ["developeros", 4], ["gravity-flow", 5]] as const) await expect(panel(page, id).locator('[role="tab"]'), id).toHaveCount(n);
+  expect((await slides(page, "aegis")).map((x) => x.offset)).toEqual(["0", "1"]);
+  expect((await slides(page, "developeros")).map((x) => x.offset)).toEqual(["0", "1", "2", "-1"]);
+  // The windows' neighbours turn too: the coverflow is the same for phones and windows.
+  expect((await slides(page, "developeros"))[1].placed).toMatch(/^matrix3d\(/);
   // It never moves on its own.
   await page.waitForTimeout(3000);
   expect(await selected(page, "poker")).toBe(0);
@@ -145,17 +225,28 @@ test("the carousel answers the keyboard (arrows, Home, End, focus following), it
   await page.keyboard.press("ArrowRight");
   await expect(tab(1)).toBeFocused();
   expect(await selected(page, "poker")).toBe(1);
-  expect((await slides(page, "poker")).map((s) => s.offset)).toEqual(["-1", "0", "1"]);
-  await expect(panel(page, "poker").locator('[aria-live="polite"]')).toHaveText(/^T Poker: capture 2 of 3\. T Poker live tournament dashboard/);
-  await page.keyboard.press("End"); await expect(tab(2)).toBeFocused();
+  expect((await slides(page, "poker")).map((s) => s.offset)).toEqual(["-1", "0", "1", "2", "-2"]);
+  await expect(panel(page, "poker").locator('[aria-live="polite"]')).toHaveText(/^T Poker: capture 2 of 5\. T Poker live tournament dashboard/);
+  await page.keyboard.press("End"); await expect(tab(4)).toBeFocused();
+  await expect(panel(page, "poker").locator('[aria-live="polite"]')).toHaveText("T Poker: capture 5 of 5. Lifetime statistics and profit/loss");
   await page.keyboard.press("ArrowRight"); await expect(tab(0)).toBeFocused();   // wraps around
+  await page.keyboard.press("ArrowLeft"); await expect(tab(4)).toBeFocused();    // and back
   await page.keyboard.press("Home"); expect(await selected(page, "poker")).toBe(0);
   await panel(page, "poker").getByRole("button", { name: "Next capture" }).click(); expect(await selected(page, "poker")).toBe(1);
   await panel(page, "poker").getByRole("button", { name: "Previous capture" }).click(); expect(await selected(page, "poker")).toBe(0);
   await panel(page, "poker").locator('.wk__slide[data-offset="-1"]').click({ position: { x: 20, y: 200 } });   // the left neighbour
-  expect(await selected(page, "poker")).toBe(2);
+  expect(await selected(page, "poker")).toBe(4);
   // The front slide is the one assistive tech reads; the others are hidden from it.
-  expect(await panel(page, "poker").locator(".wk__slide").evaluateAll((ss) => ss.map((s) => s.getAttribute("aria-hidden")))).toEqual(["true", "true", null]);
+  expect(await panel(page, "poker").locator(".wk__slide").evaluateAll((ss) => ss.map((s) => s.getAttribute("aria-hidden")))).toEqual(["true", "true", "true", "true", null]);
+  // A window carousel answers the same way: each DeveloperOS capture in turn, announced with its own alt text.
+  const dos = (i: number) => panel(page, "developeros").locator('[role="tab"]').nth(i);
+  await dos(0).focus();
+  for (const [i, alt] of ["Learning centre generated from indexed code", "Career tools—leads, CV match, interview prep", "DeveloperOS dashboard overview"].entries()) {
+    await page.keyboard.press("ArrowRight");
+    await expect(dos(i + 1)).toBeFocused();
+    await expect(panel(page, "developeros").locator('[aria-live="polite"]')).toHaveText(`DeveloperOS: capture ${i + 2} of 4. ${alt}`);
+    await expect(panel(page, "developeros").locator('.wk__slide[data-offset="0"] img')).toHaveAttribute("alt", alt);
+  }
   await ctx.close();
 });
 
@@ -205,7 +296,7 @@ for (const [label, opts, cookie] of [["the OS setting", { reducedMotion: "reduce
 test("keyboard: every control in reading order, each with a solid 2px cyan ring; focus lifts its panel", async ({ browser }) => {
   const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: "no-preference" });
   const seen: { at: string; ring: string }[] = [];
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 21; i++) {
     await page.keyboard.press("Tab");
     seen.push(await page.evaluate(() => {
       const e = document.activeElement as HTMLElement, cs = getComputedStyle(e);
@@ -213,10 +304,10 @@ test("keyboard: every control in reading order, each with a solid 2px cyan ring;
     }));
   }
   expect(seen.map((s) => s.at)).toEqual(["#main",
-    "https://app.tpoker.app/", "/#work-poker", "Previous capture", "Capture 1 of 3", "Next capture",
-    "https://github.com/taysh123/aegis", "/#work-aegis",
-    "https://github.com/taysh123/DeveloperOS", "/#work-developeros",
-    "/#work-gravity-flow", "Previous capture", "Capture 1 of 2", "Next capture",
+    "https://app.tpoker.app/", "/#work-poker", "Previous capture", "Capture 1 of 5", "Next capture",
+    "https://github.com/taysh123/aegis", "/#work-aegis", "Previous capture", "Capture 1 of 2", "Next capture",
+    "https://github.com/taysh123/DeveloperOS", "/#work-developeros", "Previous capture", "Capture 1 of 4", "Next capture",
+    "/#work-gravity-flow", "Previous capture", "Capture 1 of 5", "Next capture",
     "Chat with the assistant"]);
   for (const s of seen) expect(s.ring, s.at).toBe("solid 2px rgb(46, 230, 214)");
   await panel(page, "aegis").locator("[data-more]").focus();
@@ -287,6 +378,13 @@ for (const vp of [[1440, 900], [1024, 768], [390, 844], [320, 568]] as const) {
       .map((el) => ({ t: (el.textContent || el.getAttribute("aria-label") || "").trim().slice(0, 24), h: el.getBoundingClientRect().height, w: el.getBoundingClientRect().width }))
       .filter((r) => r.h < 44 || r.w < 44));
     expect(small).toEqual([]);
+    // Five dots and two arrows are seven 44px targets: below 390px they take two rows. None may be cut by the stage.
+    const cut = await page.locator(".wk__panel").evaluateAll((ps) => ps.flatMap((p) => {
+      const st = p.querySelector(".wk__stage")!.getBoundingClientRect();
+      return [...p.querySelectorAll<HTMLElement>(".wk__step, .wk__dot")].map((b) => ({ id: (p as HTMLElement).dataset.panel, b: b.getAttribute("aria-label"), r: b.getBoundingClientRect() }))
+        .filter(({ r }) => r.left < st.left + 1 || r.right > st.right - 1).map(({ id, b }) => `${id}: ${b}`);
+    }));
+    expect(cut).toEqual([]);
     await scrollAll(page);
     await expect.poll(() => page.locator(".wk img").evaluateAll((is) => is.every((i) => (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0)), { timeout: 15000 }).toBe(true);
     expect(errors).toEqual([]);
@@ -294,14 +392,13 @@ for (const vp of [[1440, 900], [1024, 768], [390, 844], [320, 568]] as const) {
   });
 }
 
-test("structure: one h1, four product h2s, a landmark, two carousels, and four empty hidden P4 demo slots", async ({ page }) => {
+test("structure: one h1, four product h2s, a landmark, four carousels, and four empty hidden P4 demo slots", async ({ page }) => {
   await page.goto(ROUTE);
   await expect(page.locator("h1")).toHaveCount(1);
   await expect(page.locator("article h2")).toHaveText(NAMES);
   await expect(page.getByRole("main")).toHaveCount(1);
   for (const n of NAMES) await expect(page.getByRole("article", { name: n })).toHaveCount(1);
-  await expect(page.getByRole("region", { name: "T Poker: captures" })).toHaveCount(1);
-  await expect(page.getByRole("region", { name: "GRAVITY FLOW: captures" })).toHaveCount(1);
+  for (const n of NAMES) await expect(page.getByRole("region", { name: `${n}: captures` })).toHaveCount(1);
   const slots = await page.locator("[data-demo-slot]").evaluateAll((s) => s.map((e) => ({ id: e.getAttribute("data-demo-slot"), hidden: (e as HTMLElement).hidden, empty: e.childNodes.length === 0, shown: (e as HTMLElement).offsetParent !== null })));
   expect(slots).toEqual(["poker", "aegis", "developeros", "gravity-flow"].map((id) => ({ id, hidden: true, empty: true, shown: false })));
 });
@@ -310,11 +407,12 @@ for (const [label, vp, opts] of [
   ["1440, motion on", [1440, 900], { reducedMotion: "no-preference" }],
   ["390, motion on", [390, 844], { reducedMotion: "no-preference" }],
   ["1440, reduced motion", [1440, 900], { reducedMotion: "reduce" }],
+  ["390, reduced motion", [390, 844], { reducedMotion: "reduce" }],
 ] as const) {
-  test(`axe (WCAG 2.2 A/AA): no violations, after the carousel has moved — ${label}`, async ({ browser }) => {
+  test(`axe (WCAG 2.2 A/AA): no violations, after every carousel has moved — ${label}`, async ({ browser }) => {
     const { ctx, page } = await at(browser, vp, opts);
     await scrollAll(page);
-    await panel(page, "poker").getByRole("button", { name: "Next capture" }).click();
+    for (const id of ["poker", "aegis", "developeros", "gravity-flow"]) await panel(page, id).getByRole("button", { name: "Next capture" }).click();
     await page.evaluate(() => scrollTo(0, 0));
     await page.waitForTimeout(1400);
     await page.addScriptTag({ path: AXE });

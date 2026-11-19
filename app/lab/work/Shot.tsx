@@ -1,4 +1,7 @@
-import { IMAGES, srcSet, fallback, type ImageName } from "@/data/images";
+import { captureOf, captureSrcSet as srcSet, captureFallback as fallback, type CaptureName } from "@/data/lab-images";
+
+/** A capture's shape as a CSS ratio, from its real size. */
+export const ratioOf = (name: CaptureName) => `${captureOf(name).w} / ${captureOf(name).h}`;
 
 /**
  * One real capture (PROTOTYPE, the lab's Work slice): AVIF first, WebP for the rest, every encoded width, and the
@@ -7,8 +10,8 @@ import { IMAGES, srcSet, fallback, type ImageName } from "@/data/images";
  * this. `priority` is for the first capture on the page only: eager and first in the fetch queue. Everything else is
  * lazy. Shared by the still panels (server) and the carousel (client).
  */
-export function Shot({ image, phone, alt, sizes, priority }: { image: ImageName; phone?: ImageName; alt: string; sizes: string; priority?: boolean }) {
-  const im = IMAGES[image];
+export function Shot({ image, phone, alt, sizes, priority }: { image: CaptureName; phone?: CaptureName; alt: string; sizes: string; priority?: boolean }) {
+  const im = captureOf(image);
   return (
     <picture>
       {phone && <source media="(max-width: 639px)" type="image/avif" srcSet={srcSet(phone, "avif")} sizes="92vw" />}
@@ -17,7 +20,7 @@ export function Shot({ image, phone, alt, sizes, priority }: { image: ImageName;
       {/* The phone crop has its own shape: its real ratio reserves the box below 640px (work.css), so nothing shifts. */}
       <img src={fallback(image)} srcSet={srcSet(image, "webp")} sizes={sizes} alt={alt} width={im.w} height={im.h}
         decoding="async" loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : undefined} draggable={false}
-        style={phone ? ({ "--wk-ratio-phone": `${IMAGES[phone].w} / ${IMAGES[phone].h}` } as React.CSSProperties) : undefined} />
+        style={phone ? ({ "--wk-ratio-phone": ratioOf(phone) } as React.CSSProperties) : undefined} />
     </picture>
   );
 }

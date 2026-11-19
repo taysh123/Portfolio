@@ -155,6 +155,12 @@
   transition: transform var(--cine-dur-move) var(--cine-ease-reveal), opacity var(--cine-dur-move) var(--cine-ease);
 }
 .wk__slide:not([data-shown]) { visibility: hidden; }
+/* Every slide keeps its capture's box, drawn or not: an empty device holds the shape the server handed the carousel, so
+   the stage is as tall as its tallest capture from the first paint, with or without JS, and keeps that height as the
+   reader moves (Aegis's alert row and its board are different shapes). */
+.wk__slide .wk__device:empty::before { content: ""; display: block; aspect-ratio: var(--wk-box); }
+/* Windows in a carousel: the front one narrower than the stage, so its neighbours show either side. */
+.wk__panel[data-kind="window"] .wk__slide { width: 80%; }
 .wk__slide[data-offset="0"] { z-index: 3; }
 .wk__slide[data-offset="1"] { z-index: 2; cursor: pointer; transform: translateX(var(--wk-flow-x)) rotateY(calc(-1 * var(--cine-flow-turn))) scale(var(--cine-flow-scale)); }
 .wk__slide[data-offset="-1"] { z-index: 2; cursor: pointer; transform: translateX(calc(-1 * var(--wk-flow-x))) rotateY(var(--cine-flow-turn)) scale(var(--cine-flow-scale)); }
@@ -230,4 +236,13 @@
   /* Only a capture with a phone crop carries this (Shot.tsx); every other keeps the ratio its width and height give,
      reserved before it loads. (A blanket "auto" here dropped that reservation: CLS 0.017 on phones, measured.) */
   .wk__device img[style] { aspect-ratio: var(--wk-ratio-phone); }
+  .wk__slide .wk__device:empty::before { aspect-ratio: var(--wk-box-phone, var(--wk-box)); }
+  .wk__panel[data-kind="window"] .wk__slide { width: 86%; }
+}
+/* The narrowest phones: seven 44px targets (previous, five dots, next) need 324px, more than the stage has below 390px.
+   The dots take their own row under the capture and the two arrows sit below them; focus still runs previous, the
+   chosen dot, next, and every target keeps its size. */
+@media (max-width: 389px) {
+  .wk__controls { display: grid; grid-template-columns: repeat(2, auto); justify-content: center; justify-items: center; gap: var(--cine-space-1) var(--cine-space-2); }
+  .wk__dots { grid-column: 1 / -1; grid-row: 1; justify-content: center; }
 }

@@ -1,7 +1,7 @@
 import { projects, publicRepoUrl, PROJECT_GALLERIES, type Project } from "@/data/projects";
 import { flagships, type WorldKey } from "@/data/work";
 import { indexStateKey } from "@/data/proof";
-import type { ImageName } from "@/data/images";
+import type { CaptureName } from "@/data/lab-images";
 import { dict } from "@/lib/dict";
 import { fmt } from "@/lib/fmt";
 
@@ -14,7 +14,7 @@ import { fmt } from "@/lib/fmt";
  */
 
 /** One capture in a panel's gallery. `phone` is the crop the live chapter swaps in below 640px, if it has one. */
-export type Slide = { image: ImageName; phone?: ImageName; alt: string };
+export type Slide = { image: CaptureName; phone?: CaptureName; alt: string };
 
 export type Panel = {
   id: WorldKey;
@@ -43,22 +43,40 @@ export const DOS_CHIPS = ["devos/providers/ollama.py:1-50", "tests/test_ollama.p
 
 const project = (id: string): Project => projects.find((p) => p.id === id)!;
 
+/** The alt text the project's own media already gives one of its files (public/projects/<project>/<file>): its lead
+ *  image's, or its gallery entry's. A capture in public/work that re-encodes that file (scripts/m10-images.mjs) takes
+ *  it word for word; the unit test compares the pixels, so the text is the picture's. */
+export function mediaAlt(id: string, file: string): string | undefined {
+  const m = project(id).media;
+  if (m?.image?.endsWith(`/${file}`)) return m.alt;
+  return m?.gallery?.find((g) => g.src.endsWith(`/${file}`))?.alt;
+}
+
 /** The alt text for every capture a gallery can name, from where the site already says it: lib/dict.ts, or the
  *  project's own media. A gallery entry may carry its own instead ({ image, alt }); an image with neither fails the
  *  build (below) and the unit test. */
-const ALT: Partial<Record<ImageName, string>> = {
+const ALT: Partial<Record<CaptureName, string>> = {
   "poker-home": dict.poker.alts[0],
   "poker-live": dict.poker.alts[1],
   "poker-settle": dict.poker.alts[2],
   "aegis-alerts": dict.aegis.alt,
-  "hero-aegis": project("aegis").media!.alt!,   // the Incidents board crop (data/images.ts AEGIS_BOARD), if it is added
+  // The Incidents board crop (data/images.ts AEGIS_BOARD): public/projects/aegis/incident-board-open.webp is the same crop.
+  "hero-aegis": mediaAlt("aegis", "incident-board-open.webp"),
   "dos-search": fmt(dict.dos.alt, { chips: DOS_CHIPS.join(", ") }),
   "gf-gameplay": dict.gf.alt,
-  // public/work/gf-boss is public/projects/gravity-flow/boss.webp re-encoded: its alt text is that gallery entry's.
-  "gf-boss": project("gravity-flow").media!.gallery!.find((g) => g.src.endsWith("/boss.webp"))!.alt,
+  "gf-boss": mediaAlt("gravity-flow", "boss.webp"),
+  // The lab's own captures (data/lab-images.ts), each a re-encode of the file named.
+  "poker-podium": mediaAlt("poker", "podium.webp"),
+  "poker-stats": mediaAlt("poker", "stats.webp"),
+  "dos-learning": mediaAlt("developeros", "learning.webp"),
+  "dos-career": mediaAlt("developeros", "career.webp"),
+  "dos-dashboard": mediaAlt("developeros", "dashboard.webp"),
+  "gf-gravity-run": mediaAlt("gravity-flow", "gravity-run.webp"),
+  "gf-cosmetics": mediaAlt("gravity-flow", "cosmetics.webp"),
+  "gf-win": mediaAlt("gravity-flow", "win.webp"),
 };
 /** The phone crops the live chapters use below 640px (the unit test reads them from the chapters). */
-export const PHONE_CROP: Partial<Record<ImageName, ImageName>> = { "aegis-alerts": "aegis-alerts-phone", "dos-search": "dos-search-phone" };
+export const PHONE_CROP: Partial<Record<CaptureName, CaptureName>> = { "aegis-alerts": "aegis-alerts-phone", "dos-search": "dos-search-phone" };
 const KIND: Record<WorldKey, Panel["kind"]> = { poker: "phone", aegis: "window", developeros: "window", "gravity-flow": "phone" };
 
 function galleryOf(id: WorldKey): Slide[] {

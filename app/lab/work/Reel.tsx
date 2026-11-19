@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
 
 const noop = () => () => {};
@@ -28,8 +28,11 @@ const Arrow = () => (
  * - Server-rendered captures: the page renders each <picture> (Shot.tsx) on the server and hands them in as `shots`;
  *   this island only chooses which to mount. It imports no image data, so the live page's bundles are untouched (a
  *   first version that imported the image table made Turbopack re-cut two of /'s first-load chunks, measured).
+ * - Every slide keeps its capture's box, mounted or not (`boxes`: each capture's ratio, and its phone crop's, from the
+ *   server). So a gallery of mixed shapes (Aegis's alert row and its board) is as tall as its tallest capture from the
+ *   first paint, with or without JS, and neither hydration nor a move shifts the page.
  */
-export function Reel({ id, name, shots, alts }: { id: string; name: string; shots: ReactNode[]; alts: string[] }) {
+export function Reel({ id, name, shots, alts, boxes }: { id: string; name: string; shots: ReactNode[]; alts: string[]; boxes: { ratio: string; phone?: string }[] }) {
   const n = shots.length;
   const [active, setActive] = useState(0);
   const [said, setSaid] = useState("");
@@ -79,7 +82,7 @@ export function Reel({ id, name, shots, alts }: { id: string; name: string; shot
             <div key={i} id={`wk-${id}-slide-${i}`} className="wk__slide" role="tabpanel" aria-roledescription="slide"
               aria-label={`${i + 1} of ${n}`} aria-hidden={front ? undefined : true} data-offset={String(Math.max(-2, Math.min(2, d)))}
               data-shown={shown || undefined} onClick={front ? undefined : () => { if (!swiped.current) go(i); }}>
-              <div className="wk__device">{shown && shot}</div>
+              <div className="wk__device" style={{ "--wk-box": boxes[i].ratio, "--wk-box-phone": boxes[i].phone } as CSSProperties}>{shown && shot}</div>
             </div>
           );
         })}

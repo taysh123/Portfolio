@@ -6,6 +6,7 @@ import fs from "node:fs";
 import { projects, publicRepoUrl, PRIVATE_REPO_LABEL, PROJECT_GALLERIES } from "@/data/projects";
 import { flagships } from "@/data/work";
 import { IMAGES } from "@/data/images";
+import { LAB_IMAGES, captureOf } from "@/data/lab-images";
 import { dict } from "@/lib/dict";
 import { panels, DOS_CHIPS, PHONE_CROP } from "@/app/lab/work/panels";
 import sharp from "sharp";
@@ -81,41 +82,95 @@ describe("honest content", () => {
 });
 
 describe("real captures: each project's gallery (data/projects.ts PROJECT_GALLERIES)", () => {
-  it("holds exactly the captures Tay listed (round 6), in order, and feeds each panel", () => {
+  it("holds exactly the captures Tay listed (round 6, then session 11), in order, and feeds each panel", () => {
+    // Session 11 (Tay's answers): T Poker's "final count" is already poker-settle, so it is not added twice; the
+    // DeveloperOS refusal strip and its AI-features capture (the search capture's own screen) are left out.
     expect(PROJECT_GALLERIES).toEqual({
-      poker: ["poker-home", "poker-live", "poker-settle"], aegis: ["aegis-alerts"], developeros: ["dos-search"], "gravity-flow": ["gf-gameplay", "gf-boss"] });
+      poker: ["poker-home", "poker-live", "poker-settle", "poker-podium", "poker-stats"],
+      aegis: ["aegis-alerts", "hero-aegis"],
+      developeros: ["dos-search", "dos-learning", "dos-career", "dos-dashboard"],
+      "gravity-flow": ["gf-gameplay", "gf-boss", "gf-gravity-run", "gf-cosmetics", "gf-win"] });
     for (const p of panels) expect(p.gallery.map((g) => g.image), p.id).toEqual(PROJECT_GALLERIES[p.id].map((e) => (typeof e === "string" ? e : e.image)));
-    // One capture is a still; two or more, a carousel. Aegis and DeveloperOS have one real capture each today.
-    expect(Object.fromEntries(panels.map((p) => [p.id, p.gallery.length]))).toEqual({ poker: 3, aegis: 1, developeros: 1, "gravity-flow": 2 });
+    // One capture is a still; two or more, a carousel. All four are carousels now.
+    expect(Object.fromEntries(panels.map((p) => [p.id, p.gallery.length]))).toEqual({ poker: 5, aegis: 2, developeros: 4, "gravity-flow": 5 });
+    // No capture twice: each gallery entry is a different file, and a different source.
+    const all = panels.flatMap((p) => p.gallery.map((g) => g.image));
+    expect(new Set(all).size).toBe(all.length);
   });
   it("is a separate export, not a field of the projects the live page and its case study read", () => {
     for (const p of projects) expect(Object.keys(p)).not.toContain("gallery");
-    expect(read("data/projects.ts")).toMatch(/^import type \{ ImageName \} from "@\/data\/images";$/m);   // type-only: no runtime import
+    expect(read("data/projects.ts")).toMatch(/^import type \{ CaptureName \} from "@\/data\/lab-images";$/m);   // type-only: no runtime import
   });
   it("every capture, and every phone crop, exists in public/work at every width, in AVIF and WebP", () => {
     for (const p of panels) for (const g of p.gallery) for (const name of [g.image, ...(g.phone ? [g.phone] : [])]) {
-      expect(IMAGES[name], name).toBeDefined();
-      for (const w of IMAGES[name].widths) for (const ext of ["avif", "webp"]) expect(fs.existsSync(`public/work/${name}-${w}.${ext}`), `${name}-${w}.${ext}`).toBe(true);
+      expect(captureOf(name), name).toBeDefined();
+      for (const w of captureOf(name).widths) for (const ext of ["avif", "webp"]) expect(fs.existsSync(`public/work/${name}-${w}.${ext}`), `${name}-${w}.${ext}`).toBe(true);
     }
     expect(shot).toMatch(/width=\{im\.w\} height=\{im\.h\}/);   // real dimensions reserve the box
   });
+  it("the lab's own captures: listed in data/lab-images.ts at their real sizes, never in data/images.ts", async () => {
+    for (const [name, im] of Object.entries(LAB_IMAGES)) {
+      expect(Object.keys(IMAGES), name).not.toContain(name);
+      for (const w of im.widths) for (const ext of ["avif", "webp"]) {
+        const m = await sharp(`public/work/${name}-${w}.${ext}`).metadata();
+        expect(m.width, `${name}-${w}.${ext}`).toBe(w);
+        if (w === im.w) expect(m.height, `${name}-${w}.${ext}`).toBe(im.h);
+      }
+      expect(im.widths.at(-1), name).toBe(im.w);
+    }
+    // The live About visual is client code that imports data/images.ts whole: a lab entry there would ship in /'s
+    // first-load JavaScript. Only the lab (and data/projects.ts, for a type) may name data/lab-images.
+    const files = (d: string): string[] => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? files(`${d}/${e.name}`) : [`${d}/${e.name}`]);
+    const users = ["app", "components", "lib", "data"].flatMap(files).filter((f) => /\.(ts|tsx)$/.test(f) && /lab-images/.test(read(f)));
+    expect(users.filter((f) => !f.startsWith("app/lab/"))).toEqual(["data/projects.ts"]);
+  });
   it("alt text is the site's own, already reviewed: lib/dict.ts or the project's media", () => {
     const alt = Object.fromEntries(panels.flatMap((p) => p.gallery.map((g) => [g.image, g.alt])));
+    const media = (id: string, file: string) => {
+      const m = project(id).media!;
+      return m.image?.endsWith(`/${file}`) ? m.alt : m.gallery!.find((g) => g.src.endsWith(`/${file}`))!.alt;
+    };
     expect(alt).toEqual({
       "poker-home": dict.poker.alts[0], "poker-live": dict.poker.alts[1], "poker-settle": dict.poker.alts[2],
-      "aegis-alerts": dict.aegis.alt,
+      "poker-podium": media("poker", "podium.webp"), "poker-stats": media("poker", "stats.webp"),
+      "aegis-alerts": dict.aegis.alt, "hero-aegis": media("aegis", "incident-board-open.webp"),
       "dos-search": dict.dos.alt.replace("{chips}", DOS_CHIPS.join(", ")),
-      "gf-gameplay": dict.gf.alt,
-      "gf-boss": project("gravity-flow").media!.gallery!.find((g) => g.src.endsWith("/boss.webp"))!.alt,
+      "dos-learning": media("developeros", "learning.webp"), "dos-career": media("developeros", "career.webp"),
+      "dos-dashboard": media("developeros", "dashboard.webp"),
+      "gf-gameplay": dict.gf.alt, "gf-boss": media("gravity-flow", "boss.webp"),
+      "gf-gravity-run": media("gravity-flow", "gravity-run.webp"), "gf-cosmetics": media("gravity-flow", "cosmetics.webp"),
+      "gf-win": media("gravity-flow", "win.webp"),
     });
-    expect(alt["gf-boss"]).toBe("World boss encounter");
+    // The reviewed words themselves, so a change to the data shows up here.
+    expect(alt).toMatchObject({
+      "gf-boss": "World boss encounter",
+      "poker-podium": "Tournament results podium", "poker-stats": "Lifetime statistics and profit/loss",
+      "dos-learning": "Learning centre generated from indexed code", "dos-career": "Career tools—leads, CV match, interview prep",
+      "dos-dashboard": "DeveloperOS dashboard overview",
+      "gf-gravity-run": "Endless Gravity Run mode", "gf-cosmetics": "Cosmetics collection screen", "gf-win": "Three-star level completion",
+    });
+    expect(alt["hero-aegis"]).toMatch(/^The Aegis Incidents page/);
     for (const a of Object.values(alt)) expect(a).not.toMatch(/\{\w+\}/);
   });
-  it("gf-boss really is the capture whose alt text it reuses (public/projects/gravity-flow/boss.webp, re-encoded)", async () => {
-    const px = (f: string) => sharp(f).resize(48, 96, { fit: "fill" }).removeAlpha().raw().toBuffer();
-    const [a, b] = await Promise.all([px("public/projects/gravity-flow/boss.webp"), px("public/work/gf-boss-480.webp")]);
-    let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]);
-    expect(d / a.length).toBeLessThan(2);   // measured 0.48 of 255: the same image
+  // Each capture that borrows a media entry's alt text must be that entry's file: the image script encodes it from
+  // that file, and the pixels agree (a mean difference of a few levels of 255 is encoding; another screen is ~20).
+  const REENCODED = {
+    "gf-boss": "gravity-flow/boss.webp",
+    "hero-aegis": "aegis/incident-board-open.webp",   // the same AEGIS_BOARD crop, from the owner's full capture
+    "poker-podium": "poker/podium.webp", "poker-stats": "poker/stats.webp",
+    "dos-learning": "developeros/learning.webp", "dos-career": "developeros/career.webp", "dos-dashboard": "developeros/dashboard.webp",
+    "gf-gravity-run": "gravity-flow/gravity-run.webp", "gf-cosmetics": "gravity-flow/cosmetics.webp", "gf-win": "gravity-flow/win.webp",
+  } as const;
+  it("each capture that reuses a media entry's alt text really is that entry's file, re-encoded", async () => {
+    const script = read("scripts/m10-images.mjs");
+    for (const [name, src] of Object.entries(REENCODED)) {
+      if (name !== "hero-aegis") expect(script, name).toContain(`{ name: "${name}", src: \`\${P}/${src}\``);
+      const im = captureOf(name as keyof typeof REENCODED);
+      const px = (f: string) => sharp(f).resize(48, Math.round((48 * im.h) / im.w), { fit: "fill" }).removeAlpha().raw().toBuffer();
+      const [a, b] = await Promise.all([px(`public/projects/${src}`), px(`public/work/${name}-${im.w}.webp`)]);
+      let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]);
+      expect(d / a.length, name).toBeLessThan(2);   // gf-boss measured 0.48 of 255: the same image
+    }
   });
   it("adding a capture without alt text fails the build: the gallery resolver throws", () => {
     expect(data).toMatch(/if \(!alt\) throw new Error\(/);
@@ -166,11 +221,17 @@ describe("structure", () => {
   it("no JS shows the first capture alone and hides the controls; reduced motion is a flat slider", () => {
     expect(reel).toMatch(/useSyncExternalStore\(noop, \(\) => true, \(\) => false\)/);
     expect(reel).toMatch(/const shown = front \|\| \(ready && !flat && Math\.abs\(d\) === 1\);/);
-    expect(reel).toMatch(/<div className="wk__device">\{shown && shot\}<\/div>/);
+    expect(reel).toMatch(/<div className="wk__device" style=\{\{ "--wk-box": boxes\[i\]\.ratio, "--wk-box-phone": boxes\[i\]\.phone \} as CSSProperties\}>\{shown && shot\}<\/div>/);
     expect(css).toMatch(/\.wk__reel:not\(\[data-ready\]\) \.wk__controls \{ visibility: hidden; \}/);
     expect(css).toMatch(/\.wk__slide:not\(\[data-shown\]\) \{ visibility: hidden; \}/);
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[^@]*\.wk__slide:not\(\[data-offset="0"\]\) \{ transform: none; visibility: hidden; \}/);
     expect(css).toMatch(/\[data-reduced-motion="true"\] \.wk__slide:not\(\[data-offset="0"\]\) \{ transform: none; visibility: hidden; \}/);
+  });
+  it("every slide holds its capture's box, drawn or not (mixed shapes never shift the page), from the server's ratios", () => {
+    expect(page).toMatch(/boxes=\{p\.gallery\.map\(\(g\) => \(\{ ratio: ratioOf\(g\.image\), \.\.\.\(g\.phone \? \{ phone: ratioOf\(g\.phone\) \} : null\) \}\)\)\}/);
+    expect(shot).toMatch(/export const ratioOf = \(name: CaptureName\) => `\$\{captureOf\(name\)\.w\} \/ \$\{captureOf\(name\)\.h\}`;/);
+    expect(css).toMatch(/\.wk__slide \.wk__device:empty::before \{ content: ""; display: block; aspect-ratio: var\(--wk-box\); \}/);
+    expect(css).toMatch(/@media \(max-width: 639px\) \{[^@]*\.wk__slide \.wk__device:empty::before \{ aspect-ratio: var\(--wk-box-phone, var\(--wk-box\)\); \}/);
   });
   it("one opening reveal (eyebrow, the title settling, lede) and still panels", () => {
     expect(page.match(/\sdata-reveal(="settle")?[\s>]/g)).toHaveLength(3);

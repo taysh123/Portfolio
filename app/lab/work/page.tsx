@@ -5,17 +5,18 @@ import { PrivateRepoLabel } from "@/components/ui/PrivateRepoLabel";
 import { ArrowUpRightIcon } from "@/components/ui/icons";
 import { dict } from "@/lib/dict";
 import { panels, type Panel } from "./panels";
-import { Shot } from "./Shot";
+import { Shot, ratioOf } from "./Shot";
 import { Reel } from "./Reel";
 import "./work.css";
 
 export const metadata: Metadata = { title: "Lab: Work section" };
 
-/** How wide a capture is drawn: phone captures at the device width (narrower in a carousel, whose sides need the
- *  room), desktop windows across the stage. */
+/** How wide a capture is drawn: phone captures at the device width, desktop windows across the stage; both narrower in
+ *  a carousel, whose sides need the room (a window there is 80% of the stage, 86% below 640px: work.css). */
 const sizesOf = (kind: Panel["kind"], reel: boolean) => kind === "phone"
   ? reel ? "(min-width: 1024px) 250px, 52vw" : "(min-width: 1024px) 300px, 52vw"
-  : "(min-width: 1280px) 660px, (min-width: 1024px) 52vw, 92vw";
+  : reel ? "(min-width: 1280px) 500px, (min-width: 1024px) 36vw, (min-width: 640px) 70vw, 80vw"
+    : "(min-width: 1280px) 660px, (min-width: 1024px) 52vw, 92vw";
 
 /**
  * The Work section in the cinematic language: a MEASURED PROTOTYPE slice (round 5; D2 reopened by Tay, 2026-11-18),
@@ -80,6 +81,7 @@ export default function WorkSlicePage() {
                     <div className="wk__device"><Shot {...p.gallery[0]} sizes={sizesOf(p.kind, false)} priority={i === 0} /></div>
                   ) : (
                     <Reel id={p.id} name={p.name} alts={p.gallery.map((g) => g.alt)}
+                      boxes={p.gallery.map((g) => ({ ratio: ratioOf(g.image), ...(g.phone ? { phone: ratioOf(g.phone) } : null) }))}
                       shots={p.gallery.map((g, k) => <Shot key={g.image} {...g} sizes={sizesOf(p.kind, true)} priority={i === 0 && k === 0} />)} />
                   )}
                 </figure>
