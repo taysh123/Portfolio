@@ -40,7 +40,9 @@ for (const vp of VIEWPORTS) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(vp[0]);
     expect(await page.evaluate(() => innerWidth)).toBe(vp[0]);
     expect(await page.evaluate(() => (window as unknown as { __gl: number }).__gl)).toBe(0);
-    await expect(page.locator("canvas")).toHaveCount(0);
+    // R12 (Tay, session 16): exactly one canvas, the hero's 2D field, hidden from assistive tech (D2: still no WebGL).
+    await expect(page.locator("canvas")).toHaveCount(1);
+    await expect(page.locator("#hero canvas")).toHaveAttribute("aria-hidden", "true");
     await expect.poll(async () => { const r = await decodedImages(page, "main"); return r.length > 0 && r.every((x) => x.ok); }, { timeout: 20000 }).toBe(true);
     expect(failed).toEqual([]);
     await ctx.close();
