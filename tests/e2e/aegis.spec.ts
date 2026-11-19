@@ -17,7 +17,7 @@ test("no SentinelAI branding and no 'Formerly' on any current surface; new captu
   const aegis = page.locator("#work-aegis"); await aegis.scrollIntoViewIfNeeded(); await page.waitForTimeout(600);
   const imgs = await aegis.locator("img").evaluateAll((els) => els.map((i) => ({ src: (i as HTMLImageElement).currentSrc, ok: (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0 })));
   expect(imgs.length).toBeGreaterThan(0);
-  for (const i of imgs) { expect(i.ok, i.src).toBe(true); expect(decodeURIComponent(i.src)).toMatch(/\/work\/aegis-alerts(-phone)?-\d+\.(avif|webp)$/); }
+  for (const i of imgs) { expect(i.ok, i.src).toBe(true); expect(decodeURIComponent(i.src)).toMatch(/\/work\/(aegis-alerts(-phone)?|hero-aegis)-\d+\.(avif|webp)$/); }
   const opener = page.locator("button[data-case-study='aegis']"); await opener.scrollIntoViewIfNeeded(); await opener.click();
   const panel = page.getByRole("dialog"); await expect(panel).toBeVisible();
   await expect(panel).not.toContainText(/formerly|sentinel/i);
