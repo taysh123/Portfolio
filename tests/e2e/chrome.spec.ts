@@ -182,10 +182,9 @@ test("desktop: after a jump to any chapter, its Case study button is whole in th
   }
 });
 
-test("phones: theme in the header, the rest in the menu sheet; Escape and the close button return focus to the menu button", async ({ browser }) => {
+test("phones: the menu button in the header, the rest in the menu sheet; Escape and the close button return focus to the menu button", async ({ browser }) => {
   const { ctx, page } = await open(browser, [390, 844]);
   const menu = page.getByRole("button", { name: "Open menu" });
-  await expect(page.locator("header").getByRole("button", { name: /Switch to (dark|light) mode/ })).toBeVisible();
   await menu.click();
   const sheet = page.getByRole("dialog", { name: "Navigation" });
   await expect(sheet).toBeVisible();
