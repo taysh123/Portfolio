@@ -22,14 +22,15 @@ test("desktop header: name, four destinations, accessibility and one Contact act
   expect(await page.content()).not.toMatch(/GROQ|gsk_/);
 });
 
-test("light is the default; the dark theme is the visitor's choice and is remembered", async ({ browser }) => {
-  const { ctx, page } = await open(browser, [1440, 900]);
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe("rgb(243, 244, 246)");
-  await page.getByRole("button", { name: "Switch to dark mode" }).click();
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await page.reload(); await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await ctx.close();
+// R3 and R12 (Tay, session 16): dark is the only theme. A theme cookie left from the old site changes nothing.
+test("dark is the only theme, cookie or not", async ({ browser }) => {
+  for (const theme of [undefined, "light", "dark"] as const) {
+    const { ctx, page } = await open(browser, [1440, 900], theme ? { theme } : {});
+    await expect(page.locator("html"), `cookie ${theme}`).toHaveAttribute("data-theme", "dark");
+    expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), `cookie ${theme}`).toBe("rgb(4, 6, 13)");
+    await expect(page.getByRole("button", { name: /Switch to (dark|light) mode/ })).toHaveCount(0);
+    await ctx.close();
+  }
 });
 
 test("a theme toggle shifts no layout", async ({ page }) => {
