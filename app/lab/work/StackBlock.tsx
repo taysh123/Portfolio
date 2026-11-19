@@ -1,38 +1,38 @@
-import { Fragment } from "react";
 import { stackBlock as s } from "./stack";
+import { StackFilter } from "./StackFilter";
 
 /**
- * Stack (P3.4), under About: the tools behind the work, grouped as the live Stack groups them, plus Security. Each tool
- * names the flagships that use it, under it. Server-rendered, with no client code and no control of its own: nothing
- * here is a target, and it holds still (the page's one opening reveal stays the only one).
+ * Stack (P3.4), under About: the tools behind the work, as the live Stack shows them (components/sections/Stack.tsx),
+ * restyled in the lab's layer. One row per group: its name, its tools on one wrapping line, and the group's evidence
+ * sentence under them. Each tool carries its flagships the live way: `data-p` for the filter, and the names in its
+ * accessible text and hover title.
+ *
+ * Above the groups, "Filter by project" (StackFilter.tsx, the one client island here): pressing a project lights its
+ * tools and dims the rest. Server-rendered otherwise; without JavaScript the full list shows. Nothing in it moves.
  */
 export function StackBlock() {
   return (
     <section aria-labelledby="wk-stack-title" className="wk__stack" data-stack>
       <p className="wk__stack-eyebrow">{s.eyebrow}</p>
       <h2 id="wk-stack-title" className="wk__stack-title">{s.title}</h2>
-      <div className="wk__stack-groups">
+      <style>{s.filter.css}</style>
+      <StackFilter label={s.filter.label} all={s.filter.all} options={s.filter.options.map(({ id, name, status }) => ({ id, name, status }))}>
         {s.groups.map((g) => (
           <div key={g.id} className="wk__stack-group" data-group={g.id}>
             <h3 id={`wk-stack-${g.id}`} className="wk__stack-name">{g.title}</h3>
-            <ul className="wk__stack-tools" aria-labelledby={`wk-stack-${g.id}`}>
-              {g.tools.map((t) => (
-                <li key={t.label} data-tool>
-                  <span className="wk__stack-tool">{t.label}</span>
-                  {t.where && (
-                    // Each name whole, with its separator after it, so "GRAVITY FLOW" never splits across two lines.
-                    <span className="wk__stack-where">
-                      {t.names.map((n, k) => (
-                        <Fragment key={n}>{k > 0 && " "}<span className="wk__stack-project">{k < t.names.length - 1 ? `${n} ·` : n}</span></Fragment>
-                      ))}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
+            <div className="wk__stack-body">
+              <ul className="wk__stack-tools" aria-labelledby={`wk-stack-${g.id}`}>
+                {g.tools.map((t) => (
+                  <li key={t.label} data-tool data-p={t.projects.join(" ") || undefined} title={t.names ?? undefined}>
+                    {t.label}{t.names && <span className="sr-only"> ({t.names})</span>}
+                  </li>
+                ))}
+              </ul>
+              <p className="wk__stack-evidence">{g.evidence}</p>
+            </div>
           </div>
         ))}
-      </div>
+      </StackFilter>
     </section>
   );
 }

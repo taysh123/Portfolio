@@ -17,6 +17,8 @@ const ABOUT_LINKS = [
   ["https://www.linkedin.com/in/tay-shofer-1b2b54287", "LinkedIn (opens in a new tab)"],
 ] as const;
 /** Stack's groups (P3.4): the live Stack's, with Security after Services and APIs (Tay, session 13). */
+/** Stack's filter (Tay, session 13): All and the four flagships, in Work order. */
+const STACK_FILTER = ["All", ...NAMES];
 const STACK_GROUPS = ["Languages", "Product and interface", "Services and APIs", "Security", "Data, search and models",
   "Delivery and testing", "Everyday tools"];
 
@@ -97,6 +99,7 @@ test("without JavaScript: every word and link, and each project's first real cap
     .toEqual(["poker-home", "aegis-alerts", "dos-search", "gf-gameplay"]);
   // The carousels' controls would do nothing without script, so they are not shown.
   for (const c of await page.locator(".wk__controls").all()) expect(await c.evaluate((e) => getComputedStyle(e).visibility)).toBe("hidden");
+  expect(await page.locator(".wk__lens").evaluate((e) => getComputedStyle(e).visibility)).toBe("hidden");   // Stack's filter
   expect(await page.locator("[data-primary]").evaluateAll((as) => as.map((a) => a.getAttribute("href")))).toEqual([
     "https://app.tpoker.app/", "https://github.com/taysh123/aegis", "https://github.com/taysh123/DeveloperOS"]);
   await expect(page.locator("[data-private-repo]")).toHaveCount(2);
@@ -306,11 +309,11 @@ for (const [label, opts, cookie] of [["the OS setting", { reducedMotion: "reduce
 test("keyboard: every control in reading order, each with a solid 2px cyan ring; focus lifts its panel", async ({ browser }) => {
   const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: "no-preference" });
   const seen: { at: string; ring: string }[] = [];
-  for (let i = 0; i < 24; i++) {
+  for (let i = 0; i < 29; i++) {
     await page.keyboard.press("Tab");
     seen.push(await page.evaluate(() => {
       const e = document.activeElement as HTMLElement, cs = getComputedStyle(e);
-      return { at: e.getAttribute("href") ?? e.getAttribute("aria-label") ?? "", ring: `${cs.outlineStyle} ${cs.outlineWidth} ${cs.outlineColor}` };
+      return { at: e.getAttribute("href") ?? e.getAttribute("aria-label") ?? e.textContent ?? "", ring: `${cs.outlineStyle} ${cs.outlineWidth} ${cs.outlineColor}` };
     }));
   }
   expect(seen.map((s) => s.at)).toEqual(["#main",
@@ -319,6 +322,7 @@ test("keyboard: every control in reading order, each with a solid 2px cyan ring;
     "https://github.com/taysh123/DeveloperOS", "/#work-developeros", "Previous capture", "Capture 1 of 4", "Next capture",
     "/#work-gravity-flow", "Previous capture", "Capture 1 of 5", "Next capture",
     ...ABOUT_LINKS.map(([href]) => href),
+    ...STACK_FILTER,
     "Chat with the assistant"]);
   for (const s of seen) expect(s.ring, s.at).toBe("solid 2px rgb(46, 230, 214)");
   await panel(page, "aegis").locator("[data-more]").focus();
@@ -490,10 +494,11 @@ for (const [label, vp, opts] of [
   ["1440, reduced motion", [1440, 900], { reducedMotion: "reduce" }],
   ["390, reduced motion", [390, 844], { reducedMotion: "reduce" }],
 ] as const) {
-  test(`axe (WCAG 2.2 A/AA): no violations, after every carousel has moved — ${label}`, async ({ browser }) => {
+  test(`axe (WCAG 2.2 A/AA): no violations, after every carousel has moved and Stack is filtered — ${label}`, async ({ browser }) => {
     const { ctx, page } = await at(browser, vp, opts);
     await scrollAll(page);
     for (const id of ["poker", "aegis", "developeros", "gravity-flow"]) await panel(page, id).getByRole("button", { name: "Next capture" }).click();
+    await page.locator("[data-stack]").getByRole("button", { name: "Aegis", exact: true }).click();   // Stack's dimmed tools, checked too
     await page.evaluate(() => scrollTo(0, 0));
     await page.waitForTimeout(1400);
     await page.addScriptTag({ path: AXE });
@@ -505,75 +510,128 @@ for (const [label, vp, opts] of [
   });
 }
 
-// Stack (P3.4, session 13): the live Stack's tools under About, each with the flagships that use it. Every word
-// server-rendered, nothing in it is a control, and it holds still. Two tool columns from 360px, one at 320.
-const tools = (page: Page) => page.locator("[data-stack] [data-tool]").evaluateAll((ls) => ls.map((l) =>
-  [l.querySelector(".wk__stack-tool")!.textContent, l.querySelector(".wk__stack-where")?.textContent ?? null]));
+// Stack (P3.4, session 13, rebuilt on Tay's review): the live Stack under About, restyled. One row per group (name, its
+// tools on one wrapping line, the evidence), and a "Filter by project" of the four flagships that lights a project's
+// tools and dims the rest. Without JavaScript the full list shows; with reduced motion nothing eases.
+const stack = (page: Page) => page.locator("[data-stack]");
+const chip = (page: Page, name: string) => stack(page).getByRole("button", { name, exact: true });
+/** Each tool: its label, its flagships (data-p) and its colour. */
+const toolsOf = (page: Page) => stack(page).locator("[data-tool]").evaluateAll((ls) => ls.map((l) =>
+  ({ label: l.firstChild!.textContent!, p: (l.getAttribute("data-p") ?? "").split(" ").filter(Boolean), color: getComputedStyle(l).color })));
+const INK = "rgb(238, 242, 251)", CYAN = "rgb(46, 230, 214)", FAINT = "rgb(149, 160, 182)";
 
-test("Stack without JavaScript: every group, every tool and its projects, no control, nothing faded", async ({ browser }) => {
+test("Stack without JavaScript: every group, tool and evidence sentence, the full list, and no dead filter", async ({ browser }) => {
   const { ctx, page } = await at(browser, [1440, 900], { javaScriptEnabled: false });
-  const st = page.locator("[data-stack]");
-  await expect(st.locator(".wk__stack-eyebrow")).toHaveText("Stack");
-  await expect(st.locator("h2")).toHaveText("Tools behind the work.");
-  await expect(st.locator("h3")).toHaveText(STACK_GROUPS);
-  const rows = await tools(page);
-  expect(rows).toHaveLength(45);
-  expect(rows.filter(([, w]) => w === null).map(([t]) => t))
-    .toEqual(["Java", "C++", "C", "JavaFX", "Framer Motion", "pytest", "Playwright", "Git", "Linux", "Claude Code"]);
-  expect(rows.slice(21, 24)).toEqual([["JWT (RS256)", "Aegis"], ["Body HMAC", "Aegis"], ["CSRF token", "DeveloperOS"]]);
-  expect(rows).toContainEqual(["Ollama", "DeveloperOS (optional)"]);
-  expect(rows).toContainEqual(["GitHub Actions", "T Poker · DeveloperOS · GRAVITY FLOW"]);
-  // Each group's tools are a list named by its heading.
-  for (const g of STACK_GROUPS) await expect(page.getByRole("list", { name: g, exact: true })).toHaveCount(1);
-  await expect(page.getByRole("list", { name: "Security", exact: true }).getByRole("listitem")).toHaveCount(3);
-  await expect(st.locator("a, button, input, img, picture, svg, canvas")).toHaveCount(0);
-  expect(await st.evaluate((e) => [e, ...e.querySelectorAll("*")].filter((x) => getComputedStyle(x).opacity !== "1").length)).toBe(0);
+  await expect(stack(page).locator(".wk__stack-eyebrow")).toHaveText("Stack");
+  await expect(stack(page).locator("h2")).toHaveText("Tools behind the work.");
+  await expect(stack(page).locator("h3")).toHaveText(STACK_GROUPS);
+  const tools = await toolsOf(page);
+  expect(tools).toHaveLength(45);
+  expect(tools.every((t) => t.color === INK), "the full list, nothing dimmed").toBe(true);
+  expect(tools.slice(21, 24).map((t) => [t.label, t.p])).toEqual([["JWT", ["poker", "aegis"]], ["Body HMAC", ["aegis"]], ["CSRF token", ["developeros"]]]);
+  await expect(stack(page).locator(".wk__stack-evidence")).toHaveCount(7);
+  await expect(stack(page).locator('[data-group="security"] .wk__stack-evidence')).toHaveText(
+    "Aegis authenticates agent ingestion by body HMAC and uses JWT (RS256); DeveloperOS compares a per-instance CSRF token with hmac.compare_digest.");
+  // Each tool says its flagships in its accessible text, as the live Stack does.
+  await expect(page.getByRole("list", { name: "Security", exact: true }).getByRole("listitem")).toHaveText(["JWT (T Poker, Aegis)", "Body HMAC (Aegis)", "CSRF token (DeveloperOS)"]);
+  // The filter would do nothing: not shown, and not reachable.
+  expect(await stack(page).locator(".wk__lens").evaluate((e) => getComputedStyle(e).visibility)).toBe("hidden");
+  await expect(stack(page).locator("a, img, picture, svg, canvas")).toHaveCount(0);
+  expect(await stack(page).evaluate((e) => [e, ...e.querySelectorAll("*")].filter((x) => getComputedStyle(x).opacity !== "1").length)).toBe(0);
+  await ctx.close();
+});
+
+test("Stack's filter: pressing a project lights its tools and dims the rest, by the live mapping; All restores the list", async ({ browser }) => {
+  const { ctx, page, errors } = await at(browser, [1440, 900], { reducedMotion: "reduce" });
+  await stack(page).scrollIntoViewIfNeeded();
+  await expect(stack(page).locator('[role="group"]')).toHaveAccessibleName("Filter by project");
+  await expect(stack(page).locator('[role="group"] button')).toHaveText(STACK_FILTER);
+  const pressed = () => stack(page).locator('[role="group"] button').evaluateAll((bs) => bs.map((b) => b.getAttribute("aria-pressed")));
+  expect(await pressed()).toEqual(["true", "false", "false", "false", "false"]);
+  for (const [i, [id, name, n]] of ([["poker", "T Poker", 18], ["aegis", "Aegis", 19], ["developeros", "DeveloperOS", 9], ["gravity-flow", "GRAVITY FLOW", 6]] as const).entries()) {
+    await chip(page, name).click();
+    expect(await pressed()).toEqual(STACK_FILTER.map((_, k) => String(k === i + 1)));
+    const tools = await toolsOf(page);
+    for (const t of tools) expect(t.color, `${name}: ${t.label}`).toBe(t.p.includes(id) ? CYAN : FAINT);
+    expect(tools.filter((t) => t.color === CYAN)).toHaveLength(n);
+    await expect(stack(page).locator(".wk__lens-status")).toHaveText(`Showing the ${n} tools ${name} uses.`);
+    // The tools no flagship uses dim under every project.
+    for (const label of ["Java", "JavaFX", "C", "C++", "pytest", "Framer Motion", "Playwright", "Git"]) expect(tools.find((t) => t.label === label)!.color, label).toBe(FAINT);
+  }
+  // A group the project uses nothing in steps back by its name too (GRAVITY FLOW has no Security tool).
+  expect(await stack(page).locator('[data-group="security"] h3').evaluate((e) => getComputedStyle(e).color)).toBe(FAINT);
+  await chip(page, "All").click();
+  expect(await pressed()).toEqual(["true", "false", "false", "false", "false"]);
+  expect((await toolsOf(page)).every((t) => t.color === INK)).toBe(true);
+  await expect(stack(page).locator(".wk__lens-status")).toHaveText("");
+  expect(errors).toEqual([]);
+  await ctx.close();
+});
+
+test("Stack's filter answers the keyboard: Tab reaches each button, Enter and Space press it, with the cyan ring", async ({ browser }) => {
+  const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: "reduce" });
+  await chip(page, "All").focus();
+  for (const name of STACK_FILTER.slice(1)) {
+    await page.keyboard.press("Tab");
+    await expect(chip(page, name)).toBeFocused();
+    const ring = await chip(page, name).evaluate((e) => { const cs = getComputedStyle(e); return `${cs.outlineStyle} ${cs.outlineWidth} ${cs.outlineColor}`; });
+    expect(ring, name).toBe("solid 2px rgb(46, 230, 214)");
+  }
+  await page.keyboard.press("Enter");
+  await expect(chip(page, "GRAVITY FLOW")).toHaveAttribute("aria-pressed", "true");
+  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press("Space");
+  await expect(chip(page, "DeveloperOS")).toHaveAttribute("aria-pressed", "true");
+  await expect(chip(page, "GRAVITY FLOW")).toHaveAttribute("aria-pressed", "false");
+  for (const name of STACK_FILTER) {
+    const b = (await chip(page, name).boundingBox())!;
+    expect(b.height, name).toBeGreaterThanOrEqual(44);
+    expect(b.width, name).toBeGreaterThanOrEqual(44);
+  }
   await ctx.close();
 });
 
 for (const [label, motion] of [["motion on", "no-preference"], ["reduced motion", "reduce"]] as const) {
-  test(`Stack holds still (${label}): no animation, and nothing eases in or out`, async ({ browser }) => {
+  test(`Stack holds still (${label}): nothing animates or moves when a project is pressed${motion === "reduce" ? ", and nothing eases" : ""}`, async ({ browser }) => {
     const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: motion });
-    const st = page.locator("[data-stack]");
-    await st.scrollIntoViewIfNeeded();
+    await stack(page).scrollIntoViewIfNeeded();
+    const boxes = () => stack(page).locator("[data-tool], .wk__stack-evidence, .wk__stack-name").evaluateAll((es) => es.map((e) => { const r = e.getBoundingClientRect(); return `${r.x + scrollX},${r.y + scrollY},${r.width},${r.height}`; }));   // page coordinates: a click may scroll
+    const before = await boxes();
+    await chip(page, "Aegis").click();
     await page.waitForTimeout(300);
-    expect(await st.evaluate((e) => [e, ...e.querySelectorAll("*")].reduce((n, x) => n + x.getAnimations().length, 0))).toBe(0);
-    // Under reduced motion the site sets every duration to 0.001ms (app/globals.css), so "none" is under 10 ms, as in the
-    // carousel's reduced-motion test above.
-    expect(await st.evaluate((e) => [e, ...e.querySelectorAll("*")].filter((x) => parseFloat(getComputedStyle(x).transitionDuration) >= 0.01).length)).toBe(0);
+    expect(await boxes(), "colour only: nothing moves or resizes").toEqual(before);
+    expect(await stack(page).evaluate((e) => [e, ...e.querySelectorAll("*")].reduce((n, x) => n + x.getAnimations().length, 0))).toBe(0);
+    if (motion === "reduce") {
+      // The site sets every duration to 0.001ms under reduced motion (app/globals.css), and Stack's own rules to none.
+      expect(await stack(page).evaluate((e) => [e, ...e.querySelectorAll("*")].filter((x) => parseFloat(getComputedStyle(x).transitionDuration) >= 0.01).length)).toBe(0);
+    }
     await ctx.close();
   });
 }
 
-for (const vp of [[1440, 900], [1024, 768], [390, 844], [360, 740], [320, 568]] as const) {
-  test(`Stack at ${vp[0]}×${vp[1]}: each group's name beside its tools from 1024px, stacked below; ${vp[0] >= 360 ? "two" : "one"} tool column${vp[0] >= 360 ? "s" : ""}; nothing clipped`, async ({ browser }) => {
+for (const vp of [[1440, 900], [1024, 768], [390, 844], [320, 568]] as const) {
+  test(`Stack at ${vp[0]}×${vp[1]}: each group's name beside its tools from 1024px, stacked below; the tools wrap; nothing clipped`, async ({ browser }) => {
     const { ctx, page } = await at(browser, vp, { reducedMotion: "no-preference" });
-    const st = page.locator("[data-stack]");
-    await st.scrollIntoViewIfNeeded();
-    for (const g of await st.locator(".wk__stack-group").all()) {
-      const name = (await g.locator("h3").boundingBox())!, list = (await g.locator("ul").boundingBox())!;
-      if (vp[0] >= 1024) { expect(list.x).toBeGreaterThan(name.x + name.width); expect(Math.abs(list.y - name.y)).toBeLessThan(2); }
-      else { expect(list.y).toBeGreaterThanOrEqual(name.y + name.height); expect(Math.abs(list.x - name.x)).toBeLessThan(2); }
-      // The tool columns: how many distinct left edges the tools have.
-      const lefts = new Set(await g.locator("li").evaluateAll((ls) => ls.map((l) => Math.round(l.getBoundingClientRect().left))));
-      expect(lefts.size, await g.locator("h3").textContent() ?? "").toBe(vp[0] >= 360 ? 2 : 1);
+    await stack(page).scrollIntoViewIfNeeded();
+    for (const g of await stack(page).locator(".wk__stack-group").all()) {
+      const name = (await g.locator("h3").boundingBox())!, body = (await g.locator(".wk__stack-body").boundingBox())!;
+      if (vp[0] >= 1024) { expect(body.x).toBeGreaterThan(name.x + name.width); expect(Math.abs(body.y - name.y)).toBeLessThan(2); }
+      else { expect(body.y).toBeGreaterThanOrEqual(name.y + name.height); expect(Math.abs(body.x - name.x)).toBeLessThan(2); }
+      // The evidence sits under the tools.
+      const list = (await g.locator("ul").boundingBox())!, ev = (await g.locator(".wk__stack-evidence").boundingBox())!;
+      expect(ev.y).toBeGreaterThanOrEqual(list.y + list.height);
     }
-    // From 1024px the tools line up under About's words.
+    // The tools share a line: Languages' eight take fewer lines than eight.
+    const tops = new Set(await stack(page).locator('[data-group="languages"] [data-tool]').evaluateAll((ls) => ls.map((l) => Math.round(l.getBoundingClientRect().top))));
+    expect(tops.size).toBeLessThan(vp[0] >= 1024 ? 3 : 5);
     if (vp[0] >= 1024) {
       const words = (await page.locator(".wk__about-body").boundingBox())!.x;
-      expect(Math.abs((await st.locator("ul").first().boundingBox())!.x - words)).toBeLessThan(1);
+      expect(Math.abs((await stack(page).locator(".wk__stack-body").first().boundingBox())!.x - words)).toBeLessThan(1);
     }
-    // Nothing overflows its cell or the section, and the page never scrolls sideways.
-    const out = await st.evaluate((e) => {
+    await chip(page, "GRAVITY FLOW").click();   // the longest name; the pressed state wraps the same way
+    const out = await stack(page).evaluate((e) => {
       const r = e.getBoundingClientRect();
-      const wide = [...e.querySelectorAll<HTMLElement>("li, li span")].filter((x) => x.scrollWidth > x.clientWidth + 0.5).map((x) => x.textContent);
-      const past = [...e.querySelectorAll<HTMLElement>("*")].filter((x) => { const b = x.getBoundingClientRect(); return b.right > r.right + 0.5 || b.left < r.left - 0.5; }).map((x) => x.textContent);
-      // A project's name is never split across two lines, and never runs past its tool's cell.
-      const split = [...e.querySelectorAll<HTMLElement>(".wk__stack-project")].filter((x) => {
-        const cell = x.closest("li")!.getBoundingClientRect(), b = x.getBoundingClientRect();
-        return new Set([...x.getClientRects()].map((r) => Math.round(r.top))).size !== 1 || b.right > cell.right + 0.5;
-      }).map((x) => `name: ${x.textContent}`);
-      return [...wide, ...past, ...split];
+      return [...e.querySelectorAll<HTMLElement>("*")].filter((x) => { const b = x.getBoundingClientRect(); return b.width > 0 && (b.right > r.right + 0.5 || b.left < r.left - 0.5); }).map((x) => x.className || x.textContent);
     });
     expect(out).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(vp[0]);

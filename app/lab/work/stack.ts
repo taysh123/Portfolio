@@ -1,68 +1,84 @@
 import { projects } from "@/data/projects";
 import { skillGroups } from "@/data/skills";
 import { flagships } from "@/data/work";
-import { namesToken, projectsFor, termsFor } from "@/data/stackLens";
+import { projectsFor } from "@/data/stackLens";
 import { dict } from "@/lib/dict";
+import { fmt } from "@/lib/fmt";
 
 /**
- * The Stack section under About (PROTOTYPE, P3.4; D1 reopened by Tay, 2026-11-18; D2 not reopened, so no WebGL). Nothing
- * is typed fresh. The groups and the tools are the live Stack's (data/skills.ts), word for word and in its order. Which
- * flagship uses each tool is the live site's own mapping (projectsFor in data/stackLens.ts, read from each project's
- * published text), kept to the four projects this page shows. tests/unit/lab-work.test.ts holds every string to its
- * source.
+ * The Stack section under About (PROTOTYPE, P3.4; D1 reopened by Tay, 2026-11-18; D2 not reopened, so no WebGL). It
+ * works like the live Stack (components/sections/Stack.tsx), restyled in the lab's layer, and nothing is typed fresh:
+ * - the groups, their tools and each group's evidence sentence are the live Stack's (data/skills.ts), word for word;
+ * - which flagship uses each tool is the live mapping (projectsFor in data/stackLens.ts), kept to the four this page
+ *   shows. Each tool carries it the live way: `data-p` for the filter, and the names in its accessible text;
+ * - the filter's highlight is written from the options, as the live Stack writes its FILTER.
+ * tests/unit/lab-work.test.ts holds every string to its source.
  *
- * Tay's choices (session 13):
- * - A tool that no flagship uses is still listed in its live group, with no project under it. Its live note is not
- *   shown, and the other two projects are never named here.
- * - A Security group, built only from techniques data/projects.ts already states, in that file's own words, each with
- *   the one flagship whose text says it. JWT moves into it from Services and APIs, so no tool appears twice.
- * - Everyday tools stays, with no projects (the live group names none either).
- *
- * No logos, no levels, no years. Aegis's analysis is a deterministic mock, so nothing here comes from it; the only
- * model tool is Ollama, which DeveloperOS marks optional, and the row says so.
+ * Tay's choices (session 13): a Security group (one JWT row, moved from Services and APIs, so it appears once; Body
+ * HMAC; CSRF token), with one evidence sentence built only from its source lines; tools no flagship uses are listed and
+ * dim under every project; Everyday tools stays, naming no project. No logos, no levels, no years.
  */
 
 const FLAGSHIPS: readonly string[] = flagships.map((f) => f.id);
 const project = (id: string) => projects.find((p) => p.id === id)!;
 
-/** The Security rows. Each label is the project's own wording (the source is beside it); the unit test checks each one
- *  against that text, and that no other flagship's text says it. */
-export const SECURITY = [
-  { label: "JWT (RS256)", projects: ["aegis"] },   // Aegis's stack entry
-  { label: "Body HMAC", projects: ["aegis"] },     // Aegis: "Agent ingestion authenticated by body HMAC"
-  { label: "CSRF token", projects: ["developeros"] },   // DeveloperOS: "A per-instance CSRF token compared with hmac.compare_digest"
-] as const;
-
-/** The live tool that moves into Security, out of Services and APIs. */
+/** The tool that moves into Security, out of Services and APIs. */
 const MOVED = "JWT";
 
-/** True when the project's own stack entry for this tool says it is optional (DeveloperOS: "Ollama (optional)"). */
-const optionalIn = (label: string, id: string) =>
-  project(id).stack.some((s) => /\(optional\)/.test(s.label) && termsFor(label).some((t) => namesToken(s.label, t)));
+/** Security's own rows, each in its project's words (the unit test checks each against that text):
+ *  Aegis's decision "Agent ingestion authenticated by body HMAC", and DeveloperOS's "A per-instance CSRF token compared
+ *  with hmac.compare_digest". The live mapping names neither, so their project is stated here. */
+export const SECURITY_ROWS = [
+  { label: "Body HMAC", projects: ["aegis"] },
+  { label: "CSRF token", projects: ["developeros"] },
+] as const;
 
-/** `names` is what the page draws, one whole name each (a line breaks only between them); `where` is the same line as
- *  one string, the way the live site joins project names. */
-export type StackTool = { label: string; projects: readonly string[]; names: string[]; where: string | null };
-export type StackGroup = { id: string; title: string; tools: StackTool[] };
+/** Security's one sentence, built only from those source lines and Aegis's stack entry "JWT (RS256)" (Tay, session 13). */
+export const SECURITY_EVIDENCE =
+  "Aegis authenticates agent ingestion by body HMAC and uses JWT (RS256); DeveloperOS compares a per-instance CSRF token with hmac.compare_digest.";
 
-const tool = (label: string, ids: readonly string[]): StackTool => {
-  const names = ids.map((id) => `${project(id).name}${optionalIn(label, id) ? " (optional)" : ""}`);
-  return { label, projects: ids, names, where: names.length ? names.join(" · ") : null };
-};
+export type StackTool = { label: string; projects: readonly string[]; names: string | null };
+export type StackGroup = { id: string; title: string; tools: StackTool[]; evidence: string };
+
+/** `names` is the live Stack's accessible text and hover title for a tool: its projects, comma-separated. */
+const tool = (label: string, ids: readonly string[]): StackTool =>
+  ({ label, projects: ids, names: ids.length ? ids.map((id) => project(id).name).join(", ") : null });
+const flagshipsFor = (label: string) => projectsFor(label).filter((id) => FLAGSHIPS.includes(id));
 
 const groups: StackGroup[] = skillGroups.flatMap((g) => {
   const row: StackGroup = {
     id: g.id,
     title: g.title,
-    tools: g.items.filter((i) => i.label !== MOVED).map((i) =>
-      tool(i.label, g.related === false ? [] : projectsFor(i.label).filter((id) => FLAGSHIPS.includes(id)))),
+    tools: g.items.filter((i) => i.label !== MOVED).map((i) => tool(i.label, g.related === false ? [] : flagshipsFor(i.label))),
+    evidence: g.evidence,
   };
-  return g.id === "service" ? [row, { id: "security", title: "Security", tools: SECURITY.map((s) => tool(s.label, s.projects)) }] : [row];
+  if (g.id !== "service") return [row];
+  const security: StackGroup = {
+    id: "security",
+    title: "Security",
+    tools: [tool(MOVED, flagshipsFor(MOVED)), ...SECURITY_ROWS.map((s) => tool(s.label, s.projects))],
+    evidence: SECURITY_EVIDENCE,
+  };
+  return [row, security];
 });
+
+/** The filter's options: the four flagships in Work order, each with how many tools it lights and the live status line. */
+const options = FLAGSHIPS.map((id) => {
+  const count = groups.flatMap((g) => g.tools).filter((t) => t.projects.includes(id)).length;
+  return { id, name: project(id).name, count, status: fmt(dict.stack.showing, { n: count, name: project(id).name }) };
+});
+
+/** The highlight, written from the options like the live FILTER: choosing a project lights the tools whose `data-p`
+ *  names it, dims every other tool, and dims the name of a group it lights nothing in. Colour only: nothing moves. */
+const LENS_CSS = options.map(({ id }) =>
+  `.wk__stack-groups[data-lens="${id}"] [data-tool][data-p~="${id}"]{color:var(--cine-cyan)}` +
+  `.wk__stack-groups[data-lens="${id}"] [data-tool]:not([data-p~="${id}"]){color:var(--cine-faint)}` +
+  `.wk__stack-groups[data-lens="${id}"] .wk__stack-group:not(:has([data-p~="${id}"])) .wk__stack-name{color:var(--cine-faint)}`).join("");
 
 export const stackBlock = {
   eyebrow: dict.nav.stack,
-  /** The live Stack's own title. No lede: each tool already says where it is used. */
+  /** The live Stack's own title. No lede. */
   title: dict.stack.title,
+  filter: { label: dict.stack.filter, all: dict.stack.all, options, css: LENS_CSS },
   groups,
 } as const;

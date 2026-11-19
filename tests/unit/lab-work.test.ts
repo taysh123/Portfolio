@@ -10,9 +10,10 @@ import { LAB_IMAGES, captureOf } from "@/data/lab-images";
 import { dict } from "@/lib/dict";
 import { panels, DOS_CHIPS, PHONE_CROP } from "@/app/lab/work/panels";
 import { aboutBlock } from "@/app/lab/work/about";
-import { stackBlock, SECURITY } from "@/app/lab/work/stack";
+import { stackBlock, SECURITY_ROWS, SECURITY_EVIDENCE } from "@/app/lab/work/stack";
 import { skillGroups } from "@/data/skills";
-import { projectsFor } from "@/data/stackLens";
+import { projectsFor, lensProjects } from "@/data/stackLens";
+import { fmt } from "@/lib/fmt";
 import { about } from "@/data/about";
 import { availability, resume, socials } from "@/data/socials";
 import sharp from "sharp";
@@ -201,7 +202,7 @@ describe("structure", () => {
     expect(page).toMatch(/\{\/\* P4: the "try it" demo mounts here[\s\S]*?\*\/\}\n\s*<div className="wk__demo" data-demo-slot=\{p\.id\} hidden \/>/);
     expect(page.match(/data-demo-slot/g)).toHaveLength(1);   // one per panel, from the map
   });
-  it("the carousel is the slice's only client code: the page and its data stay on the server; no canvas or WebGL", () => {
+  it("the carousel and Stack's filter are the slice's only client code: the page and its data stay on the server", () => {
     for (const t of [page, data, shot]) expect(t).not.toMatch(/^["']use client["']|useEffect|<canvas|getContext/m);
     expect(reel).toMatch(/^"use client";/);
     expect(code(reel)).not.toMatch(/<canvas|getContext|webgl|three|lenis/i);
@@ -342,113 +343,136 @@ describe("About (P3.3): the live About section's own words, and the live site's 
   });
 });
 
-// Stack (P3.4, session 13): the live Stack's groups and tools, word for word, each with the flagships the live site's own
-// mapping finds for it, plus the Security group Tay asked for, from the projects' own text. Every string is held to its
-// source, and the approved rows are pinned, so a change to either one shows up here.
-describe("Stack (P3.4): the live Stack's tools, each with the flagships that really use it", () => {
+// Stack (P3.4, session 13, rebuilt on Tay's review): the live Stack, restyled. Its groups, tools and evidence sentences
+// word for word, the live mapping on each tool, a filter of the four flagships, and Tay's Security group. Every string is
+// held to its source, and the approved rows are pinned, so a change to either one shows up here.
+describe("Stack (P3.4): the live Stack's groups, tools and evidence, with a filter of the four flagships", () => {
   const block = read("app/lab/work/StackBlock.tsx");
+  const filter = read("app/lab/work/StackFilter.tsx");
   const src = read("app/lab/work/stack.ts");
   const FLAG = ["poker", "aegis", "developeros", "gravity-flow"];
-  const groups = stackBlock.groups;
+  const { groups, filter: lens } = stackBlock;
   const tools = groups.flatMap((g) => g.tools);
-  const shown = [stackBlock.eyebrow, stackBlock.title, ...groups.map((g) => g.title), ...tools.flatMap((t) => [t.label, t.where ?? ""])];
+  const shown = [stackBlock.eyebrow, stackBlock.title, lens.label, lens.all, ...lens.options.flatMap((o) => [o.name, o.status]),
+    ...groups.flatMap((g) => [g.title, g.evidence]), ...tools.flatMap((t) => [t.label, t.names ?? ""])];
 
-  it("the eyebrow and the title are the live Stack's, and there is no lede", () => {
-    expect(stackBlock.eyebrow).toBe(dict.nav.stack);
-    expect(stackBlock.title).toBe(dict.stack.title);
-    expect([stackBlock.eyebrow, stackBlock.title]).toEqual(["Stack", "Tools behind the work."]);
-    expect(Object.keys(stackBlock)).toEqual(["eyebrow", "title", "groups"]);
+  it("the eyebrow, the title and the filter's words are the live Stack's; there is no lede", () => {
+    expect([stackBlock.eyebrow, stackBlock.title, lens.label, lens.all]).toEqual([dict.nav.stack, dict.stack.title, dict.stack.filter, dict.stack.all]);
+    expect([stackBlock.eyebrow, stackBlock.title, lens.label, lens.all]).toEqual(["Stack", "Tools behind the work.", "Filter by project", "All"]);
+    expect(Object.keys(stackBlock)).toEqual(["eyebrow", "title", "filter", "groups"]);
   });
   it("the live groups in the live order, with Security after Services and APIs", () => {
     expect(groups.map((g) => g.title)).toEqual(["Languages", "Product and interface", "Services and APIs", "Security",
       "Data, search and models", "Delivery and testing", "Everyday tools"]);
     expect(groups.filter((g) => g.id !== "security").map((g) => g.title)).toEqual(skillGroups.map((g) => g.title));
   });
-  it("every live tool once, in its live group and order; only JWT moves, into Security, so nothing appears twice", () => {
+  it("each live group's evidence sentence, word for word", () => {
+    for (const g of skillGroups) expect(groups.find((r) => r.id === g.id)!.evidence, g.id).toBe(g.evidence);
+  });
+  it("every live tool once, in its live group and order; JWT moves into Security, so it appears once", () => {
     for (const g of skillGroups) expect(groups.find((r) => r.id === g.id)!.tools.map((t) => t.label), g.id)
       .toEqual(g.items.map((i) => i.label).filter((l) => l !== "JWT"));
+    expect(groups.find((g) => g.id === "security")!.tools.map((t) => t.label)).toEqual(["JWT", "Body HMAC", "CSRF token"]);
     const labels = tools.map((t) => t.label);
     expect(new Set(labels).size).toBe(labels.length);
-    expect(labels.filter((l) => /JWT/.test(l))).toEqual(["JWT (RS256)"]);
+    expect(labels.filter((l) => /JWT/.test(l))).toEqual(["JWT"]);
     expect(labels).toHaveLength(45);
   });
-  it("each tool names exactly the flagships the live site's own mapping finds for it (projectsFor), in Work order", () => {
-    for (const g of groups.filter((g) => g.id !== "security")) for (const t of g.tools)
+  it("each live tool carries exactly the flagships the live mapping finds for it (projectsFor), in Work order", () => {
+    for (const g of groups) for (const t of g.tools) {
+      if (SECURITY_ROWS.some((r) => r.label === t.label)) continue;
       expect(t.projects, t.label).toEqual(g.id === "workflow" ? [] : projectsFor(t.label).filter((id) => FLAG.includes(id)));
-    // The approved rows, pinned.
-    expect(Object.fromEntries(tools.map((t) => [t.label, t.where]))).toEqual({
-      "C#": "T Poker · Aegis", TypeScript: "T Poker · Aegis · GRAVITY FLOW", Python: "DeveloperOS", Java: null,
-      JavaScript: "DeveloperOS", SQL: "T Poker · Aegis · DeveloperOS", "C++": null, C: null,
-      React: "T Poker · Aegis · DeveloperOS", "Next.js": "Aegis", "React Native / Expo": "T Poker", "Tailwind CSS": "Aegis",
+    }
+    expect(groups.find((g) => g.id === "security")!.tools[0].projects).toEqual(["poker", "aegis"]);   // JWT: T Poker · Aegis
+    // The approved mapping, pinned (a tool's accessible text and hover title: its flagships, as the live Stack says them).
+    expect(Object.fromEntries(tools.map((t) => [t.label, t.names]))).toEqual({
+      "C#": "T Poker, Aegis", TypeScript: "T Poker, Aegis, GRAVITY FLOW", Python: "DeveloperOS", Java: null,
+      JavaScript: "DeveloperOS", SQL: "T Poker, Aegis, DeveloperOS", "C++": null, C: null,
+      React: "T Poker, Aegis, DeveloperOS", "Next.js": "Aegis", "React Native / Expo": "T Poker", "Tailwind CSS": "Aegis",
       "Phaser 3": "GRAVITY FLOW", JavaFX: null, "Framer Motion": null,
-      "ASP.NET Core": "T Poker · Aegis", "RabbitMQ / MassTransit": "Aegis", "CQRS / MediatR": "T Poker",
-      "Clean Architecture": "T Poker · Aegis", SignalR: "Aegis", REST: "T Poker · Aegis",
-      "JWT (RS256)": "Aegis", "Body HMAC": "Aegis", "CSRF token": "DeveloperOS",
-      PostgreSQL: "T Poker · Aegis", "SQLite / FTS5": "DeveloperOS", Redis: "Aegis", "EF Core": "T Poker · Aegis",
-      Ollama: "DeveloperOS (optional)",
-      Docker: "T Poker · Aegis", "GitHub Actions": "T Poker · DeveloperOS · GRAVITY FLOW", xUnit: "T Poker · Aegis",
+      "ASP.NET Core": "T Poker, Aegis", "RabbitMQ / MassTransit": "Aegis", "CQRS / MediatR": "T Poker",
+      "Clean Architecture": "T Poker, Aegis", SignalR: "Aegis", REST: "T Poker, Aegis",
+      JWT: "T Poker, Aegis", "Body HMAC": "Aegis", "CSRF token": "DeveloperOS",
+      PostgreSQL: "T Poker, Aegis", "SQLite / FTS5": "DeveloperOS", Redis: "Aegis", "EF Core": "T Poker, Aegis", Ollama: "DeveloperOS",
+      Docker: "T Poker, Aegis", "GitHub Actions": "T Poker, DeveloperOS, GRAVITY FLOW", xUnit: "T Poker, Aegis",
       Testcontainers: "Aegis", Jest: "T Poker", Vitest: "GRAVITY FLOW", pytest: null, Playwright: null,
       Capacitor: "GRAVITY FLOW", PyInstaller: "DeveloperOS", Vercel: "T Poker", Railway: "T Poker", Firebase: "GRAVITY FLOW",
       Git: null, Linux: null, "Claude Code": null,
     });
   });
-  it("a tool no flagship uses has no project line and no note; the other two projects are never named", () => {
+  it("a tool no flagship uses names no project, so every project filter dims it; the live notes are not shown", () => {
     expect(tools.filter((t) => !t.projects.length).map((t) => t.label))
       .toEqual(["Java", "C++", "C", "JavaFX", "Framer Motion", "pytest", "Playwright", "Git", "Linux", "Claude Code"]);
-    for (const t of tools.filter((t) => !t.projects.length)) expect(t.where, t.label).toBeNull();
+    for (const t of tools.filter((t) => !t.projects.length)) expect(t.names, t.label).toBeNull();
     const notes = skillGroups.flatMap((g) => g.items.flatMap((i) => (i.note ? [i.note] : [])));
-    expect(notes.length).toBeGreaterThan(0);
-    for (const n of notes) expect(shown.join(" | ")).not.toContain(n);
-    for (const id of ["job-assistant", "orders-delivery"]) expect(shown.join(" | ")).not.toContain(project(id).name);
+    for (const n of notes) expect(tools.map((t) => t.names ?? "").join(" | ")).not.toContain(n);
   });
-  it("Security: three rows in the projects' own words, each with the one flagship whose text says it", () => {
-    const sec = groups.find((g) => g.id === "security")!;
-    expect(sec.tools.map((t) => [t.label, t.where])).toEqual([["JWT (RS256)", "Aegis"], ["Body HMAC", "Aegis"], ["CSRF token", "DeveloperOS"]]);
-    expect(sec.tools.map((t) => t.label)).toEqual(SECURITY.map((s) => s.label));
-    // The source lines, word for word.
-    expect(project("aegis").stack.map((s) => s.label)).toContain("JWT (RS256)");
+  it("Security: Body HMAC and CSRF token in their projects' own words, each with the one flagship whose text says it", () => {
+    expect(SECURITY_ROWS.map((r) => [r.label, [...r.projects]])).toEqual([["Body HMAC", ["aegis"]], ["CSRF token", ["developeros"]]]);
     expect(project("aegis").caseStudy.decisions.map((d) => d.title)).toContain("Agent ingestion authenticated by body HMAC");
     expect(project("developeros").caseStudy.decisions.find((d) => d.title === "Loopback API hardened like a public one")!.body)
       .toMatch(/^A per-instance CSRF token compared with hmac\.compare_digest/);
-    // Each label is in its project's own text (only the first letter's case differs, for "body HMAC"), and in no other
-    // flagship's: T Poker's stack says "JWT", not RS256, so it is not on that row.
-    for (const t of sec.tools) for (const id of FLAG)
-      expect(JSON.stringify(project(id)).toLowerCase().includes(t.label.toLowerCase()), `${t.label} in ${id}`).toBe(t.projects.includes(id));
+    for (const r of SECURITY_ROWS) for (const id of FLAG)
+      expect(JSON.stringify(project(id)).toLowerCase().includes(r.label.toLowerCase()), `${r.label} in ${id}`).toBe((r.projects as readonly string[]).includes(id));
   });
-  it("every string shown is the site's own: a live group or tool, a project name, or a Security label", () => {
-    const live = new Set([...skillGroups.map((g) => g.title), ...skillGroups.flatMap((g) => g.items.map((i) => i.label))]);
-    const names = new Set(FLAG.map((id) => project(id).name));
-    for (const g of groups) expect(live.has(g.title) || g.title === "Security", g.title).toBe(true);   // Security: Tay's group
-    for (const t of tools) {
-      expect(live.has(t.label) || SECURITY.some((s) => s.label === t.label), t.label).toBe(true);
-      for (const n of (t.where ?? "").split(" · ").filter(Boolean)) expect(names.has(n.replace(/ \(optional\)$/, "")), n).toBe(true);
+  it("Security's one sentence is built only from its cited source lines", () => {
+    expect(SECURITY_EVIDENCE).toBe("Aegis authenticates agent ingestion by body HMAC and uses JWT (RS256); DeveloperOS compares a per-instance CSRF token with hmac.compare_digest.");
+    expect(groups.find((g) => g.id === "security")!.evidence).toBe(SECURITY_EVIDENCE);
+    // Each phrase is in the project's own text: Aegis's decision title and stack entry, DeveloperOS's decision.
+    const aegis = JSON.stringify(project("aegis")), dos = JSON.stringify(project("developeros"));
+    for (const phrase of ["agent ingestion authenticated by body HMAC", "JWT (RS256)"]) expect(aegis.toLowerCase(), phrase).toContain(phrase.toLowerCase());
+    for (const phrase of ["per-instance CSRF token compared with hmac.compare_digest"]) expect(dos, phrase).toContain(phrase);
+  });
+  it("the filter: All and the four flagships in Work order, each with its count and the live status line", () => {
+    expect(lens.options.map((o) => [o.id, o.name])).toEqual([["poker", "T Poker"], ["aegis", "Aegis"], ["developeros", "DeveloperOS"], ["gravity-flow", "GRAVITY FLOW"]]);
+    for (const o of lens.options) {
+      expect(o.count, o.id).toBe(tools.filter((t) => t.projects.includes(o.id)).length);
+      expect(o.status).toBe(fmt(dict.stack.showing, { n: o.count, name: o.name }));
+      expect(lensProjects.map((l) => l.id)).toContain(o.id);   // the live lens's own projects, never a fifth
     }
-    // What the page draws is the same line, one whole name at a time (it breaks only between names).
-    for (const t of tools) expect(t.names.join(" · ") || null, t.label).toBe(t.where);
-    expect(block).toMatch(/<span className="wk__stack-project">\{k < t\.names\.length - 1 \? `\$\{n\} ·` : n\}<\/span>/);
-    expect(css).toMatch(/\.wk__stack-project \{ white-space: nowrap; \}/);
-    // "(optional)" only where the project's own stack says so: DeveloperOS's Ollama.
-    expect(tools.filter((t) => t.where?.includes("(optional)")).map((t) => t.label)).toEqual(["Ollama"]);
-    expect(project("developeros").stack.map((s) => s.label)).toContain("Ollama (optional)");
+    expect(lens.options.map((o) => o.status)).toEqual(["Showing the 18 tools T Poker uses.", "Showing the 19 tools Aegis uses.",
+      "Showing the 9 tools DeveloperOS uses.", "Showing the 6 tools GRAVITY FLOW uses."]);
+  });
+  it("the highlight is written from the options, like the live FILTER: light by data-p, dim the rest, colour only", () => {
+    for (const { id } of lens.options) {
+      expect(lens.css).toContain(`.wk__stack-groups[data-lens="${id}"] [data-tool][data-p~="${id}"]{color:var(--cine-cyan)}`);
+      expect(lens.css).toContain(`.wk__stack-groups[data-lens="${id}"] [data-tool]:not([data-p~="${id}"]){color:var(--cine-faint)}`);
+    }
+    expect(lens.css.match(/\{[^}]*\}/g)!.every((d) => /^\{color:var\(--cine-(cyan|faint)\)\}$/.test(d))).toBe(true);
+    expect(block).toMatch(/<style>\{s\.filter\.css\}<\/style>/);
+    expect(block).toMatch(/<li key=\{t\.label\} data-tool data-p=\{t\.projects\.join\(" "\) \|\| undefined\} title=\{t\.names \?\? undefined\}>/);
+    expect(block).toMatch(/\{t\.label\}\{t\.names && <span className="sr-only"> \(\{t\.names\}\)<\/span>\}/);   // the live accessible text
+  });
+  it("the filter is one small island: real toggle buttons, labelled, no data of its own, shown only once it works", () => {
+    expect(filter).toMatch(/^"use client";/);
+    expect([...filter.matchAll(/^import .* from "([^"]+)";$/gm)].map((m) => m[1])).toEqual(["react"]);   // no data, no @/ module
+    expect(filter).toMatch(/<button key=\{o\.id \|\| "all"\} type="button" className="wk__lens-chip" aria-pressed=\{lens === o\.id\} onClick=\{\(\) => setLens\(o\.id\)\}>/);
+    expect(filter).toMatch(/<div role="group" aria-labelledby="wk-lens-label" className="wk__lens-chips">/);
+    expect(filter).toMatch(/aria-live="polite"/);
+    expect(filter).toMatch(/useSyncExternalStore\(noop, \(\) => true, \(\) => false\)/);
+    expect(css).toMatch(/\.wk__lens:not\(\[data-ready\]\) \{ visibility: hidden; \}/);
+    expect(code(filter)).not.toMatch(/useEffect|setTimeout|setInterval|requestAnimationFrame|<canvas|getContext/);
+    expect(block).not.toMatch(/"use client"|data-reveal/);
+    expect(src).not.toMatch(/"use client"/);
   });
   it("no AI claim, no levels or percentages, no years, no logo, no institution, no private repository", () => {
     const text = shown.join(" | ");
     expect(text).not.toMatch(/\bAI\b|LLM|machine learning|\bML\b|%|\byears?\b|expert|proficient|beginner|level/i);
     expect(text).not.toMatch(/\b(19|20)\d{2}\b/);
-    for (const t of [block, src, text]) expect(namesAny(t)).toBe(false);
-    expect(privateRepoLeaks(block + src + JSON.stringify(stackBlock))).toEqual([]);
+    for (const t of [block, filter, src, text]) expect(namesAny(t)).toBe(false);
+    expect(privateRepoLeaks(block + filter + src + JSON.stringify(stackBlock))).toEqual([]);
     expect(code(block)).not.toMatch(/<img|<svg|<picture|<Pic|<Image|<Shot/);
   });
-  it("holds still and ships no client code: no reveal and no control, under About inside <main>", () => {
-    expect(block).not.toMatch(/data-reveal|"use client"|useState|useEffect|<a |<button|<input|<Link/);
-    expect(src).not.toMatch(/"use client"/);
+  it("under About inside <main>, and the page keeps its one opening reveal", () => {
     expect(page).toMatch(/<AboutBlock \/>\n\s*<StackBlock \/>\n\s*<\/main>/);
     expect(page.match(/\sdata-reveal(="settle")?[\s>]/g)).toHaveLength(3);
   });
-  it("adds no token: its rules read only layer tokens", () => {
+  it("adds no token; its rules read only layer tokens, and reduced motion drops every transition", () => {
     const rules = css.slice(css.indexOf("/* ── Stack (P3.4"), css.indexOf("/* ── Smaller screens"));
     expect(rules.length).toBeGreaterThan(500);
     expect(rules).not.toMatch(/--cine-[\w-]+:|#[0-9a-fA-F]{3,6}\b|rgba?\(/);
-    expect(rules.match(/var\(--cine-[\w-]+\)/g)!.length).toBeGreaterThan(10);
+    expect(rules.match(/var\(--cine-[\w-]+\)/g)!.length).toBeGreaterThan(20);
+    expect(rules).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*\.wk__lens-chip, \.wk__stack-name, \.wk__stack-tools \[data-tool\] \{ transition: none; \}/);
+    expect(rules).toMatch(/\[data-reduced-motion="true"\] \.wk__lens-chip, \[data-reduced-motion="true"\] \.wk__stack-name, \[data-reduced-motion="true"\] \.wk__stack-tools \[data-tool\] \{ transition: none; \}/);
   });
 });

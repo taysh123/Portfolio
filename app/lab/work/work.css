@@ -297,20 +297,45 @@
 .wk__go--fill { border-color: var(--cine-cyan); background: var(--cine-cyan); color: var(--cine-on-accent); }
 .wk__go--fill:hover { border-color: var(--cine-cyan-hover); background: var(--cine-cyan-hover); }
 
-/* ── Stack (P3.4, StackBlock.tsx): the tools behind the work, under About and after a hairline. Each group is a row on
-   its own hairline: from 1024px its name takes the words share and its tools the capture's (so they line up under
-   About's words); below that they stack. Two tool columns from 360px, one on the narrowest phones. Under each tool, in
-   mist, the flagships that use it. Nothing in it is a control, and it holds still. ── */
+/* ── Stack (P3.4, StackBlock.tsx): the tools behind the work, under About and after a hairline, as the live Stack shows
+   them. "Filter by project" first (StackFilter.tsx): pills at the 44px target, the pressed one filled in the accent,
+   like the résumé. Then one row per group, each on its own hairline: from 1024px its name takes the words share and its
+   tools and evidence the capture's (they line up under About's words); below that they stack. The tools share one
+   line, wrapping as needed. A pressed project lights its tools in the accent and dims the rest to the faintest ink
+   (the rules are written from the options in stack.ts): colour only, so nothing moves. ── */
 .wk__stack {
   margin-top: var(--cine-section-y);
   padding-top: var(--cine-space-7);
   border-top: 1px solid var(--cine-hair);
 }
-.wk__stack-groups { margin-top: var(--cine-space-7); }
+.wk__lens { margin-top: var(--cine-space-6); }
+/* Without JavaScript, and until hydration, the buttons would do nothing: not shown, their space kept. */
+.wk__lens:not([data-ready]) { visibility: hidden; }
+.wk__lens-label { font-size: var(--cine-text-small); line-height: var(--cine-leading-label); color: var(--cine-mist); }
+.wk__lens-chips { margin-top: var(--cine-space-3); display: flex; flex-wrap: wrap; gap: var(--cine-space-2); }
+.wk__lens-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--cine-target-min);
+  padding: 0 var(--cine-space-4);
+  border: 1px solid var(--cine-edge);
+  border-radius: var(--cine-radius-pill);
+  background: var(--cine-glass-ink);
+  font-size: var(--cine-text-small);
+  font-weight: var(--cine-weight-label);
+  color: var(--cine-ink);
+  transition: background-color var(--cine-dur-hover) var(--cine-ease), border-color var(--cine-dur-hover) var(--cine-ease), color var(--cine-dur-hover) var(--cine-ease);
+}
+.wk__lens-chip:hover { border-color: var(--cine-edge-hover); background: var(--cine-glass-ink-hover); }
+.wk__lens-chip[aria-pressed="true"] { border-color: var(--cine-cyan); background: var(--cine-cyan); color: var(--cine-on-accent); }
+.wk__lens-chip[aria-pressed="true"]:hover { border-color: var(--cine-cyan-hover); background: var(--cine-cyan-hover); }
+.wk .wk__lens-chip:focus-visible { border-radius: var(--cine-radius-pill); }
+.wk__lens-status { min-height: 1lh; margin-top: var(--cine-space-3); font-size: var(--cine-text-small); line-height: var(--cine-leading-label); color: var(--cine-mist); }
+.wk__stack-groups { margin-top: var(--cine-space-4); }
 .wk__stack-group {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--cine-space-4);
+  gap: var(--cine-space-3);
   padding-block: var(--cine-space-5);
   border-top: 1px solid var(--cine-hair);
 }
@@ -323,16 +348,29 @@
   font-weight: var(--cine-weight-name);
   letter-spacing: var(--cine-tracking-name);
   color: var(--cine-ink);
+  transition: color var(--cine-dur-hover) var(--cine-ease);
 }
-.wk__stack-tools { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--cine-space-4) var(--cine-space-5); }
-@media (min-width: 360px) {
-  .wk__stack-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.wk__stack-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cine-space-1) var(--cine-space-5);
+  font-size: var(--cine-text-body);
+  line-height: var(--cine-leading-lead);
+  color: var(--cine-ink);
 }
-.wk__stack-tool, .wk__stack-where { display: block; line-height: var(--cine-leading-label); }
-.wk__stack-tool { font-size: var(--cine-text-body); color: var(--cine-ink); }
-.wk__stack-where { margin-top: var(--cine-space-1); font-size: var(--cine-text-label); color: var(--cine-mist); }
-/* A project's name never splits ("GRAVITY FLOW" stays whole); the line breaks only between names. */
-.wk__stack-project { white-space: nowrap; }
+.wk__stack-tools [data-tool] { transition: color var(--cine-dur-hover) var(--cine-ease); }
+.wk__stack-evidence {
+  margin-top: var(--cine-space-2);
+  max-width: 36rem;
+  font-size: var(--cine-text-small);
+  line-height: var(--cine-leading-lead);
+  color: var(--cine-mist);
+}
+/* Reduced motion (the OS or the site's switch): the chips and the highlight change at once. */
+@media (prefers-reduced-motion: reduce) {
+  .wk__lens-chip, .wk__stack-name, .wk__stack-tools [data-tool] { transition: none; }
+}
+[data-reduced-motion="true"] .wk__lens-chip, [data-reduced-motion="true"] .wk__stack-name, [data-reduced-motion="true"] .wk__stack-tools [data-tool] { transition: none; }
 
 /* ── Smaller screens: a phone capture is capped by the screen's width AND height (T Poker's tall screens no longer
    take the whole view), the stage and the panel tighten, and the art-directed phone crops keep their own shape. ── */
