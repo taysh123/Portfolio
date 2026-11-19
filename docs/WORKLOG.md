@@ -11,6 +11,65 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-20 — Sessions 18+19 close-out: approved by Tay; #17 logged for S21+S22 (Claude Code)
+
+**Scope (Tay's brief):** S18+S19 reviewed and approved. Log one item for S21+S22. Close out: CLAUDE.md, START-HERE
+and this log on `release/concept-a`; remove the scratch build of `main` and clean up scratch; push (no PR, no merge);
+confirm `main` is clean and level with `origin/main`.
+
+### Decisions (Tay)
+- **S18+S19 approved** as built and pushed (`482d29e`…`7a85e92`; the Preview at `7a85e92`).
+- **New: ROADMAP #17, for S21+S22.** Fix the case-study dialog's two axe best-practice findings, even though production
+  has them too:
+  - `aria-allowed-role`: the panel is an `<aside role="dialog">` (`components/ui/CaseStudyPanel.tsx`). All six case
+    studies.
+  - `image-redundant-alt`: a gallery image whose alt repeats its caption. Three: T Poker, DeveloperOS, GRAVITY FLOW.
+- Added to the S21+S22 row in `docs/ROADMAP.md`. #15 and the Work lede are marked done there (S18+S19).
+
+### Docs
+- **A correction:** the S18+S19 entry below said `image-redundant-alt` was on four case studies. The results show
+  three. Fixed there and in #17.
+- **`docs/ROADMAP.md`:** P5/P6 status (S18+S19 done and approved, S20 next); the S18+S19 row's commits; the S21+S22 row
+  (#17 added, #15 and the Work lede moved out); #15 done; #17 new.
+- **`CLAUDE.md`:**
+  - The release branch after the swap, and its Preview link.
+  - The prototype record's layer, now at `app/cinematic.css` on this branch.
+  - The approved test changes: R12, plus the six from this session and Tay's phone condition.
+  - The unit count, and new gotchas: the build type-checks tests; a removed route's e2e tests each wait out the timeout;
+    the Vercel connector's authenticated fetch creates a share link; `git rm` of a folder's last files removes the
+    folder.
+- **`claude/START-HERE.md`:** S18+S19 approved; what's next (S20); what waits on Tay; #17.
+- **The memory's state note.**
+
+### Clean-up (VL)
+- **The scratch worktree of `443a1f9`** (`main`'s comparison build):
+  - `git worktree remove` deregistered it, but could not delete its folder. Some `node_modules` paths exceed Windows'
+    260-character limit ("Filename too long").
+  - The folder was deleted through the long-path prefix, and `git worktree prune` run. `git worktree list` shows only
+    the repo.
+- **Scratch:** every file and folder deleted. That covers the probes, the screenshots, the Lighthouse reports, the
+  Playwright logs, the commit-split scripts and drafts, and the per-test S20 list. The per-file S20 table is in the
+  S18+S19 entry §4.
+- Ports 3400–3402 are free.
+
+### Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` after the docs edits | **121/121 tests**; the two lab unit files fail at load until S20, as in S18+S19. The private-repo and institution guards pass over the new docs |
+| `npm run build` (Turbopack cache cleared), then `/`'s two stylesheets | Unchanged: the same two files, 43,672 B and 28,727 B. CLAUDE.md and START-HERE add no utility |
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production (`gh api …/deployments`), tagged `product-plates-final`. Untouched.
+- `release/concept-a`: S18+S19 and this close-out, pushed. No PR.
+- `proto/hero-a-cinematic`: frozen; PR #18 a draft.
+
+### Waiting on Tay
+- **S20** in a new session, on `release/concept-a`: the tests. Port the lab specs and unit tests to `/`, delete the two
+  prototype-only ones, remove the temporary `@ts-nocheck` lines, retire the old page's specs, and add the new guards.
+- In S21+S22: N7's final `/privacy` wording (R13), and #17.
+
+---
+
 ## 2026-11-20 — Sessions 18+19: `/` is the Concept A page; `/lab` and the retired code deleted (Claude Code)
 
 **Scope (Tay's brief, S18+S19 exactly as planned):**
@@ -151,8 +210,8 @@ English only.
 - **The case-study dialog, each of the six:**
   - First run: `landmark-no-duplicate-banner` and `landmark-unique` on `.site-nav`, new with the swap. Fixed in
     `270ab27` (§2).
-  - Left: `aria-allowed-role` (the panel is an `<aside role="dialog">`) on all six, and `image-redundant-alt` on four
-    (gallery images whose alt repeats their caption). **The same on production's code:** the same script on `main`'s
+  - Left: `aria-allowed-role` (the panel is an `<aside role="dialog">`) on all six, and `image-redundant-alt` on three
+    (T Poker, DeveloperOS, GRAVITY FLOW: gallery images whose alt repeats their caption). **The same on production's code:** the same script on `main`'s
     build gives exactly these two. Both are axe best-practice rules, not WCAG A/AA. Not changed here; for Tay.
 - `page.spec.ts`'s axe test (the page, then the chat open, dark, 1440 and 390): **0 violations**.
 
@@ -3149,3 +3208,4 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-19 | Session 16 | The P5/P6 plan (gap audit, the tests the release touches, the backlog, the mechanism), approved by Tay as R1–R15; the S17–S24 plan, S18+S19 and S21+S22 paired; the P4 restore record for the four explainers; the backlog's new #16. Docs only | `docs/{RESEARCH_AND_DECISIONS,ROADMAP,WORKLOG}.md`, `claude/START-HERE.md` |
 | 2026-11-19 | Session 17 | `product-plates-final` (`8f0a96a`) on `443a1f9`, pushed. `release/concept-a` cut from `origin/main`: the prototype's 77 untouched paths copied unchanged (`8b77de1`), the 5 state docs merged three ways (`b4fd805`); unit 216/216, Playwright 213/213, `/`'s stylesheets and markup equal `main`'s build (its scripts the same 177 modules in 10 files instead of 9). R12's "still to name" group approved (`2efac00`). CLAUDE.md for the release track (`0a889bf`). Production baseline: Lighthouse mobile median 98, LCP 2,288 ms; first-load JS 182.04 KiB, HTML 160,584 B. #16 measured | `CLAUDE.md`, `claude/START-HERE.md`, `docs/*.md`, the copied paths |
 | 2026-11-20 | Sessions 18+19 | `/` composed from the Concept A sections, in the layer: header (R2), hero, Work with "Case study" buttons (R4) and Two more (R5), About ending on the facts (R10), Stack, Think · Build · Ship, Contact, footer; dark only (R3); every live id (R7). `/lab` and the retired Product Plates code deleted (`482d29e`); the dialog back inside `<main>` (`270ab27`). R12's test edits and S17's group, plus 6 test commits Tay approved in-session, each its own commit. Must-pass e2e 70/70 + 6/6, unit 121/121 (the two lab unit files fail at load until S20). Gate: Lighthouse mobile median 100, LCP 1,061 ms (local `main` 93, 3,191 ms); first-load JS 185.00 KiB, HTML 127,970 B. Pushed; Preview READY | `app/`, `components/`, `lib/`, `data/`, `tests/`, `docs/WORKLOG.md`, `claude/START-HERE.md` |
+| 2026-11-20 | Sessions 18+19 close | Approved by Tay. ROADMAP #17 logged for S21+S22 (the case study's two axe best-practice findings); #15 and the Work lede marked done; the S18+S19 entry's finding count corrected (three, not four). CLAUDE.md, START-HERE, the memory. The scratch worktree of `443a1f9` removed (long paths deleted by hand), scratch emptied | `CLAUDE.md`, `claude/START-HERE.md`, `docs/{ROADMAP,WORKLOG}.md` |

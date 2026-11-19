@@ -20,9 +20,9 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
 `docs/ROADMAP.md` (phases), `docs/WORKLOG.md` (session log), `docs/RESEARCH_AND_DECISIONS.md`
 (open decisions + tool inventory).
 
-## Where production code is (verified 2026-11-19)
+## Where production code is (verified 2026-11-20)
 - **`main` is the source of truth.** Production = GitHub `taysh123/Portfolio` `main`; every merge deploys
-  via Vercel's GitHub integration (last verified: `443a1f9`, 2026-11-19, PRs #8–#20). Cloudflare proxies the domain
+  via Vercel's GitHub integration (last verified: `443a1f9`, 2026-11-20, PRs #8–#20). Cloudflare proxies the domain
   in front of Vercel (N7 in `docs/RESEARCH_AND_DECISIONS.md`). Its Web Analytics and Email Address Obfuscation are
   off (Tay, 2026-11-18), and E2E can't see the edge, so check the live page with a browser `Accept` header. `origin` is
   `https://github.com/taysh123/Portfolio.git` (the old name `Tay-Shofer---Portfolio` redirects). The repo
@@ -33,10 +33,18 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
   - S17 copied the prototype over unchanged (`8b77de1`): the 77 paths of
     `git diff --name-only main...proto/hero-a-cinematic` that `main` had not touched since the branch point. Then it
     merged the five state docs both sides had changed.
-  - Until the swap (S18+S19), `/` serves `main`'s stylesheets byte for byte, and the same markup apart from its script
-    tags. Its scripts carry the same code, but in 10 files instead of 9: Turbopack splits them differently once a
-    second route exists.
-  - `/lab` is never shipped to `main`: the swap deletes it. One PR, opened in S23 on Tay's go; Tay merges.
+  - **S18+S19 (approved by Tay, 2026-11-20): `/` is the Concept A page, and `/lab` is deleted.**
+    - The layer is `app/cinematic.css`, imported by `/` only. The sections live in `components/sections/` (Hero,
+      Work with `panels.ts`, `Reel` and `Shot`, `MoreWork` for Two more, About, Stack, ThinkBuildShip, Contact).
+    - The header has its own `.cine` root. `main` holds the page's root, then the case-study host, outside the layer,
+      so the dialog keeps the site's dark theme and its own header is not a second banner. The live footer follows.
+    - Dark only (R3); every live id kept (R7). The retired Product Plates code is deleted; the explainers can be
+      restored from `product-plates-final` (`docs/ROADMAP.md`, P4 restore record).
+    - Preview, behind Vercel's login, following each push:
+      `https://tay-shofer-portfolio-git-release-840354-tays-projects-d5aefd6e.vercel.app/`.
+  - Until S20 ports them, the lab specs and both lab unit tests fail (their routes and modules are gone), and so do
+    the old page's specs that S20 retires. The two lab unit tests carry a temporary `@ts-nocheck` (below).
+  - One PR, opened in S23 on Tay's go; Tay merges.
   - Rollback: Vercel's Instant Rollback to `443a1f9`'s deployment, then a `git revert -m 1` PR. `443a1f9` is tagged
     `product-plates-final` (R15, pushed in S17).
   - Push this branch only when the brief says so. No PR, merge or deploy before S23/S24.
@@ -49,7 +57,8 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
   - The Work slice has four carousels of real captures: T Poker 5, Aegis 2, DeveloperOS 4, GRAVITY FLOW 5 (approved by
     Tay, session 11).
   - Its lab-only design system is `app/lab/_cinematic/`, documented in `docs/CINEMATIC_SYSTEM.md`. Both came over to
-    `release/concept-a` in the copy; the WORKLOG's sessions 10–16 came with the docs merge.
+    `release/concept-a` in the copy (the layer is `app/cinematic.css` there since S18+S19); the WORKLOG's sessions
+    10–16 came with the docs merge.
   - On that branch `/` and every guard file stay identical to `main`; an e2e test pins `/`'s stylesheets.
 - `reference/premium-redesign-package` is **stale** (Next 16.2.6, old names, institution label, private
   repo URLs). Never build, deploy, or copy content from it. (The local `feature/premium-portfolio-redesign`,
@@ -106,9 +115,12 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
   bodies or commits; say "the private T Poker repository". Run `npm test` after any docs commit.
   The private-repo guard pins both private repos (T Poker and GRAVITY FLOW) by digest in `tests/support/private-repo.ts`.
 - **The release's approved test changes are R12's list** (`docs/RESEARCH_AND_DECISIONS.md`), including the "still to
-  name" group Tay approved in S17. The one canvas exception: `page.spec.ts:43` allows exactly one canvas, the hero's 2D,
-  `aria-hidden` field. Each change goes in its own commit naming the approval. Any other guard edit still needs Tay's
-  explicit approval first.
+  name" group Tay approved in S17, plus six Tay approved in S18+S19 (`docs/WORKLOG.md`, "Sessions 18+19" §3).
+  - The one canvas exception: `page.spec.ts:43` allows exactly one canvas, the hero's 2D, `aria-hidden` field.
+  - Tay's condition on the phone header's one icon: the accessibility button stays reachable on phones, in the menu
+    sheet, and `chrome.spec.ts` tests it there at 320 and 390. Keep it.
+  - Each change goes in its own commit naming the approval. Any other guard edit still needs Tay's explicit approval
+    first.
 - Project copy must agree across `data/projects.ts`, the assistant prompt rules in
   `app/api/chat/route.ts`, metadata, and `/privacy`.
 
@@ -133,7 +145,8 @@ Verified gotchas (2026-11-18):
   old build. Serve manual checks on another port. On Windows, stopping a backgrounded `npx next start` can leave
   its `node` child holding the port: check `Get-NetTCPConnection -LocalPort <port> -State Listen` and stop that PID.
 - The Windows-only `tests/unit/site.test.ts:78` failure (N6) is fixed (`b4d5c73`, PR #7): the unit suite is
-  122/122 on Windows (`main` `1c57789`; PR #20 changed docs only), and 216/216 on `release/concept-a` (S17). Run
+  122/122 on Windows (`main` `1c57789`; PR #20 changed docs only). On `release/concept-a` since S18+S19: 121/121
+  tests, with the two lab unit files failing at load until S20 ports them. Run
   `npm test` from Git Bash: a test shells out `git grep … || true`, and cmd.exe (PowerShell's child shell) has no
   `true`, so it fails there spuriously.
 - Lighthouse is not a dependency. S17 ran `npx --yes lighthouse@13.6.0` (Tay's go) with the installed Chrome; the
@@ -141,6 +154,15 @@ Verified gotchas (2026-11-18):
 - A fresh `npm ci` here warns that some packages' install scripts await approval ("allow-scripts"). A production build
   still passes without them (S17's baseline worktree).
 - After leaving an old branch, run `npx next typegen` before `npm run typecheck` (stale `.next/types`).
+- **`npm run build` type-checks every test file** (`tsconfig.json` includes them). A test importing a deleted module
+  fails the build, and the Preview with it. That is why the two lab unit tests carry a temporary `@ts-nocheck` until
+  S20.
+- **A test whose route is gone waits out its whole timeout** (60 s), and one file's tests run one after another. On
+  the release branch, the full suite takes over an hour until S20. Run the must-pass specs on the standard config,
+  and the S20 set with `--fully-parallel --timeout=15000` to list it.
+- **The Vercel connector's authenticated fetch** (`web_fetch_vercel_url`) creates a 23-hour share link on a protected
+  deployment, which opens it to anyone holding the link. Don't use it without Tay's go.
+- `git rm` of a folder's last tracked files also removes the folder, so a `git mv` into it then fails: recreate it.
 - `npm run build` fetches Geist from Google Fonts (`next/font`). A network blip fails it ("Failed to fetch Geist");
   retry, there is nothing to fix.
 - The résumé PDF's exact byte size is pinned in `tests/e2e/lower.spec.ts`, and its size label is in
@@ -149,11 +171,12 @@ Verified gotchas (2026-11-18):
   `app/globals.css`), comments and object keys included. That covers this file, `README.md` and `claude/` too.
   - A utility's name written anywhere else (zero opacity, an elevation, a small corner radius…) adds a rule to `/`'s
     stylesheet. Describe one in words, never by its class name, and write docs in `docs/`.
-  - It happened three times on the prototype branch, then a fourth time from this file (session 12). Its e2e test pins
-    `/`'s CSS to `main`'s SHA-256; rebuild before trusting it.
+  - It happened three times on the prototype branch, then a fourth time from this file (session 12). Rebuild and
+    compare `/`'s stylesheets (names and bytes) before and after any edit here or in `claude/`.
 - **A client component can change `/`'s first-load JS** by importing a shared module.
-  - `components/sections/AboutVisual.tsx` (client) imports `data/images.ts` whole, so a new entry there ships in `/`.
-    The prototype lists its own captures in `data/lab-images.ts`.
+  - On `main`, `components/sections/AboutVisual.tsx` (client) imports `data/images.ts` whole, so a new entry there
+    ships in `/`. The release deletes it; the carousel (`Reel.tsx`) imports no image data, and the newer captures
+    stay listed in `data/lab-images.ts`.
   - Verify by hashing `.next/static/chunks` before and after.
 - **A CSS reveal from `opacity: 0` hides text from LCP.**
   - Headless Chromium's GPU is SwiftShader, so canvas cost measured headless is pessimistic.

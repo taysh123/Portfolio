@@ -24,12 +24,12 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
    job hunting. The demos (P4) come after.
    - It ships from `release/concept-a`, cut from `main` in S17 and pushed (no PR yet), through a PR that Tay merges.
      The prototype branch stays frozen as the record.
-   - **S18+S19 (2026-11-20): on that branch, `/` is now the Concept A page** and `/lab` is gone. Pushed at `270ab27`
-     (Preview READY); waiting on Tay's review on his phone.
+   - **S18+S19 (2026-11-20): on that branch, `/` is now the Concept A page** and `/lab` is gone. **Approved by Tay**
+     after his review on the Preview. S20 (the tests) is next.
    - The plan, S17 to S24: `docs/ROADMAP.md`, "Concept A: P4–P6". Tay's decisions, R1 to R15:
      `docs/RESEARCH_AND_DECISIONS.md`, "Resolved in session 16".
 
-## What's live now (verified 2026-11-19, S17: Production is `443a1f9`, status success)
+## What's live now (verified 2026-11-20 at the S18+S19 close: Production is still `443a1f9`, status success)
 - The current site is the calm, light **"Product Plates"** editorial design (M10), with the whole **M1 core, moves
   A–E**:
   - **A**, the iris accent: `#4a3fe0` light, `#a5a8ff` dark, `#b1b4ff` on the dark plates.
@@ -63,7 +63,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   merges. `reference/premium-redesign-package` is a stale September design branch: never build or deploy from it.
 
 ## The release branch: `release/concept-a` (S17, S18+S19)
-- **S18+S19 (2026-11-20): the swap.** `/` is the Concept A page; detail in `docs/WORKLOG.md`, "Sessions 18+19".
+- **S18+S19 (2026-11-20): the swap, approved by Tay.** `/` is the Concept A page; detail in `docs/WORKLOG.md`,
+  "Sessions 18+19" and its close-out.
   - **The page** (`app/page.tsx`): the header in its own `.cine` root; then `main`, holding the page's root (the hero,
     then one `.wk` region with Work, Two more, About, Stack, Think · Build · Ship and Contact) and the case-study host;
     then the live footer.
@@ -99,7 +100,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - **Budgets:** first-load JS 185.00 KiB (budget 205.7), HTML 127,970 B (budget 568 KB).
   - **Status codes:** `/` serves `index, follow` with its canonical; `/lab/*` answers 404.
   - **axe with the overlays open:** the accessibility panel has 0 violations. The case study has two best-practice
-    findings that production's code shares (`aria-allowed-role` on its `aside`, `image-redundant-alt`), unchanged.
+    findings that production's code shares: `aria-allowed-role` on its `aside`, all six; `image-redundant-alt`, three.
+    **Tay: fix both in S21+S22** (ROADMAP #17).
   - **Preview:** `https://tay-shofer-portfolio-git-release-840354-tays-projects-d5aefd6e.vercel.app/` (the branch's
     link, behind Vercel's login).
 - **Cut from `origin/main` `443a1f9`** (`--no-track`), pushed in S17 with its upstream set: branch only, no PR, no
@@ -275,21 +277,23 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 
 ## What's next
 - **S17 is done** (2026-11-19): the tag, the branch and the copy, the clean run, the baseline, #16, CLAUDE.md.
-- **S18+S19 is built and pushed (2026-11-20), waiting on Tay's review on his phone** before the session closes. The
-  plan it carried out:
+- **S18+S19 is done and approved by Tay (2026-11-20)**, and closed out. The plan it carried out:
   - One page: the header (R2), the hero, Work, About, Stack, Think · Build · Ship, Contact and the live Footer, with
     one `main` and one h1, the live anchor ids (R7), and dark `<html>` (R3).
   - `/lab` and the retired live components are deleted.
   - The "Case study" buttons (R4) and Two more (R5).
   - R12's approved test edits, the S17 group included, each in its own commit naming the approval.
   - Measure the JS and HTML budgets.
-- Then S20 (the tests), S21+S22 (privacy and SEO surfaces, then the backlog: #13 against S17's baseline, #14, #15, #16),
+- **S20 is next** (the tests): port the lab specs and unit tests to `/`, delete the two prototype-only ones, remove the
+  two temporary `@ts-nocheck` lines, retire the old page's specs, and add the new guards.
+- Then S21+S22 (privacy and SEO surfaces, then the backlog: #13 against S17's baseline, #14, #16, and #17, the case
+  study's two axe findings; #15 was done in S18+S19),
   S23 (the release candidate: WebKit and Firefox runs, Tay's review on his own phone, the GRAVITY FLOW capture swap),
   S24 (check the tag, Tay's merge, the production checks).
 
 ## Open PRs / branches (S17, 2026-11-19)
-- **`release/concept-a`**: the release branch, pushed in S17 and again in S18+S19 (`270ab27`, then the docs), with no
-  PR yet. S23 opens it on Tay's go; Tay merges.
+- **`release/concept-a`**: the release branch, pushed in S17 and in S18+S19 (the code at `270ab27`, then the docs and
+  the close-out), with no PR yet. S23 opens it on Tay's go; Tay merges.
 - **Tag `product-plates-final`** (`8f0a96a`) on `443a1f9`, pushed in S17: the P4 restore point (R6, R15).
 - **PR #18** (`proto/hero-a-cinematic`, draft): the Concept A prototype. Never merge, never delete; Preview only.
 - Merged and deleted (each checked with `git merge-base --is-ancestor` first):
@@ -302,9 +306,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Review S18+S19 on his phone** through the branch's Preview link (above), then close the session. Points to look at
-  are in `docs/WORKLOG.md`, "Sessions 18+19", "Waiting on Tay".
-- **Then S20** in a new session: the tests (port the lab specs to `/`, retire the old page's, add the new guards).
+- **Start S20** in a new session, on `release/concept-a`: the tests.
+- **In S21+S22:** fix the case study's two axe best-practice findings (#17).
 - **In S21+S22:** approve N7's exact final `/privacy` wording before it is committed (R13).
 - **In S23:** the GRAVITY FLOW image for the capture swap; the review on his own phone through the Preview.
 - **In S24:** merge. The `product-plates-final` tag is already pushed (S17).
