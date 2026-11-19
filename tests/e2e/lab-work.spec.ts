@@ -647,6 +647,27 @@ for (const vp of [[1440, 900], [390, 844]] as const) {
   });
 }
 
+// Session 14: with Think · Build · Ship below Stack, the page is taller and the violet glow (at a share of its height)
+// sits in the view when the buttons are low in it. The browser's scroll anchoring took the glow as its anchor and moved
+// the view up with it as the list shortened (220–462px, measured). A glow is never an anchor now.
+for (const vp of [[1440, 900], [390, 844]] as const) {
+  test(`Stack at ${vp[0]}: with the buttons low in the view, pressing a project never scrolls the page (no glow is a scroll anchor)`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp, { reducedMotion: "reduce" });
+    const view = () => page.evaluate(() => ({ y: Math.round(scrollY), chip: Math.round(document.querySelector(".wk__lens-chip")!.getBoundingClientRect().top) }));
+    await chip(page, "All").evaluate((e) => scrollTo(0, e.getBoundingClientRect().top + scrollY - innerHeight + 120));
+    await page.waitForTimeout(200);
+    const at1 = await view();
+    for (const name of ["T Poker", "GRAVITY FLOW", "All", "DeveloperOS", "Aegis", "All"]) {
+      await chip(page, name).evaluate((e) => (e as HTMLElement).focus({ preventScroll: true }));
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(150);
+      expect(await view(), `${name}: the view stays`).toEqual(at1);
+    }
+    expect(await page.locator(".wk__glow").evaluateAll((gs) => gs.map((g) => getComputedStyle(g).overflowAnchor))).toEqual(["none", "none"]);
+    await ctx.close();
+  });
+}
+
 for (const [label, motion] of [["motion on", "no-preference"], ["reduced motion", "reduce"]] as const) {
   test(`Stack holds still (${label}): nothing animates, and the buttons stay put when a project is pressed${motion === "reduce" ? "; nothing eases" : ""}`, async ({ browser }) => {
     const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: motion });

@@ -7,7 +7,10 @@
 /* ── The sky: the base gradient and two static glows, once, behind the whole section. No field, no drift: here the
    captures are the star. ── */
 .wk__sky { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: var(--cine-sky); }
-.wk__glow { position: absolute; }
+/* A glow is never a scroll anchor: the violet one sits at a share of the page's height, so when Stack's filter shortens
+   the page it moves up, and the browser's scroll anchoring moved the view with it (up to 462px at 390, measured,
+   session 14). Only the glows are left out, so everything else anchors as before. */
+.wk__glow { position: absolute; overflow-anchor: none; }
 .wk__glow--cyan { right: -18%; top: -12vh; width: 72%; height: 110vh; background: var(--cine-glow-cyan); }
 .wk__glow--violet { left: -30%; top: 38%; width: 80%; height: 120vh; background: var(--cine-glow-violet); }
 
