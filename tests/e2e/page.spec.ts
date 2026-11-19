@@ -87,7 +87,7 @@ test("no animation-frame loop runs once the page is still (top with reduced moti
   }
 });
 
-test("axe: no WCAG 2.2 A/AA or best-practice violations — light and dark, 1440 and 390, chat open too", async ({ browser }) => {
+test("axe: no WCAG 2.2 A/AA or best-practice violations — dark (the only theme), 1440 and 390, chat open too", async ({ browser }) => {
   test.setTimeout(180_000);
   const AXE = fs.readFileSync("node_modules/axe-core/axe.min.js", "utf8");
   const run = (page: import("playwright/test").Page) => page.evaluate(async () => {
@@ -95,7 +95,7 @@ test("axe: no WCAG 2.2 A/AA or best-practice violations — light and dark, 1440
       { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa", "best-practice"] } });
     return r.violations.map((x) => `${x.id}: ${x.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(" | ")}`);
   });
-  for (const theme of ["light", "dark"] as const) for (const vp of [[1440, 900], [390, 844]] as const) {
+  for (const theme of ["dark"] as const) for (const vp of [[1440, 900], [390, 844]] as const) {
     const { ctx, page } = await open(browser, vp, { theme });
     await scrollThrough(page);
     await page.addScriptTag({ content: AXE });

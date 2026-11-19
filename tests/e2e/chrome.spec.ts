@@ -59,7 +59,7 @@ const headerRatios = (page: Page, behind: string) => page.locator("header[data-s
 }, behind);
 const SECTIONS = ["work-poker", "work-aegis", "work-developeros", "work-gravity-flow", "more-work", "about", "skills", "approach", "contact"];
 
-for (const theme of ["light", "dark"] as const) {
+for (const theme of ["dark"] as const) {
   test(`${theme}: the header is one neutral surface over every section — it never repaints, and its controls read on all of them`, async ({ browser }) => {
     const { ctx, page } = await open(browser, [1440, 900], { theme, motion: true });
     await page.evaluate(() => scrollTo({ top: 40, behavior: "instant" as ScrollBehavior })); await page.screenshot({ clip: { x: 0, y: 0, width: 100, height: 40 } });
@@ -121,8 +121,8 @@ test("a jump from the nav makes that link current where it lands", async ({ brow
   await ctx.close();
 });
 
-test("phones, both themes: the header's theme and menu buttons read on every section they pass over", async ({ browser }) => {
-  for (const theme of ["light", "dark"] as const) {
+test("phones, dark: the header's buttons read on every section they pass over", async ({ browser }) => {
+  for (const theme of ["dark"] as const) {
     const { ctx, page } = await open(browser, [390, 844], { theme });
     for (const id of ["hero", ...SECTIONS]) {
       if (id === "hero") { await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" as ScrollBehavior })); await page.screenshot({ clip: { x: 0, y: 0, width: 100, height: 40 } }); }
@@ -136,7 +136,7 @@ test("phones, both themes: the header's theme and menu buttons read on every sec
   }
 });
 
-for (const theme of ["light", "dark"] as const) {
+for (const theme of ["dark"] as const) {
   test(`phones, ${theme}: during real touch swipes the header keeps one surface on every frame, and the current section only moves forward then back`, async ({ browser }) => {
     test.setTimeout(120_000);
     const { ctx, page } = await open(browser, [390, 844], { theme });
