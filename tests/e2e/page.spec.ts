@@ -74,9 +74,12 @@ test("zero console errors while wheel-scrolling from the top to the footer", asy
   expect(errors).toEqual([]);
 });
 
-test("no animation-frame loop runs once the page is still (top, middle, bottom)", async ({ page }) => {
-  await page.goto("/", { waitUntil: "networkidle" });
-  for (const at of [0, 0.5, 1]) {
+// R12 (Tay, session 16): the hero's field is live at the top, so the top is measured with reduced motion (one still frame,
+// no loop); in the middle and at the bottom the field is off screen and paused, so nothing may run there.
+test("no animation-frame loop runs once the page is still (top with reduced motion, middle, bottom)", async ({ page }) => {
+  for (const [at, reducedMotion] of [[0, "reduce"], [0.5, "no-preference"], [1, "no-preference"]] as const) {
+    await page.emulateMedia({ reducedMotion });
+    await page.goto("/", { waitUntil: "networkidle" });
     await page.evaluate((at) => scrollTo({ top: (document.documentElement.scrollHeight - innerHeight) * at, behavior: "instant" as ScrollBehavior }), at);
     await page.waitForTimeout(700);
     const n = await page.evaluate(async () => { let n = 0; const o = window.requestAnimationFrame; window.requestAnimationFrame = (cb) => o((t) => { n++; cb(t); }); await new Promise((r) => setTimeout(r, 1000)); window.requestAnimationFrame = o; return n; });
