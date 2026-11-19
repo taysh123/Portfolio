@@ -31,7 +31,7 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
   it, never delete it.**
   - Concept A work happens there, not on `main`. Push or make a Preview only on Tay's go.
   - Its routes are all noindex under `/lab`: the locked hero `/lab/hero-a`, and the Work slice `/lab/work` (About
-    below its panels since session 12).
+    below its panels, approved by Tay in session 12).
   - The Work slice has four carousels of real captures: T Poker 5, Aegis 2, DeveloperOS 4, GRAVITY FLOW 5 (approved by
     Tay, session 11).
   - Its lab-only design system is `app/lab/_cinematic/`. The doc, `docs/CINEMATIC_SYSTEM.md`, is on that branch, with

@@ -252,7 +252,8 @@ the two-row controls below 390px.
 
 ### About (P3.3, session 12)
 
-Under the four panels, after a hairline: who, in about ten seconds. Tay approved every word before it was built.
+Under the four panels, after a hairline: who, in about ten seconds. Tay approved every word before it was built, and
+**approved the built section** at the session 12 close.
 
 | Element | Text | Source |
 |---|---|---|

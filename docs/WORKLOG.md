@@ -11,6 +11,58 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-19 — Session 12 close-out: About approved; PR #20 fixes `main`'s CSS leak (Claude Code)
+
+**Scope (Tay's brief):**
+- A one-line docs PR for `main` that fixes the CLAUDE.md Tailwind leak: from an up-to-date `origin/main`, only that
+  line, the same rewording as `fb3bb41`. Confirm `/`'s sheet is back to 44,530 bytes in a production build, run
+  `npm test`, push it and open the PR. No merge.
+- Close out here: WORKLOG, START-HERE, CLAUDE.md and the memory with the final state. Push; PR #18 stays a draft.
+- Delete `docs/session-10-closeout` locally and remotely after `git merge-base --is-ancestor`. Never delete this branch.
+- Clean scratch, and confirm `main` is clean.
+
+### Decisions (Tay)
+- **About is approved** as built (`121d86b`).
+- A go for the `main` fix (below).
+
+### PR #20: the leak fix for `main` (VL)
+- Branch **`docs/claude-md-tailwind-leak`** from `origin/main` `1c57789` (`--no-track`). One commit, `CLAUDE.md` only,
+  +2/−2: the gotcha bullet now describes the three utilities in words, as `fb3bb41` does here.
+  - Only that bullet. The branch's other two edits in `fb3bb41` (the "covers this file" clause and the "fourth time"
+    note) are not in it.
+- `npm run build` on it: `/`'s Tailwind sheet is **44,530 bytes**, SHA-256 `868e8b98…`, the sheet before PR #19. The
+  other sheet is unchanged (31,805 bytes).
+- `npm test` (Git Bash): **122/122**. No utility name is left in `CLAUDE.md`.
+- Pushed, and **PR #20** opened into `main`: https://github.com/taysh123/Portfolio/pull/20. Not merged.
+- Until it merges, Production serves the 44,829-byte sheet (299 bytes of unused rules; nothing renders differently).
+
+### Branches (each checked with `git merge-base --is-ancestor`)
+- **Deleted:** `docs/session-10-closeout`, local and remote (`2101ef6`, merged as PR #19; both tips are ancestors of
+  `origin/main`).
+- **Kept:**
+  - `proto/hero-a-cinematic` (active; never delete);
+  - `docs/claude-md-tailwind-leak` (PR #20, open);
+  - `reference/premium-redesign-package` and the six D8 branches, none merged.
+
+### Scratch
+- Cleaned: the session's scratchpad (screenshots, measurement scripts, build logs) and the `5d4610b` baseline worktree
+  (removed during the session; `git worktree list` shows only the main checkout).
+
+### State (VL)
+- `origin/main` = **`1c57789`**, Production `1c57789`. Local `main` level with it, and clean.
+- This branch: the code is `121d86b`; the docs are on top. PR #18 is a draft.
+- Validation after this close-out's docs (Git Bash): `npm test` 186/186; a production build's `/` Tailwind sheet at
+  `868e8b98…` (44,530 bytes), and the pinned-stylesheet e2e test passes.
+
+### Waiting on Tay
+- **Merge PR #20** (docs only), so the live `/` sheet loses the 299 unused bytes.
+- **Decide what Concept A takes on next.** The carousels, the five layer values and About are approved.
+- **Swap the GRAVITY FLOW capture** he has in mind.
+- **Move F:** not started; still his call.
+- Optional, on `main`: the chat launcher's fold on scroll (0.0076 CLS).
+
+---
+
 ## 2026-11-19 — Session 12: About (P3.3) on `/lab/work`; the D2 comments reworded (prototype, D1 reopened) (Claude Code)
 
 **Scope (Tay's brief):**
@@ -1693,3 +1745,4 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-19 | Session 11 | Every flagship's real captures in its carousel (`9569bd8`): 8 captures encoded, the lab's own image list, box reservation for mixed shapes, window carousels, two-row controls below 390px; START-HERE brought up to date | `app/lab/work/*`, `data/lab-images.ts`, `data/projects.ts`, `scripts/m10-images.mjs`, `public/work/*` (48 new), `tests/**/lab-work*`, `docs/CINEMATIC_SYSTEM.md`, `docs/WORKLOG.md`, `claude/START-HERE.md` |
 | 2026-11-19 | Session 11 close | Carousels approved by Tay; the D1/D2 framing corrected (D1 reopened, D2 not); CLAUDE.md brought level with `main`'s plus the prototype; the close-out PR for `main` refreshed from `docs/session-10-closeout`; `docs/session-9-closeout` deleted | `CLAUDE.md`, `claude/START-HERE.md`, `docs/WORKLOG.md`, `docs/CINEMATIC_SYSTEM.md` |
 | 2026-11-19 | Session 12 | About (P3.3) on `/lab/work` from the live About's own words (`121d86b`); the 11 "D2 reopened" comments reworded (`4dccdf8`); the five NEW layer values approved as they are; a fourth Tailwind leak found (PR #19's CLAUDE.md line, live on `main`) and fixed on this branch (`fb3bb41`) | `app/lab/work/{about.ts,AboutBlock.tsx,page.tsx,work.css}`, `tests/{unit,e2e}/lab-work.*`, 11 lab headers, `CLAUDE.md`, `docs/CINEMATIC_SYSTEM.md`, `claude/START-HERE.md`, `docs/WORKLOG.md` |
+| 2026-11-19 | Session 12 close | About approved by Tay; PR #20 opened into `main` (the CLAUDE.md Tailwind gotcha bullet reworded: `/`'s sheet back to 44,530 bytes); `docs/session-10-closeout` deleted (merged as #19); scratch cleaned | `docs/WORKLOG.md`, `claude/START-HERE.md`, `CLAUDE.md`, `docs/CINEMATIC_SYSTEM.md` (PR #20: `CLAUDE.md`) |
