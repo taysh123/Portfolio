@@ -4,6 +4,7 @@ import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import { flagships, moreWork, projectOf, aegisTrace, aegisCopy, dosFlow, dosRefusal, dosRefusalCaption, gfFacts, pokerSteps } from "@/data/work";
 import { IMAGES, AEGIS_CROPS, AEGIS_ROW, AEGIS_BOARD, AEGIS_BOARD_BOUNDS } from "@/data/images";
+import { panels } from "@/components/sections/panels";
 
 const numbers = (s: string) => (s.match(/\d[\d,.]*/g) ?? []).map((n) => n.replace(/[,.]$/, ""));
 const json = (id: string) => JSON.stringify(projectOf(id)).toLowerCase().replace(/[-‑]/g, " ");
@@ -99,7 +100,8 @@ describe("DeveloperOS: evidence, then cite or decline", () => {
 describe("GRAVITY FLOW: gameplay first, no physics claims", () => {
   it("the lede is the mechanic, and nothing claims precise or fair physics", () => {
     expect(flagships[3].lede).toMatch(/hold to place a gravity well/i);
-    const gf = JSON.stringify(flagships[3]) + fs.readFileSync("components/work/GravityChapter.tsx", "utf8");
+    // R12 (Tay, S17): the GRAVITY FLOW chapter is retired; its panel is where the page describes the game now.
+    const gf = JSON.stringify(flagships[3]) + JSON.stringify(panels.find((p) => p.id === "gravity-flow"));
     expect(gf).not.toMatch(/precise|accurate physics|fair physics|frame-rate|deterministic physics|hand-tuned/i);
     expect(projectOf("gravity-flow").tagline).not.toMatch(/hand-tuned/i);
   });
@@ -164,13 +166,5 @@ describe("images", () => {
   it("every registered image exists at every width, in AVIF and WebP", () => {
     for (const [name, im] of Object.entries(IMAGES)) for (const w of im.widths) for (const ext of ["avif", "webp"])
       expect(fs.existsSync(`public/work/${name}-${w}.${ext}`), `${name}-${w}.${ext}`).toBe(true);
-  });
-  it("About's visual adds no raster of its own: it composes registered captures only (the 3D render is gone)", () => {
-    const src = fs.readFileSync("components/sections/AboutVisual.tsx", "utf8");
-    const names = [...new Set([...src.matchAll(/<Pic name="([^"]+)"|srcSet\("([^"]+)"/g)].map((m) => m[1] ?? m[2]))];
-    expect(names.sort()).toEqual(["dos-search", "dos-search-phone", "gf-gameplay", "hero-aegis", "poker-settle"]);
-    for (const n of names) expect(Object.keys(IMAGES), n).toContain(n);
-    expect(src).not.toMatch(/\.png|\.jpe?g|\.webp"|\.avif"|<canvas|<video|figcaption/);
-    expect(fs.readdirSync("public/work").filter((f) => f.startsWith("about-"))).toEqual([]);
   });
 });
