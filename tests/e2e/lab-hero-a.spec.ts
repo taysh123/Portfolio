@@ -1,12 +1,13 @@
-// tests/e2e/lab-hero-a.spec.ts — Concept A, the cinematic hero (PROTOTYPE; D1 reopened by Tay, 2026-11-18; D2 not
-// reopened, so no WebGL). Branch proto/hero-a-cinematic only, never merged. main's guards (no <canvas>/WebGL on /, the
-// first-load budget for /) are unchanged and still run against /. This file holds the prototype route to the same
-// budget and checks its accessibility, no-JS and reduced-motion paths, and its loop's pause behaviour.
+// tests/e2e/lab-hero-a.spec.ts — Concept A's cinematic hero, the first screen of / (the release, R1–R15; D1 reopened by
+// Tay, 2026-11-18; D2 not reopened, so no WebGL). Ported in S20 from the prototype's /lab/hero-a spec (the file keeps
+// its name: docs/CINEMATIC_SYSTEM.md points here). The page-wide guards stay in budget.spec.ts and page.spec.ts (the
+// budget, no WebGL, one 2D canvas; / indexed and /lab gone). This file checks the hero's own share: where its code
+// ships, its accessibility, the no-JS and reduced-motion paths, and its loop's pause behaviour.
 import { test, expect, type Page, type Browser, type BrowserContextOptions } from "playwright/test";
 import zlib from "node:zlib";
 import { COUNT_WEBGL } from "../support/page";
 
-const ROUTE = "/lab/hero-a";
+const ROUTE = "/";
 // axe-core is already installed (eslint-config-next → eslint-plugin-jsx-a11y); no new dependency.
 const AXE = require.resolve("axe-core/axe.min.js");
 const REVEAL_MS = 1400;   // the last block starts at 5 × 70ms and runs 700ms; with margin
@@ -30,6 +31,7 @@ const rafCount = (page: Page, ms = 1000) => page.evaluate(async (ms) => {
   await new Promise((r) => setTimeout(r, ms)); window.requestAnimationFrame = o; return n;
 }, ms);
 const field = (page: Page) => page.locator("canvas.hxa__field");
+const hero = (page: Page) => page.locator("#hero");
 const firstLoadJs = async (request: import("playwright/test").APIRequestContext, baseURL: string, path: string) => {
   const html = await (await request.get(path)).text();
   const srcs = [...new Set([...html.matchAll(/<script[^>]+src="([^"]+)"/g)].map((m) => m[1]))];
@@ -37,47 +39,52 @@ const firstLoadJs = async (request: import("playwright/test").APIRequestContext,
   return { html, srcs, bodies, gz: bodies.reduce((a, b) => a + zlib.gzipSync(b).length, 0) };
 };
 
-test("budget: the prototype's first-load JS ≤ 205.7 KB gzip and HTML ≤ 568 KB; none of it reaches /", async ({ request, baseURL }) => {
-  const lab = await firstLoadJs(request, baseURL!, ROUTE);
-  const home = await firstLoadJs(request, baseURL!, "/");
+test("budget: /'s first-load JS ≤ 205.7 KB gzip and HTML ≤ 568 KB; the field's code ships with / and no other page", async ({ request, baseURL }) => {
+  const home = await firstLoadJs(request, baseURL!, ROUTE);
+  const privacy = await firstLoadJs(request, baseURL!, "/privacy");
   test.info().annotations.push({ type: "measured", description:
-    `/lab/hero-a JS ${(lab.gz / 1024).toFixed(2)} KiB over ${lab.srcs.length} scripts, HTML ${(Buffer.byteLength(lab.html) / 1024).toFixed(2)} KB; ` +
-    `/ JS ${(home.gz / 1024).toFixed(2)} KiB, HTML ${(Buffer.byteLength(home.html) / 1024).toFixed(2)} KB` });
+    `/ JS ${(home.gz / 1024).toFixed(2)} KiB over ${home.srcs.length} scripts, HTML ${(Buffer.byteLength(home.html) / 1024).toFixed(2)} KB; ` +
+    `/privacy JS ${(privacy.gz / 1024).toFixed(2)} KiB, HTML ${(Buffer.byteLength(privacy.html) / 1024).toFixed(2)} KB` });
   console.log(test.info().annotations.at(-1)!.description);
-  expect(lab.gz / 1024).toBeLessThanOrEqual(205.7);
-  expect(Buffer.byteLength(lab.html) / 1024).toBeLessThanOrEqual(568);
-  // The field's code ships only with its route: no first-load script of / carries it.
-  expect(lab.bodies.some((b) => b.toString().includes("hxa__field"))).toBe(true);
-  expect(home.bodies.some((b) => b.toString().includes("hxa__field"))).toBe(false);
+  expect(home.gz / 1024).toBeLessThanOrEqual(205.7);
+  expect(Buffer.byteLength(home.html) / 1024).toBeLessThanOrEqual(568);
+  // The field's code ships only with the page that draws it: no first-load script of /privacy carries it.
+  expect(home.bodies.some((b) => b.toString().includes("hxa__field"))).toBe(true);
+  expect(privacy.bodies.some((b) => b.toString().includes("hxa__field"))).toBe(false);
 });
 
-test("never indexed, never linked: noindex meta, no canonical, not in the sitemap, no link from /", async ({ request }) => {
-  const html = await (await request.get(ROUTE, { headers: { Accept: "text/html" } })).text();
-  expect(html).toMatch(/<meta name="robots" content="noindex, nofollow, nocache"\/>/);
-  expect(html).not.toMatch(/rel="canonical"/);
-  expect(await (await request.get("/sitemap.xml")).text()).not.toMatch(/\/lab/);
+// The prototype's "never indexed" half is page.spec.ts's guard now (R12: / is index, follow with its canonical; /lab
+// answers 404). What is left here is "never linked".
+test("nothing points at /lab: the sitemap lists only /, robots.txt and / never mention it", async ({ request }) => {
+  const sitemap = await (await request.get("/sitemap.xml")).text();
+  expect([...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])).toEqual(["https://tayshofer.dev"]);
   expect(await (await request.get("/robots.txt")).text()).not.toMatch(/\/lab/);
-  expect(await (await request.get("/")).text()).not.toMatch(/href="\/lab/);
+  expect(await (await request.get("/", { headers: { Accept: "text/html" } })).text()).not.toMatch(/href="\/lab/);
 });
 
 test("without JavaScript: every word and action is in the HTML, visible, and works", async ({ browser }) => {
   const { ctx, page } = await at(browser, [1440, 900], { javaScriptEnabled: false });
   await page.waitForTimeout(REVEAL_MS);   // the CSS reveal runs without JS and ends visible
   await expect(page.locator("h1")).toHaveText("Building software. Turning ideas into products.");
-  for (const sel of [".hxa__top", ".hxa__eyebrow", ".hxa__title", ".hxa__lede", ".hxa__ctas", ".hxa__featured"])
+  // The locked hero's top line is the header's row now (R2): it rises first, and ends visible too.
+  for (const sel of [".site-nav__row", ".hxa__eyebrow", ".hxa__title", ".hxa__lede", ".hxa__ctas", ".hxa__featured"])
     expect(await page.locator(sel).evaluate((e) => getComputedStyle(e).opacity), sel).toBe("1");
-  await expect(page.getByText("Available for opportunities")).toBeVisible();
-  await expect(page.getByText("Software Engineer", { exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Explore my work" })).toHaveAttribute("href", "/#work");
-  const cv = page.getByRole("link", { name: /^Download résumé/ });
+  // One pill is shown at any width: at 1440 it is the header's.
+  await expect(page.locator(".hxa__pill:visible")).toHaveCount(1);
+  await expect(page.locator("header .hxa__pill")).toHaveText("Available for opportunities");
+  await expect(page.locator("header .hxa__pill")).toBeVisible();
+  await expect(hero(page).getByText("Software Engineer", { exact: true })).toBeVisible();
+  // R7: the hero's links are in-page.
+  await expect(hero(page).getByRole("link", { name: "Explore my work" })).toHaveAttribute("href", "#work");
+  const cv = hero(page).getByRole("link", { name: /^Download résumé/ });
   await expect(cv).toHaveAttribute("href", "/resume/Tay-Shofer-Software-Engineer-Resume.pdf");
   await expect(cv).toHaveAttribute("download", "Tay-Shofer-Software-Engineer-Resume.pdf");
   const nav = page.getByRole("navigation", { name: "Featured work" });
   expect(await nav.getByRole("link").evaluateAll((as) => as.map((a) => [a.querySelector("b")!.textContent, a.getAttribute("href")]))).toEqual([
-    ["T Poker", "/#work-poker"], ["Aegis", "/#work-aegis"], ["DeveloperOS", "/#work-developeros"], ["GRAVITY FLOW", "/#work-gravity-flow"]]);
+    ["T Poker", "#work-poker"], ["Aegis", "#work-aegis"], ["DeveloperOS", "#work-developeros"], ["GRAVITY FLOW", "#work-gravity-flow"]]);
   await expect(field(page)).toHaveAttribute("data-state", "idle");   // an empty, transparent layer; nothing depends on it
-  // The links really navigate with no client router: "Explore my work" lands on the live page's Work section.
-  await page.getByRole("link", { name: "Explore my work" }).click();
+  // The links really navigate with no client router: "Explore my work" lands on Work.
+  await hero(page).getByRole("link", { name: "Explore my work" }).click();
   await expect(page).toHaveURL(/\/#work$/);
   await expect(page.locator("#work")).toBeAttached();
   await ctx.close();
@@ -112,6 +119,7 @@ for (const [name, opts] of [["the OS setting", { reducedMotion: "reduce" }], ["t
     await page.mouse.move(1000, 400); await page.mouse.move(1100, 450);
     expect(await rafCount(page)).toBe(0);
     expect(await page.locator(".hxa__title").evaluate((e) => e.getAnimations().length)).toBe(0);
+    expect(await page.locator(".site-nav__row").evaluate((e) => e.getAnimations().length)).toBe(0);   // the header's row: no reveal either
     expect(await page.locator(".hxa__glow").evaluateAll((gs) => gs.map((g) => g.style.transform + g.style.opacity))).toEqual(["", ""]);   // the glows rest
     expect(await page.locator(".hxa__featured").evaluate((e) => getComputedStyle(e).opacity)).toBe("1");
     await ctx.close();
@@ -136,8 +144,8 @@ test("motion on: the loop runs, and stops while the tab is hidden or the field i
   const held = await sky(); await page.waitForTimeout(600); expect(await sky()).toEqual(held);   // the sky stops with the loop
   await page.evaluate(() => { Object.defineProperty(document, "hidden", { configurable: true, get: () => false }); document.dispatchEvent(new Event("visibilitychange")); });
   await expect(field(page)).toHaveAttribute("data-state", "running");
-  // Off screen: give the page room to scroll the hero away, then come back.
-  await page.evaluate(() => { document.body.style.paddingBottom = "300vh"; scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" as ScrollBehavior }); });
+  // Off screen: scroll the hero away (to the end of the page), then come back.
+  await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" as ScrollBehavior }));
   await expect(field(page)).toHaveAttribute("data-state", "paused");
   expect(await rafCount(page, 600)).toBe(0);
   await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }));
@@ -184,19 +192,25 @@ for (const vp of [[1440, 900], [1024, 768], [390, 844], [320, 568]] as const) {
 test("keyboard: every control takes focus in reading order, each with a visible 2px ring", async ({ browser }) => {
   const { ctx, page } = await at(browser, [1440, 900]);
   const seen: { at: string; ring: string }[] = [];
-  for (let i = 0; i < 9; i++) {
+  for (let i = 0; i < 15; i++) {
     await page.keyboard.press("Tab");
-    seen.push(await page.evaluate(() => {
-      const e = document.activeElement as HTMLElement, cs = getComputedStyle(e);
+    seen.push(await page.evaluate(async () => {
+      const e = document.activeElement as HTMLElement;
+      // The header's four links ease their colours, the ring's included, over 150ms: read the ring once it has settled.
+      await Promise.all(e.getAnimations().map((a) => a.finished));
+      const cs = getComputedStyle(e);
       return { at: e.getAttribute("href") ?? e.getAttribute("aria-label") ?? e.textContent!.trim(), ring: `${cs.outlineStyle} ${cs.outlineWidth} ${cs.outlineColor}` };
     }));
   }
-  expect(seen.map((s) => s.at)).toEqual(["#main", "/", "/#work", "/resume/Tay-Shofer-Software-Engineer-Resume.pdf",
-    "/#work-poker", "/#work-aegis", "/#work-developeros", "/#work-gravity-flow", "Chat with the assistant"]);
+  // The skip link, the header (R2: the wordmark, the four destinations, accessibility, "Get in touch"), the hero's two
+  // actions and Featured work, then on into Work's first panel.
+  expect(seen.map((s) => s.at)).toEqual(["#main", "#hero", "#work", "#about", "#skills", "#contact", "Accessibility settings", "#contact",
+    "#work", "/resume/Tay-Shofer-Software-Engineer-Resume.pdf",
+    "#work-poker", "#work-aegis", "#work-developeros", "#work-gravity-flow", "https://app.tpoker.app/"]);
   // Every control, the site chrome included: a solid 2px ring in the field's cyan (13:1 on the dark field).
   for (const s of seen) expect(s.ring, s.at).toBe("solid 2px rgb(46, 230, 214)");
   // Names as assistive tech computes them, separate words included.
-  await expect(page.getByRole("link", { name: "Tay Shofer Portfolio", exact: true })).toHaveCount(1);
+  await expect(page.getByRole("link", { name: "Tay Shofer — home", exact: true })).toHaveCount(1);
   await expect(page.getByRole("link", { name: "Download résumé (PDF · two pages, 79 KB)", exact: true })).toHaveCount(1);
   await ctx.close();
 });
@@ -207,10 +221,11 @@ test("structure: one h1, banner, main and a labelled nav; the canvas is hidden f
   await expect(page.getByRole("banner")).toHaveCount(1);
   await expect(page.getByRole("main")).toHaveCount(1);
   await expect(page.getByRole("navigation", { name: "Featured work" })).toHaveCount(1);
-  await expect(page.locator("main h2")).toHaveText(["Featured work"]);
+  await expect(hero(page).locator("h2")).toHaveText(["Featured work"]);
   await expect(field(page)).toHaveAttribute("aria-hidden", "true");
   expect(await field(page).evaluate((e) => getComputedStyle(e).pointerEvents)).toBe("none");
-  await expect(page.getByRole("link", { name: "Tay Shofer Portfolio", exact: true })).toHaveAttribute("href", "/");
+  // The wordmark is the header's (R2), and it leads to the top of the page.
+  await expect(page.getByRole("link", { name: "Tay Shofer — home", exact: true })).toHaveAttribute("href", "#hero");
 });
 
 for (const [label, vp, opts] of [
