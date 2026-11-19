@@ -1,6 +1,6 @@
-// tests/unit/lab-work.test.ts — the Work slice in the cinematic language (PROTOTYPE, round 5; D2 reopened by Tay,
-// 2026-11-18). Branch proto/hero-a-cinematic only, never merged. Every visible fact must come from the site's own data,
-// private repositories stay labels, and the slice stays inside the lab's .cine layer.
+// tests/unit/lab-work.test.ts — the Work slice in the cinematic language (PROTOTYPE, round 5; D1 reopened by Tay,
+// 2026-11-18; D2 not reopened, so no WebGL). Branch proto/hero-a-cinematic only, never merged. Every visible fact must
+// come from the site's own data, private repositories stay labels, and the slice stays inside the lab's .cine layer.
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import { projects, publicRepoUrl, PRIVATE_REPO_LABEL, PROJECT_GALLERIES } from "@/data/projects";

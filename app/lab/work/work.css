@@ -1,5 +1,6 @@
-/* app/lab/work/work.css — the Work slice (PROTOTYPE, round 5; D2 reopened by Tay, 2026-11-18). Only its geometry: every
-   colour, size, step, radius and timing is a --cine-* token from app/lab/_cinematic/cinematic.css. Scoped under .wk. */
+/* app/lab/work/work.css — the Work slice (PROTOTYPE, round 5; D1 reopened by Tay, 2026-11-18; D2 not reopened, so no
+   WebGL). Only its geometry: every colour, size, step, radius and timing is a --cine-* token from
+   app/lab/_cinematic/cinematic.css. Scoped under .wk. */
 
 .wk { position: relative; isolation: isolate; min-height: 100svh; overflow: clip; }
 

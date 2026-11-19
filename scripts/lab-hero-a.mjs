@@ -1,5 +1,5 @@
-// scripts/lab-hero-a.mjs — Concept A prototype measurements (D2 reopened by Tay, 2026-11-18; branch
-// proto/hero-a-cinematic only). Lab numbers from a local production server, never field data.
+// scripts/lab-hero-a.mjs — Concept A prototype measurements (D1 reopened by Tay, 2026-11-18; D2 not reopened, so no
+// WebGL; branch proto/hero-a-cinematic only). Lab numbers from a local production server, never field data.
 //
 // The live hero (/) and the prototype (/lab/hero-a) are measured the same way, so / is the baseline:
 //   desktop  1440×900 @1x, no throttling, fine pointer

@@ -1,7 +1,8 @@
-// tests/unit/lab-hero-a.test.ts — Concept A, the cinematic hero (PROTOTYPE, D2 reopened by Tay on 2026-11-18). Branch
-// proto/hero-a-cinematic only, never merged. It pins what the prototype promised: honest copy, never indexed or linked
-// from the live page, and progressive enhancement. Round 4 extracted its design language into the lab-scoped layer
-// app/lab/_cinematic/cinematic.css: the contrast floors are read from there, and the last block pins the layer's scope.
+// tests/unit/lab-hero-a.test.ts — Concept A, the cinematic hero (PROTOTYPE; D1 reopened by Tay, 2026-11-18; D2 not
+// reopened, so no WebGL). Branch proto/hero-a-cinematic only, never merged. It pins what the prototype promised: honest
+// copy, never indexed or linked from the live page, and progressive enhancement. Round 4 extracted its design language
+// into the lab-scoped layer app/lab/_cinematic/cinematic.css: the contrast floors are read from there, and the last
+// block pins the layer's scope.
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";

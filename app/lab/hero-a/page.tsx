@@ -9,8 +9,9 @@ import "./hero-a.css";
 export const metadata: Metadata = { title: "Lab: Concept A hero" };
 
 /**
- * Concept A, "Cinematic hero": a MEASURED PROTOTYPE of the hero only (D2 reopened by Tay, 2026-11-18). It lives here,
- * behind the noindex /lab segment, and never replaces the live hero (components/sections/Hero.tsx).
+ * Concept A, "Cinematic hero": a MEASURED PROTOTYPE of the hero only (D1 reopened by Tay, 2026-11-18; D2 not
+ * reopened, so no WebGL). It lives here, behind the noindex /lab segment, and never replaces the live hero
+ * (components/sections/Hero.tsx).
  *
  * The cinematic design language it was extracted into (app/lab/_cinematic/cinematic.css, docs/CINEMATIC_SYSTEM.md)
  * applies inside the `.cine` root: tokens, surfaces, focus, the duotone clause, and the one reveal (`data-reveal`, the

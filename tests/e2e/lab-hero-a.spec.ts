@@ -1,7 +1,7 @@
-// tests/e2e/lab-hero-a.spec.ts — Concept A, the cinematic hero (PROTOTYPE, D2 reopened by Tay on 2026-11-18). Branch
-// proto/hero-a-cinematic only, never merged. main's guards (no <canvas>/WebGL on /, the first-load budget for /) are
-// unchanged and still run against /. This file holds the prototype route to the same budget and checks its
-// accessibility, no-JS and reduced-motion paths, and its loop's pause behaviour.
+// tests/e2e/lab-hero-a.spec.ts — Concept A, the cinematic hero (PROTOTYPE; D1 reopened by Tay, 2026-11-18; D2 not
+// reopened, so no WebGL). Branch proto/hero-a-cinematic only, never merged. main's guards (no <canvas>/WebGL on /, the
+// first-load budget for /) are unchanged and still run against /. This file holds the prototype route to the same
+// budget and checks its accessibility, no-JS and reduced-motion paths, and its loop's pause behaviour.
 import { test, expect, type Page, type Browser, type BrowserContextOptions } from "playwright/test";
 import zlib from "node:zlib";
 import { COUNT_WEBGL } from "../support/page";

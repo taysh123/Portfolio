@@ -19,9 +19,9 @@ const sizesOf = (kind: Panel["kind"], reel: boolean) => kind === "phone"
     : "(min-width: 1280px) 660px, (min-width: 1024px) 52vw, 92vw";
 
 /**
- * The Work section in the cinematic language: a MEASURED PROTOTYPE slice (round 5; D2 reopened by Tay, 2026-11-18),
- * behind the noindex /lab segment and its `.cine` layer (docs/CINEMATIC_SYSTEM.md). It never replaces the live Work
- * chapters (components/work/).
+ * The Work section in the cinematic language: a MEASURED PROTOTYPE slice (round 5; D1 reopened by Tay, 2026-11-18;
+ * D2 not reopened, so no WebGL), behind the noindex /lab segment and its `.cine` layer (docs/CINEMATIC_SYSTEM.md). It
+ * never replaces the live Work chapters (components/work/).
  *
  * Four product panels, recruiter-first: the name and one honest line first in reading order, then the state, the
  * stack, the links. Beside them (alternating sides on wide screens), the real capture on a glass stage. Everything is

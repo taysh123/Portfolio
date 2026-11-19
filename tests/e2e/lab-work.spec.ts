@@ -1,5 +1,6 @@
-// tests/e2e/lab-work.spec.ts — the Work slice in the cinematic language (PROTOTYPE, rounds 5–6; D2 reopened by Tay,
-// 2026-11-18). Branch proto/hero-a-cinematic only, never merged. main's guards still run against /, unchanged.
+// tests/e2e/lab-work.spec.ts — the Work slice in the cinematic language (PROTOTYPE, rounds 5–6; D1 reopened by Tay,
+// 2026-11-18; D2 not reopened, so no WebGL). Branch proto/hero-a-cinematic only, never merged. main's guards still run
+// against /, unchanged.
 import { test, expect, type Browser, type BrowserContextOptions, type Page } from "playwright/test";
 import zlib from "node:zlib";
 import { createHash } from "node:crypto";
