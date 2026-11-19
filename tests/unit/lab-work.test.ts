@@ -1,22 +1,22 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment -- TEMPORARY (S18+S19), with the next line: this prototype test still
-   imports the deleted /lab modules, and the production build type-checks every test file. S20 ports it to / and removes
-   both lines (docs/ROADMAP.md, "Concept A: P4–P6"). */
-// @ts-nocheck
-// tests/unit/lab-work.test.ts — the Work slice in the cinematic language (PROTOTYPE, round 5; D1 reopened by Tay,
-// 2026-11-18; D2 not reopened, so no WebGL). Branch proto/hero-a-cinematic only, never merged. Every visible fact must
-// come from the site's own data, private repositories stay labels, and the slice stays inside the lab's .cine layer.
+// tests/unit/lab-work.test.ts — everything under the hero on /, in the cinematic language: Work's four panels and their
+// carousels, Two more, About, Stack, Think · Build · Ship and Contact (the release, R1–R15; D1 reopened by Tay,
+// 2026-11-18; D2 not reopened, so no WebGL). Ported in S20 from the prototype's /lab/work test (the file keeps its name:
+// the code's comments and docs/CINEMATIC_SYSTEM.md point here). Every visible fact must come from the site's own data,
+// private repositories stay labels, and the sections stay inside the page's .cine layer. Where the prototype compared
+// itself with the Product Plates page, which the release deleted, the comparison is now a fixed value, taken from
+// product-plates-final (the tag on 443a1f9, the last Product Plates commit).
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import { projects, publicRepoUrl, PRIVATE_REPO_LABEL, PROJECT_GALLERIES } from "@/data/projects";
-import { flagships } from "@/data/work";
+import { flagships, moreWork } from "@/data/work";
 import { IMAGES } from "@/data/images";
 import { LAB_IMAGES, captureOf } from "@/data/lab-images";
 import { dict } from "@/lib/dict";
-import { panels, DOS_CHIPS, PHONE_CROP } from "@/app/lab/work/panels";
-import { aboutBlock } from "@/app/lab/work/about";
-import { stackBlock, SECURITY_ROWS, SECURITY_EVIDENCE } from "@/app/lab/work/stack";
-import { tbsBlock, DOS_EVIDENCE } from "@/app/lab/work/tbs";
-import { contactBlock } from "@/app/lab/work/contact";
+import { panels, DOS_CHIPS, PHONE_CROP } from "@/components/sections/panels";
+import { aboutBlock } from "@/components/sections/aboutBlock";
+import { stackBlock, SECURITY_ROWS, SECURITY_EVIDENCE } from "@/components/sections/stackBlock";
+import { tbsBlock, DOS_EVIDENCE } from "@/components/sections/tbsBlock";
+import { contactBlock } from "@/components/sections/contactBlock";
 import { pillars } from "@/data/approach";
 import { skillGroups } from "@/data/skills";
 import { projectsFor, lensProjects } from "@/data/stackLens";
@@ -28,15 +28,20 @@ import { privateRepoLeaks } from "../support/private-repo";
 import { namesAny } from "../support/institution";
 
 const read = (f: string) => fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-const page = read("app/lab/work/page.tsx");
-const css = read("app/lab/work/work.css");
-const data = read("app/lab/work/panels.ts");
-const reel = read("app/lab/work/Reel.tsx");
-const shot = read("app/lab/work/Shot.tsx");
+const page = read("components/sections/Work.tsx");
+const more = read("components/sections/MoreWork.tsx");
+const home = read("app/page.tsx");
+const css = read("components/sections/work.css");
+const data = read("components/sections/panels.ts");
+const reel = read("components/sections/Reel.tsx");
+const shot = read("components/sections/Shot.tsx");
 /** Code without its comments (a comment saying "no WebGL" is not WebGL). */
 const code = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-const layer = read("app/lab/_cinematic/cinematic.css");
+const layer = read("app/cinematic.css");
 const project = (id: string) => projects.find((p) => p.id === id)!;
+/** The page's sections under the hero, in order, inside `main` (app/page.tsx). */
+const ORDER = /<Work \/>\n\s*<About \/>\n\s*<Stack \/>\n\s*<ThinkBuildShip \/>\n\s*<Contact \/>\n\s*<\/div>/;
+const inMain = (tag: string) => home.indexOf('<main id="main">') < home.indexOf(tag) && home.indexOf(tag) < home.indexOf("</main>");
 
 describe("honest content", () => {
   it("the four flagships, in Work order, with the correct names", () => {
@@ -62,36 +67,63 @@ describe("honest content", () => {
       expect(p.chips.slice(0, emphasised.length), p.id).toEqual(emphasised.slice(0, 3));
     }
   });
-  it("links: the live product where one exists, else the public repository; GRAVITY FLOW has neither", () => {
+  it("links: the live product where one exists, else the public repository; GRAVITY FLOW has neither; each opens its case study (R4)", () => {
     const by = Object.fromEntries(panels.map((p) => [p.id, p]));
     expect(by.poker.primary).toEqual({ href: project("poker").liveUrl, label: project("poker").liveLabel });
     expect(by.aegis.primary).toEqual({ href: publicRepoUrl(project("aegis")), label: dict.common.source });
     expect(by.developeros.primary).toEqual({ href: publicRepoUrl(project("developeros")), label: dict.common.source });
     expect(by["gravity-flow"].primary).toBeUndefined();
-    for (const p of panels) expect(p.more).toEqual({ href: `/#work-${p.id}`, label: `More on ${p.name}` });
+    // R4: "More on X" (a link to the live chapter the release removed) is a "Case study" button on the site's dialog.
+    for (const p of panels) expect(Object.keys(p), p.id).not.toContain("more");
+    expect(dict.common.caseStudy).toBe("Case study");
+    const trigger = /<button type="button" className="wk__more case-study-trigger" data-case-study=\{p\.id\} aria-haspopup="dialog">\s*\{dict\.common\.caseStudy\}\s*<\/button>/;
+    expect(page).toMatch(trigger);
+    expect(code(page)).not.toMatch(/<Link|href=\{p\.more|#work-\$\{/);
   });
-  it("private repositories are labels, never links: no slug or URL in the slice's data, page or rendered values", () => {
+  it("private repositories are labels, never links: no slug or URL in the section's data, page or rendered values", () => {
     expect(panels.filter((p) => p.privateRepo).map((p) => p.id)).toEqual(["poker", "gravity-flow"]);
     for (const p of panels.filter((p) => p.privateRepo)) expect(project(p.id).repo.visibility).toBe("private");
-    for (const t of [page, css, data, JSON.stringify(panels)]) expect(privateRepoLeaks(t)).toEqual([]);
+    for (const t of [page, more, css, data, JSON.stringify(panels)]) expect(privateRepoLeaks(t)).toEqual([]);
     expect(JSON.stringify(panels)).not.toMatch(/github\.com\/[^"]*(poker|gravity)/i);
     expect(page).toMatch(/\{p\.privateRepo && <PrivateRepoLabel/);
     expect(PRIVATE_REPO_LABEL).toBe("Private repository");
   });
   it("names no institution, and claims no AI (Aegis's analysis is a deterministic mock; DeveloperOS's default is offline)", () => {
-    for (const t of [page, data, JSON.stringify(panels)]) expect(namesAny(t)).toBe(false);
+    for (const t of [page, more, data, JSON.stringify(panels)]) expect(namesAny(t)).toBe(false);
     expect(JSON.stringify(panels)).not.toMatch(/\bAI\b|LLM|model/i);
   });
-  it("the title says projects, not products: not all four are shipped (Tay, round 5)", () => {
-    expect(page).toMatch(/<h1[^>]*>Four projects, built end to end\.<\/h1>/);
-    expect(page).not.toMatch(/Four products/);
+  it("the title says projects, not products: not all four are shipped (Tay, round 5); under the hero's h1 it is an h2", () => {
+    expect(page).toMatch(/<h2[^>]*>Four projects, built end to end\.<\/h2>/);
+    expect(page).not.toMatch(/Four products|<h1/);
   });
   it("adds no figures of its own: every number shown is in the project's data", () => {
     for (const p of panels) for (const n of `${p.line} ${p.state}`.match(/\d[\d.,]*/g) ?? [])
       expect(JSON.stringify(project(p.id)), `${p.id}: ${n}`).toContain(n);
-    const jsx = code(page.slice(page.indexOf("  return (")));   // the markup only: sizes strings and comments are not copy
-    const copy = [...jsx.replace(/<svg[\s\S]*?<\/svg>/g, "").replace(/className="[^"]*"/g, "").matchAll(/>([^<>{}]+)</g)].map((m) => m[1]).join(" ");
-    expect(copy).not.toMatch(/\d/);
+    for (const t of [page, more]) {
+      const jsx = code(t.slice(t.indexOf("  return (")));   // the markup only: sizes strings and comments are not copy
+      const copy = [...jsx.replace(/<svg[\s\S]*?<\/svg>/g, "").replace(/className="[^"]*"/g, "").matchAll(/>([^<>{}]+)</g)].map((m) => m[1]).join(" ");
+      expect(copy).not.toMatch(/\d/);
+    }
+  });
+});
+
+// Two more (R5, S18+S19): the live block's words only, each project with its case study, so the page keeps six triggers.
+describe("Two more (R5): the live block's words, each with its case study", () => {
+  it("the live title and the two smaller systems, in the live order, from the site's data", () => {
+    expect(dict.more.title).toBe("Two more");
+    expect(more).toMatch(/<h2 id="more-work-title" className="wk__mw-title">\{dict\.more\.title\}<\/h2>/);
+    expect(moreWork.map((m) => m.id)).toEqual(["job-assistant", "orders-delivery"]);
+    expect(more).toMatch(/\{p\.name\}[\s\S]*\{p\.context\}[\s\S]*\{p\.summary\}/);
+  });
+  it("a public repository is a link that says it opens a new tab; a private one is the site's plain label; each has a case study", () => {
+    expect(more).toMatch(/<a href=\{repo\} target="_blank" rel="noopener noreferrer" className="wk__go">\s*\{dict\.common\.source\}<ArrowUpRightIcon size=\{15\} \/><span className="sr-only">\{dict\.common\.newTab\}<\/span>/);
+    expect(more).toMatch(/<PrivateRepoLabel className="wk__private" label=\{repoLabel\(p\)\} \/>/);
+    expect(more).toMatch(/<button type="button" className="wk__more case-study-trigger" data-case-study=\{p\.id\} aria-haspopup="dialog">\s*\{dict\.common\.caseStudy\}\s*<\/button>/);
+  });
+  it("a server component inside Work that holds still: no client code, no reveal, no image", () => {
+    expect(more).not.toMatch(/^["']use client["']|useState|useEffect|data-reveal/m);
+    expect(code(more)).not.toMatch(/<img|<picture|<Shot|<Image|<canvas/);
+    expect(page).toMatch(/<\/div>\n\n\s*<MoreWork \/>\n\s*<\/section>/);   // after the four panels, inside #work
   });
 });
 
@@ -111,7 +143,7 @@ describe("real captures: each project's gallery (data/projects.ts PROJECT_GALLER
     const all = panels.flatMap((p) => p.gallery.map((g) => g.image));
     expect(new Set(all).size).toBe(all.length);
   });
-  it("is a separate export, not a field of the projects the live page and its case study read", () => {
+  it("is a separate export, not a field of the projects the case study reads", () => {
     for (const p of projects) expect(Object.keys(p)).not.toContain("gallery");
     expect(read("data/projects.ts")).toMatch(/^import type \{ CaptureName \} from "@\/data\/lab-images";$/m);   // type-only: no runtime import
   });
@@ -122,7 +154,7 @@ describe("real captures: each project's gallery (data/projects.ts PROJECT_GALLER
     }
     expect(shot).toMatch(/width=\{im\.w\} height=\{im\.h\}/);   // real dimensions reserve the box
   });
-  it("the lab's own captures: listed in data/lab-images.ts at their real sizes, never in data/images.ts", async () => {
+  it("the newer captures: listed in data/lab-images.ts at their real sizes, never in data/images.ts, and named by server code only", async () => {
     for (const [name, im] of Object.entries(LAB_IMAGES)) {
       expect(Object.keys(IMAGES), name).not.toContain(name);
       for (const w of im.widths) for (const ext of ["avif", "webp"]) {
@@ -132,11 +164,16 @@ describe("real captures: each project's gallery (data/projects.ts PROJECT_GALLER
       }
       expect(im.widths.at(-1), name).toBe(im.w);
     }
-    // The live About visual is client code that imports data/images.ts whole: a lab entry there would ship in /'s
-    // first-load JavaScript. Only the lab (and data/projects.ts, for a type) may name data/lab-images.
+    // The image tables stay out of the first-load JavaScript: no client component may name them. On the prototype this
+    // guarded the Product Plates About visual (client code that imported data/images.ts whole); on / it guards the
+    // carousel, which receives server-rendered captures instead (the structure tests below). Only server code, and
+    // data/projects.ts for a type, names data/lab-images.
     const files = (d: string): string[] => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? files(`${d}/${e.name}`) : [`${d}/${e.name}`]);
     const users = ["app", "components", "lib", "data"].flatMap(files).filter((f) => /\.(ts|tsx)$/.test(f) && /lab-images/.test(read(f)));
-    expect(users.filter((f) => !f.startsWith("app/lab/"))).toEqual(["data/projects.ts"]);
+    expect(users.sort()).toEqual(["components/sections/Shot.tsx", "components/sections/panels.ts", "data/projects.ts"]);
+    for (const f of users) expect(read(f), f).not.toMatch(/^["']use client["']/m);
+    const clients = ["app", "components", "lib"].flatMap(files).filter((f) => /\.tsx?$/.test(f) && /^["']use client["']/m.test(read(f)));
+    for (const f of clients) expect(read(f), f).not.toMatch(/from "@\/data\/(lab-)?images"/);
   });
   it("alt text is the site's own, already reviewed: lib/dict.ts or the project's media", () => {
     const alt = Object.fromEntries(panels.flatMap((p) => p.gallery.map((g) => [g.image, g.alt])));
@@ -189,17 +226,19 @@ describe("real captures: each project's gallery (data/projects.ts PROJECT_GALLER
   it("adding a capture without alt text fails the build: the gallery resolver throws", () => {
     expect(data).toMatch(/if \(!alt\) throw new Error\(/);
   });
-  it("the phone crops are the ones the live chapters use below 640px", () => {
-    const pairs = (f: string) => [...read(f).matchAll(/srcSet\("([\w-]+-phone)", "avif"\)[\s\S]*?srcSet\("([\w-]+)", "avif"\)/g)].map((m) => [m[2], m[1]]);
-    expect(Object.entries(PHONE_CROP)).toEqual([...pairs("components/work/AegisChapter.tsx"), ...pairs("components/work/DeveloperOSChapter.tsx")]);
+  it("the phone crops are the ones the Product Plates chapters used below 640px", () => {
+    // Fixed values: the Aegis and DeveloperOS chapters (product-plates-final:components/work/AegisChapter.tsx and
+    // DeveloperOSChapter.tsx) swapped in exactly these two crops under 640px.
+    expect(PHONE_CROP).toEqual({ "aegis-alerts": "aegis-alerts-phone", "dos-search": "dos-search-phone" });
+    expect(shot).toMatch(/media="\(max-width: 639px\)"/);
   });
-  it("the DeveloperOS chips are the live chapter's own (copied, because the chapter does not export them)", () => {
-    const chapter = read("components/work/DeveloperOSChapter.tsx");
-    expect([...chapter.slice(chapter.indexOf("const CHIPS")).matchAll(/label: "([^"]+)"/g)].slice(0, 3).map((m) => m[1])).toEqual(DOS_CHIPS);
+  it("the DeveloperOS chips are the Product Plates chapter's own", () => {
+    // Fixed values: the first three labels of CHIPS in product-plates-final:components/work/DeveloperOSChapter.tsx, the
+    // file:line chips on the search capture.
+    expect(DOS_CHIPS).toEqual(["devos/providers/ollama.py:1-50", "tests/test_ollama.py:1-50", "devos/providers/__init__.py:1-5"]);
   });
-  it("only the page's first capture loads eagerly at high priority; every other capture is lazy", () => {
-    expect(page).toMatch(/<Shot \{\.\.\.p\.gallery\[0\]\} sizes=\{sizesOf\(p\.kind, false\)\} priority=\{i === 0\} \/>/);   // a still first panel
-    expect(page).toMatch(/priority=\{i === 0 && k === 0\}/);                                                       // or a carousel's first capture
+  it("no capture is a load priority on /: the hero fills the first screen, so every capture is lazy", () => {
+    expect(code(page)).not.toMatch(/priority/);
     expect(shot).toMatch(/loading=\{priority \? "eager" : "lazy"\} fetchPriority=\{priority \? "high" : undefined\}/);
   });
 });
@@ -209,13 +248,13 @@ describe("structure", () => {
     expect(page).toMatch(/\{\/\* P4: the "try it" demo mounts here[\s\S]*?\*\/\}\n\s*<div className="wk__demo" data-demo-slot=\{p\.id\} hidden \/>/);
     expect(page.match(/data-demo-slot/g)).toHaveLength(1);   // one per panel, from the map
   });
-  it("the carousel and Stack's filter are the slice's only client code: the page and its data stay on the server", () => {
-    for (const t of [page, data, shot]) expect(t).not.toMatch(/^["']use client["']|useEffect|<canvas|getContext/m);
+  it("the carousel and Stack's filter are the only client code under the hero: the sections and their data stay on the server", () => {
+    for (const t of [page, more, data, shot, home]) expect(t).not.toMatch(/^["']use client["']|useEffect|<canvas|getContext/m);
     expect(reel).toMatch(/^"use client";/);
     expect(code(reel)).not.toMatch(/<canvas|getContext|webgl|three|lenis/i);
     // It imports no data and no image table: the server renders every capture and hands them in (`shots`).
     expect(reel).not.toMatch(/from "\.\/panels"|from "\.\/Shot"|@\/data\//);
-    expect(page).toMatch(/shots=\{p\.gallery\.map\(\(g, k\) => <Shot /);
+    expect(page).toMatch(/shots=\{p\.gallery\.map\(\(g\) => <Shot /);
   });
   it("a single capture is a still, with no carousel chrome; two or more are a carousel", () => {
     expect(page).toMatch(/\{p\.gallery\.length === 1 \? \(\s*<div className="wk__device"><Shot \{\.\.\.p\.gallery\[0\]\}[\s\S]*?\) : \(\s*<Reel /);
@@ -240,6 +279,8 @@ describe("structure", () => {
     expect(css).toMatch(/\.wk__slide:not\(\[data-shown\]\) \{ visibility: hidden; \}/);
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[^@]*\.wk__slide:not\(\[data-offset="0"\]\) \{ transform: none; visibility: hidden; \}/);
     expect(css).toMatch(/\[data-reduced-motion="true"\] \.wk__slide:not\(\[data-offset="0"\]\) \{ transform: none; visibility: hidden; \}/);
+    // A case study is a script-driven dialog: without JavaScript its triggers would do nothing, so the page hides them.
+    expect(home).toMatch(/<noscript><style>\{"\.case-study-trigger\{display:none\}"\}<\/style><\/noscript>/);
   });
   it("every slide holds its capture's box, drawn or not (mixed shapes never shift the page), from the server's ratios", () => {
     expect(page).toMatch(/boxes=\{p\.gallery\.map\(\(g\) => \(\{ ratio: ratioOf\(g\.image\), \.\.\.\(g\.phone \? \{ phone: ratioOf\(g\.phone\) \} : null\) \}\)\)\}/);
@@ -247,10 +288,10 @@ describe("structure", () => {
     expect(css).toMatch(/\.wk__slide \.wk__device:empty::before \{ content: ""; display: block; aspect-ratio: var\(--wk-box\); \}/);
     expect(css).toMatch(/@media \(max-width: 639px\) \{[^@]*\.wk__slide \.wk__device:empty::before \{ aspect-ratio: var\(--wk-box-phone, var\(--wk-box\)\); \}/);
   });
-  it("one opening reveal (eyebrow, the title settling, lede) and still panels", () => {
-    expect(page.match(/\sdata-reveal(="settle")?[\s>]/g)).toHaveLength(3);
-    expect(page).toMatch(/<h1[^>]*data-reveal="settle"/);
-    expect([...css.matchAll(/--reveal-i: (\d+);/g)].map((m) => Number(m[1]))).toEqual([0, 1, 2]);
+  it("no reveal of its own and no lede (R10): the hero's reveal is the page's one; the panels hold still", () => {
+    for (const t of [page, more, home]) expect(t).not.toMatch(/data-reveal/);
+    expect(css).not.toMatch(/--reveal-i|data-reveal|\.wk__lede/);
+    expect(code(page)).not.toMatch(/wk__lede|heroLead/);
   });
   it("lifts on hover, keyboard focus and touch, and never moves with reduced motion", () => {
     expect(css).toMatch(/\.wk__panel:is\(:hover, :focus-within, :active\) \.wk__stage \{\s*translate: 0 var\(--cine-lift\);/);
@@ -260,7 +301,7 @@ describe("structure", () => {
 });
 
 describe("inside the cinematic layer", () => {
-  it("every selector is scoped to the slice (.wk)", () => {
+  it("every selector is scoped to the region (.wk)", () => {
     const selectors = [...css.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{/g)].map((m) => m[1].trim()).filter((s) => !s.startsWith("@"));
     expect(selectors.length).toBeGreaterThan(30);
     for (const sel of selectors) for (const part of sel.split(/,(?![^(]*\))/)) expect(part.trim(), sel).toMatch(/\.wk\b|\.wk__/);
@@ -280,19 +321,22 @@ describe("inside the cinematic layer", () => {
     for (const t of ["--cine-flow-turn", "--cine-flow-scale", "--cine-flow-dim"]) expect(round6).toMatch(new RegExp(`${t}: [^;]+;\\s*/\\* NEW:`));
     expect(round6).toMatch(/--cine-dur-move: var\(--dur-slow\);/);   // the site's own timing
   });
-  it("lives under the /lab layout (noindex) and nothing on the live page links to it", () => {
-    expect(fs.existsSync("app/lab/layout.tsx")).toBe(true);
+  it("is the page now: / composes the sections inside <main>, in the .cine root, and /lab is gone", () => {
+    expect(fs.existsSync("app/lab")).toBe(false);
     for (const f of ["app/page.tsx", "app/sitemap.ts", "app/robots.ts"]) expect(read(f), f).not.toMatch(/lab\/work/);
+    expect(home).toMatch(ORDER);
+    expect(inMain("<Work />") && inMain("<Contact />")).toBe(true);
+    expect(home).toMatch(/<main id="main">\n\s*<div className="cine" data-theme="dark">\n\s*<Hero c=\{c\} \/>\n\s*<div className="wk">/);
+    expect(read("components/sections/Work.tsx")).toMatch(/import "\.\/work\.css";/);
   });
 });
 
 // About (P3.3, session 12): Tay approved every word before it was built. Each string is held to its source, and the
-// approved copy is pinned as well, so a change to either one shows up here.
-describe("About (P3.3): the live About section's own words, and the live site's own links", () => {
-  const block = read("app/lab/work/AboutBlock.tsx");
-  const hero = read("app/lab/hero-a/page.tsx");
-  const shown = [aboutBlock.eyebrow, ...aboutBlock.title, aboutBlock.lede, ...aboutBlock.facts, aboutBlock.availability ?? "",
-    aboutBlock.resume.label, aboutBlock.resume.note, ...aboutBlock.profiles.map((p) => p.label)];
+// approved copy is pinned as well, so a change to either one shows up here. Since R10 (S18+S19) it ends on the facts.
+describe("About (P3.3): the live About section's own words, ending on the facts (R10)", () => {
+  const block = read("components/sections/About.tsx");
+  const hero = read("components/sections/Hero.tsx");
+  const shown = [aboutBlock.eyebrow, ...aboutBlock.title, aboutBlock.lede, ...aboutBlock.facts];
 
   it("the eyebrow, the title and the four facts are the live ones, word for word", () => {
     expect(aboutBlock.eyebrow).toBe(dict.nav.about);
@@ -308,38 +352,30 @@ describe("About (P3.3): the live About section's own words, and the live site's 
     expect(about.paragraphs[0].startsWith(who)).toBe(true);
     expect(about.paragraphs[1]).toContain(` ${what} `);
   });
-  it("the availability line is the one joined string: the live label, then the end of the live detail (Tay's choice)", () => {
-    expect(aboutBlock.availability).toBe("Available for software engineering roles: on-site, hybrid, or remote.");
-    expect(availability.open).toBe(true);
-    expect(aboutBlock.availability!.startsWith(`${availability.label}: `)).toBe(true);
-    expect(availability.detail.endsWith("—on-site, hybrid, or remote.")).toBe(true);
-    expect(block).toMatch(/\{a\.availability && \(/);   // only while the site says it is open
+  it("R10: no availability line and no links; it ends on the facts", () => {
+    expect(Object.keys(aboutBlock)).toEqual(["eyebrow", "title", "lede", "facts"]);
+    expect(code(block)).not.toMatch(/<a\b|<button|availability|resume|profiles/);
+    expect(block).toMatch(/\{a\.facts\.map\(\(f\) => <li key=\{f\}>\{f\}<\/li>\)\}\n\s*<\/ul>\n\s*<\/div>\n\s*<\/section>/);
   });
-  it("links: the résumé, GitHub and LinkedIn at exactly the live site's targets", () => {
-    expect(aboutBlock.resume.href).toBe(resume.href);
-    expect(aboutBlock.resume.href).toBe("/resume/Tay-Shofer-Software-Engineer-Resume.pdf");
-    expect(aboutBlock.resume.fileName).toBe(resume.fileName);
-    expect(aboutBlock.profiles).toEqual([
-      { href: socials.github.url, label: dict.contact.github },
-      { href: socials.linkedin.url, label: dict.contact.linkedin },
-    ]);
-    expect(aboutBlock.profiles.map((p) => p.href)).toEqual(["https://github.com/taysh123", "https://www.linkedin.com/in/tay-shofer-1b2b54287"]);
-    // The résumé is the locked hero's control: its label, its note, and a download of the same PDF.
-    expect(hero).toContain(`${aboutBlock.resume.label}<span aria-hidden="true">↓</span>`);
-    expect(aboutBlock.resume.note).toBe(" (PDF · two pages, 79 KB)");
-    expect(block).toMatch(/<a href=\{a\.resume\.href\} download=\{a\.resume\.fileName\} type="application\/pdf"/);
-    expect(block).toMatch(/target="_blank" rel="noopener noreferrer"/);
+  it("the three links it dropped are still on the page, at exactly the live site's targets: the hero's résumé, and Contact's", () => {
+    expect(resume.href).toBe("/resume/Tay-Shofer-Software-Engineer-Resume.pdf");
+    expect([socials.github.url, socials.linkedin.url]).toEqual(["https://github.com/taysh123", "https://www.linkedin.com/in/tay-shofer-1b2b54287"]);
+    // The hero's résumé: its label, its note, and a download of the same PDF (R9: the arrow is the site's SVG icon).
+    expect(hero).toMatch(/<a href=\{resume\.href\} download=\{resume\.fileName\} type="application\/pdf" className="hxa__btn hxa__btn--ghost">\n\s*Download résumé<ArrowDownIcon size=\{17\} \/>\n\s*<span className="sr-only"> \(PDF\{t\.contact\.resumeNote\}\)<\/span>/);
+    expect(dict.contact.resumeNote).toBe(" · two pages, 79 KB");
+    // Contact's: the same PDF, GitHub and LinkedIn (held to their sources in Contact's tests below).
+    expect(contactBlock.resume.href).toBe(resume.href);
+    expect(contactBlock.profiles.map((p) => p.href).sort()).toEqual([socials.github.url, socials.linkedin.url].sort());
   });
   it("no photo, no capture, no institution, no year or number of its own, and no private repository", () => {
     expect(code(block)).not.toMatch(/<img|<picture|<Shot|<Pic|<Image/);
-    for (const t of [block, read("app/lab/work/about.ts"), shown.join(" ")]) expect(namesAny(t)).toBe(false);
-    expect(shown.join(" ")).not.toMatch(/\b(19|20)\d{2}\b/);
-    expect(shown.join(" ").match(/\d+/g)).toEqual(["79"]);   // the résumé's size, the live site's own note
+    for (const t of [block, read("components/sections/aboutBlock.ts"), shown.join(" ")]) expect(namesAny(t)).toBe(false);
+    expect(shown.join(" ")).not.toMatch(/\d/);
     expect(privateRepoLeaks(block + JSON.stringify(aboutBlock))).toEqual([]);
   });
-  it("holds still and ships no client code: the page's one reveal stays the only one", () => {
+  it("holds still and ships no client code: the page's one reveal stays the hero's", () => {
     expect(block).not.toMatch(/data-reveal|"use client"|useState|useEffect/);
-    expect(page).toMatch(/<AboutBlock \/>\n\s*<StackBlock \/>\n\s*<TbsBlock \/>\n\s*<ContactBlock \/>\n\s*<\/main>/);   // Stack (session 13), Think · Build · Ship (14), Contact (15)
+    expect(home).toMatch(ORDER);   // Work, then About, Stack (session 13), Think · Build · Ship (14), Contact (15)
   });
   it("adds no token: the layer still defines the same 76, and the About rules read only layer tokens", () => {
     const root = layer.slice(layer.indexOf(".cine[data-theme] {"));
@@ -354,9 +390,9 @@ describe("About (P3.3): the live About section's own words, and the live site's 
 // word for word, the live mapping on each tool, a filter of the four flagships, and Tay's Security group. Every string is
 // held to its source, and the approved rows are pinned, so a change to either one shows up here.
 describe("Stack (P3.4): the live Stack's groups, tools and evidence, with a filter of the four flagships", () => {
-  const block = read("app/lab/work/StackBlock.tsx");
-  const filter = read("app/lab/work/StackFilter.tsx");
-  const src = read("app/lab/work/stack.ts");
+  const block = read("components/sections/Stack.tsx");
+  const filter = read("components/sections/StackFilter.tsx");
+  const src = read("components/sections/stackBlock.ts");
   const FLAG = ["poker", "aegis", "developeros", "gravity-flow"];
   const { groups, filter: lens } = stackBlock;
   const tools = groups.flatMap((g) => g.tools);
@@ -440,11 +476,10 @@ describe("Stack (P3.4): the live Stack's groups, tools and evidence, with a filt
     expect(lens.options.map((o) => o.status)).toEqual(["Showing the 18 tools T Poker uses.", "Showing the 19 tools Aegis uses.",
       "Showing the 9 tools DeveloperOS uses.", "Showing the 6 tools GRAVITY FLOW uses."]);
   });
-  it("the filter is written from the options exactly as the live FILTER: only the project's tools, no empty group", () => {
-    const live = read("components/sections/Stack.tsx");
-    // The live rules: a tool whose data-p doesn't name the project goes, and so does a group left with none.
-    expect(live).toContain('[data-tool]:not([data-p~="${id}"]){display:none}');
-    expect(live).toContain('.sgroup:not(:has([data-p~="${id}"])){display:none}');
+  it("the filter is written from the options exactly as the Product Plates FILTER was: only the project's tools, no empty group", () => {
+    // Fixed values: the Product Plates Stack (product-plates-final:components/sections/Stack.tsx) wrote, per project, a tool
+    // whose data-p doesn't name it `[data-tool]:not([data-p~="<id>"]){display:none}`, and a group left with none
+    // `<group>:not(:has([data-p~="<id>"])){display:none}`. The release writes the same two rules, on its own classes.
     for (const { id } of lens.options) {
       expect(lens.css).toContain(`.wk__stack-groups[data-lens="${id}"] [data-tool]:not([data-p~="${id}"]){display:none}`);
       expect(lens.css).toContain(`.wk__stack-groups[data-lens="${id}"] .wk__stack-group:not(:has([data-p~="${id}"])){display:none}`);
@@ -478,9 +513,10 @@ describe("Stack (P3.4): the live Stack's groups, tools and evidence, with a filt
     expect(privateRepoLeaks(block + filter + src + JSON.stringify(stackBlock))).toEqual([]);
     expect(code(block)).not.toMatch(/<img|<svg|<picture|<Pic|<Image|<Shot/);
   });
-  it("under About inside <main>, and the page keeps its one opening reveal", () => {
-    expect(page).toMatch(/<AboutBlock \/>\n\s*<StackBlock \/>\n\s*<TbsBlock \/>\n\s*<ContactBlock \/>\n\s*<\/main>/);   // Think · Build · Ship (session 14), then Contact (15)
-    expect(page.match(/\sdata-reveal(="settle")?[\s>]/g)).toHaveLength(3);
+  it("under About inside <main>, and the page keeps the hero's one opening reveal", () => {
+    expect(home).toMatch(ORDER);   // About above it; Think · Build · Ship (session 14), then Contact (15), below it
+    expect(inMain("<Stack />")).toBe(true);
+    for (const t of [block, home]) expect(t).not.toMatch(/data-reveal/);
   });
   it("adds no token; pills outlined under All, filled for a project, evidence only under All; no transition when reduced", () => {
     const rules = css.slice(css.indexOf("/* ── Stack (P3.4"), css.indexOf("/* ── Smaller screens"));
@@ -501,8 +537,8 @@ describe("Stack (P3.4): the live Stack's groups, tools and evidence, with a filt
 // Tay's wording, so all four flagships appear. Each string is held to its source, and the approved copy is pinned, so
 // a change to either one shows up here.
 describe("Think · Build · Ship (P3.5): the live section's words, with evidence from all four flagships", () => {
-  const block = read("app/lab/work/TbsBlock.tsx");
-  const src = read("app/lab/work/tbs.ts");
+  const block = read("components/sections/ThinkBuildShip.tsx");
+  const src = read("components/sections/tbsBlock.ts");
   const { rows } = tbsBlock;
   const shown = [tbsBlock.title, ...rows.flatMap((r) => [r.word, r.line, r.summary, ...r.evidence.map((e) => e.text)])];
 
@@ -549,7 +585,7 @@ describe("Think · Build · Ship (P3.5): the live section's words, with evidence
   });
   it("names all four flagships, each once; no figure, year, institution, AI claim or private repository", () => {
     const names = rows.flatMap((r) => r.evidence.map((e) => e.name));
-    expect([...names].sort()).toEqual(panels.map((p) => p.name).sort());   // the four flagships the slice shows
+    expect([...names].sort()).toEqual(panels.map((p) => p.name).sort());   // the four flagships Work shows
     const text = shown.join(" | ");
     expect(text).not.toMatch(/\d/);
     expect(text).not.toMatch(/\bAI\b|LLM|\bmodel\b|machine learning|\bML\b|microservice/i);
@@ -559,8 +595,9 @@ describe("Think · Build · Ship (P3.5): the live section's words, with evidence
   it("a server component under Stack inside <main>: no client code, no reveal, no link, no image", () => {
     for (const t of [block, src]) expect(t).not.toMatch(/^["']use client["']|useState|useEffect|data-reveal/m);
     expect(code(block)).not.toMatch(/<a\b|<Link|<button|<img|<svg|<picture|<Pic|<Image|<Shot/);
-    expect(page).toMatch(/<StackBlock \/>\n\s*<TbsBlock \/>\n\s*<ContactBlock \/>\n\s*<\/main>/);   // Contact follows it (session 15)
-    expect(page.match(/\sdata-reveal(="settle")?[\s>]/g)).toHaveLength(3);
+    expect(home).toMatch(ORDER);   // Contact follows it (session 15)
+    expect(inMain("<ThinkBuildShip />")).toBe(true);
+    expect(home).not.toMatch(/data-reveal/);
     // The live structure: an ordered list of rows, each word an h3 with the live screen-reader colon.
     expect(block).toMatch(/<ol className="wk__tbs-rows">/);
     expect(block).toMatch(/<h3 className="wk__tbs-word">\{r\.word\}<span className="sr-only">:<\/span><\/h3>/);
@@ -572,18 +609,19 @@ describe("Think · Build · Ship (P3.5): the live section's words, with evidence
     expect(rules).not.toMatch(/--cine-[\w-]+:|#[0-9a-fA-F]{3,6}\b|rgba?\(|transition|animation|data-reveal/);
     expect(rules.match(/var\(--cine-[\w-]+\)/g)!.length).toBeGreaterThan(20);
     expect(rules).toMatch(/@media \(min-width: 1024px\) \{\s*\.wk__tbs-row \{ grid-template-columns: minmax\(0, 5fr\) minmax\(0, 7fr\); column-gap: clamp\(40px, 5vw, 80px\); \}/);
-    expect(css).toMatch(/\.wk__about-title, \.wk__stack-title, \.wk__tbs-title, \.wk__contact-title \{/);
+    expect(css).toMatch(/\.wk__about-title, \.wk__stack-title, \.wk__tbs-title, \.wk__mw-title, \.wk__contact-title \{/);
   });
 });
 
 // Contact (P3.6, session 15): the live Contact section's own words and links, under Think · Build · Ship. Tay approved
 // the copy before it was built: the live title (not the reference images' draft), the live mailto with its subject, the
 // nav's "Contact" as the eyebrow, and the lead only while the site says it is open. Each string and target is held to its
-// source, and the approved copy is pinned, so a change to either one shows up here.
+// source, and the approved copy is pinned, so a change to either one shows up here. The prototype also read the Product
+// Plates Contact (components/sections/Contact.tsx then); the release replaced that file, so those reads are the fixed
+// values below, as product-plates-final has them.
 describe("Contact (P3.6): the live Contact section's own words, and its four links at the live targets", () => {
-  const block = read("app/lab/work/ContactBlock.tsx");
-  const src = read("app/lab/work/contact.ts");
-  const live = read("components/sections/Contact.tsx");
+  const block = read("components/sections/Contact.tsx");
+  const src = read("components/sections/contactBlock.ts");
   const c = contactBlock;
   const shown = [c.eyebrow, ...c.title, c.lead ?? "", c.email.label, ...c.profiles.map((p) => p.label), c.resume.label, c.resume.note];
 
@@ -595,9 +633,7 @@ describe("Contact (P3.6): the live Contact section's own words, and its four lin
     expect(c.title.join(" ")).not.toMatch(/meaningful/);                       // not the reference images' draft
     expect(c.lead).toBe(availability.detail);
     expect(c.lead).toBe("I'm looking for a software engineering opportunity that fits my skills—on-site, hybrid, or remote.");
-    // The live section reads the same fields.
-    expect(live).toContain("{t.contact.title[0]}<br /><span>{t.contact.title[1]}</span>");
-    expect(live).toContain('<p className="contact__lead">{availability.detail}</p>');
+    expect(block).toMatch(/<span>\{c\.title\[0\]\}<\/span> <span>\{c\.title\[1\]\}<\/span>/);   // each half on its own line, as live
   });
   it("the lead shows only while the site says it is open (Tay, session 15)", () => {
     expect(availability.open).toBe(true);
@@ -608,7 +644,6 @@ describe("Contact (P3.6): the live Contact section's own words, and its four lin
     expect(c.email.href).toBe(`mailto:${socials.email}?subject=${encodeURIComponent(dict.contact.subject)}`);
     expect(c.email.href).toBe(`mailto:${socials.email}?subject=Hello%20Tay`);
     expect(c.email.label).toBe("Email me");
-    expect(live).toContain("href={`mailto:${socials.email}?subject=${encodeURIComponent(t.contact.subject)}`}");
     expect(block).toMatch(/<a href=\{c\.email\.href\} className="wk__go wk__go--fill" data-email>\{c\.email\.label\}<\/a>/);
   });
   it("the two profiles: the live labels, order and targets, each in a new tab and saying so", () => {
@@ -616,28 +651,31 @@ describe("Contact (P3.6): the live Contact section's own words, and its four lin
       { href: socials.linkedin.url, label: dict.contact.linkedin },
       { href: socials.github.url, label: dict.contact.github },
     ]);
+    // The live order, LinkedIn first, as fixed values.
     expect(c.profiles.map((p) => [p.label, p.href])).toEqual([
       ["LinkedIn", "https://www.linkedin.com/in/tay-shofer-1b2b54287"], ["GitHub", "https://github.com/taysh123"]]);
-    expect(live.indexOf("socials.linkedin.url")).toBeLessThan(live.indexOf("socials.github.url"));   // the live order
     expect(block).toMatch(/<a key=\{p\.href\} href=\{p\.href\} target="_blank" rel="noopener noreferrer" className="wk__go" data-profile>/);
     expect(block).toContain('<span className="sr-only">{dict.common.newTab}</span>');
   });
-  it("the résumé: the live label and note, the same file and download; the PDF is untouched", () => {
+  it("the résumé: the live label and note, the same file and download; its size never breaks across a line; the PDF is untouched", () => {
     expect(c.resume.href).toBe(resume.href);
     expect(c.resume.fileName).toBe(resume.fileName);
     expect(c.resume.label).toBe(dict.contact.resume);
     expect(c.resume.label).toBe("Download résumé (PDF)");
-    expect(c.resume.note).toBe(" · two pages, 79 KB");
-    expect(live).toContain('t.contact.resumeNote.replace(" KB", "\\u00a0KB")');
-    expect(live).toContain('<a href={resume.href} download={resume.fileName} type="application/pdf" data-resume>');
+    expect(c.resume.note).toBe(" · two pages, 79 KB");   // the live note, its size joined by a no-break space
+    expect(dict.contact.resumeNote).toBe(" · two pages, 79 KB");
     expect(block).toContain('<a href={c.resume.href} download={c.resume.fileName} type="application/pdf" data-resume>{c.resume.label}</a>');
+    // As on the Product Plates Contact, "79 KB" never splits; and the whole note is one unbreakable run.
+    expect(block).toContain("<span>{c.resume.note}</span>");
+    expect(css).toMatch(/\.wk__contact-resume span \{ white-space: nowrap; \}/);
   });
   it("no form and no backend: four plain links; no client code, no reveal, and it ends the page inside <main>", () => {
     for (const t of [block, src]) expect(t).not.toMatch(/^["']use client["']|useState|useEffect|data-reveal|fetch\(|action=/m);
     expect(code(block)).not.toMatch(/<form|<input|<textarea|<button|<img|<picture|<Pic|<Image|<Shot|<canvas/);
     expect(code(block).match(/<a /g)).toHaveLength(3);   // the email, the profiles (one, mapped), the résumé
-    expect(page).toMatch(/<TbsBlock \/>\n\s*<ContactBlock \/>\n\s*<\/main>/);
-    expect(page.match(/\sdata-reveal(="settle")?[\s>]/g)).toHaveLength(3);
+    expect(home).toMatch(/<ThinkBuildShip \/>\n\s*<Contact \/>\n\s*<\/div>/);   // the last section; the footer follows <main>
+    expect(inMain("<Contact />")).toBe(true);
+    expect(home).not.toMatch(/data-reveal/);
   });
   it("no institution, no year, no figure but the résumé's size, no private repository, no availability claim beyond the live lead", () => {
     const text = shown.join(" | ");
