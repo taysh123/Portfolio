@@ -147,7 +147,7 @@ The slice keeps a copy, and the test holds it equal.
   - With reduced motion it never moves; the edge and halo still answer.
   - iOS Safari applies `:active` only when a touch listener exists. A tap there still lifts through the browser's
     emulated hover. Not verified on a device.
-- **Captures:** the first loads eagerly at high priority, the other three lazily.
+- **Captures:** the page's first loads eagerly at high priority; every other capture (15 since session 11) is lazy.
 - **Background:** two static glows, no field: the captures are the star.
 - **JavaScript:** the page ships no client code of its own.
 
@@ -160,26 +160,44 @@ The slice keeps a copy, and the test holds it equal.
 
 ### Galleries and the carousel (round 6)
 
-**Each project's captures** are `PROJECT_GALLERIES` in `data/projects.ts`: image names from `data/images.ts`, in order.
+**Each project's captures** are `PROJECT_GALLERIES` in `data/projects.ts`: image names from `data/images.ts` or
+`data/lab-images.ts`, in order.
 - It is a separate export, not a field of `projects`, so it reaches no bundle the live page loads. A build-to-build hash
   of every chunk shows only the lab's own chunks changed.
 - One entry is a still capture with no carousel chrome; two or more become a carousel.
-- Today: T Poker 3 (home, live, settle) and GRAVITY FLOW 2 (gameplay, boss). Aegis (the alert row) and DeveloperOS (the
-  search) have 1 each.
+- Since session 11 all four are carousels:
+
+| Project | Captures, in order | Count |
+|---|---|---|
+| T Poker | home, live, settle (the final count), podium, stats | 5 |
+| Aegis | the alert row, the Incidents board (`hero-aegis`) | 2 |
+| DeveloperOS | search, learning, career, dashboard | 4 |
+| GRAVITY FLOW | gameplay, boss, gravity run, cosmetics, win | 5 |
+
+- **Left out on Tay's answers (session 11):**
+  - T Poker's "final count" is not added twice: `poker-settle` already is `final-count.webp`, re-encoded.
+  - DeveloperOS's refusal strip has no reviewed alt text on `main`, and the learning capture already shows it.
+  - DeveloperOS's AI-features capture shows the same results as the search capture: the search is a crop of that screen.
+- Tay will swap one GRAVITY FLOW capture himself later; the existing two stay as they are.
 
 **To add a capture:**
-1. Encode it into `public/work/` (`scripts/m10-images.mjs`).
-2. List it in `data/images.ts`.
+1. Add a job to `scripts/m10-images.mjs` at the widths of the captures beside it, then run only that job:
+   `node scripts/m10-images.mjs <name>`. Named jobs run alone; the other outputs stand.
+2. List it in **`data/lab-images.ts`, not `data/images.ts`**.
+   - The live About visual (`components/sections/AboutVisual.tsx`) is client code that imports `IMAGES` whole.
+   - So one more entry in `data/images.ts` ships in `/`'s first-load JavaScript.
 3. Append its name to the project's array.
 
-- If `app/lab/work/panels.ts` has no alt text for it, write the entry as `{ image, alt }`. An entry with no alt text
-  stops the build.
-- Ready to add, with reviewed alt text already in each project's `media.gallery`:
-  - **T Poker:** podium, stats, final count;
-  - **DeveloperOS:** AI features, learning, career, refusal, dashboard;
-  - **GRAVITY FLOW:** gravity run, cosmetics, win.
-  - They are in `public/projects/`, not yet encoded into `public/work/`.
-- `public/work/hero-aegis`, the Aegis Incidents board, is a second real Aegis capture with alt text, ready now.
+- Alt text comes from where the site already says it.
+  - `mediaAlt(project, file)` in `app/lab/work/panels.ts` takes the project's own `media` entry for that source file:
+    its lead image's alt text, or its gallery entry's.
+  - The unit test then checks that the encoded capture really is that file, by pixels (a mean difference under 2 of 255).
+  - With no such entry, write `{ image, alt }` in the gallery, with text Tay has reviewed. An entry with no alt text
+    stops the build.
+- **AVIF output depends on the machine.**
+  - The same script and sharp 0.34.5 reproduce the committed WebP files byte for byte.
+  - They do not reproduce the AVIF files: this Windows machine's encoder build writes them 5–10% larger.
+  - The settings are the same; only the platform's aom build differs.
 
 **The carousel** (`app/lab/work/Reel.tsx`, the slice's only client code) is a CSS 3D coverflow:
 - The front capture is flat and whole. Its neighbours step aside, turn `--cine-flow-turn`, scale to `--cine-flow-scale`
@@ -193,6 +211,21 @@ The slice keeps a copy, and the test holds it equal.
 - **Reduced motion:** a flat slider, one capture at a time, no turn, no movement.
 - **Lazy:** a neighbour mounts only after hydration and only one step from the front; every capture but the page's
   first is `loading="lazy"`.
+  - At five captures, two of them are never fetched until the reader moves toward them (an e2e test holds this).
+- **Every slide keeps its capture's box, mounted or not.**
+  - The server hands the island each capture's ratio (`boxes`), and its phone crop's ratio.
+  - An empty slide holds that shape with a `::before` spacer, so a track is as tall as its tallest capture from the
+    first paint, with or without JS.
+  - Without it, Aegis's track grows from the alert row (89px) to the board (281px) at hydration: CLS 0.064 when the
+    page opens there with slow scripts (measured, red/green).
+  - Within a pixel: a loaded smaller encode keeps its own whole-pixel size (`hero-aegis-600` is 600 × 337), 0.27px
+    under the reserved box.
+- **Window carousels** (Aegis, DeveloperOS): the front window is 80% of the stage (86% below 640px), so its neighbours
+  show either side. The same turn, scale and dim as the phones.
+- **The narrowest phones:** five dots and two arrows are seven 44px targets (324px).
+  - Below 390px the stage is narrower than that, so the dots take their own row under the capture and the arrows sit
+    below them.
+  - Focus still runs previous, the chosen dot, next.
 - The server renders every `<picture>` (`Shot.tsx`) and hands them in. The island imports no data and no image table,
   and it draws its own arrow.
   - Both choices are measured. Importing the image table, or the site's `ArrowLeftIcon`, into client code changed
@@ -207,3 +240,6 @@ The slice keeps a copy, and the test holds it equal.
 
 **Tokens it added:** `--cine-dur-move` (= the site's `--dur-slow`), plus three NEW values for Tay's review:
 `--cine-flow-turn` 38deg, `--cine-flow-scale` 0.78, `--cine-flow-dim` 0.55.
+
+Session 11 added no token. Its new values are the slice's own geometry in `work.css`: the window slide's 80% / 86%, and
+the two-row controls below 390px.

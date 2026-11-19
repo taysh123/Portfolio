@@ -11,6 +11,153 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-19 — Session 11: every flagship's real captures in its Work carousel (prototype, D2 reopened) (Claude Code)
+
+**Scope (Tay's brief):**
+- Enrich the four per-project carousels on `/lab/work` with the real captures already in `public/projects/`.
+- Use the existing encoding pipeline and the reviewed alt text.
+- Only the first slide is eager.
+- Keyboard, touch, reduced motion and no-JS must work at the new counts, with the phone proportions kept.
+- `/` and the locked hero stay unchanged, the guard files stay identical to `main`, and no WebGL.
+- Commit, push and update draft PR #18: no merge, no deploy.
+
+Skills: `systematic-debugging` (the CLS check), `verification-before-completion`.
+
+### 1. Preconditions (VL)
+- `git fetch`: `origin/main` = **`fb0f575`** (PR #17, the session 9 close-out, merged). Production `fb0f575`, GitHub
+  status `success`.
+- `proto/hero-a-cinematic` was at **`0f38825`**, level with its remote.
+- This branch's `claude/START-HERE.md` still described the calm direction at session 9, from before PR #17. It was
+  flagged, and updated at the end of this session (section 9).
+
+### 2. The brief against the files: three questions, Tay's answers (VL)
+- **T Poker's "final count" is already in.**
+  - `poker-settle` is `final-count.webp` re-encoded (mean pixel difference 0.83 of 255).
+  - There are 5 distinct T Poker captures, so 6 would need a duplicate. **Tay: 5, no duplicate.**
+- **DeveloperOS refusal** (`refusal.webp`, 1400 × 188):
+  - it has no alt text on `main`; the only text ever written for it is in an unmerged October commit (`62a6e20`);
+  - the learning capture already shows the same refusal. **Tay: skip it.**
+- **DeveloperOS AI features** shows the same "ollama provider" results as the search capture (the search is a crop of
+  that screen). **Tay: skip it.**
+- **Result:** T Poker 5, Aegis 2, DeveloperOS 4, GRAVITY FLOW 5. GRAVITY FLOW's two existing captures are unchanged
+  (Tay will swap one himself).
+
+### 3. What changed (`9569bd8`)
+- **Encoding: 8 jobs in `scripts/m10-images.mjs`**, at the widths of the captures beside them.
+  - Poker and GRAVITY FLOW at 320/480/640; DeveloperOS at 800/1200/1600.
+  - The script's own settings: AVIF q60 and WebP q80, effort 6.
+  - The script now runs named jobs alone, so nothing else was re-encoded: 48 new files, and no existing file changed.
+  - WebP output reproduces the committed files byte for byte. AVIF does not: it comes out 5–10% larger here, with the
+    same sharp 0.34.5 and settings but a different platform build of aom.
+- **`data/lab-images.ts` (new):** the lab's captures in `data/images.ts`'s shape, with lookups over both lists.
+  - Not in `data/images.ts`, the documented step until now: `components/sections/AboutVisual.tsx` is a client component
+    that imports `IMAGES` whole, so an entry there ships in `/`'s first-load JS.
+  - A unit test holds that nothing outside `app/lab/` names the new file, except a type import in `data/projects.ts`.
+- **Galleries and alt text:**
+  - `PROJECT_GALLERIES` holds the counts above.
+  - `mediaAlt(project, file)` takes the project's own media entry for the source file, word for word.
+  - A unit test compares each re-encode's pixels against that file (all under 2 of 255).
+- **Mixed shapes:** every slide keeps its capture's box, mounted or not. The server passes `boxes` (each capture's
+  ratio), and an `:empty::before` spacer holds it.
+- **Window carousels:** the front window is 80% of the stage (86% below 640px), and `sizes` matches.
+- **Narrow phones:** seven 44px targets need 324px, and the stage is 254px at 320 and 294px at 360, so the arrows were
+  clipped. Below 390px the dots take their own row and the arrows sit below them.
+- No token was added. The layer, the hero, `/` and every live source are unchanged.
+
+### 4. Found on the way (VL)
+- **The CLS check read 0.0076.** Every shift's source was `button.chat-launcher`.
+  - The site's chat launcher folds its label as the page scrolls, and unfolds it at the top.
+  - The same on `0f38825` (0.00764), and on `/` at 1440 and 390 (0.0076).
+  - Pre-existing live code, not changed. The test now counts shifts inside the slice (0) and logs the launcher's share.
+- **A hydration shift hides locally.**
+  - With the box reservation removed, the Aegis track still grows 89 → 281px, but at 89 ms, before the first paint
+    (100 ms), so CLS reads 0.
+  - The test now holds the scripts back 1.2 s and opens at `#wk-aegis`.
+  - Red/green: 0.064 without the reservation (0.068 opening at DeveloperOS), 0 with it.
+- **Sub-pixel:** a loaded smaller encode keeps its own whole-pixel size (600 × 337), 0.27px under the reserved box.
+  Heights are compared within 1px.
+- **The Tailwind leak, a third time.**
+  - A test comment's word added a border-radius utility rule (30 bytes) to `/`'s stylesheet.
+  - The pinned-digest e2e test caught it. The comment is reworded, and both sheets are byte-identical again.
+
+### 5. Measured (VL; local production builds, lab data, interleaved against `0f38825`)
+| | before | after |
+|---|---|---|
+| First-load JS `/lab/work` (the budget algorithm) | 181.39 KiB (carousel 4.72) | **181.43 KiB** (4.76); budget 205.7 |
+| HTML `/lab/work` | 52.98 KB (13.1 KB gzip) | **67.46 KB** (14.4 KB gzip); budget 568 |
+| LCP desktop (median of 5; range) | 72 ms (68–76) | 92 ms (72–120) |
+| LCP phone, 4× CPU and slow 4G | 928 ms (884–956) | 880 ms (844–952) |
+| CLS | 0 | 0 |
+| INP desktop / phone (`scripts/lab-hero-a.mjs`: empty-space interactions) | 40 / 40 ms | 40 / 48 ms |
+| FPS desktop / phone | 60.5 / 60.6 | 60.5 / 60.4 |
+
+- **The LCP element is the first capture, and LCP = FCP in every run:** it paints in the first frame.
+  - Desktop first paint, broken down over 10 more interleaved loads: TTFB +3.4 ms and DOM interactive +7.8 ms.
+  - Both come from the larger HTML, which carries each lazy capture's server-rendered markup for the island.
+  - The FCP ranges overlap: 64–108 ms before, 60–124 ms after.
+  - No lazy capture becomes the LCP, and none is fetched before it.
+- **INP on the carousel controls** (Next, 3 taps per carousel × 3 rounds; phone at 4× CPU):
+  - T Poker: median 48 → 56 ms, worst 80 → 80;
+  - GRAVITY FLOW: median 72 → 64 ms, worst 112 → 104;
+  - new: Aegis median 56 ms (worst 168), DeveloperOS 64 (worst 136);
+  - desktop medians 24–40 ms, worst 64.
+- **Image bytes:** 838,474 on disk (AVIF 386,944, WebP 451,530). A visit gets one format at one width:
+
+  | | before | after, scrolling through | after, every capture viewed |
+  |---|---|---|---|
+  | desktop | 61.6 KiB | 94.2 KiB | 138.8 KiB |
+  | phone @3x | 107.8 KiB | 178.3 KiB | 271.2 KiB |
+
+  Captures two steps from the front are never fetched until the reader moves toward them (an e2e test).
+- **axe-core 4.11.4, WCAG 2.2 A/AA, after every carousel has moved:** 0 violations at 1440 and 390, with motion on and
+  reduced.
+  - At 390, two need-review contrast items: mist text over the glows, covered by the layer's floor.
+
+### 6. Unchanged (VL)
+- **`/`, `/lab/hero-a`, `/privacy`** (the final build against `0f38825`): the same 12, 13 and 10 first-load assets, byte
+  for byte. The HTML is identical except the per-build ID.
+- **Pixels, full page:**
+  - `/`: 0 differing at 1440 and 390, with motion on and off.
+  - The hero: 0 with reduced motion.
+  - The hero with motion on: differences of at most 1 of 255, 419–6,359 pixels varying by run, from its glows' drift.
+    The same build against itself gives 0.
+- **Guard files** identical to `origin/main` (`fb0f575`): dead-code, budget, page, tokens, institution, and the
+  private-repo test and support.
+
+### 7. Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` | **179/179** (16 files; 177 before, plus 2) |
+| `npm run typecheck`, `npm run lint` | exit 0 |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test` | **176/176** (173 before, plus 3: lazy at any count, mixed shapes, axe at 390 reduced) |
+
+### 8. Pushed: the Preview (Tay's brief)
+- `9569bd8` pushed. Vercel built a **Preview** (`production_environment=false`). Production stays on `fb0f575`.
+- Preview of `/lab/work`:
+  - this build: `https://tay-shofer-portfolio-hqpcueiom-tays-projects-d5aefd6e.vercel.app/lab/work`;
+  - the branch's own link, which follows each push:
+    `https://tay-shofer-portfolio-git-proto-he-65ec6d-tays-projects-d5aefd6e.vercel.app/lab/work`.
+  - Both sit behind Vercel's login (a logged-out request gets a 302 to `vercel.com/sso-api`).
+- PR #18's description is updated with the session's table and numbers. It is still a draft.
+
+### 9. Limitations (NC unless stated)
+- **No real phone.** Headless raster is SwiftShader, so the controls' worst phone taps are a pessimistic bound.
+- **Aegis's board** (`hero-aegis`) is encoded up to 900px wide. A 2× desktop asks for about 1000px, so it is slightly
+  soft. Its full source capture is not on this machine (`M10_CAPTURES`).
+- **The new DeveloperOS captures have no phone crop.** At 390 they are desktop windows about 279px wide, and their text
+  is small.
+- **Copy:** `refusal.webp` and `ai-features.webp` stay in `public/projects/`, unused by the lab.
+
+### Waiting on Tay
+- Review the four carousels on the Preview, and swap the GRAVITY FLOW capture he has in mind.
+- Decide whether Concept A goes further. Its NEW values still wait for review: `--cine-lift`, `--cine-glow-lift`,
+  `--cine-flow-turn`, `--cine-flow-scale`, `--cine-flow-dim`.
+- **Move F:** the session 9 close set it for "next session" (on `main`). It has not been started: sessions 10–11 went to
+  Concept A.
+- Optional, on `main`: the chat launcher's fold on scroll (0.0076 CLS on `/`). His call; untouched here.
+
+---
+
 ## 2026-11-18 — Session 10: Concept A, the cinematic hero, as a measured prototype (prototype, D2 reopened) (Claude Code)
 
 **Scope (Tay's brief):**
@@ -1361,3 +1508,5 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-18 | Session 8 | N7 investigated (beacon + Email Address Obfuscation at the Cloudflare edge; draft `/privacy` wording); N8 logged; state docs | `docs/RESEARCH_AND_DECISIONS.md`, `docs/ROADMAP.md`, `docs/WORKLOG.md`, `claude/START-HERE.md`, `CLAUDE.md` |
 | 2026-11-18 | Session 8 close | PR #14 merged (`d80cb4c`, live); N7 Cloudflare toggles done by Tay, verified live; `docs/backlog-n1-n2-n7` deleted; state docs | `docs/WORKLOG.md`, `claude/START-HERE.md`, `CLAUDE.md`, `docs/RESEARCH_AND_DECISIONS.md`, `docs/ROADMAP.md` |
 | 2026-11-18 | Session 9 | N8: GRAVITY FLOW's private repository name scrubbed from 9 doc lines; the private-repo guard pins both private repos by digest (guard change for Tay's approval); `docs/session-7-closeout` and `docs/session-8-closeout` deleted; state docs | `docs/*.md`, `tests/support/private-repo.ts`, `tests/unit/private-repo.test.ts`, `claude/START-HERE.md`, `CLAUDE.md` |
+| 2026-11-18/19 | Session 10 | Concept A prototype (D2 reopened; branch `proto/hero-a-cinematic`, draft PR #18, never merged): the `/lab/hero-a` hero, the cinematic layer, the `/lab/work` slice and its carousels (rounds 1–6) | `app/lab/**`, `data/projects.ts` (galleries), `docs/CINEMATIC_SYSTEM.md`, `scripts/lab-hero-a.mjs`, `tests/**/lab-*` |
+| 2026-11-19 | Session 11 | Every flagship's real captures in its carousel (`9569bd8`): 8 captures encoded, the lab's own image list, box reservation for mixed shapes, window carousels, two-row controls below 390px; START-HERE brought up to date | `app/lab/work/*`, `data/lab-images.ts`, `data/projects.ts`, `scripts/m10-images.mjs`, `public/work/*` (48 new), `tests/**/lab-work*`, `docs/CINEMATIC_SYSTEM.md`, `docs/WORKLOG.md`, `claude/START-HERE.md` |
