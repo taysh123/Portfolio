@@ -278,3 +278,51 @@ Under the four panels, after a hairline: who, in about ten seconds. Tay approved
 - **A side effect to know:** the violet glow sits at 38% of the section's height, so the taller page moves it down. At
   1440 it now lies behind the Aegis line, which axe lists as "needs review" (covered by the floor: mist ≥ 7:1 at the glow
   peak). axe: 0 violations.
+
+### Stack (P3.4, session 13)
+
+Under About, after a hairline: the tools behind the work, each with the flagships that use it. Tay approved the plan with
+four changes (session 13): the tools no flagship uses stay listed with no project line; a Security group from the
+projects' own text, with JWT moved into it; two tool columns at 390px, one only at 320px; Everyday tools kept.
+
+| Element | Text | Source |
+|---|---|---|
+| Eyebrow | Stack | `dict.nav.stack` |
+| Title (h2) | Tools behind the work. | `dict.stack.title`, the live Stack's title. No lede. |
+| Groups (h3) | Languages · Product and interface · Services and APIs · Security · Data, search and models · Delivery and testing · Everyday tools | the live `skillGroups` titles, in order; "Security" is Tay's group, after Services and APIs |
+| Tools | the live labels, word for word, in the live order; JWT moves to Security | `data/skills.ts` |
+| Projects under a tool | T Poker · Aegis · DeveloperOS · GRAVITY FLOW, as they apply | `projectsFor()` in `data/stackLens.ts` (each project's published text), kept to the four flagships; names from `data/projects.ts` |
+| "(optional)" | on Ollama only | DeveloperOS's stack entry "Ollama (optional)" |
+
+**Security, in the projects' own words:**
+
+| Label | Project | Source line (`data/projects.ts`) |
+|---|---|---|
+| JWT (RS256) | Aegis | Aegis `stack`: "JWT (RS256)" |
+| Body HMAC | Aegis | Aegis decision title: "Agent ingestion authenticated by body HMAC" (first letter capitalised) |
+| CSRF token | DeveloperOS | DeveloperOS decision "Loopback API hardened like a public one": "A per-instance CSRF token compared with hmac.compare_digest" |
+
+- T Poker's stack says "JWT", not RS256 (it signs its own tokens with HS256, per the `data/skills.ts` comment), so it is
+  not on the JWT (RS256) row. The lab Stack therefore shows no JWT for T Poker.
+- **No project line** for Java, C++, C, JavaFX, Framer Motion, pytest and Playwright (no flagship uses them), nor for
+  Everyday tools (Git, Linux, Claude Code). Their live notes ("where I started", "this site", …) are not shown, and Job
+  Assistant and Orders & Delivery are never named.
+- **No AI group:** Aegis's analysis is a deterministic mock and DeveloperOS's default is offline; Ollama is the only
+  model tool, and its row says optional.
+- **Not used:** the live per-group evidence sentences (each tool names its projects instead), logos, levels, years, the
+  live filter.
+- **Files:** `app/lab/work/stack.ts` derives every string; `StackBlock.tsx` is a server component.
+  `tests/unit/lab-work.test.ts` holds each string to its source and pins the approved rows.
+- **Layout:** each group is a row on its own hairline. From 1024px its name takes the panels' words share (5fr) and its
+  tools the capture's (7fr), so the tools line up under About's words; stacked below. Two tool columns from 360px, one
+  below (320). Each tool in ink at the body size, its projects under it in mist at the label size.
+  - A project's name never splits across two lines ("GRAVITY FLOW" stays whole): each name is one unbreakable span
+    with its separator after it, so the line breaks only between names. The e2e layout test holds it at every width.
+- **Semantics:** each group's tools are a list named by its heading (h3). Nothing in it is a link or a control.
+- **Motion:** none. It holds still; nothing in it animates or eases.
+- **Tokens:** none added. Its eyebrow and title share About's rules; its own rules read only layer tokens.
+- **Its cost (measured, session 13):** no script changes (every JS chunk identical); the page's HTML grows 73.02 →
+  100.05 KB (14.0 → 16.5 KB gzip). On a phone at 4× CPU, laying out its 201 elements before the first paint moves LCP
+  by about 40–76 ms (desktop flat). `content-visibility: auto` on the section wins most of that back, but it is not
+  used: the page then grows when Stack first renders, and the violet glow, placed at 38% of the page's height, moves
+  with it (slice CLS 0.353 at 320px). It would need the glow to stop depending on the page's height. Tay's call.

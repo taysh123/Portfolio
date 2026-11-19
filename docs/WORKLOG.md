@@ -11,6 +11,136 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-19 — Session 13: Stack (P3.4) on `/lab/work` (prototype, D1 reopened) (Claude Code)
+
+**Scope (Tay's brief):**
+- Sync: confirm PR #20 merged and delete its branch (after `git merge-base --is-ancestor`); this branch at `d64763d`.
+- One task: the Stack section (P3.4) on `/lab/work`, below About. Lab-only; `/` untouched.
+  - Group the skills by discipline, as the real data supports. Tie each skill to the featured projects that really use
+    it (`data/projects.ts`, PROJECT_CONTEXT); never attach one that doesn't.
+  - No logo wall, levels, percentages, years or institution. Every word from facts already in the repo. Aegis's AI is a
+    deterministic mock: no LLM or ML claim. The `.cine` tokens; no client JS without showing why; it holds still.
+  - Step 1 a plan only (groups, every skill with its evidence and source, the copy, the layout), then Tay's OK. Step 2
+    build, measure as last session, confirm `/`, `/lab/hero-a`, the guards and `/`'s stylesheet bytes unchanged.
+    Screenshots at 390 and 1440 in scratch, not committed.
+- Commit, push, update draft PR #18 (no merge, no deploy); the Preview URL; START-HERE and WORKLOG.
+
+### 1. Preconditions (VL)
+- `git fetch`: **PR #20 merged** (2026-11-19 03:20Z, merge commit `443a1f9`). `origin/main` = **`443a1f9`**; Production
+  `443a1f9` (`success`, 03:20Z). The live `/` Tailwind sheet is back to **44,530 bytes** (read-only `curl`; 44,829 with
+  the leak). Its digest is not the local build's, so only the size is compared.
+- **Deleted:** `docs/claude-md-tailwind-leak`, local and remote (tip `2e73766`; both tips ancestors of `origin/main`).
+- `proto/hero-a-cinematic` at **`d64763d`**, level with its remote, clean.
+
+### 2. The plan and Tay's answers
+- The plan reused the live Stack's six groups (`data/skills.ts`), with no AI group (the only model tool is DeveloperOS's
+  optional Ollama) and, at first, no Security group. Each skill's projects from the live site's own mapping
+  (`projectsFor`, `data/stackLens.ts`), kept to the four flagships, each match checked by hand.
+- **Tay approved it with four changes:**
+  1. The tools no flagship uses (Java, JavaFX, C, C++, pytest, Framer Motion, Playwright) stay in their live groups,
+     with no project line. No other project named, no new words.
+  2. A **Security** group from techniques `data/projects.ts` already states, in its own words, each with the project
+     that really uses it; JWT moves out of Services and APIs, so nothing appears twice.
+  3. Two tool columns at 390px if they fit; one only at 320px.
+  4. Everyday tools kept, with no projects.
+
+### 3. What changed (`757c377`)
+- `app/lab/work/stack.ts` derives every string: the live groups and tools in order, `projectsFor` kept to the
+  flagships, the Security rows, and "(optional)" only where a project's own stack entry says so (DeveloperOS's Ollama).
+- `StackBlock.tsx`, a server component, renders it after About, inside `<main>`: an eyebrow, the h2, and one row per
+  group (an h3 and a list named by it). No link, no control, no reveal, no client code.
+- `work.css`: its rules, layer tokens only. Its eyebrow and title share About's rules (grouped selectors). From 1024px
+  each group's name takes 5fr and its tools 7fr, so they line up under About's words; stacked below; two tool columns
+  from 360px, one at 320. A project's name never splits across two lines.
+- **No token added:** the layer still defines 76.
+- Tests: 10 unit (every string held to its source, the approved rows pinned, the Security source lines word for word,
+  no AI or level claim) and 8 e2e (no JS, holds still ×2, layout at 1440, 1024, 390, 360 and 320). Two lab assertions
+  now include Stack: About's placement (`<AboutBlock />` then `<StackBlock />`) and the structure test's h2 count.
+- The copy, every row with its source: `docs/CINEMATIC_SYSTEM.md`, "Stack (P3.4, session 13)".
+
+**The Security rows (labels in `data/projects.ts`'s own words):**
+
+| Label | Project | Source line |
+|---|---|---|
+| JWT (RS256) | Aegis | Aegis `stack`: "JWT (RS256)" |
+| Body HMAC | Aegis | Aegis decision title: "Agent ingestion authenticated by body HMAC" (first letter capitalised) |
+| CSRF token | DeveloperOS | DeveloperOS decision "Loopback API hardened like a public one": "A per-instance CSRF token compared with hmac.compare_digest" |
+
+- A unit test checks each label against its project's text, and that no other flagship's text says it.
+- **A consequence:** T Poker's stack says "JWT" (HS256, per the `data/skills.ts` comment), not RS256, so with JWT moved
+  into the RS256 row the lab Stack shows no JWT for T Poker.
+
+### 4. Found on the way, fixed before the push
+- At 390 a project name split across lines ("GRAVITY / FLOW"). Each name is now one unbreakable span with its separator
+  after it, so lines break only between names; the e2e layout test holds it at all five widths.
+- My first "holds still" e2e check failed under reduced motion: the site's reset sets every duration to 0.001ms
+  (`app/globals.css`). The check now uses the 10 ms floor of the carousel's own reduced-motion test.
+
+### 5. Measured (VL; local production builds, `d64763d` in a scratch worktree vs this branch)
+| | before | after |
+|---|---|---|
+| First-load JS `/lab/work` (the budget algorithm) | 181.43 KiB | **181.43 KiB** (every script identical); budget 205.7 |
+| HTML `/lab/work` | 73.02 KB (14.0 KB gzip) | **100.05 KB** (16.5 KB gzip); budget 568 |
+| LCP desktop, median (range), 10 interleaved | 90 ms (72–116) | 114 ms (80–128) |
+| LCP phone, 4× CPU and slow 4G, median (range), 10 interleaved | 956 ms (876–1052) | 998 ms (948–1100) |
+| CLS (load) | 0 | 0 |
+| INP desktop / phone (`scripts/lab-hero-a.mjs`, worst per run, median) | 32 / 32 ms | 32 / 32 ms |
+| FPS desktop / phone | 60.6 / 60.5 | 60.5 / 60.5 |
+
+- The LCP element is the first capture, and LCP = FCP in every run.
+- **The LCP shift, diagnosed** (10 interleaved runs per variant, every variant through the same interception):
+  - desktop flat: 108 / 106 ms;
+  - phone 794 → 870 ms. With Stack's layout skipped until it nears the viewport (`content-visibility: auto`,
+    injected), 816 ms. So most of the phone cost is laying out Stack's 201 elements before the first paint; the rest is
+    its bytes.
+  - **Not adopted:** with it, the page grows when Stack first renders, and the violet glow (at 38% of the page's height)
+    moves: slice CLS **0.353** at 320px (0 at 1440, 1024 and 390), against 0 as served. Using it would mean the glow no
+    longer depends on the page's height, which changes the existing slice. Left for Tay.
+- **Scroll-through CLS** (a scratch probe, down and back up twice): the slice 0 before and after; the chat launcher's
+  fold 0.0153 in both (0.0076 per pass, pre-existing).
+- **INP on Stack's own words** (same probe in both builds, 3 runs): desktop < 16 ms; phone at 4× CPU 24–32 ms, the same
+  as About's words before and after.
+- **axe-core 4.11.4, WCAG 2.2 A/AA:** 0 violations at 1440 and 390, motion on and reduced (the e2e suite and a probe).
+  - Needs review: at 390 the same two as before (the lede, T Poker's line).
+  - At 1440, none; it was one (Aegis's line), because the taller page moves the violet glow down again.
+- At page end the chat launcher clears the last tool by 150px at 1440 and 102px at 390 and 320.
+
+### 6. Unchanged (VL)
+- **`/`, `/lab/hero-a`, `/privacy`:** every script and stylesheet byte-identical; the markup identical with build IDs
+  masked.
+- **`/`'s stylesheets:** `868e8b98…` (44,530 bytes, the Tailwind sheet) and `4b84cc35…` (31,805), the pinned digests.
+- **Built files:** 24 of 25 JS and CSS files byte-identical, all 20 JS chunks among them. The one that changed is the
+  lab's Work stylesheet (11,158 → 12,427 bytes).
+- **Pixels (reduced motion, full page):** `/` 0 differing at 1440 and 390; the hero 0 with its canvas hidden.
+  `/lab/work` from the top to About's end, glows hidden: 0 differing at 1440 and 390.
+- **Guard files** identical to `origin/main` (`443a1f9`): dead-code, budget, page, tokens, institution, private-repo
+  (test, support, spec), the page support.
+- `components/`, `lib/`, `public/`, `data/`, `app/globals.css`, `app/page.tsx`, the hero and the layer: unchanged since
+  `d64763d`.
+
+### 7. Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` | **196/196** (16 files; 186 before, plus 10 Stack tests) |
+| `npm run typecheck`, `npm run lint` | exit 0 |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test` | **192/192** (184 before, plus 8) |
+
+### 8. Screenshots (scratch, not committed)
+- At 1440 and 390: the Stack section (motion on and reduced), the view a reader scrolls to, and the full page.
+
+### 9. Limitations (NC unless stated)
+- **No real phone.** Headless raster is SwiftShader.
+- The phone LCP shift above (VL) stays until Tay decides on the glow.
+- The branch's `CLAUDE.md` still names `121d86b` as the prototype's code commit; not updated (not in the brief).
+
+### Waiting on Tay
+- Review Stack on the Preview.
+- Decide on the phone LCP cost: keep it, or anchor the violet glow so `content-visibility` can skip Stack's layout.
+- T Poker's JWT (HS256) is no longer shown: fine as is, or a separate "JWT" row for T Poker in Security?
+- Swap the GRAVITY FLOW capture he has in mind. Move F: still his call.
+
+---
+
 ## 2026-11-19 — Session 12 close-out: About approved; PR #20 fixes `main`'s CSS leak (Claude Code)
 
 **Scope (Tay's brief):**
