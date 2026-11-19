@@ -615,8 +615,10 @@ test("Stack's filter answers the keyboard: Tab reaches each button, Enter and Sp
   await ctx.close();
 });
 
-// Stack ends the page, so a shorter list would pull the page up under the reader. Pressing a project must not move the
-// view: not with the buttons near the top of it, and not at the very end of the page (pressed from the keyboard).
+// The hold (StackFilter.tsx): a shorter list must never pull the page up under the reader. Pressing a project must not
+// move the view: not with the buttons near the top of it, and not at the very end of the page (pressed from the
+// keyboard). Since session 14 Think · Build · Ship sits below Stack, so at these sizes the hold engages only in the
+// second case (ROADMAP #14).
 for (const vp of [[1440, 900], [390, 844]] as const) {
   test(`Stack at ${vp[0]}: pressing a project never scrolls the page, wherever the reader is`, async ({ browser }) => {
     const { ctx, page } = await at(browser, vp, { reducedMotion: "reduce" });
