@@ -4,7 +4,7 @@ Orientation doc for the Portfolio Project. Read this first in any new chat here 
 Claude Code session, then continue with the current task. Update it before each transition
 (new chat / new session) so the next one starts informed.
 
-> **This copy is on `proto/hero-a-cinematic`** (session 15 close, 2026-11-19: P3 complete). It has more prototype detail than `main`'s
+> **This copy is on `proto/hero-a-cinematic`** (session 16, 2026-11-19: the release plan approved). It has more prototype detail than `main`'s
 > copy (`main` has the essentials since PR #19). The branch is never merged.
 
 ## What the product is
@@ -19,8 +19,14 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
    under the noindex `/lab` segment.
    - Tay reopened **D1** for it (2026-11-18). **D2 is still not reopened, so no WebGL.**
    - Draft PR #18, never merged, Vercel Preview only.
+3. **The release (session 16, approved by Tay): Concept A replaces the live `/`** as soon as possible, because Tay is
+   job hunting. The demos (P4) come after.
+   - It ships from a new branch, `release/concept-a`, cut from `main`, through a PR that Tay merges. The prototype
+     branch stays frozen as the record.
+   - The plan, S17 to S24: `docs/ROADMAP.md`, "Concept A: P4–P6". Tay's decisions, R1 to R15:
+     `docs/RESEARCH_AND_DECISIONS.md`, "Resolved in session 16".
 
-## What's live now (verified 2026-11-19, session 15)
+## What's live now (verified 2026-11-19, session 16: Production is `443a1f9`, status success)
 - The current site is the calm, light **"Product Plates"** editorial design (M10), with the whole **M1 core, moves
   A–E**:
   - **A**, the iris accent: `#4a3fe0` light, `#a5a8ff` dark, `#b1b4ff` on the dark plates.
@@ -49,7 +55,7 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 - **Check your branch first.** Live work branches from an up-to-date `main`, and changes go through a PR that Tay
   merges. `reference/premium-redesign-package` is a stale September design branch: never build or deploy from it.
 
-## The Concept A prototype (sessions 10–15)
+## The Concept A prototype (sessions 10–16)
 - **Branch** `proto/hero-a-cinematic`: code at **`1369b00`** (session 15), with the docs on top.
   - Draft **PR #18**: never merge it, never deploy it.
   - Every push builds a Vercel **Preview**, behind Vercel's login. Production is untouched.
@@ -124,6 +130,33 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
     header comment fixed (`bbd9d55`, comment only).
   - **Logged for P5 (Tay):** Contact repeats About's availability wording and its three links; re-check whether About
     keeps its links once the page is assembled (`docs/ROADMAP.md` #15).
+- **Session 16: the P5 (integration) and P6 (release) plan**, a plan only (no code changed), **approved by Tay**:
+  - **How it ships (R1):**
+    - S17 cuts `release/concept-a` from an up-to-date `origin/main`.
+    - The prototype's source is copied over unchanged in one commit, with the suite passing and `/` byte-identical.
+    - Then the swap. `/lab` is never shipped to `main`.
+    - Tay merges. Rollback is Vercel's Instant Rollback to `443a1f9`'s deployment, then a revert PR.
+  - **The page:**
+    - The live header's behaviour, recoloured dark, without the theme toggle (R2).
+    - Dark only, site-wide; the `theme` cookie goes (R3).
+    - "More on X" becomes "Case study", the existing dialog (R4).
+    - A Two more block (R5). The live anchor ids (R7). The live footer.
+    - The hero's h1 and lede in `siteMeta`, and a dark social card (R8). The hero's arrow as the site's icon (R9).
+  - **Retired for the release:** the live chapters' four explainers (R6). Their files and last commit are in
+    `docs/ROADMAP.md`, "P4 restore record": all intact at `443a1f9`.
+  - **The backlog:**
+    - #15: About drops its links and availability line; Work drops its lede (R10).
+    - #13 is measured on the composed page (R11). #14 is re-checked.
+    - New #16: the chat launcher over LinkedIn mid-scroll on phones, measured in S17.
+  - **Tests (R12):**
+    - Approved as written: the canvas count (exactly one, the hero's 2D field), the animation-frame test, the dark-only
+      theme tests, and the new guards (`/` indexable with its canonical; `/lab` answers 404).
+    - Each change goes in its own commit naming the approval. **The WebGL guards stay unchanged.**
+    - The old page's feature tests retire as a set. A few string and colour changes are still to be named by Tay in
+      S18+S19.
+  - **N7** goes into the `/privacy` edit, with its exact wording shown to Tay before the commit (R13).
+  - **Move F is retired** (R14).
+  - **`443a1f9` is tagged `product-plates-final`** before the merge, and the tag pushed (R15, an S24 step).
 - **Preview of `/lab/work`** (the branch's own link, which follows each push):
   `https://tay-shofer-portfolio-git-proto-he-65ec6d-tays-projects-d5aefd6e.vercel.app/lab/work`.
 - **Kept identical on this branch** (tests hold it):
@@ -155,9 +188,11 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 - **N5** GRAVITY FLOW repo **stays private**; the site marks it private like T Poker, and the dead link
   is removed from the served résumé PDF (PR #5, live).
 - **M1** (`docs/M1_VISUAL_PLAN.md`): the core, moves **A–E**, is approved and **live** (PRs #8, #11, #12).
-  - **F** (the desk plate): Tay's plan at the session 9 close was to build it next session, on a preview branch.
-  - It is **not started**: sessions 10 and 11 went to Concept A.
+  - **F** (the desk plate): **retired by Tay in session 16 (R14).** It was a Product Plates move, and the Concept A
+    release supersedes it.
   - **Keep Geist** (no display-face study). Use the plan's token values exactly; invent none.
+- **Session 16: the release plan, R1–R15** (`docs/RESEARCH_AND_DECISIONS.md`, "Resolved in session 16"). Summary under
+  "The Concept A prototype" above.
 - **N1, N2** (merged in PR #14): the reference README's text is in `docs/references/`, byte for byte, with no image; the
   agent docs say "the institution" instead of its abbreviation.
 - **N7, the Cloudflare toggles:** done. The `/privacy` wording is **deferred to the end of the build** (Tay, session 9
@@ -168,13 +203,17 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   AI-features captures are left out. GRAVITY FLOW's existing two stay; Tay will swap one himself.
 
 ## What's next
-- **Concept A: P3 is complete** (all six sections approved). Tay decides what the prototype takes on next.
-  - Logged for P5 (integration): the LCP of Stack, Think · Build · Ship and Contact (`docs/ROADMAP.md` #13); a re-check
-    of the filter hold's visible gap case (#14); whether About keeps its links, which Contact repeats (#15).
-- **Move F** on `main`: still Tay's plan from the session 9 close, not started.
-  - It needs one additive floor case in `tokens.test.ts` (plan §11), and that is its only test change.
-  - Branch from an up-to-date `main`; Tay merges.
-- After M1, the next phase is in `docs/ROADMAP.md`.
+- **S17: the release branch and the baseline** (`docs/ROADMAP.md`, "Concept A: P4–P6"):
+  - Cut `release/concept-a` from an up-to-date `origin/main`.
+  - Copy the prototype's source over unchanged in one commit, after checking that none of those paths changed on
+    `main` since the branch point. The suite passes, with `/` byte-identical.
+  - Measure production's baseline: Lighthouse mobile (median of 5), first-load JS and HTML bytes.
+  - Measure #16, the launcher over LinkedIn on phones.
+- Then S18+S19 (compose `/`, with the case studies and Two more), S20 (the tests), S21+S22 (privacy and SEO surfaces,
+  then the backlog), S23 (the release candidate: WebKit and Firefox runs, Tay's review on his own phone, the GRAVITY
+  FLOW capture swap), S24 (the tag, Tay's merge, the production checks).
+- **CLAUDE.md** still says Move F is not started, and has no line on the release. Update it on the release branch in
+  S17, and rebuild to check `/`'s stylesheet: the root of the repo is scanned by Tailwind.
 
 ## Open PRs / branches (session 15, 2026-11-19)
 - **PR #18** (`proto/hero-a-cinematic`, draft): the Concept A prototype. Never merge, never delete; Preview only.
@@ -188,17 +227,20 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Decide what Concept A takes on next.** P3 is complete: the hero, the carousels, the five layer values, About,
-  Stack, Think · Build · Ship and Contact are approved.
-- **Swap the GRAVITY FLOW capture** he has in mind (the carousels themselves are approved).
-- **Move F:** confirm it is still next on `main`.
+- **Start S17** in a new session.
+- **In S18+S19:** name the remaining test changes (the h1 and h2 strings, the focus ring's colour, the Tab order's
+  labels, the headline pins, and the two unit cases that read deleted files). `docs/RESEARCH_AND_DECISIONS.md`, R12.
+- **In S21+S22:** approve N7's exact final `/privacy` wording before it is committed (R13).
+- **In S23:** the GRAVITY FLOW image for the capture swap; the review on his own phone through the Preview.
+- **In S24:** merge, after the `product-plates-final` tag is pushed.
 - **Optional, on `main`:** the site's chat launcher folds its label as the page scrolls. That is 0.0076 CLS on `/` at
   1440 and 390 (measured in session 11), well inside "good". Untouched.
 - **A note from session 7's preview shots:** at 390px the TBS row word (20.3px, 600) is close to the row's lead line
   `.tbs__line` (19px, 600). It follows the plan exactly, and no change was made.
-- **Not pending:** the N7 `/privacy` wording is deferred to the end of the build.
+- **The N7 `/privacy` wording is scheduled:** it goes into S21+S22's `/privacy` edit (R13), with its exact final
+  wording shown to Tay before the commit.
   - The draft is in `docs/RESEARCH_AND_DECISIONS.md` N7.
-  - When it ships, it needs an approved edit to `tests/e2e/privacy.spec.ts`, which pins 2 outbound links.
+  - It needs an approved edit to `tests/e2e/privacy.spec.ts`, which pins 2 outbound links.
 - **D8 remainder:** six unmerged remote branches are kept (`feature/portfolio-polish`,
   `feature/premium-portfolio-redesign-1mqmgf`, four `review/m10-*`), plus `reference/premium-redesign-package`. Delete
   only on a per-branch yes.
@@ -228,6 +270,11 @@ copy ends with a summary of sessions 10–11.
 > New session. First check out and update `proto/hero-a-cinematic` (`git fetch && git checkout proto/hero-a-cinematic
 > && git pull`), then read claude/START-HERE.md, docs/WORKLOG.md, CLAUDE.md and docs/CINEMATIC_SYSTEM.md on that
 > branch. Then: <the new task>.
+
+**Open a release session (S17 onwards):**
+> New session. First `git fetch && git checkout proto/hero-a-cinematic && git pull`, and read claude/START-HERE.md,
+> docs/WORKLOG.md, CLAUDE.md, docs/ROADMAP.md ("Concept A: P4–P6") and docs/RESEARCH_AND_DECISIONS.md ("Resolved in
+> session 16") there. Then check out the release branch (S17 cuts it from an up-to-date `origin/main`). Then: <Sn only>.
 
 **Open a new session (the live site):**
 > New session. First read claude/START-HERE.md, docs/WORKLOG.md, and CLAUDE.md on `main` to load the

@@ -12,7 +12,8 @@ true project facts, through a prototype-first sequence with an owner approval ga
 riskiest piece (the hero) in isolation against hard budgets, then build sections, motion, and case
 studies on a branch cut from production `main`. Release through a Vercel Preview and Tay's sign-off.
 
-**Owner / approver:** Tay (every gate). **Last updated:** 2026-11-18 (M0 audit session).
+**Owner / approver:** Tay (every gate). **Last updated:** 2026-11-19 (session 16: the Concept A release plan,
+"Concept A: P4–P6" below).
 
 ## Global constraints (apply to every phase)
 
@@ -33,8 +34,12 @@ studies on a branch cut from production `main`. Release through a Vercel Preview
 - No deploy, push, merge, or install without Tay's explicit ask.
 - **Direction (D1, 2026-11-18):** evolve Product Plates; calm/premium, restrained cyan/violet accents;
   the reference README's do-NOT-take list applies (no RGB wash, no holographic cube, no fabricated stats).
+  **D1 was reopened by Tay the same day for Concept A,** and in session 16 he approved replacing the live `/` with it
+  ("Concept A: P4–P6" below). These rules hold on `main` until that release merges.
 - **No 3D now (D2):** the 3D-guard tests and the JS budget are not modified by any phase below unless
-  Tay later approves a separate M2 prototype.
+  Tay later approves a separate M2 prototype. **The one exception (Tay, session 16, R12):** for the release,
+  `tests/e2e/page.spec.ts:43` allows exactly one canvas, the hero's 2D `aria-hidden` field. The WebGL guards and the
+  budget stay unchanged.
 
 ## Review focus (what is most likely to go wrong)
 
@@ -96,7 +101,7 @@ Acceptance criteria:
 
 Risks: low. Content-only diffs; the existing tests already guard neighbouring claims.
 
-### M1 — Art direction, design system, storyboard · `IN PROGRESS` (core A–E live 2026-11-18: A/C/D #8, B #11, E #12; F deferred to Tay's call after previewing A–E live)
+### M1 — Art direction, design system, storyboard · `IN PROGRESS` (core A–E live 2026-11-18: A/C/D #8, B #11, E #12; F deferred to Tay's call after previewing A–E live; **F retired by Tay in session 16, R14**: the Concept A release supersedes it)
 
 Scope per D1: **evolve** Product Plates (calm/premium, restrained cyan/violet accents). This is not a
 replacement. The reference README's take / do-NOT-take applies (quoted in `docs/RESEARCH_AND_DECISIONS.md` §1).
@@ -184,6 +189,72 @@ Acceptance criteria:
       rollback to the previous production deployment.
 - [ ] Post-release check of the live site: headers, the main route, the chat path, `/privacy`, `/he` redirect.
 
+M3–M7 were written for evolving Product Plates. For Concept A, the work they describe is done by P3 on the prototype,
+then by P5 and P6 below (S23 is M6's validation, and S24 is M7's release and checks).
+
+---
+
+## Concept A: P4–P6 (plan approved by Tay, 2026-11-19, session 16)
+
+P1–P3 (the hero and the six sections) are done and approved on `proto/hero-a-cinematic` (`docs/WORKLOG.md`, sessions
+10–15). The plan's gap audit and test list are in `docs/WORKLOG.md` (session 16). Tay's decisions, R1–R15, are in
+`docs/RESEARCH_AND_DECISIONS.md` ("Resolved in session 16"). Goal: the new site replaces the live `/` as soon as
+possible, because Tay is job hunting; the demos (P4) come after the release.
+
+### P5 (integration) and P6 (release) · `NOT STARTED` (approved; S17 is next)
+
+The work happens on `release/concept-a`, cut from an up-to-date `origin/main` (R1). Nothing on `main` changes until
+Tay merges. Each test change goes in its own commit naming Tay's approval (R12); the WebGL guards stay unchanged.
+
+| Session | One focused thing | Done when |
+|---|---|---|
+| **S17** | **The release branch and the baseline.** Cut `release/concept-a` from `origin/main`. Copy the prototype's source over unchanged in one commit: every non-doc path in `git diff --name-only main...proto/hero-a-cinematic`, after checking that none changed on `main` since the branch point. Measure production's baseline: Lighthouse mobile (median of 5), first-load JS and HTML bytes. Measure the chat launcher over LinkedIn mid-scroll on phones (#16) | The full suite passes with `/` byte-identical; the baseline is in the WORKLOG |
+| **S18+S19** | **Compose `/`, with the case studies and Two more.** One page: the header (R2), the hero, Work, About, Stack, Think · Build · Ship, Contact and the live Footer. One `main` and one h1 (Work's title an h2, the products h3s); the live anchor ids (R7); dark `<html>` (R3); the layer imported by `/`. `/lab` and the retired live components deleted (the `data/` modules unit tests read stay). "Case study" buttons in the panels (R4) and the Two more block (R5); the dialogs checked with axe on the dark page. The approved guard edits (R12), and the "still to name" ones confirmed with Tay first. JS and HTML budgets measured | `/` is the new page; `budget.spec.ts` and the tests the plan lists as unchanged pass |
+| **S20** | **The tests.** Retire the old page's feature specs (the approved set). Port `lab-hero-a.*` and `lab-work.*` to `/`, deleting the two prototype-only tests (`/`'s CSS pinned to `main`'s digest; Contact "as on the live `/`", which becomes fixed expected values). Add the new guards (R12) | The full suite passes |
+| **S21+S22** | **Privacy and SEO surfaces, then the backlog on the composed page.** The `theme` cookie out and `/privacy` updated with N7's sentence: **Tay approves the exact wording before the commit** (R13). The dark social card and the headline in `siteMeta` (R8); the manifest and `themeColor`; the sitemap's date; the 404. Then #15 and the Work lede (R10), the launcher fix (#16), #13 measured (R11), #14 re-checked | Each change measured against S17's baseline; the suite passes |
+| **S23** | **The release candidate.** Full validation on a production build: typecheck, lint, unit, e2e in Chromium **plus Playwright WebKit and Firefox runs**, axe, Lighthouse mobile (median of 5) against the baseline, headers, privacy and secret scans. Screenshots at the standard viewports. On Tay's go: push and open the PR, which builds a Preview. **Tay reviews it on his own phone.** **The GRAVITY FLOW capture swap:** ask Tay for the image then | Tay approves the Preview |
+| **S24** | **The release.** **Before the merge: tag `443a1f9` as `product-plates-final` and push the tag** (R15). Tay merges. The production checks below. Close out the docs on `main`, `docs/CINEMATIC_SYSTEM.md` included; the prototype branch stays frozen | The production checks pass |
+
+**Rollback:** Vercel's Instant Rollback to `443a1f9`'s deployment (no rebuild), then a `git revert -m 1 <merge>` PR.
+After an instant rollback, Vercel stops promoting new production deployments automatically until the rollback is undone
+(NC: confirm in Vercel's docs at the time).
+
+**The production checks (S24, read-only):**
+- The Production deployment is the merge's SHA.
+- `/` answers 200 with `index, follow`, the canonical, the title, OG, JSON-LD and the new h1.
+- Every security header is present, and `X-Powered-By` is absent.
+- `/privacy` 200, `/nope` 404, `/he` 308, `/lab/work` 404. Robots, the sitemap and the social card are served.
+- The résumé is 80,593 bytes.
+- `POST /api/chat` with an empty body answers 400, and Tay asks one real question.
+- Cloudflare's HTML matches Vercel's.
+- A Playwright check at 390 and 1440: no console errors, one 2D canvas, no WebGL.
+- Lighthouse mobile (median of 5) against S17's baseline.
+- Tay's manual steps: LinkedIn's Post Inspector to refresh the share card, and a reindex request if he uses Search
+  Console.
+
+### P4 (the project demos) · `NOT STARTED` (after the release)
+
+Each panel keeps its empty, hidden demo slot (`data-demo-slot`; `docs/CINEMATIC_SYSTEM.md`, "Work slice"). A demo mounts
+there.
+
+**P4 restore record (R6, Tay's condition).** The release removes the live chapters, and with them four explainers.
+- **All four are intact at `443a1f9`** (`main` = production, 2026-11-19), which is tagged **`product-plates-final`**
+  before the release merges (R15). S24 confirms that the release merge's first parent still has them, and adds both
+  SHAs here.
+- **Restore one:** `git checkout product-plates-final -- <its paths>`, or read it with
+  `git show product-plates-final:<path>`.
+- **Shared by all four:** `components/work/Work.tsx` (last changed in `fddc36e`), `components/work/work.css`
+  (`a4d0e99`), `lib/content.ts` (`fddc36e`, which hands each chapter its data), the plate tones and studio light in
+  `app/globals.css` (the `[data-plate]` rules, `b5941cf`), and the captures in `public/work/` through `data/images.ts`
+  (`fddc36e`).
+
+| Explainer | Component and styles (last changed in) | Data, strings, captures (last changed in) | The tests that held it |
+|---|---|---|---|
+| **T Poker stepper:** three steps as a radio group, each bringing its real screen to the front; works without JS | `components/work/PokerChapter.tsx` (`fddc36e`), `components/work/poker.css` (`b5941cf`) | `pokerSteps` in `data/work.ts` (`fddc36e`); `dict.poker` in `lib/dict.ts` (`e105917`); the captures `poker-home`, `poker-live`, `poker-settle` | `tests/e2e/chapters.spec.ts`, "T Poker" and "T Poker on desktop"; the T Poker cases in `tests/unit/work.test.ts` (`fddc36e`) |
+| **Aegis trace:** ingest → normalise → detect, the parallel fork, then live; the highlighted port-scan row on the alerts capture | `components/work/AegisChapter.tsx` (`fddc36e`), `components/work/aegis.css` (`b5941cf`) | `aegisTrace`, `aegisCopy` in `data/work.ts`; `AEGIS_ROW`, `AEGIS_CROPS` and the captures `aegis-alerts`, `aegis-alerts-phone` in `data/images.ts`; `dict.aegis` | `chapters.spec.ts`, "Aegis"; `work.test.ts`, "Aegis: the trace is the implemented path" |
+| **DeveloperOS cite-or-decline:** index → retrieve → evidence → cite, or decline; the refusal as real text; citation boxes on the capture's file:line chips | `components/work/DeveloperOSChapter.tsx` (`fddc36e`), `components/work/dos.css` (`b5941cf`) | `dosFlow`, `dosRefusal`, `dosRefusalCaption` in `data/work.ts`; the captures `dos-search`, `dos-search-phone`; `dict.dos` | `chapters.spec.ts`, "DeveloperOS"; `work.test.ts`, "DeveloperOS: evidence, then cite or decline" |
+| **GRAVITY FLOW marked frame:** the mechanic marked on the real gameplay frame, then the facts | `components/work/GravityChapter.tsx` (`fddc36e`; the marks are its `MARKS`), `components/work/gravity.css` (`b5941cf`) | `gfFacts` in `data/work.ts`; the captures `gf-gameplay`, `gf-boss`; `dict.gf` | `chapters.spec.ts`, "GRAVITY FLOW"; `work.test.ts`, "GRAVITY FLOW: gameplay first, no physics claims" |
+
 ---
 
 ## Prioritised backlog (not yet scheduled)
@@ -202,6 +273,7 @@ Acceptance criteria:
 | 10 | Consider a nonce-based CSP (`script-src` currently allows `'unsafe-inline'`) | The route is already dynamic (cookies), so nonces are feasible. Needs measurement | M6 |
 | 11 | N7: ~~Cloudflare's beacon and Email Address Obfuscation~~ turned off by Tay 2026-11-18 (verified live). Left: `/privacy` names only Vercel, though Cloudflare proxies the site | Privacy wording. Tay approves or rejects the draft (`docs/RESEARCH_AND_DECISIONS.md` N7) | any |
 | 12 | ~~N8: GRAVITY FLOW's private repository name in nine doc lines~~ Done in session 9 on the N8 PR: the lines say "the private GRAVITY FLOW repository", and the guard pins both private repos by digest | — | any |
-| 13 | Concept A: let the off-screen Stack, Think · Build · Ship and Contact skip their layout (`content-visibility: auto`), together with anchoring the violet glow so it no longer sits at a share of the page's height | Stack costs LCP +14 ms desktop and +46 ms on a phone at 4× CPU (session 13). Think · Build · Ship adds +2 / +42 ms (session 14; a first round +8 / +72), most of it its layout: `content-visibility` on it measured 852 ms against 932 as served (phone, through one interception). **Tay keeps both costs for now and added Think · Build · Ship to this fix** (session 13 and 14 closes). Contact adds +0 to +8 ms desktop and +4 to +18 ms phone (session 15, three rounds of 10 interleaved); **Tay keeps that cost too and added Contact to this fix** (session 15 close). `content-visibility` alone moves the glow when Stack renders (slice CLS 0.353 at 320px, measured), so the two go together. Details: `docs/WORKLOG.md`, sessions 13, 14 and 15 | P5 (integration, prototype) |
-| 14 | Concept A: Stack's filter hold, with sections below it. **Done in session 14:** Tay keeps the hold as it is; its test's comment reworded (`a8062e6`). **Left for P5: re-check the visible gap case** | The hold (`app/lab/work/StackFilter.tsx`) is 0 at 1440×900 and 390×844 whenever the buttons are in view (session 14, with Think · Build · Ship below). It engages on tall screens with the buttons near the top (128–729px; up to 448px of space at 1440×1800) and after a press with the buttons out of view above (keyboard only; 579–1,215px of space), and that space now sits between the filtered list and the next section, until All is pressed. Without it the view would jump that far. **Session 15, with Contact below:** whenever the buttons are in view the hold is 0 at 1440×900, 390×844, 1920×1200 and 2560×1440, and 346px at 1440×1800 (0–81px of space; it was 729px). The page's-end case is unchanged (1,096px at 1440 wide, 1,619px at 390): there the hold always equals the full list's height, so no section below changes it. The view moved 0px in every case. `StackFilter.tsx`'s header comment fixed (`bbd9d55`, comment only). **Tay keeps the hold as it is** (session 15 close). Re-check the 1440×1800-class and the keyboard-only end cases once the page is composed. Details: `docs/WORKLOG.md`, sessions 14 and 15 | P5 (integration, prototype) |
-| 15 | Concept A: Contact repeats About's availability wording ("on-site, hybrid, or remote") and its three links (the résumé, GitHub, LinkedIn). **Re-check whether About keeps its links once the full page is assembled** | Logged by Tay (session 15). Contact uses the live Contact's lead and links word for word and target for target; About's line and links were approved in session 12, before Contact existed. Details: `docs/WORKLOG.md`, session 15 | P5 (integration, prototype) |
+| 13 | Concept A: let the off-screen Stack, Think · Build · Ship and Contact skip their layout (`content-visibility: auto`), together with anchoring the violet glow so it no longer sits at a share of the page's height | Stack costs LCP +14 ms desktop and +46 ms on a phone at 4× CPU (session 13). Think · Build · Ship adds +2 / +42 ms (session 14; a first round +8 / +72), most of it its layout: `content-visibility` on it measured 852 ms against 932 as served (phone, through one interception). **Tay keeps both costs for now and added Think · Build · Ship to this fix** (session 13 and 14 closes). Contact adds +0 to +8 ms desktop and +4 to +18 ms phone (session 15, three rounds of 10 interleaved); **Tay keeps that cost too and added Contact to this fix** (session 15 close). `content-visibility` alone moves the glow when Stack renders (slice CLS 0.353 at 320px, measured), so the two go together. Details: `docs/WORKLOG.md`, sessions 13, 14 and 15. **Session 16 (R11):** composing `/` anchors the glow to its section anyway; then `content-visibility` is measured on the composed page, and kept only if phone LCP improves, scroll-through CLS stays 0 and nav jumps still land exactly. Otherwise the release ships without it, unless phone LCP is worse than production's baseline | P5: S21+S22 |
+| 14 | Concept A: Stack's filter hold, with sections below it. **Done in session 14:** Tay keeps the hold as it is; its test's comment reworded (`a8062e6`). **Left for P5: re-check the visible gap case** | The hold (`app/lab/work/StackFilter.tsx`) is 0 at 1440×900 and 390×844 whenever the buttons are in view (session 14, with Think · Build · Ship below). It engages on tall screens with the buttons near the top (128–729px; up to 448px of space at 1440×1800) and after a press with the buttons out of view above (keyboard only; 579–1,215px of space), and that space now sits between the filtered list and the next section, until All is pressed. Without it the view would jump that far. **Session 15, with Contact below:** whenever the buttons are in view the hold is 0 at 1440×900, 390×844, 1920×1200 and 2560×1440, and 346px at 1440×1800 (0–81px of space; it was 729px). The page's-end case is unchanged (1,096px at 1440 wide, 1,619px at 390): there the hold always equals the full list's height, so no section below changes it. The view moved 0px in every case. `StackFilter.tsx`'s header comment fixed (`bbd9d55`, comment only). **Tay keeps the hold as it is** (session 15 close). Re-check the 1440×1800-class and the keyboard-only end cases once the page is composed. Details: `docs/WORKLOG.md`, sessions 14 and 15. **Session 16:** keep the hold; re-measure on the composed page, where the footer now follows Contact | P5: S21+S22 |
+| 15 | Concept A: Contact repeats About's availability wording ("on-site, hybrid, or remote") and its three links (the résumé, GitHub, LinkedIn). **Re-check whether About keeps its links once the full page is assembled** | Logged by Tay (session 15). Contact uses the live Contact's lead and links word for word and target for target; About's line and links were approved in session 12, before Contact existed. Details: `docs/WORKLOG.md`, session 15. **Decided in session 16 (R10):** About drops its three links and its availability line and ends on the facts. Composed, the hero has the résumé and the availability pill, Contact has all four links, and the footer repeats them. Work also drops its lede, which repeats the hero's | P5: S21+S22 |
+| 16 | Concept A: the chat launcher passes over LinkedIn mid-scroll on phones (Tay, session 16). Not measured yet | Measure in S17 (320–430, the label full and tucked). Fix in S21+S22: `scroll-padding-bottom` of the launcher's height plus a gap, so a link focused by keyboard is never under it (WCAG 2.4.11), and the Tab test's "unobscured" check extended to the launcher. #15 removes About's links, the case Tay reported. Don't move or hide the launcher | P5: S17, S21+S22 |

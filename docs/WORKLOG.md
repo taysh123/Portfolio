@@ -11,6 +11,127 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-19 — Session 16: the P5 (integration) and P6 (release) plan, approved (Claude Code)
+
+**Scope (Tay's brief):**
+- Sync both branches.
+- A plan only, for P5 and P6. No code changed.
+- The goal: the new site (the locked hero and the approved sections) replaces the live `/` as soon as possible,
+  because Tay is job hunting. The demos (P4) come after the release.
+- Then: record the decisions, update START-HERE and this log on this branch, run `npm test`, push, and close out.
+  S17 does not start this session.
+
+### 1. Preconditions (VL)
+- `git fetch`: `origin/main` = **`443a1f9`**; local `main` level with it, clean.
+- `proto/hero-a-cinematic` at **`d8f3ef4`**, level with its remote, clean.
+
+### 2. What the plan found (VL, by reading the code on both branches)
+- **The prototype only adds files.** Outside docs and tests, `git diff --stat main...HEAD` touches 70 files, +2,295
+  lines, 0 deletions. It can be copied onto a branch from `main` exactly as it is.
+- **The root layout already serves `/lab`:**
+  - the skip link (to `#main`), the providers with the chat launcher and its panel, the accessibility panel's
+    provider, JSON-LD, and the early-chat script;
+  - plus the root metadata, which the lab layout overrides with noindex and no canonical.
+
+  What `/lab` lacks is in `app/page.tsx`: `Navbar` and `Footer`.
+
+**The gap audit (live `/` against the prototype):**
+
+| Area | Live `/` | Prototype | Plan |
+|---|---|---|---|
+| Header | Fixed `Navbar`: `#work #about #skills #contact` with a current-section underline, accessibility button, theme toggle, "Get in touch", phone menu sheet | The hero's own top bar (wordmark, availability pill), not fixed; section ids are `wk-*` | R2, R7 |
+| Hero links | In-page | `/#work`, `/#work-<id>` (links to the live page) | In-page `#work`, `#work-<id>` (R7) |
+| Outline | One `main`, one h1 | Two routes, each with its own `main#main` and h1 | One `main`; the hero's h1; Work's title an h2, the products h3s |
+| Footer | Identity, the channels, the résumé, Privacy, Back to top (`#hero`), © and the legal name | None | The live Footer as it is |
+| Chat | Launcher and panel | The same, from the root layout. The layer recolours only the launcher; by the code, the panel opens in `<html>`'s theme, which defaults to light (NC: to confirm on the Preview) | R3 |
+| Theme | Light by default, dark on request, `theme` cookie | Dark only | R3 |
+| Accessibility panel | Header button | No button, so the panel can't be opened on `/lab`; the layer honours reduced motion and high contrast | Keep the button (R2); check large text on the layer |
+| Depth | Six "Case study" buttons and the lazy dialog; the chapters' explainers | "More on X" to `/#work-<id>`, which the swap removes | R4, R6 |
+| Two more | Job Assistant, Orders & Delivery, each with a case study | Missing (Stack's evidence names both) | R5 |
+| Metadata and the card | Root metadata; light card with `siteMeta.headline` | Lab titles, noindex | Root route inherits index and canonical; R8; manifest and `themeColor` to the dark field |
+| noindex | Index | All of `/lab` | `/lab` never shipped; a guard (R12) |
+| 404, error page | Light-themed | — | Dark theme (R3); the 404's copy kept |
+| Résumé | Same PDF | Linked four times once composed | R10 |
+| Headers and CSP | `proxy.ts` on every route | No new origin; the 2D canvas and the two inline scripts are already allowed | No change; verify on the Preview and production |
+| Retired code | Plates hero, chapters, About visual, Stack lens | — | Deleted in the release PR (`dead-code.test.ts` fails on orphaned components) |
+
+**The tests the release touches** (detail: `docs/RESEARCH_AND_DECISIONS.md`, R12).
+- **Unchanged if R2, R4, R5 and R7 are taken.** Read, not yet run:
+  - `budget.spec.ts` (its three case-study tests open `button[data-case-study='aegis']`);
+  - `dead-code.test.ts`, `tokens.test.ts`, the institution and private-repo guards;
+  - `english.spec.ts`, `privacy.spec.ts:15`, `site.test.ts:24`;
+  - `chat.spec.ts` (`:99` needs the footer and a case-study button);
+  - `chapters.spec.ts:304–352` (six triggers);
+  - `private-repo.spec.ts` (`:49` needs the `more-work__row` class, or a one-selector change);
+  - `aegis.spec.ts` (needs `#work-aegis`);
+  - `hero.test.ts` (`heroIndex` hrefs are `#work-<id>`);
+  - `chrome.spec.ts:276`, and `:284`, which checks that every in-page link's target exists.
+- **Likely to pass; verify by running:** `page.spec.ts:18`, `:50`, `:111`, `:120` (the layer's smallest text is
+  exactly 12px).
+
+**The rest of the plan:**
+- The backlog (#13–#16): ROADMAP.
+- The mechanism and the production checks: ROADMAP, "Concept A: P4–P6".
+- Ruled out:
+  - merging the prototype branch: never merged, and it carries `/lab`;
+  - a route flag keeping the old page alongside: two homes, twice the tests, and Vercel's rollback already covers it.
+
+### 3. Tay's decisions
+All recorded as **R1–R15** in `docs/RESEARCH_AND_DECISIONS.md`, "Resolved in session 16":
+- **Approved as recommended:** decisions 1–5, 7–12 and 14.
+- **6, the explainers:** they retire for the release, provided ROADMAP P4 records their files and last commit.
+  Done: "P4 restore record". All four are intact at `443a1f9`, last changed in `fddc36e` (markup and data) and
+  `b5941cf` (styles).
+- **13, N7:** it goes into S21's `/privacy` edit, but its exact final wording is shown to Tay before the commit.
+- **15:** tag `443a1f9` as `product-plates-final` before the merge, and push the tag (an S24 step, not done now).
+- **Tests:**
+  - §2 A (the canvas and rAF changes, plus the dark-only theme tests) and E (the new guards) are approved as written.
+    Each change goes in its own commit naming the approval. The WebGL guards stay unchanged.
+  - The other §2 A rows follow from R7–R9, but Tay hasn't named them yet: the h1 and h2 strings, the focus-ring
+    colour, the Tab order's labels, the headline pins, and the two `work.test.ts` cases that read deleted files.
+    They are logged as "still to name" and get confirmed in S18+S19.
+- **Sessions:**
+  - S18 and S19 are paired, and so are S21 and S22.
+  - S23 adds WebKit and Firefox runs, Tay's review on his own phone through the Preview, and the GRAVITY FLOW capture
+    swap (ask Tay for the image then).
+  - The plan S17–S24: `docs/ROADMAP.md`.
+
+### 4. What changed (docs only)
+- **`docs/RESEARCH_AND_DECISIONS.md`:**
+  - D1: the reopening for Concept A, which this log had never recorded, and the session 16 approval.
+  - D2: the one approved `<canvas>` exception, with the WebGL guards unchanged.
+  - New: "Resolved in session 16" (R1–R15).
+  - N7: decided for S21+S22.
+  - The history row.
+- **`docs/ROADMAP.md`:**
+  - New: "Concept A: P4–P6". It holds the S17–S24 table as merged, the rollback, the production checks, and P4 with
+    the restore record.
+  - Global constraints: D1 and D2 amended. M1: Move F retired (R14). A note mapping M3–M7 to P3–P6.
+  - Backlog: #13–#15 decided and scheduled, plus a new **#16**, the chat launcher over LinkedIn mid-scroll on phones.
+- **`claude/START-HERE.md`** and this entry.
+- **The memory's state note.**
+
+### 5. Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` | **216/216** (the private-repo guard scans these docs) |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test tests/e2e/lab-work.spec.ts -g "byte-identical"` | **1/1**: `/`'s stylesheets still equal `origin/main`'s bytes after the START-HERE edit (Tailwind scans `claude/`) |
+
+- Production checked read-only (`gh api …/deployments`): `443a1f9`, status success.
+- The full e2e suite was not run: no code changed.
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production. Local `main` level with it, and clean.
+- This branch: the code is still `1369b00`; the docs are on top. PR #18 is a draft.
+
+### Waiting on Tay
+- **S17 is next:** the release branch, the unchanged copy of the prototype, and production's baseline.
+- In S18+S19, confirm the "still to name" test changes.
+- In S21+S22, approve N7's final `/privacy` wording.
+- In S23, the GRAVITY FLOW image.
+
+---
+
 ## 2026-11-19 — Session 15 close-out: Contact approved with the 1100px fix; P3 complete (Claude Code)
 
 **Scope (Tay's brief):**
@@ -2482,3 +2603,4 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-19 | Session 14 close | Think · Build · Ship approved; the hold kept and its test's comment reworded (`a8062e6`); the glow fix kept; the section's LCP cost kept and added to ROADMAP #13; #14's visible gap case logged for P5; baseline worktree removed, scratch cleaned | `tests/e2e/lab-work.spec.ts` (comment), `CLAUDE.md`, `claude/START-HERE.md`, `docs/{WORKLOG,ROADMAP,CINEMATIC_SYSTEM}.md` |
 | 2026-11-19 | Session 15 | Contact (P3.6) ends `/lab/work`, from the live Contact's own words and links (`56e3dea`); `StackFilter.tsx`'s header comment fixed (`bbd9d55`, comment only); #14 re-measured (the tall-screen case shrinks, the end case unchanged); About's repetition logged for P5 (ROADMAP #15) | `app/lab/work/{contact.ts,ContactBlock.tsx,page.tsx,work.css,StackFilter.tsx}`, `tests/{unit,e2e}/lab-work.*`, `docs/{CINEMATIC_SYSTEM,ROADMAP,WORKLOG}.md`, `claude/START-HERE.md` |
 | 2026-11-19 | Session 15 close | Contact approved, with its two columns from 1100px (`1369b00`); P3 complete (all six sections approved); Contact's LCP cost kept and added to ROADMAP #13; the hold kept (#14); baseline worktree removed, scratch cleaned | `app/lab/work/work.css`, `tests/{unit,e2e}/lab-work.*`, `CLAUDE.md`, `claude/START-HERE.md`, `docs/{WORKLOG,ROADMAP,CINEMATIC_SYSTEM}.md` |
+| 2026-11-19 | Session 16 | The P5/P6 plan (gap audit, the tests the release touches, the backlog, the mechanism), approved by Tay as R1–R15; the S17–S24 plan, S18+S19 and S21+S22 paired; the P4 restore record for the four explainers; the backlog's new #16. Docs only | `docs/{RESEARCH_AND_DECISIONS,ROADMAP,WORKLOG}.md`, `claude/START-HERE.md` |
