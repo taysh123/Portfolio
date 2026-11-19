@@ -16,7 +16,7 @@ const EARLY_CASE_STUDY = `document.addEventListener("click",function(e){if(windo
 
 /**
  * The page (Concept A, the release: R1–R15 in docs/RESEARCH_AND_DECISIONS.md). D1 reopened by Tay, 2026-11-18; D2 not
- * reopened, so no WebGL. One `.cine` root, dark only (R3):
+ * reopened, so no WebGL. Dark only (R3), in the layer's `.cine` roots: one for the header, one for the page:
  *
  *   Header    the hero's wordmark and pill, the four destinations, accessibility, "Get in touch" (R2)
  *   Hero      the locked hero, with its 2D field                         #hero
@@ -27,9 +27,9 @@ const EARLY_CASE_STUDY = `document.addEventListener("click",function(e){if(windo
  *   Think · Build · Ship   three principles, each with its evidence      #approach
  *   Contact   the live title, lead and four links                        #contact
  *
- * Then the live footer, and the case-study dialog's host. Both sit outside the root, so the footer and every overlay
- * (the case study, the chat, the accessibility panel) keep the site's own dark theme (R3). One `main`, one h1 (the
- * hero's); every live anchor id is kept (R7).
+ * Then the case-study dialog's host (inside `main`, outside the roots) and the live footer. The footer and every
+ * overlay (the case study, the chat, the accessibility panel) sit outside the layer, so they keep the site's own dark
+ * theme (R3). One `main`, one h1 (the hero's); every live anchor id is kept (R7).
  */
 export default function Page() {
   const c = getContent();
@@ -37,7 +37,9 @@ export default function Page() {
     <>
       <div className="cine" data-theme="dark">
         <Navbar />
-        <main id="main">
+      </div>
+      <main id="main">
+        <div className="cine" data-theme="dark">
           <Hero c={c} />
           <div className="wk">
             <div className="wk__sky" aria-hidden="true">
@@ -52,16 +54,18 @@ export default function Page() {
               <Contact />
             </div>
           </div>
-        </main>
-      </div>
+        </div>
+        {/* A "Case study" press before hydration would otherwise be lost (the host's listener isn't attached yet):
+            remember the last early opener; CaseStudyHost replays it on mount. Inline because it must run before
+            any bundle (CSP allows inline scripts, proxy.ts). */}
+        <script dangerouslySetInnerHTML={{ __html: EARLY_CASE_STUDY }} />
+        {/* Inside <main>, as on the Product Plates page: the dialog's own <header> is then not a second banner
+            landmark. Outside the layer's root, so the dialog keeps the site's dark theme (R3). */}
+        <CaseStudyHost />
+        {/* The case study is a script-driven dialog; without JavaScript its trigger would do nothing, so it isn't shown. */}
+        <noscript><style>{".case-study-trigger{display:none}"}</style></noscript>
+      </main>
       <Footer c={c} />
-      {/* A "Case study" press before hydration would otherwise be lost (the host's listener isn't attached yet):
-          remember the last early opener; CaseStudyHost replays it on mount. Inline because it must run before
-          any bundle (CSP allows inline scripts, proxy.ts). */}
-      <script dangerouslySetInnerHTML={{ __html: EARLY_CASE_STUDY }} />
-      <CaseStudyHost />
-      {/* The case study is a script-driven dialog; without JavaScript its trigger would do nothing, so it isn't shown. */}
-      <noscript><style>{".case-study-trigger{display:none}"}</style></noscript>
     </>
   );
 }
