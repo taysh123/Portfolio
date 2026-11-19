@@ -299,10 +299,11 @@
 
 /* ── Stack (P3.4, StackBlock.tsx): the tools behind the work, under About and after a hairline, as the live Stack shows
    them. "Filter by project" first (StackFilter.tsx): pills at the 44px target, the pressed one filled in the accent,
-   like the résumé. Then one row per group, each on its own hairline: from 1024px its name takes the words share and its
-   tools and evidence the capture's (they line up under About's words); below that they stack. The tools share one
-   line, wrapping as needed. A pressed project lights its tools in the accent and dims the rest to the faintest ink
-   (the rules are written from the options in stack.ts): colour only, so nothing moves. ── */
+   like the résumé; under them, the live status line, at the lead size. Then one row per group, each on its own
+   hairline: from 1024px its name takes the words share and its tools and evidence the capture's (they line up under
+   About's words); below that they stack. Every tool is a pill: outlined under All; with a project chosen, only its
+   tools remain (stack.ts writes those rules from the options), each filled in the accent, and the evidence steps back.
+   Nothing animates. ── */
 .wk__stack {
   margin-top: var(--cine-section-y);
   padding-top: var(--cine-space-7);
@@ -330,7 +331,15 @@
 .wk__lens-chip[aria-pressed="true"] { border-color: var(--cine-cyan); background: var(--cine-cyan); color: var(--cine-on-accent); }
 .wk__lens-chip[aria-pressed="true"]:hover { border-color: var(--cine-cyan-hover); background: var(--cine-cyan-hover); }
 .wk .wk__lens-chip:focus-visible { border-radius: var(--cine-radius-pill); }
-.wk__lens-status { min-height: 1lh; margin-top: var(--cine-space-3); font-size: var(--cine-text-small); line-height: var(--cine-leading-label); color: var(--cine-mist); }
+/* The status: what the filter shows, said plainly above the groups (empty under All, as on the live page). */
+.wk__lens-status {
+  min-height: 1lh;
+  margin-top: var(--cine-space-4);
+  font-size: var(--cine-text-lead);
+  font-weight: var(--cine-weight-control);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-ink);
+}
 .wk__stack-groups { margin-top: var(--cine-space-4); }
 .wk__stack-group {
   display: grid;
@@ -348,29 +357,33 @@
   font-weight: var(--cine-weight-name);
   letter-spacing: var(--cine-tracking-name);
   color: var(--cine-ink);
-  transition: color var(--cine-dur-hover) var(--cine-ease);
 }
-.wk__stack-tools {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--cine-space-1) var(--cine-space-5);
-  font-size: var(--cine-text-body);
-  line-height: var(--cine-leading-lead);
+.wk__stack-tools { display: flex; flex-wrap: wrap; gap: var(--cine-space-2); }
+/* Every tool a pill: outlined under All (the panels' control edge, at least 3:1). */
+.wk__stack-tools [data-tool] {
+  padding: var(--cine-space-1) var(--cine-space-3);
+  border: 1px solid var(--cine-edge);
+  border-radius: var(--cine-radius-pill);
+  background: var(--cine-glass-ink);
+  font-size: var(--cine-text-small);
+  line-height: var(--cine-leading-label);
   color: var(--cine-ink);
 }
-.wk__stack-tools [data-tool] { transition: color var(--cine-dur-hover) var(--cine-ease); }
+/* A project chosen: the tools that remain are its own, each filled in the accent; the pills are the evidence there. */
+.wk__stack-groups[data-lens] [data-tool] { border-color: var(--cine-cyan); background: var(--cine-cyan); color: var(--cine-on-accent); }
+.wk__stack-groups[data-lens] .wk__stack-evidence { display: none; }
 .wk__stack-evidence {
-  margin-top: var(--cine-space-2);
+  margin-top: var(--cine-space-3);
   max-width: 36rem;
   font-size: var(--cine-text-small);
   line-height: var(--cine-leading-lead);
   color: var(--cine-mist);
 }
-/* Reduced motion (the OS or the site's switch): the chips and the highlight change at once. */
+/* Reduced motion (the OS or the site's switch): the buttons change at once. */
 @media (prefers-reduced-motion: reduce) {
-  .wk__lens-chip, .wk__stack-name, .wk__stack-tools [data-tool] { transition: none; }
+  .wk__lens-chip { transition: none; }
 }
-[data-reduced-motion="true"] .wk__lens-chip, [data-reduced-motion="true"] .wk__stack-name, [data-reduced-motion="true"] .wk__stack-tools [data-tool] { transition: none; }
+[data-reduced-motion="true"] .wk__lens-chip { transition: none; }
 
 /* ── Smaller screens: a phone capture is capped by the screen's width AND height (T Poker's tall screens no longer
    take the whole view), the stage and the panel tighten, and the art-directed phone crops keep their own shape. ── */

@@ -11,12 +11,13 @@ import { fmt } from "@/lib/fmt";
  * - the groups, their tools and each group's evidence sentence are the live Stack's (data/skills.ts), word for word;
  * - which flagship uses each tool is the live mapping (projectsFor in data/stackLens.ts), kept to the four this page
  *   shows. Each tool carries it the live way: `data-p` for the filter, and the names in its accessible text;
- * - the filter's highlight is written from the options, as the live Stack writes its FILTER.
+ * - the filter is written from the options exactly as the live Stack writes its FILTER: a chosen project shows only
+ *   its tools, and no group left empty.
  * tests/unit/lab-work.test.ts holds every string to its source.
  *
  * Tay's choices (session 13): a Security group (one JWT row, moved from Services and APIs, so it appears once; Body
- * HMAC; CSRF token), with one evidence sentence built only from its source lines; tools no flagship uses are listed and
- * dim under every project; Everyday tools stays, naming no project. No logos, no levels, no years.
+ * HMAC; CSRF token), with one evidence sentence built only from its source lines; tools no flagship uses show under All
+ * only; Everyday tools stays, naming no project. No logos, no levels, no years.
  */
 
 const FLAGSHIPS: readonly string[] = flagships.map((f) => f.id);
@@ -68,12 +69,11 @@ const options = FLAGSHIPS.map((id) => {
   return { id, name: project(id).name, count, status: fmt(dict.stack.showing, { n: count, name: project(id).name }) };
 });
 
-/** The highlight, written from the options like the live FILTER: choosing a project lights the tools whose `data-p`
- *  names it, dims every other tool, and dims the name of a group it lights nothing in. Colour only: nothing moves. */
+/** The filter, written from the options as the live FILTER is (components/sections/Stack.tsx): choosing a project
+ *  takes out every tool whose `data-p` doesn't name it, and every group left with none. */
 const LENS_CSS = options.map(({ id }) =>
-  `.wk__stack-groups[data-lens="${id}"] [data-tool][data-p~="${id}"]{color:var(--cine-cyan)}` +
-  `.wk__stack-groups[data-lens="${id}"] [data-tool]:not([data-p~="${id}"]){color:var(--cine-faint)}` +
-  `.wk__stack-groups[data-lens="${id}"] .wk__stack-group:not(:has([data-p~="${id}"])) .wk__stack-name{color:var(--cine-faint)}`).join("");
+  `.wk__stack-groups[data-lens="${id}"] [data-tool]:not([data-p~="${id}"]){display:none}` +
+  `.wk__stack-groups[data-lens="${id}"] .wk__stack-group:not(:has([data-p~="${id}"])){display:none}`).join("");
 
 export const stackBlock = {
   eyebrow: dict.nav.stack,

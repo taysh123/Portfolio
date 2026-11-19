@@ -400,7 +400,7 @@ describe("Stack (P3.4): the live Stack's groups, tools and evidence, with a filt
       Git: null, Linux: null, "Claude Code": null,
     });
   });
-  it("a tool no flagship uses names no project, so every project filter dims it; the live notes are not shown", () => {
+  it("a tool no flagship uses names no project, so it shows under All only; the live notes are not shown", () => {
     expect(tools.filter((t) => !t.projects.length).map((t) => t.label))
       .toEqual(["Java", "C++", "C", "JavaFX", "Framer Motion", "pytest", "Playwright", "Git", "Linux", "Claude Code"]);
     for (const t of tools.filter((t) => !t.projects.length)) expect(t.names, t.label).toBeNull();
@@ -433,12 +433,17 @@ describe("Stack (P3.4): the live Stack's groups, tools and evidence, with a filt
     expect(lens.options.map((o) => o.status)).toEqual(["Showing the 18 tools T Poker uses.", "Showing the 19 tools Aegis uses.",
       "Showing the 9 tools DeveloperOS uses.", "Showing the 6 tools GRAVITY FLOW uses."]);
   });
-  it("the highlight is written from the options, like the live FILTER: light by data-p, dim the rest, colour only", () => {
+  it("the filter is written from the options exactly as the live FILTER: only the project's tools, no empty group", () => {
+    const live = read("components/sections/Stack.tsx");
+    // The live rules: a tool whose data-p doesn't name the project goes, and so does a group left with none.
+    expect(live).toContain('[data-tool]:not([data-p~="${id}"]){display:none}');
+    expect(live).toContain('.sgroup:not(:has([data-p~="${id}"])){display:none}');
     for (const { id } of lens.options) {
-      expect(lens.css).toContain(`.wk__stack-groups[data-lens="${id}"] [data-tool][data-p~="${id}"]{color:var(--cine-cyan)}`);
-      expect(lens.css).toContain(`.wk__stack-groups[data-lens="${id}"] [data-tool]:not([data-p~="${id}"]){color:var(--cine-faint)}`);
+      expect(lens.css).toContain(`.wk__stack-groups[data-lens="${id}"] [data-tool]:not([data-p~="${id}"]){display:none}`);
+      expect(lens.css).toContain(`.wk__stack-groups[data-lens="${id}"] .wk__stack-group:not(:has([data-p~="${id}"])){display:none}`);
     }
-    expect(lens.css.match(/\{[^}]*\}/g)!.every((d) => /^\{color:var\(--cine-(cyan|faint)\)\}$/.test(d))).toBe(true);
+    expect(lens.css.match(/\{[^}]*\}/g)).toHaveLength(8);
+    expect(lens.css.match(/\{[^}]*\}/g)!.every((d) => d === "{display:none}")).toBe(true);
     expect(block).toMatch(/<style>\{s\.filter\.css\}<\/style>/);
     expect(block).toMatch(/<li key=\{t\.label\} data-tool data-p=\{t\.projects\.join\(" "\) \|\| undefined\} title=\{t\.names \?\? undefined\}>/);
     expect(block).toMatch(/\{t\.label\}\{t\.names && <span className="sr-only"> \(\{t\.names\}\)<\/span>\}/);   // the live accessible text
@@ -446,7 +451,10 @@ describe("Stack (P3.4): the live Stack's groups, tools and evidence, with a filt
   it("the filter is one small island: real toggle buttons, labelled, no data of its own, shown only once it works", () => {
     expect(filter).toMatch(/^"use client";/);
     expect([...filter.matchAll(/^import .* from "([^"]+)";$/gm)].map((m) => m[1])).toEqual(["react"]);   // no data, no @/ module
-    expect(filter).toMatch(/<button key=\{o\.id \|\| "all"\} type="button" className="wk__lens-chip" aria-pressed=\{lens === o\.id\} onClick=\{\(\) => setLens\(o\.id\)\}>/);
+    expect(filter).toMatch(/<button key=\{o\.id \|\| "all"\} type="button" className="wk__lens-chip" aria-pressed=\{lens === o\.id\} onClick=\{\(\) => press\(o\.id\)\}>/);
+    // No scroll jump: the groups hold enough height for the page to reach the view's bottom; All lets go.
+    expect(filter).toMatch(/setHold\(Math\.max\(0, Math\.ceil\(innerHeight - r\.top - after\)\)\);\s*\} else setHold\(0\);/);
+    expect(filter).toMatch(/style=\{hold \? \{ minHeight: hold \} : undefined\}/);
     expect(filter).toMatch(/<div role="group" aria-labelledby="wk-lens-label" className="wk__lens-chips">/);
     expect(filter).toMatch(/aria-live="polite"/);
     expect(filter).toMatch(/useSyncExternalStore\(noop, \(\) => true, \(\) => false\)/);
@@ -467,12 +475,17 @@ describe("Stack (P3.4): the live Stack's groups, tools and evidence, with a filt
     expect(page).toMatch(/<AboutBlock \/>\n\s*<StackBlock \/>\n\s*<\/main>/);
     expect(page.match(/\sdata-reveal(="settle")?[\s>]/g)).toHaveLength(3);
   });
-  it("adds no token; its rules read only layer tokens, and reduced motion drops every transition", () => {
+  it("adds no token; pills outlined under All, filled for a project, evidence only under All; no transition when reduced", () => {
     const rules = css.slice(css.indexOf("/* ── Stack (P3.4"), css.indexOf("/* ── Smaller screens"));
     expect(rules.length).toBeGreaterThan(500);
     expect(rules).not.toMatch(/--cine-[\w-]+:|#[0-9a-fA-F]{3,6}\b|rgba?\(/);
     expect(rules.match(/var\(--cine-[\w-]+\)/g)!.length).toBeGreaterThan(20);
-    expect(rules).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*\.wk__lens-chip, \.wk__stack-name, \.wk__stack-tools \[data-tool\] \{ transition: none; \}/);
-    expect(rules).toMatch(/\[data-reduced-motion="true"\] \.wk__lens-chip, \[data-reduced-motion="true"\] \.wk__stack-name, \[data-reduced-motion="true"\] \.wk__stack-tools \[data-tool\] \{ transition: none; \}/);
+    expect(rules).toMatch(/\.wk__stack-tools \[data-tool\] \{\s*padding: var\(--cine-space-1\) var\(--cine-space-3\);\s*border: 1px solid var\(--cine-edge\);\s*border-radius: var\(--cine-radius-pill\);/);
+    expect(rules).toMatch(/\.wk__stack-groups\[data-lens\] \[data-tool\] \{ border-color: var\(--cine-cyan\); background: var\(--cine-cyan\); color: var\(--cine-on-accent\); \}/);
+    expect(rules).toMatch(/\.wk__stack-groups\[data-lens\] \.wk__stack-evidence \{ display: none; \}/);
+    // The only transition in Stack is the buttons', and reduced motion drops it.
+    expect(rules.match(/transition:/g)).toHaveLength(3);
+    expect(rules).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*\.wk__lens-chip \{ transition: none; \}/);
+    expect(rules).toMatch(/\[data-reduced-motion="true"\] \.wk__lens-chip \{ transition: none; \}/);
   });
 });
