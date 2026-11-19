@@ -4,9 +4,8 @@ Orientation doc for the Portfolio Project. Read this first in any new chat here 
 Claude Code session, then continue with the current task. Update it before each transition
 (new chat / new session) so the next one starts informed.
 
-> **This copy is on `proto/hero-a-cinematic`** (updated in session 11, 2026-11-19). `main`'s copy is from the session 9
-> close and describes only the live, calm site. This one adds the prototype track below. The branch is never merged,
-> so `main`'s copy stays the live record.
+> **This copy is on `proto/hero-a-cinematic`** (session 11 close, 2026-11-19). It has more prototype detail than `main`'s
+> copy, which the session 11 close-out PR brings level on the essentials. The branch is never merged.
 
 ## What the product is
 Tay Shofer's live software-engineering portfolio at https://www.tayshofer.dev/.
@@ -16,8 +15,10 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 ## Two tracks
 1. **The live site, on `main`:** calm Product Plates with the M1 core (A–E). Nothing on the prototype branch reaches
    it.
-2. **The Concept A prototype, on `proto/hero-a-cinematic`:** a cinematic direction, measured, under the noindex `/lab`
-   segment. D2 was reopened by Tay for it (2026-11-18). Draft PR #18, never merged, Vercel Preview only.
+2. **The Concept A prototype, on `proto/hero-a-cinematic`: the active direction.** A cinematic direction, measured,
+   under the noindex `/lab` segment.
+   - Tay reopened **D1** for it (2026-11-18). **D2 is still not reopened, so no WebGL.**
+   - Draft PR #18, never merged, Vercel Preview only.
 
 ## What's live now (verified 2026-11-19, session 11)
 - The current site is the calm, light **"Product Plates"** editorial design (M10), with the whole **M1 core, moves
@@ -55,7 +56,7 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
     project's real captures. First-load JS 181.43 KiB, HTML 67.46 KB.
 - **The system:** `docs/CINEMATIC_SYSTEM.md` covers the `--cine-*` layer (extracted from the hero, value for value), the
   motion rules, the Work slice, the galleries and the carousel. Read it before touching `/lab`.
-- **Session 11:** every flagship's real captures are now in its carousel:
+- **Session 11:** every flagship's real captures are now in its carousel. **Tay approved the carousels** at the close.
   - T Poker 5, Aegis 2, DeveloperOS 4, GRAVITY FLOW 5;
   - Tay left out a duplicate "final count", the DeveloperOS refusal strip and its AI-features capture.
   - The new captures are listed in `data/lab-images.ts`. **Never in `data/images.ts`:** the live About visual is client
@@ -70,14 +71,17 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   comment, adds a rule to `/`'s stylesheet. It has happened three times; the digest test catches it.
 
 ## Decided (Tay, 2026-11-18; details in `docs/RESEARCH_AND_DECISIONS.md` §1)
-- **D1 Direction, for the live site: calm / premium. Evolve Product Plates; don't replace it.**
-  - Restrained cyan/violet accents.
-  - Follow the reference README's take / do-NOT-take (its text: `docs/references/premium-redesign-README.md`): no RGB
-    wash, no holographic cube, no fabricated on-screen stats.
-  - Concept A explores a cinematic direction on the prototype branch only. Whether it goes further is Tay's open call.
-- **D2 3D: not on the live site.** Tay reopened it for the Concept A prototype only (2026-11-18): a measured
-  prototype, 2D canvas and CSS 3D, no WebGL. The `three`/`lenis`/WebGL/`<canvas>` guard tests and the first-load JS
-  budget are unchanged, and the prototype is held to the same 205.7 KiB.
+- **D1 Direction: reopened by Tay on 2026-11-18 for Concept A.** The cinematic prototype on `proto/hero-a-cinematic` is
+  the active direction.
+  - The live site stays calm / premium Product Plates (evolve, don't replace) until Tay decides otherwise.
+  - On `main`: restrained cyan/violet accents, and the reference README's take / do-NOT-take (its text:
+    `docs/references/premium-redesign-README.md`): no RGB wash, no holographic cube, no fabricated on-screen stats.
+- **D2 3D: still not reopened. No WebGL**, on `main` or on the prototype.
+  - The prototype's field is a 2D canvas; its carousels are CSS perspective on 2D elements.
+  - The `three`/`lenis`/WebGL/`<canvas>` guard tests and the first-load JS budget are unchanged, and the prototype is
+    held to the same 205.7 KiB.
+  - Session 10's docs and the branch's code comments called this "D2 reopened". Tay corrected that at the session 11
+    close; the comments are still to be reworded.
 - **D5** Public git history left as-is (no rewrite, repo stays public).
 - **D7** Claude Code ↔ Tay in **English**; Chat Claude ↔ Tay in **Hebrew**.
 - D3 docs merged (PR #4) · D4 duplicate ui-ux-pro-max removed · D6 content fixes merged (PR #5) ·
@@ -99,24 +103,29 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   AI-features captures are left out. GRAVITY FLOW's existing two stay; Tay will swap one himself.
 
 ## What's next
-- **Tay previews `/lab/work`** (the four carousels) and decides whether Concept A goes further.
+- **Concept A:** the carousels are approved. Tay decides what the prototype takes on next.
+- **With the next prototype commit:** reword "D2 reopened" to the corrected framing in the 11 code and test files that
+  carry it. They are comments and test titles under `app/lab/`, `tests/` and `scripts/lab-hero-a.mjs`; the docs were
+  fixed at the session 11 close.
 - **Move F** on `main`: still Tay's plan from the session 9 close, not started.
   - It needs one additive floor case in `tokens.test.ts` (plan §11), and that is its only test change.
   - Branch from an up-to-date `main`; Tay merges.
 - After M1, the next phase is in `docs/ROADMAP.md`.
 
-## Open PRs / branches (session 11, 2026-11-19)
-- **PR #18** (`proto/hero-a-cinematic`, draft): the Concept A prototype. Never merge; Preview only.
-- **`docs/session-9-closeout`**: merged as PR #17, and still on the remote. It can be deleted after a
-  `git merge-base --is-ancestor` check, on Tay's go.
-- Merged and deleted earlier (each checked with `git merge-base --is-ancestor` first):
+## Open PRs / branches (session 11 close, 2026-11-19)
+- **PR #18** (`proto/hero-a-cinematic`, draft): the Concept A prototype. Never merge, never delete; Preview only.
+- **`docs/session-10-closeout`** → the session 11 close-out PR into `main`, docs only. It brings `main`'s START-HERE,
+  CLAUDE.md, WORKLOG and RESEARCH_AND_DECISIONS level with this prototype's state. Tay merges.
+- Merged and deleted (each checked with `git merge-base --is-ancestor` first):
+  - `docs/session-9-closeout` (#17, tip `c9696d6`, local and remote, at the session 11 close);
   - `fix/n8-gravity-flow-slug` (#16), `docs/session-8-closeout` (#15), `docs/session-7-closeout` (#13);
   - `docs/backlog-n1-n2-n7` (#14), `feature/m1-lower-half` (#12), `feature/m1-studio-light` (#11),
     `docs/m1-pr1-closeout` (#10);
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Review the four carousels** on the Preview, and swap the GRAVITY FLOW capture he has in mind.
+- **Merge the session 11 close-out PR** (docs only), from `docs/session-10-closeout`.
+- **Swap the GRAVITY FLOW capture** he has in mind (the carousels themselves are approved).
 - **Decide whether Concept A goes further.** Five NEW values still wait for review: `--cine-lift`, `--cine-glow-lift`,
   `--cine-flow-turn`, `--cine-flow-scale` and `--cine-flow-dim` (`docs/CINEMATIC_SYSTEM.md`).
 - **Move F:** confirm it is still next on `main`.

@@ -11,7 +11,63 @@ changed, and what is waiting on Tay.
 
 ---
 
-## 2026-11-19 — Session 11: every flagship's real captures in its Work carousel (prototype, D2 reopened) (Claude Code)
+## 2026-11-19 — Session 11 close-out: carousels approved; `main`'s close-out PR refreshed (Claude Code)
+
+**Scope (Tay's brief):**
+- Here: update WORKLOG, START-HERE and CLAUDE.md, and the memory. Push, and keep PR #18 a draft.
+- `docs/session-10-closeout`:
+  - refresh it to the current state;
+  - make `main`'s START-HERE and CLAUDE.md name the Concept A prototype as the active direction (D1 reopened by Tay on
+    2026-11-18; D2 still not reopened, so no WebGL);
+  - rebase it onto `origin/main`, run `npm test`, push it, and open a docs-only PR into `main`. No merge.
+- Clean scratch. Delete merged work branches only after `git merge-base --is-ancestor`; never delete this branch.
+- Confirm `main` is clean.
+
+### Decisions (Tay, session 11 close)
+- **The carousels are approved:** T Poker 5, Aegis 2, DeveloperOS 4, GRAVITY FLOW 5.
+- **The framing is corrected: D1 was reopened for Concept A (2026-11-18). D2 is still not reopened: no WebGL.**
+  - Session 10's docs said "D2 reopened", and so do comments and test titles in 11 code and test files (`app/lab/**`,
+    `tests/**/lab-*`, `scripts/lab-hero-a.mjs`).
+  - The docs touched at this close now say D1: START-HERE, CLAUDE.md, CINEMATIC_SYSTEM, and this log's session 11
+    title and change-log rows. Session 10's entry below is left as history.
+  - The code files are unchanged at this docs-only close. Reword them with the next prototype commit.
+
+### State (VL)
+- `origin/main` = **`fb0f575`**, Production `success`. Local `main` fast-forwarded to it, and clean.
+- **This branch:** the code is `9569bd8`, and this docs commit sits on top. PR #18 is a draft; the first line of its
+  description now says D1.
+- **CLAUDE.md here** is now `main`'s (`fb0f575`) plus the prototype section and the corrected direction. It is the same
+  file the close-out PR puts on `main`.
+
+### The close-out PR for `main` (from `docs/session-10-closeout`)
+- Rebased onto `origin/main`: `c9696d6` (PR #17) dropped out, being upstream already.
+- **Refreshed to this branch's tip:**
+  - the sessions 10–11 summary in WORKLOG;
+  - START-HERE and CLAUDE.md naming Concept A as the active direction;
+  - RESEARCH_AND_DECISIONS, with the reopening recorded under D1 (it had been under D2) and D2 marked still closed.
+- `npm test` there, then pushed, and a docs-only PR opened into `main`. Not merged.
+
+### Branches (each checked with `git merge-base --is-ancestor`)
+- **Deleted:** `docs/session-9-closeout`, local and remote (`c9696d6`, merged as PR #17).
+- **Kept:**
+  - `proto/hero-a-cinematic` (active; never delete);
+  - `docs/session-10-closeout` (the close-out PR);
+  - `reference/premium-redesign-package` and the six D8 branches, none merged.
+
+### Scratch
+- Cleaned: the session's scratchpad (screenshots, contact sheets, measurement scripts) and both scratch worktrees (the
+  `0f38825` baseline and the close-out worktree).
+
+### Waiting on Tay
+- **Merge the close-out PR** (docs only).
+- **Swap the GRAVITY FLOW capture** he has in mind.
+- **Decide what Concept A takes on next.** The five NEW layer values still wait for review.
+- **Move F:** not started; still his call.
+- **Optional, on `main`:** the chat launcher's fold on scroll (0.0076 CLS).
+
+---
+
+## 2026-11-19 — Session 11: every flagship's real captures in its Work carousel (prototype, D1 reopened) (Claude Code)
 
 **Scope (Tay's brief):**
 - Enrich the four per-project carousels on `/lab/work` with the real captures already in `public/projects/`.
@@ -1508,5 +1564,6 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-18 | Session 8 | N7 investigated (beacon + Email Address Obfuscation at the Cloudflare edge; draft `/privacy` wording); N8 logged; state docs | `docs/RESEARCH_AND_DECISIONS.md`, `docs/ROADMAP.md`, `docs/WORKLOG.md`, `claude/START-HERE.md`, `CLAUDE.md` |
 | 2026-11-18 | Session 8 close | PR #14 merged (`d80cb4c`, live); N7 Cloudflare toggles done by Tay, verified live; `docs/backlog-n1-n2-n7` deleted; state docs | `docs/WORKLOG.md`, `claude/START-HERE.md`, `CLAUDE.md`, `docs/RESEARCH_AND_DECISIONS.md`, `docs/ROADMAP.md` |
 | 2026-11-18 | Session 9 | N8: GRAVITY FLOW's private repository name scrubbed from 9 doc lines; the private-repo guard pins both private repos by digest (guard change for Tay's approval); `docs/session-7-closeout` and `docs/session-8-closeout` deleted; state docs | `docs/*.md`, `tests/support/private-repo.ts`, `tests/unit/private-repo.test.ts`, `claude/START-HERE.md`, `CLAUDE.md` |
-| 2026-11-18/19 | Session 10 | Concept A prototype (D2 reopened; branch `proto/hero-a-cinematic`, draft PR #18, never merged): the `/lab/hero-a` hero, the cinematic layer, the `/lab/work` slice and its carousels (rounds 1–6) | `app/lab/**`, `data/projects.ts` (galleries), `docs/CINEMATIC_SYSTEM.md`, `scripts/lab-hero-a.mjs`, `tests/**/lab-*` |
+| 2026-11-18/19 | Session 10 | Concept A prototype (D1 reopened, D2 not: Tay's correction at the session 11 close; branch `proto/hero-a-cinematic`, draft PR #18, never merged): the `/lab/hero-a` hero, the cinematic layer, the `/lab/work` slice and its carousels (rounds 1–6) | `app/lab/**`, `data/projects.ts` (galleries), `docs/CINEMATIC_SYSTEM.md`, `scripts/lab-hero-a.mjs`, `tests/**/lab-*` |
 | 2026-11-19 | Session 11 | Every flagship's real captures in its carousel (`9569bd8`): 8 captures encoded, the lab's own image list, box reservation for mixed shapes, window carousels, two-row controls below 390px; START-HERE brought up to date | `app/lab/work/*`, `data/lab-images.ts`, `data/projects.ts`, `scripts/m10-images.mjs`, `public/work/*` (48 new), `tests/**/lab-work*`, `docs/CINEMATIC_SYSTEM.md`, `docs/WORKLOG.md`, `claude/START-HERE.md` |
+| 2026-11-19 | Session 11 close | Carousels approved by Tay; the D1/D2 framing corrected (D1 reopened, D2 not); CLAUDE.md brought level with `main`'s plus the prototype; the close-out PR for `main` refreshed from `docs/session-10-closeout`; `docs/session-9-closeout` deleted | `CLAUDE.md`, `claude/START-HERE.md`, `docs/WORKLOG.md`, `docs/CINEMATIC_SYSTEM.md` |

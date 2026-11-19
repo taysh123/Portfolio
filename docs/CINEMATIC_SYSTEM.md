@@ -1,6 +1,8 @@
 # Cinematic system (Concept A): tokens and motion language
 
-**Prototype only.** It lives on `proto/hero-a-cinematic` and applies only under `/lab` (D2 reopened by Tay, 2026-11-18).
+**Prototype only.** It lives on `proto/hero-a-cinematic` and applies only under `/lab`. Tay reopened D1 for it
+(2026-11-18); D2 is still not reopened, so no WebGL (corrected at the session 11 close: earlier docs and code comments
+here say "D2 reopened").
 The branch is never merged. Nothing here touches the live site's paper theme, `app/globals.css`, its contrast floors,
 or `/`.
 
