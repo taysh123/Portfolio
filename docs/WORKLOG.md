@@ -11,6 +11,101 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-18/19 — Sessions 10–11: Concept A, a measured cinematic prototype (D1 reopened; D2 not) (Claude Code)
+
+**Scope (Tay's briefs):**
+- Build Concept A, a dark cinematic direction, as a **measured prototype** on its own branch.
+- **Tay reopened D1 for it (2026-11-18). D2 is still not reopened: no WebGL.** Session 10's docs called this "D2
+  reopened"; Tay corrected that at the session 11 close.
+- Never merged, never on Production, and `/` never touched.
+- Per-round detail, with every number, is in `docs/WORKLOG.md` **on `proto/hero-a-cinematic`**: session 10 (sections
+  1–15), session 11 and its close-out. This entry is the summary on `main`.
+
+### 1. Where it is (VL, session 11 close)
+- **Branch** `proto/hero-a-cinematic` at **`5d4610b`** (the code is `9569bd8`), equal to its remote, never merged.
+- **PR #18** is a **draft** ("PROTOTYPE, do not merge"). Keep it a draft.
+- **Vercel Preview**, behind Vercel Deployment Protection (sign in to view). The branch link follows each push:
+  `https://tay-shofer-portfolio-git-proto-he-65ec6d-tays-projects-d5aefd6e.vercel.app/lab/work`, and `/lab/hero-a`.
+  - It is `production_environment=false`.
+  - Production stayed on `a7a89fd`, then `fb0f575` (PR #17), throughout.
+- **Routes:** `/lab/hero-a` (the hero) and `/lab/work` (the Projects section), under a noindex `/lab` layout, and not
+  linked from `/`.
+
+### 2. What was built
+- **The hero, LOCKED** (`app/lab/hero-a`), on a dark base with duotone cyan `#2ee6d6` and violet `#9b6bff`:
+  - **The field:** a 2D-canvas constellation (no WebGL), pointer-reactive, with twinkle and travelling signals.
+    - It pauses when the tab is hidden or the field is off screen.
+    - It caps phones at about 30 draws a second and adapts its node count.
+    - With reduced motion it is one still frame.
+  - **One CSS reveal.** The H1 rises without fading: an opacity-0 start left Chromium with no LCP at all.
+- **The design system** (`app/lab/_cinematic/cinematic.css`, doc `docs/CINEMATIC_SYSTEM.md`), extracted from the hero
+  value for value:
+  - `--cine-*` tokens, the scope chrome, the focus ring, duotone text and the one `[data-reveal]`.
+  - Loaded only by the `/lab` layout, and scoped to a `.cine` root.
+- **The Projects section** (`app/lab/work`): four product panels.
+  - Every fact is derived from `data/projects.ts` and the site's own strings.
+  - Private repositories are labels only, and each panel has one empty, hidden P4 demo slot.
+  - The title is "Four projects, built end to end."
+  - **CSS 3D coverflow carousels:** CSS perspective on 2D elements, no WebGL. The WAI-ARIA tabbed pattern, with arrows,
+    swipe and no autoplay; a flat slider with reduced motion; the first capture alone without JS.
+  - **Captures (session 11, approved by Tay):** T Poker 5, Aegis 2, DeveloperOS 4, GRAVITY FLOW 5, all real.
+    - Left out on Tay's answers: a duplicate "final count", the DeveloperOS refusal strip and its AI-features capture.
+    - The lab's captures are listed in `data/lab-images.ts`, not `data/images.ts`, which the live About visual bundles
+      whole into `/`.
+  - **Every slide holds its capture's box**, so mixed shapes never shift the page (red/green: CLS 0.064 without it).
+  - **Fitting**: phone captures are capped by width and height; the window carousels show neighbours either side; below
+    390px the dots take their own row.
+
+### 3. Measured (VL; lab numbers, never field data)
+| | first-load JS (budget 205.7 KiB) | LCP desktop / phone | CLS | INP desktop / phone |
+|---|---|---|---|---|
+| `/lab/hero-a` | 183.71 KiB | ~80–96 ms / ~1.0 s | 0 | ≤ 56 ms |
+| `/lab/work` (session 11) | 181.43 KiB (HTML 67.46 KB) | 92 ms / 880 ms | 0 | 40 / 48 ms |
+
+- The phone figures are 4× CPU with slow 4G. LCP on `/lab/work` is the first capture, painted in the first frame.
+- axe WCAG 2.2 A/AA: 0 violations on both routes, with motion on and off.
+- Validation at the session 11 code: unit tests 179/179, Playwright 176/176, typecheck and lint exit 0.
+
+### 4. `/` and the live site
+- On the branch, these are identical to `main`: the guard tests, `app/globals.css`, `lib/tokens.ts`, the root layout,
+  `app/page.tsx`, `components/` and `lib/`.
+- **Branch-only additions that reach no live bundle:**
+  - `PROJECT_GALLERIES` (a separate export in `data/projects.ts`) and `data/lab-images.ts`;
+  - 48 new files in `public/work/`, and 8 jobs in `scripts/m10-images.mjs`.
+- **Measured unchanged:**
+  - `/`, `/lab/hero-a` and `/privacy` load byte-identical first-load assets before and after session 11.
+  - Both of `/`'s stylesheets are pinned to `main`'s by an e2e test.
+- **The one standing difference**, in the branch's build only: Turbopack splits the same `/` JavaScript into 10 chunks
+  instead of 9, because a second route exists.
+
+### 5. Lessons worth keeping
+These are now in CLAUDE.md's gotchas:
+- the Tailwind leak (three times);
+- client imports that change `/`'s JS (`data/images.ts` through the About visual);
+- opacity-0 reveals hiding LCP;
+- hydration that hides CLS locally;
+- the chat launcher's own 0.0076 CLS on scroll;
+- `MSYS_NO_PATHCONV`.
+
+### 6. Session 11 close (VL)
+- `origin/main` = **`fb0f575`** (PR #17 merged; Production `success`). Local `main` fast-forwarded to it, and clean.
+- **These docs:** this PR, from `docs/session-10-closeout`, rebased onto `fb0f575`.
+- **Deleted** after `git merge-base --is-ancestor`: `docs/session-9-closeout`, local and remote (`c9696d6`, PR #17).
+- **Kept:** `proto/hero-a-cinematic` (active; never delete), `reference/premium-redesign-package` and the six D8
+  branches (none merged).
+- Scratch cleaned.
+
+### Waiting on Tay
+- **Merge this close-out PR** (docs only). Keep PR #18 a draft.
+- Swap the GRAVITY FLOW capture he has in mind.
+- Decide what Concept A takes on next. The five NEW layer values still wait for review: `--cine-lift`,
+  `--cine-glow-lift`, `--cine-flow-turn`, `--cine-flow-scale` and `--cine-flow-dim` (`docs/CINEMATIC_SYSTEM.md` on the
+  branch).
+- Move F: not started; still his call.
+- Optional: the chat launcher's fold on scroll (0.0076 CLS on `/`).
+
+---
+
 ## 2026-11-18 — Session 9 close-out: PR #16 merged and live, N8 done (Claude Code)
 
 **Scope (Tay's brief):**
@@ -1012,3 +1107,5 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-18 | Session 8 close | PR #14 merged (`d80cb4c`, live); N7 Cloudflare toggles done by Tay, verified live; `docs/backlog-n1-n2-n7` deleted; state docs | `docs/WORKLOG.md`, `claude/START-HERE.md`, `CLAUDE.md`, `docs/RESEARCH_AND_DECISIONS.md`, `docs/ROADMAP.md` |
 | 2026-11-18 | Session 9 | N8: GRAVITY FLOW's private repository name scrubbed from 9 doc lines; the private-repo guard pins both private repos by digest (guard change for Tay's approval); `docs/session-7-closeout` and `docs/session-8-closeout` deleted; state docs | `docs/*.md`, `tests/support/private-repo.ts`, `tests/unit/private-repo.test.ts`, `claude/START-HERE.md`, `CLAUDE.md` |
 | 2026-11-18 | Session 9 close | PR #16 merged (`a7a89fd`, live); `fix/n8-gravity-flow-slug` deleted; `/privacy` wording deferred to the end of the build; Move F to be built on a preview branch next session; state docs | `docs/WORKLOG.md`, `claude/START-HERE.md`, `CLAUDE.md`, `docs/RESEARCH_AND_DECISIONS.md`, `docs/ROADMAP.md` |
+| 2026-11-18/19 | Sessions 10–11 | Concept A prototype on `proto/hero-a-cinematic` (draft PR #18, never merged; D1 reopened, D2 not): the hero, the cinematic layer, `/lab/work` and its carousels (approved: T Poker 5, Aegis 2, DeveloperOS 4, GRAVITY FLOW 5) | the branch only; summary here |
+| 2026-11-19 | Session 11 close | This close-out: `main`'s START-HERE and CLAUDE.md name Concept A as the active direction; D1/D2 recorded correctly; `docs/session-9-closeout` deleted | `CLAUDE.md`, `claude/START-HERE.md`, `docs/WORKLOG.md`, `docs/RESEARCH_AND_DECISIONS.md` |
