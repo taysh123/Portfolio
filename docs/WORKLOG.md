@@ -11,6 +11,138 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-19 — Session 14: Think · Build · Ship (P3.5) on `/lab/work`; a glow scroll-anchor fix (prototype, D1 reopened) (Claude Code)
+
+**Scope (Tay's brief):**
+- Sync: `main` at `443a1f9`, this branch at `47998ee`.
+- One task: the Think · Build · Ship section (P3.5) on `/lab/work`, below Stack. Lab-only; `/` untouched.
+  - The live section's title, rows and lines word for word; every word from facts already in the repo. No metrics, test
+    counts, years or institution. Each stage points to real evidence from the four flagships, from what
+    `data/projects.ts` states; Aegis's AI is a deterministic mock and Aegis a modular monolith.
+  - Short and scannable. The `.cine` tokens; no client JS without showing why first; it holds still, like About.
+  - ROADMAP #14: check whether Stack's end-of-page hold is still needed now that this section sits below, or leaves an
+    empty gap. Measure and recommend; don't change the hold or its test without Tay's OK.
+- Step 1 a plan only (the exact copy, each line's source, the layout); Step 2 build and measure as last session; `/`,
+  its stylesheet bytes, `/lab/hero-a` and the guards unchanged; screenshots at 390 and 1440 in scratch. Commit, push,
+  update draft PR #18 (no merge, no deploy), the Preview URL. Don't close the session until Tay approves.
+
+### 1. Preconditions (VL)
+- `git fetch`: `origin/main` = **`443a1f9`**; local `main` level with it, clean.
+- `proto/hero-a-cinematic` at **`47998ee`**, level with its remote, clean.
+
+### 2. The plan and Tay's answers
+- The plan kept the live title and rows word for word (`dict.tbs.title`, `pillars` in `data/approach.ts`), each live
+  example being from one flagship (T Poker, GRAVITY FLOW, Aegis), and added one DeveloperOS line under Build so all four
+  appear. The copy, every line with its source: `docs/CINEMATIC_SYSTEM.md`, "Think · Build · Ship (P3.5, session 14)".
+- **Tay approved it with one change:** the plainer DeveloperOS line, "DeveloperOS: it declines when the index doesn't
+  support an answer—before the provider is ever reached." The layout and the #14 approach as proposed.
+
+### 3. What changed
+- **`8382889`, the section:**
+  - `app/lab/work/tbs.ts` reads every live string from `lib/dict.ts` and `data/approach.ts`; only the DeveloperOS line
+    is typed (`DOS_EVIDENCE`). Each piece of evidence is split so its project's name can be set apart.
+  - `TbsBlock.tsx`, a server component, renders it after Stack, inside `<main>`: the h2, then an ordered list of three
+    rows (the word as an h3 with the live screen-reader colon, the line, the summary, the evidence).
+  - `work.css`: its rules, layer tokens only. Its title shares About's and Stack's rule (top margin reset: no eyebrow).
+    From 1024px the word and line take 5fr and the summary and evidence 7fr, lined up under About's words; stacked
+    below. The word is a small label in the accent, the line in ink at the lead size, the evidence in mist with the
+    project's name in ink.
+  - **No token added** (the layer still defines 76). No client code, no link, no control, no reveal.
+  - Tests: 8 unit (every string held to its source, the approved copy pinned, the DeveloperOS line's words found in
+    its own text, no figure, all four flagships once) and 7 e2e (no JS; holds still ×2; layout at 1440, 1024, 390 and
+    320, with the page's last line clearing the chat launcher). Two placement assertions and the structure test's h2
+    count now include the section.
+- **`d1c53a3`, no glow is a scroll anchor** (found by the #14 check, section 5): `overflow-anchor: none` on the two
+  glows, and a new e2e test (red without the fix). The hold and its test are unchanged.
+
+### 4. Measured (VL; local production builds, `47998ee` in a scratch worktree vs `d1c53a3`)
+| | before | after |
+|---|---|---|
+| First-load JS `/lab/work` (the budget algorithm) | 181.77 KiB | **181.77 KiB** (every JS file byte-identical); budget 205.7 |
+| HTML `/lab/work` | 97.66 KB (17.7 KB gzip) | **102.79 KB** (18.9 KB gzip); budget 568 |
+| LCP desktop, median (range), 10 interleaved | 108 ms (96–116) | 110 ms (80–120) |
+| LCP phone, 4× CPU and slow 4G, median (range), 10 interleaved | 968 ms (916–1060) | 1010 ms (952–1076) |
+| CLS (load) | 0 | 0 |
+| INP desktop / phone (`scripts/lab-hero-a.mjs`, worst per run, median) | 24 / 32 ms | 24 / 32 ms |
+| FPS desktop / phone | 60.5 / 60.6 | 60.5 / 60.5 |
+
+- **LCP:** a first round of 10 on `8382889` (before the glow fix, which adds 21 bytes of CSS and no layout) gave
+  desktop 102 → 110 ms and phone 966 → 1038 ms; this round +2 and +42 ms. The LCP and FCP medians are equal, and the LCP
+  element is the first capture.
+- **The phone cost, diagnosed** (10 interleaved runs per variant, every variant through the same interception): the
+  baseline 824 ms; this build 932; this build with the section's markup cut from the HTML 858; with
+  `content-visibility: auto` on the section 852. So most of it is laying out the section's 32 elements before the first
+  paint, the same kind of cost as Stack's, and the same fix (ROADMAP #13, with the glow) would win it back. Not used.
+- **INP on the section's words** (3 runs; clicks or taps on its line, summary and evidence): desktop ≤ 16 ms; phone at
+  4× CPU 24–32 ms. On About's words: < 16 / 16–24 ms before, 16 / 24 ms after.
+- **Scroll-through CLS** (down and back up twice): the slice 0 before and after; the chat launcher's fold 0.0153 in both
+  (pre-existing).
+- **axe-core 4.11.4, WCAG 2.2 A/AA:** 0 violations at 1440 and 390, motion on and reduced, with Aegis pressed (the e2e
+  suite and a probe). Needs review: at 390 the same two as before (the lede, T Poker's line); at 1440 none. The same in
+  both builds.
+- At the page's end the last line clears the chat launcher by 150px at 1440 and 102px at 390 and 320.
+- **Built files:** 24 of 25 JS and CSS files byte-identical (all 20 JS). The lab's Work stylesheet: 14,121 → 15,401
+  bytes.
+
+### 5. ROADMAP #14: Stack's hold, with this section below it (VL)
+`StackFilter.tsx` holds `max(0, view height − results top − everything below the results)`, so this section's height
+now counts in "everything below". Measured on the final build (reduced motion; each project pressed from the keyboard):
+
+| Screen | Buttons near the view's top | Buttons near its bottom | At the page's end (buttons out of view above) |
+|---|---|---|---|
+| 1440×900 | hold 0 | 0 | 1,096px; 579–815px of space under the filtered list |
+| 390×844 | 0 | 0 | 1,619px; 903–1,215px of space |
+| 1920×1200 | 128px, no space left | 0 | as at 1440×900 |
+| 2560×1440 | 368px; 0–87px of space | 0 | as at 1440×900 |
+| 1440×1800 | 729px; 212–448px of space | 0 | as at 1440×900 |
+
+- Without the hold, the view would jump by exactly the space it leaves. With it, the view moves 0px in every case.
+- **The space now sits between the filtered Stack and this section,** not at the page's end. It shows only on tall screens
+  with the buttons near the top, or after a project is pressed with the buttons out of view (keyboard only), and only
+  until All is pressed.
+- **Recommendation: keep the hold as it is.** It is 0 at the common sizes whenever the buttons are in view, and it
+  engages only by as much as a jump would be. The test's case 2 still exercises it; its comment ("Stack ends the
+  page") is now out of date. Not changed (Tay's call).
+
+**Found on the way: the glow anchored the scroll.**
+- With the buttons low in the view, pressing a project moved the view up: 220–310px at 1440×900, 343–462px at 390×844.
+  The hold was 0 there.
+- **Cause:** the browser's scroll anchoring took the violet glow (at 38% of the page's height) as its anchor. When the
+  list got shorter the glow moved up, and the view went with it: each jump is 0.38 × the page's shrink.
+- **Pre-existing:** the baseline jumped the same way on tall screens (1920×1200, 2560×1440, 1440×1800). This section
+  made the page tall enough to bring the glow into view at the common sizes too.
+- **Fix (`d1c53a3`):** the glows opt out of anchoring. Leaving out the whole sky also fixed it, but at 390 the page's end
+  then anchored to the text in view and moved the view by the hold's 1px rounding, which the hold's test caught. With
+  only the glows left out, everything else anchors as before.
+
+### 6. Unchanged (VL)
+- **`/`, `/lab/hero-a`, `/privacy`:** every script and stylesheet byte-identical; the markup identical with build IDs
+  masked. `/`'s stylesheets keep the pinned digests (`868e8b98…` 44,530 bytes; `4b84cc35…` 31,805).
+- **Pixels (reduced motion, full page):** `/` 0 differing at 1440 and 390; the hero 0 with its canvas hidden;
+  `/lab/work` from the top to Stack's end 0, with the sky and glows hidden.
+  - With only the glows hidden it differs on most of its area by 1–3 levels of 255: the sky is one gradient over the
+    whole page, so the taller page stretches it. Nothing else.
+- **Guard files** identical to `origin/main` (`443a1f9`).
+
+### 7. Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` | **208/208** (200 before, plus 8) |
+| `npm run typecheck`, `npm run lint` | exit 0 |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test` | **204/204** (195 before, plus 7 for the section and 2 for the glow fix) |
+
+### 8. Screenshots (scratch, not committed)
+- At 1440 and 390: the section (motion on and reduced), the view a reader scrolls to, the seam from Stack, the page's
+  end, and the full page.
+
+### Waiting on Tay
+- Review the section on the Preview.
+- #14: keep the hold as it is (recommended)? And a go to reword the hold test's out-of-date comment.
+- The glow fix (`d1c53a3`): keep it, or drop it.
+- The phone LCP cost (+42 ms this round, +72 the first): keep it, or fold the section into #13's fix.
+
+---
+
 ## 2026-11-19 — Session 13 close-out: Stack approved; its LCP cost kept and logged for P5 (Claude Code)
 
 **Scope (Tay's brief):**
@@ -2104,3 +2236,4 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-19 | Session 12 close | About approved by Tay; PR #20 opened into `main` (the CLAUDE.md Tailwind gotcha bullet reworded: `/`'s sheet back to 44,530 bytes); `docs/session-10-closeout` deleted (merged as #19); scratch cleaned | `docs/WORKLOG.md`, `claude/START-HERE.md`, `CLAUDE.md`, `docs/CINEMATIC_SYSTEM.md` (PR #20: `CLAUDE.md`) |
 | 2026-11-19 | Session 13 | PR #20 merged and its branch deleted. Stack (P3.4) on `/lab/work`, in three passes on Tay's reviews: a project line per tool (`757c377`); the live Stack's layout with a dimming filter (`d3373b6`); a filter that shows only the chosen project's tools, as pills, with a no-scroll-jump hold (`8955039`). Security group; one small island (+351 bytes gzip) | `app/lab/work/{stack.ts,StackBlock.tsx,StackFilter.tsx,page.tsx,work.css}`, `tests/{unit,e2e}/lab-work.*`, `docs/CINEMATIC_SYSTEM.md`, `claude/START-HERE.md`, `docs/WORKLOG.md` |
 | 2026-11-19 | Session 13 close | Stack approved; its LCP cost kept and logged as a P5 item (ROADMAP #13); the Contact re-check logged (#14); CLAUDE.md's stale code reference, verified commit and counts updated | `CLAUDE.md`, `claude/START-HERE.md`, `docs/{WORKLOG,ROADMAP,CINEMATIC_SYSTEM}.md` |
+| 2026-11-19 | Session 14 | Think · Build · Ship (P3.5) under Stack from the live section's own words, plus one DeveloperOS line in Tay's wording (`8382889`); the #14 hold re-checked (keep, recommended); no glow is a scroll anchor (`d1c53a3`) | `app/lab/work/{tbs.ts,TbsBlock.tsx,page.tsx,work.css}`, `tests/{unit,e2e}/lab-work.*`, `docs/{CINEMATIC_SYSTEM,ROADMAP,WORKLOG}.md`, `claude/START-HERE.md` |

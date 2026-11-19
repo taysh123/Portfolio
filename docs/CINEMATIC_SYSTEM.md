@@ -349,5 +349,63 @@ text, the control edge at ≥ 3:1, the glass fill), wrapping as needed; the evid
   - `content-visibility: auto` would skip Stack's off-screen layout, but the violet glow (at 38% of the page's height)
     then moves when Stack renders: slice CLS 0.353 at 320px, measured on the first build. **Tay keeps the cost for now**
     (session 13 close); the fix and the glow's repositioning are a P5 (integration) item, `docs/ROADMAP.md` #13.
-- **Before Contact is built under it:** the scroll hold assumes Stack ends the page. Re-check it then
-  (`docs/ROADMAP.md` #14).
+- **Before Contact is built under it:** the scroll hold assumed Stack ends the page. Re-checked in session 14, with Think
+  · Build · Ship below it (`docs/ROADMAP.md` #14; below).
+
+### Think · Build · Ship (P3.5, session 14)
+
+Under Stack, after a hairline: how the work gets done, **as the live section says it**
+(`components/sections/ThinkBuildShip.tsx`), restyled in the layer. Tay approved every word before it was built, with one
+change: the plainer DeveloperOS line.
+
+| Element | Text | Source |
+|---|---|---|
+| Title (h2) | Think. Build. Ship. | `dict.tbs.title`, live. No eyebrow: the live section has none, and the nav has no label for it. |
+| Think (h3) · line · summary | Find the hard part. · Usually, one constraint shapes everything else. | live `pillars[0]`, word for word |
+| Think evidence | T Poker: the money has to be exact to the cent, even in a guest game on a phone with no signal. | the live example; T Poker's `caseStudy.problem` |
+| Build (h3) · line · summary | Make the safe path the easy one. · Encode constraints in types, interfaces, and data models—not just in documentation. | live `pillars[1]`, word for word |
+| Build evidence | GRAVITY FLOW: cosmetic items are defined by visual fields only, and every purchase grants cosmetics or ad removal—nothing that changes gameplay. | the live example; GRAVITY FLOW's decision "A cosmetics-only economy" |
+| Build evidence (new) | DeveloperOS: it declines when the index doesn't support an answer—before the provider is ever reached. | Tay's wording (session 14): DeveloperOS's description ("declines outright when the index doesn't support an answer") and its decision "Refusal as a first-class code path" ("before the provider is ever reached") |
+| Ship (h3) · line · summary | Ship it honestly. · Make the project reproducible, testable, and explicit about its known gaps. | live `pillars[2]`, word for word |
+| Ship evidence | Aegis starts from one launcher script, and its repository keeps an audit document that lists the work still open. | the live example; Aegis's description ("one launcher script") and `learned` ("audit document") |
+
+- **All four flagships, each once.** The live section names three; DeveloperOS's line joins Build, where its decision
+  is the same idea (a constraint enforced in code, not left to an instruction).
+- **No figure, year or institution**, no AI claim (the line says "the provider", and DeveloperOS's default is an offline
+  mock), nothing about Aegis's AI or architecture.
+- **Files:** `app/lab/work/tbs.ts` reads every live string from `data/approach.ts` and `lib/dict.ts`, so nothing is
+  retyped; only `DOS_EVIDENCE` is typed, and a unit test finds each of its words in DeveloperOS's own text.
+  `TbsBlock.tsx` is a server component. `tests/unit/lab-work.test.ts` holds each string to its source and pins the
+  approved copy.
+- **Structure:** the live one: an ordered list of three rows, each word an h3 with the live screen-reader colon
+  ("Think:"), then the line, the summary and the evidence as paragraphs. Each piece of evidence opens with its project's
+  name in its own span.
+- **Layout:** each row on its own hairline, on About's and Stack's grid: from 1024px the word and its line take the words
+  share (5fr) and the summary and evidence the capture's (7fr), lined up under About's words and Stack's tools; stacked
+  below. The word is a small label in the accent (the eyebrow's size and weight), so the h2 above it, which already
+  says all three words, stays the large one; the line is in ink at the lead size, like Stack's group names. The summary
+  is mist at the body size; the evidence mist at the small size, its project's name in ink.
+- **Motion:** none. No link, no control, no reveal, no client code; it holds still (rule 1).
+- **Tokens:** none added. Its title shares About's and Stack's rule (its top margin reset, since no eyebrow sits above
+  it); its own rules read only layer tokens. The layer still defines 76.
+- **Its cost (measured against `47998ee`, session 14):**
+  - first-load JS unchanged (every JS file byte-identical); HTML 97.66 → 102.79 KB (17.7 → 18.9 KB gzip);
+  - LCP +2 ms desktop and +42 ms on a phone at 4× CPU (medians of 10 interleaved; a first round gave +8 and +72). Most of
+    the phone cost is laying out the section before the first paint (diagnosed by cutting its markup, and by
+    `content-visibility: auto`), the same kind as Stack's: `docs/ROADMAP.md` #13 would win it back.
+
+### No glow is a scroll anchor (session 14)
+
+The two glows carry `overflow-anchor: none`.
+- **Why:** the violet glow sits at 38% of the page's height. With Stack's buttons low in the view, the browser's scroll
+  anchoring took the glow as its anchor, and when a project shortened the list the glow moved up and the view went with
+  it (220–462px, measured). It already happened on tall screens; Think · Build · Ship made the page tall enough for the
+  common sizes too.
+- Only the glows are left out, so everything else anchors as before. Leaving out the whole sky also fixed the jump, but
+  at the page's end it moved the view by the hold's 1px rounding.
+- `tests/e2e/lab-work.spec.ts` presses each project with the buttons low in the view at 1440 and 390.
+
+**Stack's hold with this section below it (`docs/ROADMAP.md` #14, re-checked in session 14):** 0 at 1440×900 and
+390×844 whenever the buttons are in view. It engages on tall screens with the buttons near the top (128–729px), and
+after a project is pressed with the buttons out of view above (keyboard only; 1,096–1,619px). Its space then sits
+between the filtered list and this section. Without it the view jumps by that much. Recommended: keep it as it is.

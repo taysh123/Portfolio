@@ -4,7 +4,7 @@ Orientation doc for the Portfolio Project. Read this first in any new chat here 
 Claude Code session, then continue with the current task. Update it before each transition
 (new chat / new session) so the next one starts informed.
 
-> **This copy is on `proto/hero-a-cinematic`** (session 13 close, 2026-11-19). It has more prototype detail than `main`'s
+> **This copy is on `proto/hero-a-cinematic`** (session 14, 2026-11-19). It has more prototype detail than `main`'s
 > copy (`main` has the essentials since PR #19). The branch is never merged.
 
 ## What the product is
@@ -56,8 +56,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 - **Routes** (noindex, not in the sitemap, never linked from `/`):
   - **`/lab/hero-a`**: the locked hero, a 2D-canvas constellation field (no WebGL). First-load JS 183.71 KiB.
   - **`/lab/work`**: the Work slice, four product panels in the cinematic language. Each has a CSS 3D coverflow of the
-    project's real captures. Below them, **About** (session 12, approved), then **Stack** (session 13, approved).
-    First-load JS 181.77 KiB, HTML 97.66 KB.
+    project's real captures. Below them, **About** (session 12, approved), then **Stack** (session 13, approved), then
+    **Think · Build · Ship** (session 14, for review). First-load JS 181.77 KiB, HTML 102.79 KB.
 - **The system:** `docs/CINEMATIC_SYSTEM.md` covers the `--cine-*` layer (extracted from the hero, value for value), the
   motion rules, the Work slice, the galleries and the carousel. Read it before touching `/lab`.
 - **Session 11:** every flagship's real captures are now in its carousel. **Tay approved the carousels** at the close.
@@ -89,8 +89,21 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - **Measured:** LCP +14 ms desktop, +46 ms phone at 4× CPU (more to lay out before the first paint). **Tay keeps the
     cost.** Skipping Stack's off-screen layout, with the violet glow repositioned, is logged as a P5 (integration) item
     (`docs/ROADMAP.md` #13).
-  - **Before the Contact session:** the filter's no-scroll-jump hold assumes Stack ends the page. Re-check it once
-    Contact sits below (`docs/ROADMAP.md` #14).
+  - **Before the Contact session:** the filter's no-scroll-jump hold assumed Stack ends the page. Re-checked in session
+    14 (below; `docs/ROADMAP.md` #14).
+- **Session 14: Think · Build · Ship (P3.5)** under Stack (`8382889`), **for Tay's review**:
+  - The live section's title and rows word for word (`dict.tbs.title`, `pillars`), plus one DeveloperOS line under
+    Build in Tay's wording, so all four flagships appear: "DeveloperOS: it declines when the index doesn't support an
+    answer—before the provider is ever reached."
+  - Three ruled rows on About's and Stack's grid; each piece of evidence opens with its project's name in ink. A server
+    component: no client code, no control, no reveal; no token added.
+  - **Measured:** JS unchanged; HTML 97.66 → 102.79 KB; LCP +2 ms desktop and +42 ms phone (a first round +8 / +72),
+    most of it the section's layout before the first paint (#13's fix would win it back).
+  - **#14 re-checked:** the hold is 0 at 1440×900 and 390×844 with the buttons in view. It engages on tall screens and
+    after a press with the buttons out of view, and its space then sits between the filtered list and this section.
+    Recommended: keep it.
+  - **Found and fixed (`d1c53a3`):** with the buttons low in the view, the browser's scroll anchoring followed the violet
+    glow up (220–462px). The glows no longer anchor scrolling; the hold and its test are unchanged.
 - **Preview of `/lab/work`** (the branch's own link, which follows each push):
   `https://tay-shofer-portfolio-git-proto-he-65ec6d-tays-projects-d5aefd6e.vercel.app/lab/work`.
 - **Kept identical on this branch** (tests hold it):
@@ -156,6 +169,9 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
+- **Review Think · Build · Ship** (session 14) on the Preview; the #14 hold (keep it, recommended) and a go to reword its
+  test's out-of-date comment; keep or drop the glow fix (`d1c53a3`); the section's phone LCP cost (keep it, or fold it
+  into #13).
 - **Decide what Concept A takes on next.** The carousels, the five layer values, About and Stack are approved.
 - **Swap the GRAVITY FLOW capture** he has in mind (the carousels themselves are approved).
 - **Move F:** confirm it is still next on `main`.
