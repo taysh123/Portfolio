@@ -868,20 +868,26 @@ for (const [label, motion] of [["motion on", "no-preference"], ["reduced motion"
   });
 }
 
-for (const vp of [[1440, 900], [1024, 768], [390, 844], [320, 568]] as const) {
-  test(`Contact at ${vp[0]}×${vp[1]}: the title beside the words from 1024px, stacked below; the profiles a pair; clear of the chat launcher at the end`, async ({ browser }) => {
+// Contact's two columns start at 1100px, not 1024 like the sections above (Tay, session 15): from 1024 to 1100 the
+// words share is too narrow for "Let's build something", so Contact stacks and its title keeps its two lines.
+for (const vp of [[1440, 900], [1100, 800], [1024, 768], [390, 844], [320, 568]] as const) {
+  test(`Contact at ${vp[0]}×${vp[1]}: the title beside the words from 1100px, stacked below; the profiles a pair; clear of the chat launcher at the end`, async ({ browser }) => {
     const { ctx, page } = await at(browser, vp, { reducedMotion: "no-preference" });
     await contact(page).scrollIntoViewIfNeeded();
     const head = (await contact(page).locator(".wk__contact-head").boundingBox())!, body = (await contact(page).locator(".wk__contact-body").boundingBox())!;
-    if (vp[0] >= 1024) {
+    if (vp[0] >= 1100) {
       expect(body.x).toBeGreaterThan(head.x + head.width); expect(Math.abs(body.y - head.y)).toBeLessThan(2);
       expect(Math.abs(body.x - (await page.locator(".wk__about-body").boundingBox())!.x)).toBeLessThan(1);   // under About's words
     } else { expect(body.y).toBeGreaterThanOrEqual(head.y + head.height); expect(Math.abs(body.x - head.x)).toBeLessThan(2); }
-    // Each half of the title holds its own line wherever it fits. At 320px a half may wrap, as About's does; from 1024 to
-    // about 1100px the first half wraps in its column (368px at 1024; measured, session 15), and the second never does.
+    // At 1024 only Contact stacks: About above it keeps its two columns.
+    if (vp[0] === 1024) {
+      const aHead = (await page.locator(".wk__about-head").boundingBox())!, aBody = (await page.locator(".wk__about-body").boundingBox())!;
+      expect(aBody.x).toBeGreaterThan(aHead.x + aHead.width);
+    }
+    // Each half of the title holds its own line wherever it fits: from 390px up, 1024 and 1100 included (at 320px a half
+    // may wrap, as About's does).
     const lines = await contact(page).locator(".wk__contact-title span").evaluateAll((ss) => ss.map((s) => Math.round(s.getBoundingClientRect().height / parseFloat(getComputedStyle(s).lineHeight))));
-    if (vp[0] === 1024) expect(lines).toEqual([2, 1]);
-    else if (vp[0] >= 390) expect(lines).toEqual([1, 1]);
+    if (vp[0] >= 390) expect(lines).toEqual([1, 1]);
     // The two profiles never split (the live rule): LinkedIn and GitHub share a line.
     const tops = await contact(page).locator("[data-profile]").evaluateAll((as) => as.map((a) => Math.round(a.getBoundingClientRect().top)));
     expect(new Set(tops).size).toBe(1);

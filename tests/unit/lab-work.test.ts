@@ -643,12 +643,13 @@ describe("Contact (P3.6): the live Contact section's own words, and its four lin
     expect(shown.filter((t) => /availab|looking|open to|hiring|freelance|full-time|part-time|immediate|start/i.test(t))).toEqual([availability.detail]);
     expect(privateRepoLeaks(block + src + JSON.stringify(c))).toEqual([]);
   });
-  it("adds no token and no motion; its rules read only layer tokens, on About's grid from 1024px", () => {
+  it("adds no token and no motion; its rules read only layer tokens, on About's grid from 1100px (stacked below: Tay)", () => {
     const rules = css.slice(css.indexOf("/* ── Contact (P3.6"), css.indexOf("/* ── Smaller screens"));
     expect(rules.length).toBeGreaterThan(500);
     expect(rules).not.toMatch(/--cine-[\w-]+:|#[0-9a-fA-F]{3,6}\b|rgba?\(|transition|animation|data-reveal/);
     expect(rules.match(/var\(--cine-[\w-]+\)/g)!.length).toBeGreaterThan(15);
-    expect(rules).toMatch(/@media \(min-width: 1024px\) \{\s*\.wk__contact \{ grid-template-columns: minmax\(0, 5fr\) minmax\(0, 7fr\); column-gap: clamp\(40px, 5vw, 80px\); \}/);
+    expect(rules).toMatch(/@media \(min-width: 1100px\) \{\s*\.wk__contact \{ grid-template-columns: minmax\(0, 5fr\) minmax\(0, 7fr\); column-gap: clamp\(40px, 5vw, 80px\); \}/);
+    expect(rules).not.toMatch(/min-width: 1024px/);   // Contact alone: About, Stack and Think · Build · Ship keep 1024
     expect(css).toMatch(/\.wk__about-eyebrow, \.wk__stack-eyebrow, \.wk__contact-eyebrow \{/);
     expect(css).toMatch(/\.wk__about-title span, \.wk__contact-title span \{ display: block; \}/);
     expect(css).toMatch(/\.wk__about-lede, \.wk__contact-lead \{/);

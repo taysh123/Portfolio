@@ -441,8 +441,10 @@
 .wk__tbs-project { font-weight: var(--cine-weight-control); color: var(--cine-ink); }
 
 /* ── Contact (P3.6, ContactBlock.tsx): the page's conclusion, under Think · Build · Ship and after a hairline, on
-   About's grid: from 1024px the title takes the panels' words share and the lead and links the capture's; stacked
-   below. Its eyebrow, title and lead share About's rules. One filled action (email), the two profiles as a pair in the
+   About's grid: from 1100px the title takes the panels' words share and the lead and links the capture's; stacked
+   below. Its two columns start at 1100px, not 1024 like About's: from 1024 to 1100 the words share is too narrow for
+   "Let's build something" (368px at 1024, measured), so the title stacks above and keeps its two lines (Tay, session
+   15). Its eyebrow, title and lead share About's rules. One filled action (email), the two profiles as a pair in the
    panels' outlined control, and the résumé as a quiet underlined download under its own hairline, as on the live page.
    It holds still: its links answer a hover in colour only. ── */
 .wk__contact {
@@ -453,7 +455,7 @@
   padding-top: var(--cine-space-7);
   border-top: 1px solid var(--cine-hair);
 }
-@media (min-width: 1024px) {
+@media (min-width: 1100px) {
   .wk__contact { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: clamp(40px, 5vw, 80px); }
 }
 .wk__contact-links { margin-top: var(--cine-space-6); }
