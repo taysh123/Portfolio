@@ -6,6 +6,7 @@ import zlib from "node:zlib";
 import { createHash } from "node:crypto";
 import { COUNT_WEBGL } from "../support/page";
 import { privateRepoLeaks } from "../support/private-repo";
+import { socials } from "../../data/socials";
 
 const ROUTE = "/lab/work";
 const AXE = require.resolve("axe-core/axe.min.js");
@@ -15,6 +16,13 @@ const ABOUT_LINKS = [
   ["/resume/Tay-Shofer-Software-Engineer-Resume.pdf", "Download résumé (PDF · two pages, 79 KB)"],
   ["https://github.com/taysh123", "GitHub (opens in a new tab)"],
   ["https://www.linkedin.com/in/tay-shofer-1b2b54287", "LinkedIn (opens in a new tab)"],
+] as const;
+/** Contact's four links (P3.6): the live Contact's own targets, in its order, and each one's accessible name. */
+const CONTACT_LINKS = [
+  [`mailto:${socials.email}?subject=Hello%20Tay`, "Email me"],
+  ["https://www.linkedin.com/in/tay-shofer-1b2b54287", "LinkedIn (opens in a new tab)"],
+  ["https://github.com/taysh123", "GitHub (opens in a new tab)"],
+  ["/resume/Tay-Shofer-Software-Engineer-Resume.pdf", "Download résumé (PDF)"],
 ] as const;
 /** Stack's groups (P3.4): the live Stack's, with Security after Services and APIs (Tay, session 13). */
 /** Stack's filter (Tay, session 13): All and the four flagships, in Work order. */
@@ -309,7 +317,7 @@ for (const [label, opts, cookie] of [["the OS setting", { reducedMotion: "reduce
 test("keyboard: every control in reading order, each with a solid 2px cyan ring; focus lifts its panel", async ({ browser }) => {
   const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: "no-preference" });
   const seen: { at: string; ring: string }[] = [];
-  for (let i = 0; i < 29; i++) {
+  for (let i = 0; i < 33; i++) {
     await page.keyboard.press("Tab");
     seen.push(await page.evaluate(() => {
       const e = document.activeElement as HTMLElement, cs = getComputedStyle(e);
@@ -323,6 +331,7 @@ test("keyboard: every control in reading order, each with a solid 2px cyan ring;
     "/#work-gravity-flow", "Previous capture", "Capture 1 of 5", "Next capture",
     ...ABOUT_LINKS.map(([href]) => href),
     ...STACK_FILTER,
+    ...CONTACT_LINKS.map(([href]) => href),
     "Chat with the assistant"]);
   for (const s of seen) expect(s.ring, s.at).toBe("solid 2px rgb(46, 230, 214)");
   await panel(page, "aegis").locator("[data-more]").focus();
@@ -411,12 +420,13 @@ test("structure: one h1, four product h2s, a landmark, four carousels, and four 
   await page.goto(ROUTE);
   await expect(page.locator("h1")).toHaveCount(1);
   await expect(page.locator("article h2")).toHaveText(NAMES);
-  await expect(page.locator("h2")).toHaveCount(NAMES.length + 3);   // About, Stack, and Think · Build · Ship
+  await expect(page.locator("h2")).toHaveCount(NAMES.length + 4);   // About, Stack, Think · Build · Ship, and Contact
   await expect(page.getByRole("region", { name: "Engineer by training. Builder by nature." }).locator("h2")).toHaveCount(1);
   await expect(page.getByRole("region", { name: "Tools behind the work." }).locator("h2")).toHaveCount(1);
   await expect(page.getByRole("region", { name: "Tools behind the work." }).locator("h3")).toHaveCount(STACK_GROUPS.length);
   await expect(page.getByRole("region", { name: "Think. Build. Ship." }).locator("h2")).toHaveCount(1);
   await expect(page.getByRole("region", { name: "Think. Build. Ship." }).locator("h3")).toHaveCount(3);
+  await expect(page.getByRole("region", { name: "Let's build something people use." }).locator("h2")).toHaveCount(1);
   await expect(page.getByRole("main")).toHaveCount(1);
   for (const n of NAMES) await expect(page.getByRole("article", { name: n })).toHaveCount(1);
   for (const n of NAMES) await expect(page.getByRole("region", { name: `${n}: captures` })).toHaveCount(1);
@@ -784,12 +794,109 @@ for (const vp of [[1440, 900], [1024, 768], [390, 844], [320, 568]] as const) {
     });
     expect(out).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(vp[0]);
-    // The page's last words clear the chat launcher at the end of the page.
+    // Its last line clears the chat launcher at the end of the page (Contact, below it, now ends the page).
     await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
     await page.waitForTimeout(150);
     const last = (await tbs(page).locator(".wk__tbs-example").last().boundingBox())!;
     const launcher = (await page.locator("[data-chat-launcher]").boundingBox())!;
     expect(last.y + last.height).toBeLessThanOrEqual(launcher.y);
+    await ctx.close();
+  });
+}
+
+// Contact (P3.6, session 15): the live Contact section under Think · Build · Ship, ending the page. The live title, lead
+// and four links at the live targets (Tay approved the copy). Server-rendered, no form, and it holds still.
+const contact = (page: Page) => page.locator("[data-contact]");
+/** Each link's target and attributes, in order: what a reader's browser does with it. */
+const attrsOf = (links: ReturnType<Page["locator"]>) => links.evaluateAll((as) => as.map((a) =>
+  ["href", "target", "rel", "download", "type"].map((k) => a.getAttribute(k))));
+
+test("Contact without JavaScript: the eyebrow, the live title and lead, the four live links, nothing hidden", async ({ browser }) => {
+  const { ctx, page } = await at(browser, [1440, 900], { javaScriptEnabled: false });
+  await expect(contact(page).locator(".wk__contact-eyebrow")).toHaveText("Contact");
+  await expect(contact(page).locator("h2")).toHaveText("Let's build something people use.");
+  await expect(contact(page).locator(".wk__contact-lead")).toHaveText("I'm looking for a software engineering opportunity that fits my skills—on-site, hybrid, or remote.");
+  const links = contact(page).locator("a");
+  await expect(links).toHaveCount(CONTACT_LINKS.length);
+  for (const [i, [href, name]] of CONTACT_LINKS.entries()) {
+    await expect(links.nth(i)).toHaveAttribute("href", href);
+    await expect(links.nth(i)).toHaveAccessibleName(name);
+  }
+  expect(await attrsOf(links)).toEqual([
+    [CONTACT_LINKS[0][0], null, null, null, null],                                   // the mailto, in the same tab
+    [CONTACT_LINKS[1][0], "_blank", "noopener noreferrer", null, null],
+    [CONTACT_LINKS[2][0], "_blank", "noopener noreferrer", null, null],
+    [CONTACT_LINKS[3][0], null, null, "Tay-Shofer-Software-Engineer-Resume.pdf", "application/pdf"],
+  ]);
+  await expect(contact(page).locator(".wk__contact-resume")).toHaveText("Download résumé (PDF) · two pages, 79 KB");
+  await expect(contact(page).locator("form, input, textarea, button, img, picture, canvas, svg:not([aria-hidden='true'])")).toHaveCount(0);
+  expect(await contact(page).evaluate((e) => [e, ...e.querySelectorAll("*")].filter((x) => getComputedStyle(x).opacity !== "1" || getComputedStyle(x).visibility === "hidden").length)).toBe(0);
+  await ctx.close();
+});
+
+test("Contact's links are the live Contact's: the same targets, attributes and accessible names as on /", async ({ page }) => {
+  await page.goto("/");
+  const live = page.locator("#contact a");
+  const liveAttrs = await attrsOf(live);
+  const liveNames = await live.evaluateAll((as) => as.map((a) => a.textContent!.replace(/\s+/g, " ").trim()));
+  await page.goto(ROUTE);
+  expect(await attrsOf(contact(page).locator("a"))).toEqual(liveAttrs);
+  expect(await contact(page).locator("a").evaluateAll((as) => as.map((a) => a.textContent!.replace(/\s+/g, " ").trim()))).toEqual(liveNames);
+  expect(liveNames).toEqual(CONTACT_LINKS.map(([, n]) => n));
+});
+
+for (const [label, motion] of [["motion on", "no-preference"], ["reduced motion", "reduce"]] as const) {
+  test(`Contact holds still (${label}): no animation on any of it, and a link answers a hover only in colour`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: motion });
+    await contact(page).scrollIntoViewIfNeeded();
+    await page.waitForTimeout(300);
+    const boxes = () => contact(page).locator("*").evaluateAll((es) => es.map((e) => { const r = e.getBoundingClientRect(); return `${r.x},${r.y + scrollY},${r.width},${r.height}`; }));
+    const before = await boxes();
+    expect(await contact(page).evaluate((e) => [e, ...e.querySelectorAll("*")].reduce((n, x) => n + x.getAnimations().length, 0))).toBe(0);
+    const email = contact(page).locator("[data-email]");
+    const bg = await email.evaluate((e) => getComputedStyle(e).backgroundColor);
+    await email.hover();
+    await page.waitForTimeout(300);
+    expect(await email.evaluate((e) => getComputedStyle(e).backgroundColor)).not.toBe(bg);
+    const cv = contact(page).locator("[data-resume]");
+    const line = await cv.evaluate((e) => getComputedStyle(e).textDecorationColor);
+    await cv.hover();
+    await page.waitForTimeout(300);
+    expect(await cv.evaluate((e) => getComputedStyle(e).textDecorationColor)).not.toBe(line);
+    expect(await boxes(), "nothing moves").toEqual(before);
+    await ctx.close();
+  });
+}
+
+for (const vp of [[1440, 900], [1024, 768], [390, 844], [320, 568]] as const) {
+  test(`Contact at ${vp[0]}×${vp[1]}: the title beside the words from 1024px, stacked below; the profiles a pair; clear of the chat launcher at the end`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp, { reducedMotion: "no-preference" });
+    await contact(page).scrollIntoViewIfNeeded();
+    const head = (await contact(page).locator(".wk__contact-head").boundingBox())!, body = (await contact(page).locator(".wk__contact-body").boundingBox())!;
+    if (vp[0] >= 1024) {
+      expect(body.x).toBeGreaterThan(head.x + head.width); expect(Math.abs(body.y - head.y)).toBeLessThan(2);
+      expect(Math.abs(body.x - (await page.locator(".wk__about-body").boundingBox())!.x)).toBeLessThan(1);   // under About's words
+    } else { expect(body.y).toBeGreaterThanOrEqual(head.y + head.height); expect(Math.abs(body.x - head.x)).toBeLessThan(2); }
+    // Each half of the title holds its own line wherever it fits. At 320px a half may wrap, as About's does; from 1024 to
+    // about 1100px the first half wraps in its column (368px at 1024; measured, session 15), and the second never does.
+    const lines = await contact(page).locator(".wk__contact-title span").evaluateAll((ss) => ss.map((s) => Math.round(s.getBoundingClientRect().height / parseFloat(getComputedStyle(s).lineHeight))));
+    if (vp[0] === 1024) expect(lines).toEqual([2, 1]);
+    else if (vp[0] >= 390) expect(lines).toEqual([1, 1]);
+    // The two profiles never split (the live rule): LinkedIn and GitHub share a line.
+    const tops = await contact(page).locator("[data-profile]").evaluateAll((as) => as.map((a) => Math.round(a.getBoundingClientRect().top)));
+    expect(new Set(tops).size).toBe(1);
+    const out = await contact(page).evaluate((e) => {
+      const r = e.getBoundingClientRect();
+      return [...e.querySelectorAll<HTMLElement>("*")].filter((x) => { const b = x.getBoundingClientRect(); return b.width > 0 && (b.right > r.right + 0.5 || b.left < r.left - 0.5); }).map((x) => x.className || x.textContent);
+    });
+    expect(out).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(vp[0]);
+    // At the end of the page the chat launcher covers no Contact link: every link, and the résumé's note, sit above it.
+    await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+    await page.waitForTimeout(150);
+    const launcher = (await page.locator("[data-chat-launcher]").boundingBox())!;
+    for (const box of [...await contact(page).locator("a").evaluateAll((as) => as.map((a) => a.getBoundingClientRect().toJSON() as DOMRect)),
+      (await contact(page).locator(".wk__contact-resume").boundingBox())!]) expect(box.y + box.height).toBeLessThanOrEqual(launcher.y);
     await ctx.close();
   });
 }

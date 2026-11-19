@@ -12,6 +12,7 @@ import { panels, DOS_CHIPS, PHONE_CROP } from "@/app/lab/work/panels";
 import { aboutBlock } from "@/app/lab/work/about";
 import { stackBlock, SECURITY_ROWS, SECURITY_EVIDENCE } from "@/app/lab/work/stack";
 import { tbsBlock, DOS_EVIDENCE } from "@/app/lab/work/tbs";
+import { contactBlock } from "@/app/lab/work/contact";
 import { pillars } from "@/data/approach";
 import { skillGroups } from "@/data/skills";
 import { projectsFor, lensProjects } from "@/data/stackLens";
@@ -334,7 +335,7 @@ describe("About (P3.3): the live About section's own words, and the live site's 
   });
   it("holds still and ships no client code: the page's one reveal stays the only one", () => {
     expect(block).not.toMatch(/data-reveal|"use client"|useState|useEffect/);
-    expect(page).toMatch(/<AboutBlock \/>\n\s*<StackBlock \/>\n\s*<TbsBlock \/>\n\s*<\/main>/);   // Stack (session 13), then Think · Build · Ship (session 14)
+    expect(page).toMatch(/<AboutBlock \/>\n\s*<StackBlock \/>\n\s*<TbsBlock \/>\n\s*<ContactBlock \/>\n\s*<\/main>/);   // Stack (session 13), Think · Build · Ship (14), Contact (15)
   });
   it("adds no token: the layer still defines the same 76, and the About rules read only layer tokens", () => {
     const root = layer.slice(layer.indexOf(".cine[data-theme] {"));
@@ -474,7 +475,7 @@ describe("Stack (P3.4): the live Stack's groups, tools and evidence, with a filt
     expect(code(block)).not.toMatch(/<img|<svg|<picture|<Pic|<Image|<Shot/);
   });
   it("under About inside <main>, and the page keeps its one opening reveal", () => {
-    expect(page).toMatch(/<AboutBlock \/>\n\s*<StackBlock \/>\n\s*<TbsBlock \/>\n\s*<\/main>/);   // Think · Build · Ship follows it (session 14)
+    expect(page).toMatch(/<AboutBlock \/>\n\s*<StackBlock \/>\n\s*<TbsBlock \/>\n\s*<ContactBlock \/>\n\s*<\/main>/);   // Think · Build · Ship (session 14), then Contact (15)
     expect(page.match(/\sdata-reveal(="settle")?[\s>]/g)).toHaveLength(3);
   });
   it("adds no token; pills outlined under All, filled for a project, evidence only under All; no transition when reduced", () => {
@@ -554,7 +555,7 @@ describe("Think · Build · Ship (P3.5): the live section's words, with evidence
   it("a server component under Stack inside <main>: no client code, no reveal, no link, no image", () => {
     for (const t of [block, src]) expect(t).not.toMatch(/^["']use client["']|useState|useEffect|data-reveal/m);
     expect(code(block)).not.toMatch(/<a\b|<Link|<button|<img|<svg|<picture|<Pic|<Image|<Shot/);
-    expect(page).toMatch(/<StackBlock \/>\n\s*<TbsBlock \/>\n\s*<\/main>/);
+    expect(page).toMatch(/<StackBlock \/>\n\s*<TbsBlock \/>\n\s*<ContactBlock \/>\n\s*<\/main>/);   // Contact follows it (session 15)
     expect(page.match(/\sdata-reveal(="settle")?[\s>]/g)).toHaveLength(3);
     // The live structure: an ordered list of rows, each word an h3 with the live screen-reader colon.
     expect(block).toMatch(/<ol className="wk__tbs-rows">/);
@@ -562,11 +563,94 @@ describe("Think · Build · Ship (P3.5): the live section's words, with evidence
     expect(block).toMatch(/<span className="wk__tbs-project">\{e\.name\}<\/span>\{e\.rest\}/);
   });
   it("adds no token and no motion; the rows sit on About's and Stack's grid from 1024px", () => {
-    const rules = css.slice(css.indexOf("/* ── Think · Build · Ship (P3.5"), css.indexOf("/* ── Smaller screens"));
+    const rules = css.slice(css.indexOf("/* ── Think · Build · Ship (P3.5"), css.indexOf("/* ── Contact (P3.6"));
     expect(rules.length).toBeGreaterThan(500);
     expect(rules).not.toMatch(/--cine-[\w-]+:|#[0-9a-fA-F]{3,6}\b|rgba?\(|transition|animation|data-reveal/);
     expect(rules.match(/var\(--cine-[\w-]+\)/g)!.length).toBeGreaterThan(20);
     expect(rules).toMatch(/@media \(min-width: 1024px\) \{\s*\.wk__tbs-row \{ grid-template-columns: minmax\(0, 5fr\) minmax\(0, 7fr\); column-gap: clamp\(40px, 5vw, 80px\); \}/);
-    expect(css).toMatch(/\.wk__about-title, \.wk__stack-title, \.wk__tbs-title \{/);
+    expect(css).toMatch(/\.wk__about-title, \.wk__stack-title, \.wk__tbs-title, \.wk__contact-title \{/);
+  });
+});
+
+// Contact (P3.6, session 15): the live Contact section's own words and links, under Think · Build · Ship. Tay approved
+// the copy before it was built: the live title (not the reference images' draft), the live mailto with its subject, the
+// nav's "Contact" as the eyebrow, and the lead only while the site says it is open. Each string and target is held to its
+// source, and the approved copy is pinned, so a change to either one shows up here.
+describe("Contact (P3.6): the live Contact section's own words, and its four links at the live targets", () => {
+  const block = read("app/lab/work/ContactBlock.tsx");
+  const src = read("app/lab/work/contact.ts");
+  const live = read("components/sections/Contact.tsx");
+  const c = contactBlock;
+  const shown = [c.eyebrow, ...c.title, c.lead ?? "", c.email.label, ...c.profiles.map((p) => p.label), c.resume.label, c.resume.note];
+
+  it("the eyebrow is the nav's, and the title and the lead are the live section's, word for word", () => {
+    expect(c.eyebrow).toBe(dict.nav.contact);
+    expect(c.eyebrow).toBe("Contact");
+    expect(c.title).toEqual(dict.contact.title);
+    expect([...c.title]).toEqual(["Let's build something", "people use."]);   // the live title (Tay, session 15)
+    expect(c.title.join(" ")).not.toMatch(/meaningful/);                       // not the reference images' draft
+    expect(c.lead).toBe(availability.detail);
+    expect(c.lead).toBe("I'm looking for a software engineering opportunity that fits my skills—on-site, hybrid, or remote.");
+    // The live section reads the same fields.
+    expect(live).toContain("{t.contact.title[0]}<br /><span>{t.contact.title[1]}</span>");
+    expect(live).toContain('<p className="contact__lead">{availability.detail}</p>');
+  });
+  it("the lead shows only while the site says it is open (Tay, session 15)", () => {
+    expect(availability.open).toBe(true);
+    expect(src).toMatch(/lead: availability\.open \? availability\.detail : null,/);
+    expect(block).toMatch(/\{c\.lead && <p className="wk__contact-lead">\{c\.lead\}<\/p>\}/);
+  });
+  it("email: the live Contact's mailto, with its subject, in the same tab", () => {
+    expect(c.email.href).toBe(`mailto:${socials.email}?subject=${encodeURIComponent(dict.contact.subject)}`);
+    expect(c.email.href).toBe(`mailto:${socials.email}?subject=Hello%20Tay`);
+    expect(c.email.label).toBe("Email me");
+    expect(live).toContain("href={`mailto:${socials.email}?subject=${encodeURIComponent(t.contact.subject)}`}");
+    expect(block).toMatch(/<a href=\{c\.email\.href\} className="wk__go wk__go--fill" data-email>\{c\.email\.label\}<\/a>/);
+  });
+  it("the two profiles: the live labels, order and targets, each in a new tab and saying so", () => {
+    expect(c.profiles).toEqual([
+      { href: socials.linkedin.url, label: dict.contact.linkedin },
+      { href: socials.github.url, label: dict.contact.github },
+    ]);
+    expect(c.profiles.map((p) => [p.label, p.href])).toEqual([
+      ["LinkedIn", "https://www.linkedin.com/in/tay-shofer-1b2b54287"], ["GitHub", "https://github.com/taysh123"]]);
+    expect(live.indexOf("socials.linkedin.url")).toBeLessThan(live.indexOf("socials.github.url"));   // the live order
+    expect(block).toMatch(/<a key=\{p\.href\} href=\{p\.href\} target="_blank" rel="noopener noreferrer" className="wk__go" data-profile>/);
+    expect(block).toContain('<span className="sr-only">{dict.common.newTab}</span>');
+  });
+  it("the résumé: the live label and note, the same file and download; the PDF is untouched", () => {
+    expect(c.resume.href).toBe(resume.href);
+    expect(c.resume.fileName).toBe(resume.fileName);
+    expect(c.resume.label).toBe(dict.contact.resume);
+    expect(c.resume.label).toBe("Download résumé (PDF)");
+    expect(c.resume.note).toBe(" · two pages, 79 KB");
+    expect(live).toContain('t.contact.resumeNote.replace(" KB", "\\u00a0KB")');
+    expect(live).toContain('<a href={resume.href} download={resume.fileName} type="application/pdf" data-resume>');
+    expect(block).toContain('<a href={c.resume.href} download={c.resume.fileName} type="application/pdf" data-resume>{c.resume.label}</a>');
+  });
+  it("no form and no backend: four plain links; no client code, no reveal, and it ends the page inside <main>", () => {
+    for (const t of [block, src]) expect(t).not.toMatch(/^["']use client["']|useState|useEffect|data-reveal|fetch\(|action=/m);
+    expect(code(block)).not.toMatch(/<form|<input|<textarea|<button|<img|<picture|<Pic|<Image|<Shot|<canvas/);
+    expect(code(block).match(/<a /g)).toHaveLength(3);   // the email, the profiles (one, mapped), the résumé
+    expect(page).toMatch(/<TbsBlock \/>\n\s*<ContactBlock \/>\n\s*<\/main>/);
+    expect(page.match(/\sdata-reveal(="settle")?[\s>]/g)).toHaveLength(3);
+  });
+  it("no institution, no year, no figure but the résumé's size, no private repository, no availability claim beyond the live lead", () => {
+    const text = shown.join(" | ");
+    for (const t of [block, src, text]) expect(namesAny(t)).toBe(false);
+    expect(text).not.toMatch(/\b(19|20)\d{2}\b/);
+    expect(text.match(/\d+/g)).toEqual(["79"]);   // the résumé's size, the live site's own note
+    expect(shown.filter((t) => /availab|looking|open to|hiring|freelance|full-time|part-time|immediate|start/i.test(t))).toEqual([availability.detail]);
+    expect(privateRepoLeaks(block + src + JSON.stringify(c))).toEqual([]);
+  });
+  it("adds no token and no motion; its rules read only layer tokens, on About's grid from 1024px", () => {
+    const rules = css.slice(css.indexOf("/* ── Contact (P3.6"), css.indexOf("/* ── Smaller screens"));
+    expect(rules.length).toBeGreaterThan(500);
+    expect(rules).not.toMatch(/--cine-[\w-]+:|#[0-9a-fA-F]{3,6}\b|rgba?\(|transition|animation|data-reveal/);
+    expect(rules.match(/var\(--cine-[\w-]+\)/g)!.length).toBeGreaterThan(15);
+    expect(rules).toMatch(/@media \(min-width: 1024px\) \{\s*\.wk__contact \{ grid-template-columns: minmax\(0, 5fr\) minmax\(0, 7fr\); column-gap: clamp\(40px, 5vw, 80px\); \}/);
+    expect(css).toMatch(/\.wk__about-eyebrow, \.wk__stack-eyebrow, \.wk__contact-eyebrow \{/);
+    expect(css).toMatch(/\.wk__about-title span, \.wk__contact-title span \{ display: block; \}/);
+    expect(css).toMatch(/\.wk__about-lede, \.wk__contact-lead \{/);
   });
 });

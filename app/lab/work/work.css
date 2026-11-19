@@ -238,8 +238,8 @@
 @media (min-width: 1024px) {
   .wk__about { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: clamp(40px, 5vw, 80px); }
 }
-/* Stack (below) sets its eyebrow and title the same way. */
-.wk__about-eyebrow, .wk__stack-eyebrow {
+/* Stack and Contact (below) set their eyebrows and titles the same way. */
+.wk__about-eyebrow, .wk__stack-eyebrow, .wk__contact-eyebrow {
   display: inline-flex;
   align-items: center;
   gap: var(--cine-space-3);
@@ -247,10 +247,10 @@
   font-weight: var(--cine-weight-eyebrow);
   color: var(--cine-cyan);
 }
-.wk__about-eyebrow::before, .wk__stack-eyebrow::before { content: ""; width: var(--cine-space-6); height: 1px; background: var(--cine-duotone); }
-/* A heading at the products' tier (it is an h2 beside theirs), each half of the live title on its own line. Stack's
-   and Think · Build · Ship's titles share it. */
-.wk__about-title, .wk__stack-title, .wk__tbs-title {
+.wk__about-eyebrow::before, .wk__stack-eyebrow::before, .wk__contact-eyebrow::before { content: ""; width: var(--cine-space-6); height: 1px; background: var(--cine-duotone); }
+/* A heading at the products' tier (it is an h2 beside theirs), each half of the live title on its own line. Stack's,
+   Think · Build · Ship's and Contact's titles share it. */
+.wk__about-title, .wk__stack-title, .wk__tbs-title, .wk__contact-title {
   margin-top: var(--cine-space-4);
   font-size: var(--cine-text-name);
   line-height: var(--cine-leading-display);
@@ -258,8 +258,8 @@
   font-weight: var(--cine-weight-display);
   color: var(--cine-ink);
 }
-.wk__about-title span { display: block; }
-.wk__about-lede {
+.wk__about-title span, .wk__contact-title span { display: block; }
+.wk__about-lede, .wk__contact-lead {
   max-width: 36rem;
   font-size: var(--cine-text-lead);
   line-height: var(--cine-leading-lead);
@@ -440,6 +440,53 @@
 }
 .wk__tbs-project { font-weight: var(--cine-weight-control); color: var(--cine-ink); }
 
+/* ── Contact (P3.6, ContactBlock.tsx): the page's conclusion, under Think · Build · Ship and after a hairline, on
+   About's grid: from 1024px the title takes the panels' words share and the lead and links the capture's; stacked
+   below. Its eyebrow, title and lead share About's rules. One filled action (email), the two profiles as a pair in the
+   panels' outlined control, and the résumé as a quiet underlined download under its own hairline, as on the live page.
+   It holds still: its links answer a hover in colour only. ── */
+.wk__contact {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--cine-space-5);
+  margin-top: var(--cine-section-y);
+  padding-top: var(--cine-space-7);
+  border-top: 1px solid var(--cine-hair);
+}
+@media (min-width: 1024px) {
+  .wk__contact { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: clamp(40px, 5vw, 80px); }
+}
+.wk__contact-links { margin-top: var(--cine-space-6); }
+/* The two profiles wrap as a pair (the live page's rule), at the links' own spacing. */
+.wk__contact-profiles { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cine-space-3) var(--cine-space-5); }
+/* The note stays whole: on the narrowest phones it drops under the link as one piece, instead of splitting after the
+   link's 44px line (measured at 320px). */
+.wk__contact-resume {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--cine-space-1);
+  margin-top: var(--cine-space-6);
+  padding-top: var(--cine-space-3);
+  max-width: 36rem;
+  border-top: 1px solid var(--cine-hair);
+  font-size: var(--cine-text-small);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-mist);
+}
+.wk__contact-resume a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--cine-target-min);
+  font-weight: var(--cine-weight-control);
+  color: var(--cine-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--cine-edge);
+  text-underline-offset: 4px;
+}
+.wk__contact-resume a:hover { text-decoration-color: currentColor; }
+.wk__contact-resume span { white-space: nowrap; }
+
 /* ── Smaller screens: a phone capture is capped by the screen's width AND height (T Poker's tall screens no longer
    take the whole view), the stage and the panel tighten, and the art-directed phone crops keep their own shape. ── */
 @media (max-width: 639px) {
@@ -461,6 +508,9 @@
   .wk__about-facts li { padding-block: var(--cine-space-2); }
   .wk__stack-group { gap: var(--cine-space-3); padding-block: var(--cine-space-4); }
   .wk__tbs-row { padding-block: var(--cine-space-4); }
+  /* The pair fills its own line under the email action, as the panels' links fill theirs, 12px apart like the rows: at
+     the links' wider spacing it needs 282px, 2px more than a 320px screen gives, and would split. */
+  .wk__contact-profiles { flex: 1 1 auto; column-gap: var(--cine-space-3); }
 }
 /* The narrowest phones: seven 44px targets (previous, five dots, next) need 324px, more than the stage has below 390px.
    The dots take their own row under the capture and the two arrows sit below them; focus still runs previous, the
