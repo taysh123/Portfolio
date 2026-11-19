@@ -324,9 +324,10 @@ approved it** at the session 13 close.
   - The tools that remain are filled cyan pills (on-accent ink); the evidence sentences hide (the pills are the evidence).
   - The live status line, "Showing the {n} tools {name} uses.", sits above the groups at the lead size, in ink, and is
     `aria-live="polite"`. Under All it is empty, as on the live page.
-- **No scroll jump:** Stack ends the page, so a shorter list would pull the page up under the reader. On each press the
-  results (the status line and the groups) take a `min-height` that keeps the page's end at or below the view's bottom
-  edge; All lets it go. The status line is held too because its height changes with the name (two lines at 390 for
+- **No scroll jump:** a shorter list would pull the page up under the reader whenever what follows Stack can't fill the
+  rest of the view. (Stack ended the page when this was built; Think · Build · Ship and Contact now follow it.) On each
+  press the results (the status line and the groups) take a `min-height` that keeps the page's end at or below the
+  view's bottom edge, and no more: it is 0 whenever that is already so. All lets it go. The status line is held too because its height changes with the name (two lines at 390 for
   GRAVITY FLOW, one for T Poker: that 26px was found by the e2e test).
 - **Without JavaScript,** and until hydration: the full list (All). The buttons are not shown (they would do nothing),
   and their space is kept, so nothing shifts when they appear.
@@ -349,8 +350,8 @@ text, the control edge at ≥ 3:1, the glass fill), wrapping as needed; the evid
   - `content-visibility: auto` would skip Stack's off-screen layout, but the violet glow (at 38% of the page's height)
     then moves when Stack renders: slice CLS 0.353 at 320px, measured on the first build. **Tay keeps the cost for now**
     (session 13 close); the fix and the glow's repositioning are a P5 (integration) item, `docs/ROADMAP.md` #13.
-- **Before Contact is built under it:** the scroll hold assumed Stack ends the page. Re-checked in session 14, with Think
-  · Build · Ship below it (`docs/ROADMAP.md` #14; below).
+- **The scroll hold with sections below it:** re-checked in session 14 with Think · Build · Ship below, and in session 15
+  with Contact (`docs/ROADMAP.md` #14; below).
 
 ### Think · Build · Ship (P3.5, session 14)
 
@@ -412,3 +413,48 @@ The two glows carry `overflow-anchor: none`.
 after a project is pressed with the buttons out of view above (keyboard only; 1,096–1,619px). Its space then sits
 between the filtered list and this section. Without it the view jumps by that much. **Tay keeps it as it is** (session 14
 close); its test's comment is reworded, and the visible gap case is re-checked in P5 (#14).
+
+**With Contact below as well (session 15):** whenever the buttons are in view the hold is 0 at 1440×900, 390×844,
+1920×1200 and 2560×1440, and 346px at 1440×1800 (it was 729px). The page's-end case is unchanged: there the hold always
+equals the full list's height, so no section below changes it. `StackFilter.tsx`'s header comment no longer says Stack
+ends the page (`bbd9d55`, comment only).
+
+### Contact (P3.6, session 15)
+
+Under Think · Build · Ship, after a hairline, ending the page: **the live Contact section**
+(`components/sections/Contact.tsx`), restyled in the layer. Tay approved every word and link before it was built.
+
+| Element | Text | Source |
+|---|---|---|
+| Eyebrow | Contact | `dict.nav.contact`. The live section has none; About and Stack take their nav labels the same way (Tay, session 15). |
+| Title (h2) | Let's build something / people use. | `dict.contact.title`, word for word, each half on its own line. The reference images' draft ("Let's build something meaningful.") is not used (Tay). |
+| Lead | I'm looking for a software engineering opportunity that fits my skills—on-site, hybrid, or remote. | `availability.detail`, the live lead. Shown only while `availability.open` (Tay; the live section shows it always). |
+| Email | Email me | `dict.contact.email`; `mailto:` + `socials.email` + `?subject=` + `dict.contact.subject` ("Hello Tay"), encoded as live: the live Contact's link, not the footer's bare one (Tay). Same tab. |
+| Profiles | LinkedIn · GitHub | `dict.contact.linkedin`, `dict.contact.github`; `socials.linkedin.url`, `socials.github.url`, in the live order. New tab, `noopener noreferrer`, the arrow and `dict.common.newTab`. |
+| Résumé | Download résumé (PDF) · two pages, 79 KB | `dict.contact.resume` and `dict.contact.resumeNote` (a no-break space before "KB", as live); `resume.href`, `download={resume.fileName}`, `type="application/pdf"`. The PDF is untouched. |
+
+- **The same targets, attributes and accessible names as the live Contact on `/`:** an e2e test reads both pages and
+  compares them.
+- **Left out on purpose:** a form, any backend, the email address as text (the live section doesn't show it), any
+  institution, year, or availability wording beyond the live lead.
+- **Files:** `app/lab/work/contact.ts` derives every string and target; `ContactBlock.tsx` is a server component (no
+  client code). `tests/unit/lab-work.test.ts` holds each to its source and pins the approved copy.
+- **Layout:** on About's grid. From 1024px the eyebrow and title take the words share (5fr), and the lead, the links and
+  the résumé the capture's (7fr), lined up under About's words; stacked below.
+  - "Email me" is the one filled control (`.wk__go--fill`). LinkedIn and GitHub take the panels' outlined `.wk__go` and
+    wrap as a pair, the live rule, so one is never stranded. On phones the pair fills its own line under the email
+    action, 12px apart (at 24px it needs 282px, 2px more than a 320px screen gives).
+  - The résumé is a quiet underlined download in ink under its own hairline, with the note in mist. The note stays
+    whole: on the narrowest phones it drops under the link as one piece.
+  - The title's first half wraps from 1024 to about 1100px (a 368px column), so the title takes three lines there. It
+    fits from 1100px. The e2e test pins this case.
+- **Motion:** none of its own. It holds still (rule 1); its links answer a hover in colour only.
+- **Tokens:** none added. Its eyebrow, title and lead share About's rules; its own rules read only layer tokens. The
+  layer still defines 76.
+- **Its cost (measured against `a625c75`, session 15):** first-load JS unchanged (every JS file byte-identical); HTML
+  102.79 → 107.10 KB (18.9 → 19.4 KB gzip); LCP +0 to +8 ms desktop and +4 to +18 ms on a phone at 4× CPU (medians of 10
+  interleaved, three rounds). Scroll-through CLS in the slice 0. axe: 0 violations, and nothing to review in Contact.
+- **The chat launcher:** at the page's end every Contact link and the résumé's note sit above it at 1440, 1024, 390 and
+  320 (e2e).
+- **The repetition with About** ("on-site, hybrid, or remote", and the résumé, GitHub and LinkedIn) is logged for P5:
+  re-check whether About keeps its links once the full page is assembled (`docs/ROADMAP.md` #15).

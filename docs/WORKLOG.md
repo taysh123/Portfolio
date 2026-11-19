@@ -11,6 +11,138 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-19 — Session 15: Contact (P3.6) ends `/lab/work` (prototype, D1 reopened) (Claude Code)
+
+**Scope (Tay's brief):**
+- Sync: `main` at `443a1f9`, this branch at `a625c75`.
+- One task: the Contact section (P3.6), the last section on `/lab/work`, below Think · Build · Ship. Lab-only; `/`
+  untouched.
+  - The live Contact's title, copy and links, word for word, from their source files. The brief's draft title "Let's
+    build something meaningful." comes from AI reference images: shown only as an alternative, used only if Tay picks it.
+  - Email (a plain mailto from the live source), LinkedIn, GitHub and the résumé, with the live targets and attributes.
+    The résumé PDF unchanged. No form, no backend; no institution, no years, no availability claim beyond the live
+    wording.
+  - The `.cine` tokens; no client JS without showing why first; it holds still, like About.
+  - The chat launcher must cover no Contact link at the page's end, at 320, 390 and 1440.
+  - Re-measure Stack's filter hold (ROADMAP #14) and report it; no change without Tay's OK.
+- Step 1 a plan only; Step 2 build, and fix `StackFilter.tsx`'s out-of-date header comment in its own comment-only
+  commit. Measure as last session; `/`, its stylesheet bytes, `/lab/hero-a` and the guards unchanged; screenshots at
+  390 and 1440 in scratch. Commit, push, update draft PR #18 (no merge, no deploy), the Preview URL. Don't close the
+  session until Tay approves.
+
+### 1. Preconditions (VL)
+- `git fetch`: `origin/main` = **`443a1f9`**; local `main` level with it, clean.
+- `proto/hero-a-cinematic` at **`a625c75`**, level with its remote, clean.
+
+### 2. The plan and Tay's answers
+- The copy, every string with its source: `docs/CINEMATIC_SYSTEM.md`, "Contact (P3.6, session 15)".
+- **Tay's answers:**
+  1. The live title, "Let's build something / people use." (not the reference images' draft).
+  2. The live Contact's mailto, with its subject (`?subject=Hello%20Tay`), not the footer's bare one.
+  3. Keep the "Contact" eyebrow (`dict.nav.contact`), as About and Stack take theirs.
+  4. Show the lead only while `availability.open` (the live section shows it always).
+- **Logged for P5 (Tay):** Contact repeats About's availability wording ("on-site, hybrid, or remote") and its three
+  links. Re-check whether About keeps its links once the full page is assembled (`docs/ROADMAP.md` #15).
+
+### 3. What changed
+- **`56e3dea`, the section:**
+  - `app/lab/work/contact.ts` reads every string and target from `lib/dict.ts` and `data/socials.ts`; nothing is typed.
+  - `ContactBlock.tsx`, a server component, renders it after Think · Build · Ship, inside `<main>`: the eyebrow and h2
+    on one side; the lead, "Email me" (the one filled control), LinkedIn and GitHub (the panels' outlined control, as a
+    pair), and the résumé line under its own hairline on the other.
+  - `work.css`: its rules, layer tokens only. Its eyebrow, title (each half on its own line) and lead share About's
+    rules. From 1024px the title takes 5fr and the words 7fr, lined up under About's words; stacked below.
+  - **No token added** (the layer still defines 76). No client code, no form, no reveal.
+  - Tests: 8 unit (every string and target held to its source, the approved copy pinned, no form or client code, no
+    figure but the résumé's size, no availability wording beyond the live lead) and 8 e2e (no JS; the same targets,
+    attributes and accessible names as the live Contact on `/`; holds still ×2; layout at 1440, 1024, 390 and 320 with
+    every link clear of the chat launcher at the page's end). The page order pins, the structure test's h2 count and the
+    keyboard order now include the section; Think · Build · Ship's rule slice ends where Contact's begins.
+- **Found while building, fixed in the same commit:**
+  - At 320 the profile pair needed 282px and had 280, so GitHub dropped to its own line (the live rule is that the pair
+    never splits). On phones the pair is now 12px apart, the links' own row gap: 270px.
+  - At 320 the résumé note split after "two", and its second line fell below the link's 44px line. The note now stays
+    whole and drops under the link as one piece ("· two pages, 79 KB"). The live page has the same split at 320.
+- **Known, not changed:** from 1024 to about 1100px the title's first half wraps in its 368px column ("Let's build /
+  something / people use."). It fits from 1100px. The e2e test pins this case.
+- **`bbd9d55`, comment only:** `StackFilter.tsx`'s header no longer says Stack ends the page; the comment inside
+  `press()` names the sections below. The built chunk is byte-identical.
+
+### 4. Measured (VL; local production builds, `a625c75` in a scratch worktree vs this branch)
+| | before | after |
+|---|---|---|
+| First-load JS `/lab/work` (the budget algorithm) | 181.77 KiB | **181.77 KiB** (every JS file byte-identical); budget 205.7 |
+| HTML `/lab/work` | 102.79 KB (18.9 KB gzip) | **107.10 KB** (19.4 KB gzip); budget 568 |
+| LCP desktop, medians of 10 interleaved, three rounds | 94 · 104 · 100 ms | 102 · 104 · 104 ms |
+| LCP phone, 4× CPU and slow 4G, same | 1060 · 1034 · 1052 ms | 1072 · 1052 · 1056 ms |
+| CLS (load) | 0 | 0 |
+| INP desktop / phone (`scripts/lab-hero-a.mjs`, worst of 5 runs, two passes) | 32, 24 / 32, 32 ms | 24, 24 / 32, 32 ms |
+| FPS desktop / phone | 60.5 / 60.5 | 60.4–60.5 / 60.4–60.5 |
+
+- **LCP:** +8, 0 and +4 ms desktop; +12, +18 and +4 ms phone. The LCP and FCP medians are equal, and the LCP element is
+  the first capture. Rounds 1 and 2 ran on the build before the last CSS change (the résumé note kept whole: one
+  paragraph's layout); round 3 on the final build.
+- **INP on Contact's words** (3 runs; clicks or taps on the title, the lead and the résumé's note): desktop < 16 ms;
+  phone at 4× CPU 16 ms.
+- **Scroll-through CLS** (down and back up twice): the slice 0 before and after; the chat launcher's fold 0.0153 in both
+  (pre-existing).
+- **axe-core 4.11.4, WCAG 2.2 A/AA:** 0 violations at 1440 and 390, motion on and reduced, with Aegis pressed (the e2e
+  suite). Scoped to Contact at the page's end at 1440, 390 and 320, motion on and reduced: 0 violations, nothing to
+  review. The page's "needs review" lines move with the violet glow (at 38% of the page's height): at 390 the lede and
+  T Poker's line (the baseline also listed About's lede); at 320 the lede and About's lede (the baseline only the lede).
+- **The chat launcher:** at the page's end every Contact link and the résumé's note sit above it at 1440, 1024, 390 and
+  320 (e2e).
+- **Built files:** 24 of 25 JS and CSS files byte-identical (all JS). The lab's Work stylesheet: 15,401 → 16,758 bytes.
+
+### 5. ROADMAP #14: Stack's hold, with Contact below (VL)
+Measured on both builds (reduced motion; each project pressed from the keyboard; "space" = the hold less the results'
+own height, the empty band under the filtered list):
+
+| Screen | Buttons near the view's top: before → after | Near its bottom | At the page's end (buttons out of view above) |
+|---|---|---|---|
+| 1440×900 | 0 → 0 | 0 | 1,096px both; 595–831px of space |
+| 390×844 | 0 → 0 | 0 | 1,619px both; 919–1,231px of space |
+| 1920×1200 | 128px → **0** | 0 | as at 1440×900 |
+| 2560×1440 | 368px (0–103px of space) → **0** | 0 | as at 1440×900 |
+| 1440×1800 | 729px (228–464px of space) → **346px (0–81px)** | 0 | as at 1440×900 |
+
+- The view moved 0px in every case, in both builds.
+- **Contact's height removes the tall-screen case** at 1920×1200 and 2560×1440 and shrinks it at 1440×1800.
+- **The page's-end case is unchanged:** there the hold always equals the full list's height (the page must not get
+  shorter while its end is in view), so no section below can change it. Its space sits between the filtered list and
+  Think · Build · Ship, out of view, until All is pressed.
+- This probe reads 16px more space than session 14's on the same baseline build (579–815 there); the difference is the
+  method, and both builds read the same.
+- **Not changed** (Tay's call). Recommendation: keep it as it is; #14's P5 re-check now has only 1440×1800-class screens
+  and the keyboard-only end case left.
+
+### 6. Unchanged (VL)
+- **`/`, `/lab/hero-a`, `/privacy`:** every script and stylesheet byte-identical; the markup identical with build IDs
+  masked. `/`'s stylesheets keep the pinned digests (`868e8b98…` 44,530 bytes; `4b84cc35…` 31,805).
+- **Pixels:** `/lab/work` from the top to Think · Build · Ship's end, reduced motion, sky and launcher hidden: 0
+  differing pixels at 1440 and 390.
+- **Guard files** identical to `origin/main` (`443a1f9`), and the résumé PDF. `components/`, `lib/`, `app/globals.css`,
+  `app/page.tsx`, `app/layout.tsx` and `data/socials.ts` too.
+
+### 7. Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` | **216/216** (208 before, plus 8) |
+| `npm run typecheck`, `npm run lint` | exit 0 |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test` | **212/212** (204 before, plus 8) |
+
+### 8. Screenshots (scratch, not committed)
+- At 1440 and 390: the section (motion on and reduced), the seam from Think · Build · Ship, the page's end with the
+  launcher, and the full page. At 320 and 1024: the section and the page's end.
+
+### Waiting on Tay
+- Review Contact on the Preview.
+- The title's three lines from 1024 to about 1100px: keep (as built), or a different arrangement there.
+- The phone LCP cost (+4 to +18 ms): keep it, or add Contact to #13's P5 fix.
+- #14: keep the hold as it is (recommended).
+
+---
+
 ## 2026-11-19 — Session 14 close-out: Think · Build · Ship approved; the hold kept; the glow fix kept (Claude Code)
 
 **Scope (Tay's brief):**
@@ -2290,3 +2422,4 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-19 | Session 13 close | Stack approved; its LCP cost kept and logged as a P5 item (ROADMAP #13); the Contact re-check logged (#14); CLAUDE.md's stale code reference, verified commit and counts updated | `CLAUDE.md`, `claude/START-HERE.md`, `docs/{WORKLOG,ROADMAP,CINEMATIC_SYSTEM}.md` |
 | 2026-11-19 | Session 14 | Think · Build · Ship (P3.5) under Stack from the live section's own words, plus one DeveloperOS line in Tay's wording (`8382889`); the #14 hold re-checked (keep, recommended); no glow is a scroll anchor (`d1c53a3`) | `app/lab/work/{tbs.ts,TbsBlock.tsx,page.tsx,work.css}`, `tests/{unit,e2e}/lab-work.*`, `docs/{CINEMATIC_SYSTEM,ROADMAP,WORKLOG}.md`, `claude/START-HERE.md` |
 | 2026-11-19 | Session 14 close | Think · Build · Ship approved; the hold kept and its test's comment reworded (`a8062e6`); the glow fix kept; the section's LCP cost kept and added to ROADMAP #13; #14's visible gap case logged for P5; baseline worktree removed, scratch cleaned | `tests/e2e/lab-work.spec.ts` (comment), `CLAUDE.md`, `claude/START-HERE.md`, `docs/{WORKLOG,ROADMAP,CINEMATIC_SYSTEM}.md` |
+| 2026-11-19 | Session 15 | Contact (P3.6) ends `/lab/work`, from the live Contact's own words and links (`56e3dea`); `StackFilter.tsx`'s header comment fixed (`bbd9d55`, comment only); #14 re-measured (the tall-screen case shrinks, the end case unchanged); About's repetition logged for P5 (ROADMAP #15) | `app/lab/work/{contact.ts,ContactBlock.tsx,page.tsx,work.css,StackFilter.tsx}`, `tests/{unit,e2e}/lab-work.*`, `docs/{CINEMATIC_SYSTEM,ROADMAP,WORKLOG}.md`, `claude/START-HERE.md` |

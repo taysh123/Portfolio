@@ -4,7 +4,7 @@ Orientation doc for the Portfolio Project. Read this first in any new chat here 
 Claude Code session, then continue with the current task. Update it before each transition
 (new chat / new session) so the next one starts informed.
 
-> **This copy is on `proto/hero-a-cinematic`** (session 14 close, 2026-11-19). It has more prototype detail than `main`'s
+> **This copy is on `proto/hero-a-cinematic`** (session 15, 2026-11-19: Contact built, awaiting Tay's review). It has more prototype detail than `main`'s
 > copy (`main` has the essentials since PR #19). The branch is never merged.
 
 ## What the product is
@@ -50,14 +50,15 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   merges. `reference/premium-redesign-package` is a stale September design branch: never build or deploy from it.
 
 ## The Concept A prototype (sessions 10–14)
-- **Branch** `proto/hero-a-cinematic`: code at **`a8062e6`** (session 14), with the docs on top.
+- **Branch** `proto/hero-a-cinematic`: code at **`bbd9d55`** (session 15), with the docs on top.
   - Draft **PR #18**: never merge it, never deploy it.
   - Every push builds a Vercel **Preview**, behind Vercel's login. Production is untouched.
 - **Routes** (noindex, not in the sitemap, never linked from `/`):
   - **`/lab/hero-a`**: the locked hero, a 2D-canvas constellation field (no WebGL). First-load JS 183.71 KiB.
   - **`/lab/work`**: the Work slice, four product panels in the cinematic language. Each has a CSS 3D coverflow of the
     project's real captures. Below them, **About** (session 12, approved), then **Stack** (session 13, approved), then
-    **Think · Build · Ship** (session 14, approved). First-load JS 181.77 KiB, HTML 102.79 KB.
+    **Think · Build · Ship** (session 14, approved), then **Contact**, which ends the page (session 15, awaiting Tay's
+    review). First-load JS 181.77 KiB, HTML 107.10 KB.
 - **The system:** `docs/CINEMATIC_SYSTEM.md` covers the `--cine-*` layer (extracted from the hero, value for value), the
   motion rules, the Work slice, the galleries and the carousel. Read it before touching `/lab`.
 - **Session 11:** every flagship's real captures are now in its carousel. **Tay approved the carousels** at the close.
@@ -105,6 +106,19 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
     re-check (#14). `StackFilter.tsx`'s own header comment still says Stack ends the page (not in the brief; left).
   - **Found and fixed (`d1c53a3`):** with the buttons low in the view, the browser's scroll anchoring followed the violet
     glow up (220–462px). The glows no longer anchor scrolling; the hold and its test are unchanged. **Kept by Tay.**
+- **Session 15: Contact (P3.6)** under Think · Build · Ship (`56e3dea`), **awaiting Tay's review**:
+  - The live Contact's title, lead and four links, word for word and target for target (`lib/dict.ts`,
+    `data/socials.ts`). Tay's answers: the live title (not the reference images' draft), the live mailto with its
+    subject, the nav's "Contact" as the eyebrow, and the lead only while `availability.open`.
+  - A server component on About's grid: no client code, no form, no reveal, no token added. Email is the one filled
+    control; LinkedIn and GitHub stay together as a pair; the résumé is a quiet download under its own hairline.
+  - **Measured:** JS unchanged; HTML 102.79 → 107.10 KB; LCP +0 to +8 ms desktop, +4 to +18 ms phone (three rounds);
+    axe 0 violations; every Contact link clears the chat launcher at the page's end (320, 390, 1024, 1440).
+  - **#14 re-measured:** the hold is now 0 on tall screens up to 2560×1440 with the buttons in view (346px at
+    1440×1800, was 729); the keyboard-only end case is unchanged. Not changed. `StackFilter.tsx`'s header comment
+    fixed (`bbd9d55`, comment only).
+  - **Logged for P5 (Tay):** Contact repeats About's availability wording and its three links; re-check whether About
+    keeps its links once the page is assembled (`docs/ROADMAP.md` #15).
 - **Preview of `/lab/work`** (the branch's own link, which follows each push):
   `https://tay-shofer-portfolio-git-proto-he-65ec6d-tays-projects-d5aefd6e.vercel.app/lab/work`.
 - **Kept identical on this branch** (tests hold it):
@@ -170,6 +184,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
+- **Review Contact (session 15) on the Preview.** Also: the title's three lines from 1024 to about 1100px, and
+  whether Contact's small phone LCP cost joins #13's P5 fix.
 - **Decide what Concept A takes on next.** The carousels, the five layer values, About, Stack and Think · Build · Ship
   are approved.
 - **Swap the GRAVITY FLOW capture** he has in mind (the carousels themselves are approved).
