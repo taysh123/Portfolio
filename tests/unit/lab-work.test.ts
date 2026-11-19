@@ -10,6 +10,9 @@ import { LAB_IMAGES, captureOf } from "@/data/lab-images";
 import { dict } from "@/lib/dict";
 import { panels, DOS_CHIPS, PHONE_CROP } from "@/app/lab/work/panels";
 import { aboutBlock } from "@/app/lab/work/about";
+import { stackBlock, SECURITY } from "@/app/lab/work/stack";
+import { skillGroups } from "@/data/skills";
+import { projectsFor } from "@/data/stackLens";
 import { about } from "@/data/about";
 import { availability, resume, socials } from "@/data/socials";
 import sharp from "sharp";
@@ -328,7 +331,7 @@ describe("About (P3.3): the live About section's own words, and the live site's 
   });
   it("holds still and ships no client code: the page's one reveal stays the only one", () => {
     expect(block).not.toMatch(/data-reveal|"use client"|useState|useEffect/);
-    expect(page).toMatch(/<AboutBlock \/>\n\s*<\/main>/);
+    expect(page).toMatch(/<AboutBlock \/>\n\s*<StackBlock \/>\n\s*<\/main>/);   // Stack follows it (session 13)
   });
   it("adds no token: the layer still defines the same 76, and the About rules read only layer tokens", () => {
     const root = layer.slice(layer.indexOf(".cine[data-theme] {"));
@@ -336,5 +339,116 @@ describe("About (P3.3): the live About section's own words, and the live site's 
     const rules = css.slice(css.indexOf("/* ── About (P3.3"), css.indexOf("/* ── Smaller screens"));
     expect(rules).not.toMatch(/--cine-[\w-]+:|#[0-9a-fA-F]{3,6}\b|rgba?\(/);
     expect(rules.match(/var\(--cine-[\w-]+\)/g)!.length).toBeGreaterThan(20);
+  });
+});
+
+// Stack (P3.4, session 13): the live Stack's groups and tools, word for word, each with the flagships the live site's own
+// mapping finds for it, plus the Security group Tay asked for, from the projects' own text. Every string is held to its
+// source, and the approved rows are pinned, so a change to either one shows up here.
+describe("Stack (P3.4): the live Stack's tools, each with the flagships that really use it", () => {
+  const block = read("app/lab/work/StackBlock.tsx");
+  const src = read("app/lab/work/stack.ts");
+  const FLAG = ["poker", "aegis", "developeros", "gravity-flow"];
+  const groups = stackBlock.groups;
+  const tools = groups.flatMap((g) => g.tools);
+  const shown = [stackBlock.eyebrow, stackBlock.title, ...groups.map((g) => g.title), ...tools.flatMap((t) => [t.label, t.where ?? ""])];
+
+  it("the eyebrow and the title are the live Stack's, and there is no lede", () => {
+    expect(stackBlock.eyebrow).toBe(dict.nav.stack);
+    expect(stackBlock.title).toBe(dict.stack.title);
+    expect([stackBlock.eyebrow, stackBlock.title]).toEqual(["Stack", "Tools behind the work."]);
+    expect(Object.keys(stackBlock)).toEqual(["eyebrow", "title", "groups"]);
+  });
+  it("the live groups in the live order, with Security after Services and APIs", () => {
+    expect(groups.map((g) => g.title)).toEqual(["Languages", "Product and interface", "Services and APIs", "Security",
+      "Data, search and models", "Delivery and testing", "Everyday tools"]);
+    expect(groups.filter((g) => g.id !== "security").map((g) => g.title)).toEqual(skillGroups.map((g) => g.title));
+  });
+  it("every live tool once, in its live group and order; only JWT moves, into Security, so nothing appears twice", () => {
+    for (const g of skillGroups) expect(groups.find((r) => r.id === g.id)!.tools.map((t) => t.label), g.id)
+      .toEqual(g.items.map((i) => i.label).filter((l) => l !== "JWT"));
+    const labels = tools.map((t) => t.label);
+    expect(new Set(labels).size).toBe(labels.length);
+    expect(labels.filter((l) => /JWT/.test(l))).toEqual(["JWT (RS256)"]);
+    expect(labels).toHaveLength(45);
+  });
+  it("each tool names exactly the flagships the live site's own mapping finds for it (projectsFor), in Work order", () => {
+    for (const g of groups.filter((g) => g.id !== "security")) for (const t of g.tools)
+      expect(t.projects, t.label).toEqual(g.id === "workflow" ? [] : projectsFor(t.label).filter((id) => FLAG.includes(id)));
+    // The approved rows, pinned.
+    expect(Object.fromEntries(tools.map((t) => [t.label, t.where]))).toEqual({
+      "C#": "T Poker · Aegis", TypeScript: "T Poker · Aegis · GRAVITY FLOW", Python: "DeveloperOS", Java: null,
+      JavaScript: "DeveloperOS", SQL: "T Poker · Aegis · DeveloperOS", "C++": null, C: null,
+      React: "T Poker · Aegis · DeveloperOS", "Next.js": "Aegis", "React Native / Expo": "T Poker", "Tailwind CSS": "Aegis",
+      "Phaser 3": "GRAVITY FLOW", JavaFX: null, "Framer Motion": null,
+      "ASP.NET Core": "T Poker · Aegis", "RabbitMQ / MassTransit": "Aegis", "CQRS / MediatR": "T Poker",
+      "Clean Architecture": "T Poker · Aegis", SignalR: "Aegis", REST: "T Poker · Aegis",
+      "JWT (RS256)": "Aegis", "Body HMAC": "Aegis", "CSRF token": "DeveloperOS",
+      PostgreSQL: "T Poker · Aegis", "SQLite / FTS5": "DeveloperOS", Redis: "Aegis", "EF Core": "T Poker · Aegis",
+      Ollama: "DeveloperOS (optional)",
+      Docker: "T Poker · Aegis", "GitHub Actions": "T Poker · DeveloperOS · GRAVITY FLOW", xUnit: "T Poker · Aegis",
+      Testcontainers: "Aegis", Jest: "T Poker", Vitest: "GRAVITY FLOW", pytest: null, Playwright: null,
+      Capacitor: "GRAVITY FLOW", PyInstaller: "DeveloperOS", Vercel: "T Poker", Railway: "T Poker", Firebase: "GRAVITY FLOW",
+      Git: null, Linux: null, "Claude Code": null,
+    });
+  });
+  it("a tool no flagship uses has no project line and no note; the other two projects are never named", () => {
+    expect(tools.filter((t) => !t.projects.length).map((t) => t.label))
+      .toEqual(["Java", "C++", "C", "JavaFX", "Framer Motion", "pytest", "Playwright", "Git", "Linux", "Claude Code"]);
+    for (const t of tools.filter((t) => !t.projects.length)) expect(t.where, t.label).toBeNull();
+    const notes = skillGroups.flatMap((g) => g.items.flatMap((i) => (i.note ? [i.note] : [])));
+    expect(notes.length).toBeGreaterThan(0);
+    for (const n of notes) expect(shown.join(" | ")).not.toContain(n);
+    for (const id of ["job-assistant", "orders-delivery"]) expect(shown.join(" | ")).not.toContain(project(id).name);
+  });
+  it("Security: three rows in the projects' own words, each with the one flagship whose text says it", () => {
+    const sec = groups.find((g) => g.id === "security")!;
+    expect(sec.tools.map((t) => [t.label, t.where])).toEqual([["JWT (RS256)", "Aegis"], ["Body HMAC", "Aegis"], ["CSRF token", "DeveloperOS"]]);
+    expect(sec.tools.map((t) => t.label)).toEqual(SECURITY.map((s) => s.label));
+    // The source lines, word for word.
+    expect(project("aegis").stack.map((s) => s.label)).toContain("JWT (RS256)");
+    expect(project("aegis").caseStudy.decisions.map((d) => d.title)).toContain("Agent ingestion authenticated by body HMAC");
+    expect(project("developeros").caseStudy.decisions.find((d) => d.title === "Loopback API hardened like a public one")!.body)
+      .toMatch(/^A per-instance CSRF token compared with hmac\.compare_digest/);
+    // Each label is in its project's own text (only the first letter's case differs, for "body HMAC"), and in no other
+    // flagship's: T Poker's stack says "JWT", not RS256, so it is not on that row.
+    for (const t of sec.tools) for (const id of FLAG)
+      expect(JSON.stringify(project(id)).toLowerCase().includes(t.label.toLowerCase()), `${t.label} in ${id}`).toBe(t.projects.includes(id));
+  });
+  it("every string shown is the site's own: a live group or tool, a project name, or a Security label", () => {
+    const live = new Set([...skillGroups.map((g) => g.title), ...skillGroups.flatMap((g) => g.items.map((i) => i.label))]);
+    const names = new Set(FLAG.map((id) => project(id).name));
+    for (const g of groups) expect(live.has(g.title) || g.title === "Security", g.title).toBe(true);   // Security: Tay's group
+    for (const t of tools) {
+      expect(live.has(t.label) || SECURITY.some((s) => s.label === t.label), t.label).toBe(true);
+      for (const n of (t.where ?? "").split(" · ").filter(Boolean)) expect(names.has(n.replace(/ \(optional\)$/, "")), n).toBe(true);
+    }
+    // What the page draws is the same line, one whole name at a time (it breaks only between names).
+    for (const t of tools) expect(t.names.join(" · ") || null, t.label).toBe(t.where);
+    expect(block).toMatch(/<span className="wk__stack-project">\{k < t\.names\.length - 1 \? `\$\{n\} ·` : n\}<\/span>/);
+    expect(css).toMatch(/\.wk__stack-project \{ white-space: nowrap; \}/);
+    // "(optional)" only where the project's own stack says so: DeveloperOS's Ollama.
+    expect(tools.filter((t) => t.where?.includes("(optional)")).map((t) => t.label)).toEqual(["Ollama"]);
+    expect(project("developeros").stack.map((s) => s.label)).toContain("Ollama (optional)");
+  });
+  it("no AI claim, no levels or percentages, no years, no logo, no institution, no private repository", () => {
+    const text = shown.join(" | ");
+    expect(text).not.toMatch(/\bAI\b|LLM|machine learning|\bML\b|%|\byears?\b|expert|proficient|beginner|level/i);
+    expect(text).not.toMatch(/\b(19|20)\d{2}\b/);
+    for (const t of [block, src, text]) expect(namesAny(t)).toBe(false);
+    expect(privateRepoLeaks(block + src + JSON.stringify(stackBlock))).toEqual([]);
+    expect(code(block)).not.toMatch(/<img|<svg|<picture|<Pic|<Image|<Shot/);
+  });
+  it("holds still and ships no client code: no reveal and no control, under About inside <main>", () => {
+    expect(block).not.toMatch(/data-reveal|"use client"|useState|useEffect|<a |<button|<input|<Link/);
+    expect(src).not.toMatch(/"use client"/);
+    expect(page).toMatch(/<AboutBlock \/>\n\s*<StackBlock \/>\n\s*<\/main>/);
+    expect(page.match(/\sdata-reveal(="settle")?[\s>]/g)).toHaveLength(3);
+  });
+  it("adds no token: its rules read only layer tokens", () => {
+    const rules = css.slice(css.indexOf("/* ── Stack (P3.4"), css.indexOf("/* ── Smaller screens"));
+    expect(rules.length).toBeGreaterThan(500);
+    expect(rules).not.toMatch(/--cine-[\w-]+:|#[0-9a-fA-F]{3,6}\b|rgba?\(/);
+    expect(rules.match(/var\(--cine-[\w-]+\)/g)!.length).toBeGreaterThan(10);
   });
 });

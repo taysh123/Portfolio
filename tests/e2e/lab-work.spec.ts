@@ -16,6 +16,9 @@ const ABOUT_LINKS = [
   ["https://github.com/taysh123", "GitHub (opens in a new tab)"],
   ["https://www.linkedin.com/in/tay-shofer-1b2b54287", "LinkedIn (opens in a new tab)"],
 ] as const;
+/** Stack's groups (P3.4): the live Stack's, with Security after Services and APIs (Tay, session 13). */
+const STACK_GROUPS = ["Languages", "Product and interface", "Services and APIs", "Security", "Data, search and models",
+  "Delivery and testing", "Everyday tools"];
 
 async function at(browser: Browser, [w, h]: readonly [number, number], opts: BrowserContextOptions = {}) {
   const mobile = w < 900;
@@ -404,8 +407,10 @@ test("structure: one h1, four product h2s, a landmark, four carousels, and four 
   await page.goto(ROUTE);
   await expect(page.locator("h1")).toHaveCount(1);
   await expect(page.locator("article h2")).toHaveText(NAMES);
-  await expect(page.locator("h2")).toHaveCount(NAMES.length + 1);
+  await expect(page.locator("h2")).toHaveCount(NAMES.length + 2);   // About and Stack
   await expect(page.getByRole("region", { name: "Engineer by training. Builder by nature." }).locator("h2")).toHaveCount(1);
+  await expect(page.getByRole("region", { name: "Tools behind the work." }).locator("h2")).toHaveCount(1);
+  await expect(page.getByRole("region", { name: "Tools behind the work." }).locator("h3")).toHaveCount(STACK_GROUPS.length);
   await expect(page.getByRole("main")).toHaveCount(1);
   for (const n of NAMES) await expect(page.getByRole("article", { name: n })).toHaveCount(1);
   for (const n of NAMES) await expect(page.getByRole("region", { name: `${n}: captures` })).toHaveCount(1);
@@ -496,6 +501,82 @@ for (const [label, vp, opts] of [
       .axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"] } }));
     console.log(`axe work ${label}: violations ${r.violations.length}, passes ${r.passes.length}, incomplete ${r.incomplete.map((i) => `${i.id}×${i.nodes.length}`).join(", ") || "none"}`);
     expect(r.violations.map((v) => `${v.id}×${v.nodes.length}`)).toEqual([]);
+    await ctx.close();
+  });
+}
+
+// Stack (P3.4, session 13): the live Stack's tools under About, each with the flagships that use it. Every word
+// server-rendered, nothing in it is a control, and it holds still. Two tool columns from 360px, one at 320.
+const tools = (page: Page) => page.locator("[data-stack] [data-tool]").evaluateAll((ls) => ls.map((l) =>
+  [l.querySelector(".wk__stack-tool")!.textContent, l.querySelector(".wk__stack-where")?.textContent ?? null]));
+
+test("Stack without JavaScript: every group, every tool and its projects, no control, nothing faded", async ({ browser }) => {
+  const { ctx, page } = await at(browser, [1440, 900], { javaScriptEnabled: false });
+  const st = page.locator("[data-stack]");
+  await expect(st.locator(".wk__stack-eyebrow")).toHaveText("Stack");
+  await expect(st.locator("h2")).toHaveText("Tools behind the work.");
+  await expect(st.locator("h3")).toHaveText(STACK_GROUPS);
+  const rows = await tools(page);
+  expect(rows).toHaveLength(45);
+  expect(rows.filter(([, w]) => w === null).map(([t]) => t))
+    .toEqual(["Java", "C++", "C", "JavaFX", "Framer Motion", "pytest", "Playwright", "Git", "Linux", "Claude Code"]);
+  expect(rows.slice(21, 24)).toEqual([["JWT (RS256)", "Aegis"], ["Body HMAC", "Aegis"], ["CSRF token", "DeveloperOS"]]);
+  expect(rows).toContainEqual(["Ollama", "DeveloperOS (optional)"]);
+  expect(rows).toContainEqual(["GitHub Actions", "T Poker · DeveloperOS · GRAVITY FLOW"]);
+  // Each group's tools are a list named by its heading.
+  for (const g of STACK_GROUPS) await expect(page.getByRole("list", { name: g, exact: true })).toHaveCount(1);
+  await expect(page.getByRole("list", { name: "Security", exact: true }).getByRole("listitem")).toHaveCount(3);
+  await expect(st.locator("a, button, input, img, picture, svg, canvas")).toHaveCount(0);
+  expect(await st.evaluate((e) => [e, ...e.querySelectorAll("*")].filter((x) => getComputedStyle(x).opacity !== "1").length)).toBe(0);
+  await ctx.close();
+});
+
+for (const [label, motion] of [["motion on", "no-preference"], ["reduced motion", "reduce"]] as const) {
+  test(`Stack holds still (${label}): no animation, and nothing eases in or out`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: motion });
+    const st = page.locator("[data-stack]");
+    await st.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(300);
+    expect(await st.evaluate((e) => [e, ...e.querySelectorAll("*")].reduce((n, x) => n + x.getAnimations().length, 0))).toBe(0);
+    // Under reduced motion the site sets every duration to 0.001ms (app/globals.css), so "none" is under 10 ms, as in the
+    // carousel's reduced-motion test above.
+    expect(await st.evaluate((e) => [e, ...e.querySelectorAll("*")].filter((x) => parseFloat(getComputedStyle(x).transitionDuration) >= 0.01).length)).toBe(0);
+    await ctx.close();
+  });
+}
+
+for (const vp of [[1440, 900], [1024, 768], [390, 844], [360, 740], [320, 568]] as const) {
+  test(`Stack at ${vp[0]}×${vp[1]}: each group's name beside its tools from 1024px, stacked below; ${vp[0] >= 360 ? "two" : "one"} tool column${vp[0] >= 360 ? "s" : ""}; nothing clipped`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp, { reducedMotion: "no-preference" });
+    const st = page.locator("[data-stack]");
+    await st.scrollIntoViewIfNeeded();
+    for (const g of await st.locator(".wk__stack-group").all()) {
+      const name = (await g.locator("h3").boundingBox())!, list = (await g.locator("ul").boundingBox())!;
+      if (vp[0] >= 1024) { expect(list.x).toBeGreaterThan(name.x + name.width); expect(Math.abs(list.y - name.y)).toBeLessThan(2); }
+      else { expect(list.y).toBeGreaterThanOrEqual(name.y + name.height); expect(Math.abs(list.x - name.x)).toBeLessThan(2); }
+      // The tool columns: how many distinct left edges the tools have.
+      const lefts = new Set(await g.locator("li").evaluateAll((ls) => ls.map((l) => Math.round(l.getBoundingClientRect().left))));
+      expect(lefts.size, await g.locator("h3").textContent() ?? "").toBe(vp[0] >= 360 ? 2 : 1);
+    }
+    // From 1024px the tools line up under About's words.
+    if (vp[0] >= 1024) {
+      const words = (await page.locator(".wk__about-body").boundingBox())!.x;
+      expect(Math.abs((await st.locator("ul").first().boundingBox())!.x - words)).toBeLessThan(1);
+    }
+    // Nothing overflows its cell or the section, and the page never scrolls sideways.
+    const out = await st.evaluate((e) => {
+      const r = e.getBoundingClientRect();
+      const wide = [...e.querySelectorAll<HTMLElement>("li, li span")].filter((x) => x.scrollWidth > x.clientWidth + 0.5).map((x) => x.textContent);
+      const past = [...e.querySelectorAll<HTMLElement>("*")].filter((x) => { const b = x.getBoundingClientRect(); return b.right > r.right + 0.5 || b.left < r.left - 0.5; }).map((x) => x.textContent);
+      // A project's name is never split across two lines, and never runs past its tool's cell.
+      const split = [...e.querySelectorAll<HTMLElement>(".wk__stack-project")].filter((x) => {
+        const cell = x.closest("li")!.getBoundingClientRect(), b = x.getBoundingClientRect();
+        return new Set([...x.getClientRects()].map((r) => Math.round(r.top))).size !== 1 || b.right > cell.right + 0.5;
+      }).map((x) => `name: ${x.textContent}`);
+      return [...wide, ...past, ...split];
+    });
+    expect(out).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(vp[0]);
     await ctx.close();
   });
 }

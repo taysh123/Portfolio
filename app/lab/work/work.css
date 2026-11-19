@@ -235,7 +235,8 @@
 @media (min-width: 1024px) {
   .wk__about { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: clamp(40px, 5vw, 80px); }
 }
-.wk__about-eyebrow {
+/* Stack (below) sets its eyebrow and title the same way. */
+.wk__about-eyebrow, .wk__stack-eyebrow {
   display: inline-flex;
   align-items: center;
   gap: var(--cine-space-3);
@@ -243,9 +244,9 @@
   font-weight: var(--cine-weight-eyebrow);
   color: var(--cine-cyan);
 }
-.wk__about-eyebrow::before { content: ""; width: var(--cine-space-6); height: 1px; background: var(--cine-duotone); }
+.wk__about-eyebrow::before, .wk__stack-eyebrow::before { content: ""; width: var(--cine-space-6); height: 1px; background: var(--cine-duotone); }
 /* A heading at the products' tier (it is an h2 beside theirs), each half of the live title on its own line. */
-.wk__about-title {
+.wk__about-title, .wk__stack-title {
   margin-top: var(--cine-space-4);
   font-size: var(--cine-text-name);
   line-height: var(--cine-leading-display);
@@ -296,6 +297,43 @@
 .wk__go--fill { border-color: var(--cine-cyan); background: var(--cine-cyan); color: var(--cine-on-accent); }
 .wk__go--fill:hover { border-color: var(--cine-cyan-hover); background: var(--cine-cyan-hover); }
 
+/* ── Stack (P3.4, StackBlock.tsx): the tools behind the work, under About and after a hairline. Each group is a row on
+   its own hairline: from 1024px its name takes the words share and its tools the capture's (so they line up under
+   About's words); below that they stack. Two tool columns from 360px, one on the narrowest phones. Under each tool, in
+   mist, the flagships that use it. Nothing in it is a control, and it holds still. ── */
+.wk__stack {
+  margin-top: var(--cine-section-y);
+  padding-top: var(--cine-space-7);
+  border-top: 1px solid var(--cine-hair);
+}
+.wk__stack-groups { margin-top: var(--cine-space-7); }
+.wk__stack-group {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--cine-space-4);
+  padding-block: var(--cine-space-5);
+  border-top: 1px solid var(--cine-hair);
+}
+@media (min-width: 1024px) {
+  .wk__stack-group { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: clamp(40px, 5vw, 80px); }
+}
+.wk__stack-name {
+  font-size: var(--cine-text-lead);
+  line-height: var(--cine-leading-label);
+  font-weight: var(--cine-weight-name);
+  letter-spacing: var(--cine-tracking-name);
+  color: var(--cine-ink);
+}
+.wk__stack-tools { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--cine-space-4) var(--cine-space-5); }
+@media (min-width: 360px) {
+  .wk__stack-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.wk__stack-tool, .wk__stack-where { display: block; line-height: var(--cine-leading-label); }
+.wk__stack-tool { font-size: var(--cine-text-body); color: var(--cine-ink); }
+.wk__stack-where { margin-top: var(--cine-space-1); font-size: var(--cine-text-label); color: var(--cine-mist); }
+/* A project's name never splits ("GRAVITY FLOW" stays whole); the line breaks only between names. */
+.wk__stack-project { white-space: nowrap; }
+
 /* ── Smaller screens: a phone capture is capped by the screen's width AND height (T Poker's tall screens no longer
    take the whole view), the stage and the panel tighten, and the art-directed phone crops keep their own shape. ── */
 @media (max-width: 639px) {
@@ -315,6 +353,7 @@
   .wk__slide .wk__device:empty::before { aspect-ratio: var(--wk-box-phone, var(--wk-box)); }
   .wk__panel[data-kind="window"] .wk__slide { width: 86%; }
   .wk__about-facts li { padding-block: var(--cine-space-2); }
+  .wk__stack-group { gap: var(--cine-space-3); padding-block: var(--cine-space-4); }
 }
 /* The narrowest phones: seven 44px targets (previous, five dots, next) need 324px, more than the stage has below 390px.
    The dots take their own row under the capture and the two arrows sit below them; focus still runs previous, the
