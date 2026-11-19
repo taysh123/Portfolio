@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment -- TEMPORARY (S18+S19), with the next line: this prototype test still
+   imports the deleted /lab modules, and the production build type-checks every test file. S20 ports it to / and removes
+   both lines (docs/ROADMAP.md, "Concept A: P4–P6"). */
+// @ts-nocheck
 // tests/unit/lab-work.test.ts — the Work slice in the cinematic language (PROTOTYPE, round 5; D1 reopened by Tay,
 // 2026-11-18; D2 not reopened, so no WebGL). Branch proto/hero-a-cinematic only, never merged. Every visible fact must
 // come from the site's own data, private repositories stay labels, and the slice stays inside the lab's .cine layer.
