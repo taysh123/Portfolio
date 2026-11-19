@@ -7,6 +7,7 @@ import { dict } from "@/lib/dict";
 import { panels, type Panel } from "./panels";
 import { Shot, ratioOf } from "./Shot";
 import { Reel } from "./Reel";
+import { AboutBlock } from "./AboutBlock";
 import "./work.css";
 
 export const metadata: Metadata = { title: "Lab: Work section" };
@@ -32,8 +33,11 @@ const sizesOf = (kind: Panel["kind"], reel: boolean) => kind === "phone"
  * hold still (no scroll-triggered entrances). Each stage lifts on hover, keyboard focus and touch; with reduced motion
  * it changes glow, never position.
  *
- * Headings: the title is this route's h1 and each product an h2. In a composed page, under the hero's h1, both step
- * down one level.
+ * Under the panels, About (P3.3, AboutBlock.tsx): who, in about ten seconds, from the live About section's own words.
+ * It holds still and ships no client code.
+ *
+ * Headings: the title is this route's h1, and each product and About an h2. In a composed page, under the hero's h1,
+ * they step down one level.
  */
 export default function WorkSlicePage() {
   const newTab = dict.common.newTab;
@@ -89,6 +93,8 @@ export default function WorkSlicePage() {
             ))}
           </div>
         </section>
+
+        <AboutBlock />
       </main>
     </div>
   );

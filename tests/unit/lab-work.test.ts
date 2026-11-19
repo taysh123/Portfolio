@@ -9,6 +9,9 @@ import { IMAGES } from "@/data/images";
 import { LAB_IMAGES, captureOf } from "@/data/lab-images";
 import { dict } from "@/lib/dict";
 import { panels, DOS_CHIPS, PHONE_CROP } from "@/app/lab/work/panels";
+import { aboutBlock } from "@/app/lab/work/about";
+import { about } from "@/data/about";
+import { availability, resume, socials } from "@/data/socials";
 import sharp from "sharp";
 import { privateRepoLeaks } from "../support/private-repo";
 import { namesAny } from "../support/institution";
@@ -269,5 +272,69 @@ describe("inside the cinematic layer", () => {
   it("lives under the /lab layout (noindex) and nothing on the live page links to it", () => {
     expect(fs.existsSync("app/lab/layout.tsx")).toBe(true);
     for (const f of ["app/page.tsx", "app/sitemap.ts", "app/robots.ts"]) expect(read(f), f).not.toMatch(/lab\/work/);
+  });
+});
+
+// About (P3.3, session 12): Tay approved every word before it was built. Each string is held to its source, and the
+// approved copy is pinned as well, so a change to either one shows up here.
+describe("About (P3.3): the live About section's own words, and the live site's own links", () => {
+  const block = read("app/lab/work/AboutBlock.tsx");
+  const hero = read("app/lab/hero-a/page.tsx");
+  const shown = [aboutBlock.eyebrow, ...aboutBlock.title, aboutBlock.lede, ...aboutBlock.facts, aboutBlock.availability ?? "",
+    aboutBlock.resume.label, aboutBlock.resume.note, ...aboutBlock.profiles.map((p) => p.label)];
+
+  it("the eyebrow, the title and the four facts are the live ones, word for word", () => {
+    expect(aboutBlock.eyebrow).toBe(dict.nav.about);
+    expect(aboutBlock.title).toEqual(about.title);
+    expect([...aboutBlock.title]).toEqual(["Engineer by training.", "Builder by nature."]);
+    expect(aboutBlock.facts).toEqual(about.facts);
+    expect([...aboutBlock.facts]).toEqual(["B.Sc. in Computer Science", "Full-stack: web, mobile, and backend", "Based in Israel", "Working in English and Hebrew"]);
+  });
+  it("the lede is two sentences of the live copy, word for word (who, then what with)", () => {
+    const [who, what] = ["I'm a Computer Science graduate who enjoys turning complex ideas into useful, dependable software.",
+      "Today, I work with C#/.NET, TypeScript, and Python, taking projects from an initial idea to working software."];
+    expect(aboutBlock.lede).toBe(`${who} ${what}`);
+    expect(about.paragraphs[0].startsWith(who)).toBe(true);
+    expect(about.paragraphs[1]).toContain(` ${what} `);
+  });
+  it("the availability line is the one joined string: the live label, then the end of the live detail (Tay's choice)", () => {
+    expect(aboutBlock.availability).toBe("Available for software engineering roles: on-site, hybrid, or remote.");
+    expect(availability.open).toBe(true);
+    expect(aboutBlock.availability!.startsWith(`${availability.label}: `)).toBe(true);
+    expect(availability.detail.endsWith("—on-site, hybrid, or remote.")).toBe(true);
+    expect(block).toMatch(/\{a\.availability && \(/);   // only while the site says it is open
+  });
+  it("links: the résumé, GitHub and LinkedIn at exactly the live site's targets", () => {
+    expect(aboutBlock.resume.href).toBe(resume.href);
+    expect(aboutBlock.resume.href).toBe("/resume/Tay-Shofer-Software-Engineer-Resume.pdf");
+    expect(aboutBlock.resume.fileName).toBe(resume.fileName);
+    expect(aboutBlock.profiles).toEqual([
+      { href: socials.github.url, label: dict.contact.github },
+      { href: socials.linkedin.url, label: dict.contact.linkedin },
+    ]);
+    expect(aboutBlock.profiles.map((p) => p.href)).toEqual(["https://github.com/taysh123", "https://www.linkedin.com/in/tay-shofer-1b2b54287"]);
+    // The résumé is the locked hero's control: its label, its note, and a download of the same PDF.
+    expect(hero).toContain(`${aboutBlock.resume.label}<span aria-hidden="true">↓</span>`);
+    expect(aboutBlock.resume.note).toBe(" (PDF · two pages, 79 KB)");
+    expect(block).toMatch(/<a href=\{a\.resume\.href\} download=\{a\.resume\.fileName\} type="application\/pdf"/);
+    expect(block).toMatch(/target="_blank" rel="noopener noreferrer"/);
+  });
+  it("no photo, no capture, no institution, no year or number of its own, and no private repository", () => {
+    expect(code(block)).not.toMatch(/<img|<picture|<Shot|<Pic|<Image/);
+    for (const t of [block, read("app/lab/work/about.ts"), shown.join(" ")]) expect(namesAny(t)).toBe(false);
+    expect(shown.join(" ")).not.toMatch(/\b(19|20)\d{2}\b/);
+    expect(shown.join(" ").match(/\d+/g)).toEqual(["79"]);   // the résumé's size, the live site's own note
+    expect(privateRepoLeaks(block + JSON.stringify(aboutBlock))).toEqual([]);
+  });
+  it("holds still and ships no client code: the page's one reveal stays the only one", () => {
+    expect(block).not.toMatch(/data-reveal|"use client"|useState|useEffect/);
+    expect(page).toMatch(/<AboutBlock \/>\n\s*<\/main>/);
+  });
+  it("adds no token: the layer still defines the same 76, and the About rules read only layer tokens", () => {
+    const root = layer.slice(layer.indexOf(".cine[data-theme] {"));
+    expect(new Set([...root.slice(0, root.indexOf("\n}")).matchAll(/(--cine-[\w-]+):/g)].map((m) => m[1])).size).toBe(76);
+    const rules = css.slice(css.indexOf("/* ── About (P3.3"), css.indexOf("/* ── Smaller screens"));
+    expect(rules).not.toMatch(/--cine-[\w-]+:|#[0-9a-fA-F]{3,6}\b|rgba?\(/);
+    expect(rules.match(/var\(--cine-[\w-]+\)/g)!.length).toBeGreaterThan(20);
   });
 });

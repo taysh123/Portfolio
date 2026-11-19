@@ -10,6 +10,12 @@ import { privateRepoLeaks } from "../support/private-repo";
 const ROUTE = "/lab/work";
 const AXE = require.resolve("axe-core/axe.min.js");
 const NAMES = ["T Poker", "Aegis", "DeveloperOS", "GRAVITY FLOW"];
+/** About's three links (P3.3): the live site's own targets, and each one's accessible name. */
+const ABOUT_LINKS = [
+  ["/resume/Tay-Shofer-Software-Engineer-Resume.pdf", "Download résumé (PDF · two pages, 79 KB)"],
+  ["https://github.com/taysh123", "GitHub (opens in a new tab)"],
+  ["https://www.linkedin.com/in/tay-shofer-1b2b54287", "LinkedIn (opens in a new tab)"],
+] as const;
 
 async function at(browser: Browser, [w, h]: readonly [number, number], opts: BrowserContextOptions = {}) {
   const mobile = w < 900;
@@ -297,7 +303,7 @@ for (const [label, opts, cookie] of [["the OS setting", { reducedMotion: "reduce
 test("keyboard: every control in reading order, each with a solid 2px cyan ring; focus lifts its panel", async ({ browser }) => {
   const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: "no-preference" });
   const seen: { at: string; ring: string }[] = [];
-  for (let i = 0; i < 21; i++) {
+  for (let i = 0; i < 24; i++) {
     await page.keyboard.press("Tab");
     seen.push(await page.evaluate(() => {
       const e = document.activeElement as HTMLElement, cs = getComputedStyle(e);
@@ -309,6 +315,7 @@ test("keyboard: every control in reading order, each with a solid 2px cyan ring;
     "https://github.com/taysh123/aegis", "/#work-aegis", "Previous capture", "Capture 1 of 2", "Next capture",
     "https://github.com/taysh123/DeveloperOS", "/#work-developeros", "Previous capture", "Capture 1 of 4", "Next capture",
     "/#work-gravity-flow", "Previous capture", "Capture 1 of 5", "Next capture",
+    ...ABOUT_LINKS.map(([href]) => href),
     "Chat with the assistant"]);
   for (const s of seen) expect(s.ring, s.at).toBe("solid 2px rgb(46, 230, 214)");
   await panel(page, "aegis").locator("[data-more]").focus();
@@ -397,12 +404,80 @@ test("structure: one h1, four product h2s, a landmark, four carousels, and four 
   await page.goto(ROUTE);
   await expect(page.locator("h1")).toHaveCount(1);
   await expect(page.locator("article h2")).toHaveText(NAMES);
+  await expect(page.locator("h2")).toHaveCount(NAMES.length + 1);
+  await expect(page.getByRole("region", { name: "Engineer by training. Builder by nature." }).locator("h2")).toHaveCount(1);
   await expect(page.getByRole("main")).toHaveCount(1);
   for (const n of NAMES) await expect(page.getByRole("article", { name: n })).toHaveCount(1);
   for (const n of NAMES) await expect(page.getByRole("region", { name: `${n}: captures` })).toHaveCount(1);
   const slots = await page.locator("[data-demo-slot]").evaluateAll((s) => s.map((e) => ({ id: e.getAttribute("data-demo-slot"), hidden: (e as HTMLElement).hidden, empty: e.childNodes.length === 0, shown: (e as HTMLElement).offsetParent !== null })));
   expect(slots).toEqual(["poker", "aegis", "developeros", "gravity-flow"].map((id) => ({ id, hidden: true, empty: true, shown: false })));
 });
+
+// About (P3.3, session 12): who, in about ten seconds, under the panels. Every word server-rendered, the live site's
+// own links, no photo, and it holds still.
+test("About without JavaScript: every word and the three live links, no photo, nothing hidden", async ({ browser }) => {
+  const { ctx, page } = await at(browser, [1440, 900], { javaScriptEnabled: false });
+  const ab = page.locator("[data-about]");
+  await expect(ab.locator("h2")).toHaveText("Engineer by training. Builder by nature.");
+  await expect(ab.locator(".wk__about-eyebrow")).toHaveText("About");
+  await expect(ab.locator(".wk__about-lede")).toHaveText("I'm a Computer Science graduate who enjoys turning complex ideas into useful, dependable software. Today, I work with C#/.NET, TypeScript, and Python, taking projects from an initial idea to working software.");
+  await expect(ab.locator(".wk__about-facts li")).toHaveText(["B.Sc. in Computer Science", "Full-stack: web, mobile, and backend", "Based in Israel", "Working in English and Hebrew"]);
+  await expect(ab.locator(".wk__about-open")).toHaveText("Available for software engineering roles: on-site, hybrid, or remote.");
+  await expect(ab.locator("img, picture, canvas, svg:not([aria-hidden='true'])")).toHaveCount(0);
+  const links = ab.locator("a");
+  await expect(links).toHaveCount(3);
+  for (const [i, [href, name]] of ABOUT_LINKS.entries()) {
+    await expect(links.nth(i)).toHaveAttribute("href", href);
+    await expect(links.nth(i)).toHaveAccessibleName(name);
+  }
+  await expect(links.nth(0)).toHaveAttribute("download", "Tay-Shofer-Software-Engineer-Resume.pdf");
+  await expect(links.nth(0)).toHaveAttribute("type", "application/pdf");
+  for (const k of [1, 2]) { await expect(links.nth(k)).toHaveAttribute("target", "_blank"); await expect(links.nth(k)).toHaveAttribute("rel", "noopener noreferrer"); }
+  for (const el of await ab.locator("*").all()) expect(await el.evaluate((e) => getComputedStyle(e).opacity)).toBe("1");
+  await ctx.close();
+});
+
+test("About: the résumé link serves the same PDF as the live page's", async ({ request }) => {
+  const res = await request.get(ABOUT_LINKS[0][0]);
+  expect(res.status()).toBe(200);
+  expect(res.headers()["content-type"]).toContain("application/pdf");
+  expect((await res.body()).length).toBe(80593);   // tests/e2e/lower.spec.ts pins the same bytes
+});
+
+for (const [label, motion] of [["motion on", "no-preference"], ["reduced motion", "reduce"]] as const) {
+  test(`About holds still (${label}): no animation on any of it, and a link answers a hover only in colour`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: motion });
+    const ab = page.locator("[data-about]");
+    await ab.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(300);
+    expect(await ab.evaluate((e) => [e, ...e.querySelectorAll("*")].reduce((n, x) => n + x.getAnimations().length, 0))).toBe(0);
+    const cv = ab.locator("[data-resume]");
+    const before = await cv.evaluate((e) => ({ y: e.getBoundingClientRect().top, bg: getComputedStyle(e).backgroundColor }));
+    await cv.hover();
+    await page.waitForTimeout(300);
+    const after = await cv.evaluate((e) => ({ y: e.getBoundingClientRect().top, bg: getComputedStyle(e).backgroundColor }));
+    expect(after.y).toBe(before.y);
+    expect(after.bg).not.toBe(before.bg);
+    await ctx.close();
+  });
+}
+
+for (const vp of [[1440, 900], [1024, 768], [390, 844], [320, 568]] as const) {
+  test(`About at ${vp[0]}×${vp[1]}: the title beside the words from 1024px, stacked below; nothing clipped`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp, { reducedMotion: "no-preference" });
+    const ab = page.locator("[data-about]");
+    await ab.scrollIntoViewIfNeeded();
+    const head = (await ab.locator(".wk__about-head").boundingBox())!, body = (await ab.locator(".wk__about-body").boundingBox())!;
+    if (vp[0] >= 1024) { expect(body.x).toBeGreaterThan(head.x + head.width); expect(Math.abs(body.y - head.y)).toBeLessThan(2); }
+    else { expect(body.y).toBeGreaterThanOrEqual(head.y + head.height); expect(Math.abs(body.x - head.x)).toBeLessThan(2); }
+    // Each half of the title holds its own line wherever it fits (320px is the one width where a half may wrap).
+    const lines = await ab.locator(".wk__about-title span").evaluateAll((ss) => ss.map((s) => Math.round(s.getBoundingClientRect().height / parseFloat(getComputedStyle(s).lineHeight))));
+    if (vp[0] >= 390) expect(lines).toEqual([1, 1]);
+    const out = await ab.evaluate((e) => { const r = e.getBoundingClientRect(); return [...e.querySelectorAll<HTMLElement>("*")].filter((x) => { const b = x.getBoundingClientRect(); return b.right > r.right + 0.5 || b.left < r.left - 0.5; }).length; });
+    expect(out).toBe(0);
+    await ctx.close();
+  });
+}
 
 for (const [label, vp, opts] of [
   ["1440, motion on", [1440, 900], { reducedMotion: "no-preference" }],
