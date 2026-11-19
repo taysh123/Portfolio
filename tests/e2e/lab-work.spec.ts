@@ -411,10 +411,12 @@ test("structure: one h1, four product h2s, a landmark, four carousels, and four 
   await page.goto(ROUTE);
   await expect(page.locator("h1")).toHaveCount(1);
   await expect(page.locator("article h2")).toHaveText(NAMES);
-  await expect(page.locator("h2")).toHaveCount(NAMES.length + 2);   // About and Stack
+  await expect(page.locator("h2")).toHaveCount(NAMES.length + 3);   // About, Stack, and Think · Build · Ship
   await expect(page.getByRole("region", { name: "Engineer by training. Builder by nature." }).locator("h2")).toHaveCount(1);
   await expect(page.getByRole("region", { name: "Tools behind the work." }).locator("h2")).toHaveCount(1);
   await expect(page.getByRole("region", { name: "Tools behind the work." }).locator("h3")).toHaveCount(STACK_GROUPS.length);
+  await expect(page.getByRole("region", { name: "Think. Build. Ship." }).locator("h2")).toHaveCount(1);
+  await expect(page.getByRole("region", { name: "Think. Build. Ship." }).locator("h3")).toHaveCount(3);
   await expect(page.getByRole("main")).toHaveCount(1);
   for (const n of NAMES) await expect(page.getByRole("article", { name: n })).toHaveCount(1);
   for (const n of NAMES) await expect(page.getByRole("region", { name: `${n}: captures` })).toHaveCount(1);
@@ -690,6 +692,81 @@ for (const vp of [[1440, 900], [1024, 768], [390, 844], [320, 568]] as const) {
       expect(out, name).toEqual([]);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(vp[0]);
     }
+    await ctx.close();
+  });
+}
+
+// Think · Build · Ship (P3.5, session 14): the live section's title and rows under Stack, word for word, plus one
+// DeveloperOS line (Tay's wording), so all four flagships appear. Server-rendered, no control, and it holds still.
+const tbs = (page: Page) => page.locator("[data-tbs]");
+const TBS = [
+  ["Think", "Find the hard part.", "Usually, one constraint shapes everything else.",
+    ["T Poker: the money has to be exact to the cent, even in a guest game on a phone with no signal."]],
+  ["Build", "Make the safe path the easy one.", "Encode constraints in types, interfaces, and data models—not just in documentation.",
+    ["GRAVITY FLOW: cosmetic items are defined by visual fields only, and every purchase grants cosmetics or ad removal—nothing that changes gameplay.",
+      "DeveloperOS: it declines when the index doesn't support an answer—before the provider is ever reached."]],
+  ["Ship", "Ship it honestly.", "Make the project reproducible, testable, and explicit about its known gaps.",
+    ["Aegis starts from one launcher script, and its repository keeps an audit document that lists the work still open."]],
+] as const;
+
+test("Think · Build · Ship without JavaScript: the live title and rows, every word, each project's name in ink, nothing hidden", async ({ browser }) => {
+  const { ctx, page } = await at(browser, [1440, 900], { javaScriptEnabled: false });
+  await expect(tbs(page).locator("h2")).toHaveText("Think. Build. Ship.");
+  await expect(tbs(page).locator("ol > li")).toHaveCount(3);
+  await expect(tbs(page).locator("h3")).toHaveText(TBS.map((r) => `${r[0]}:`));   // the live screen-reader colon
+  await expect(tbs(page).locator(".wk__tbs-line")).toHaveText(TBS.map((r) => r[1]));
+  await expect(tbs(page).locator(".wk__tbs-summary")).toHaveText(TBS.map((r) => r[2]));
+  await expect(tbs(page).locator(".wk__tbs-example")).toHaveText(TBS.flatMap((r) => [...r[3]]));
+  await expect(tbs(page).locator(".wk__tbs-project")).toHaveText(["T Poker", "GRAVITY FLOW", "DeveloperOS", "Aegis"]);   // all four flagships
+  for (const c of await tbs(page).locator(".wk__tbs-project").evaluateAll((es) => es.map((e) => getComputedStyle(e).color))) expect(c).toBe(INK);
+  await expect(tbs(page).locator("a, button, img, picture, svg, canvas")).toHaveCount(0);
+  expect(await tbs(page).evaluate((e) => [e, ...e.querySelectorAll("*")].filter((x) => getComputedStyle(x).opacity !== "1" || getComputedStyle(x).visibility === "hidden").length)).toBe(0);
+  await ctx.close();
+});
+
+for (const [label, motion] of [["motion on", "no-preference"], ["reduced motion", "reduce"]] as const) {
+  test(`Think · Build · Ship holds still (${label}): no animation and no transition on any of it`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: motion });
+    await tbs(page).scrollIntoViewIfNeeded();
+    const boxes = () => tbs(page).locator("*").evaluateAll((es) => es.map((e) => { const r = e.getBoundingClientRect(); return `${r.x},${r.y + scrollY},${r.width},${r.height}`; }));
+    const before = await boxes();
+    await page.waitForTimeout(300);
+    expect(await tbs(page).evaluate((e) => [e, ...e.querySelectorAll("*")].reduce((n, x) => n + x.getAnimations().length, 0))).toBe(0);
+    expect(await tbs(page).evaluate((e) => [e, ...e.querySelectorAll("*")].filter((x) => parseFloat(getComputedStyle(x).transitionDuration) >= 0.01).length)).toBe(0);
+    await tbs(page).locator(".wk__tbs-example").first().hover();
+    await page.waitForTimeout(200);
+    expect(await boxes(), "nothing moves").toEqual(before);
+    await ctx.close();
+  });
+}
+
+for (const vp of [[1440, 900], [1024, 768], [390, 844], [320, 568]] as const) {
+  test(`Think · Build · Ship at ${vp[0]}×${vp[1]}: each word and line beside the evidence from 1024px, stacked below; nothing clipped`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp, { reducedMotion: "no-preference" });
+    await tbs(page).scrollIntoViewIfNeeded();
+    for (const row of await tbs(page).locator(".wk__tbs-row").all()) {
+      const head = (await row.locator(".wk__tbs-head").boundingBox())!, body = (await row.locator(".wk__tbs-body").boundingBox())!;
+      if (vp[0] >= 1024) { expect(body.x).toBeGreaterThan(head.x + head.width); expect(Math.abs(body.y - head.y)).toBeLessThan(2); }
+      else { expect(body.y).toBeGreaterThanOrEqual(head.y + head.height); expect(Math.abs(body.x - head.x)).toBeLessThan(2); }
+      const word = (await row.locator("h3").boundingBox())!, line = (await row.locator(".wk__tbs-line").boundingBox())!;
+      expect(line.y).toBeGreaterThanOrEqual(word.y + word.height);   // the line under its word
+    }
+    if (vp[0] >= 1024) {   // lined up under About's words and Stack's tools
+      const words = (await page.locator(".wk__about-body").boundingBox())!.x;
+      expect(Math.abs((await tbs(page).locator(".wk__tbs-body").first().boundingBox())!.x - words)).toBeLessThan(1);
+    }
+    const out = await tbs(page).evaluate((e) => {
+      const r = e.getBoundingClientRect();
+      return [...e.querySelectorAll<HTMLElement>("*")].filter((x) => { const b = x.getBoundingClientRect(); return b.width > 0 && (b.right > r.right + 0.5 || b.left < r.left - 0.5); }).map((x) => x.className || x.textContent);
+    });
+    expect(out).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(vp[0]);
+    // The page's last words clear the chat launcher at the end of the page.
+    await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+    await page.waitForTimeout(150);
+    const last = (await tbs(page).locator(".wk__tbs-example").last().boundingBox())!;
+    const launcher = (await page.locator("[data-chat-launcher]").boundingBox())!;
+    expect(last.y + last.height).toBeLessThanOrEqual(launcher.y);
     await ctx.close();
   });
 }

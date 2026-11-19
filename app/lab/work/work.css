@@ -245,8 +245,9 @@
   color: var(--cine-cyan);
 }
 .wk__about-eyebrow::before, .wk__stack-eyebrow::before { content: ""; width: var(--cine-space-6); height: 1px; background: var(--cine-duotone); }
-/* A heading at the products' tier (it is an h2 beside theirs), each half of the live title on its own line. */
-.wk__about-title, .wk__stack-title {
+/* A heading at the products' tier (it is an h2 beside theirs), each half of the live title on its own line. Stack's
+   and Think · Build · Ship's titles share it. */
+.wk__about-title, .wk__stack-title, .wk__tbs-title {
   margin-top: var(--cine-space-4);
   font-size: var(--cine-text-name);
   line-height: var(--cine-leading-display);
@@ -385,6 +386,57 @@
 }
 [data-reduced-motion="true"] .wk__lens-chip { transition: none; }
 
+/* ── Think · Build · Ship (P3.5, TbsBlock.tsx): the live section's three principles, under Stack and after a hairline.
+   The live title alone (the live section has no eyebrow, and none is invented), then three ruled rows on About's and
+   Stack's grid: from 1024px the principle's word (a small label in the accent) and its line take the words share, the
+   summary and the evidence the capture's; below that they stack. Each piece of evidence opens with its project's
+   name, in ink. Nothing animates. ── */
+.wk__tbs {
+  margin-top: var(--cine-section-y);
+  padding-top: var(--cine-space-7);
+  border-top: 1px solid var(--cine-hair);
+}
+.wk__tbs .wk__tbs-title { margin-top: 0; }
+.wk__tbs-rows { margin-top: var(--cine-space-6); }
+.wk__tbs-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--cine-space-3);
+  padding-block: var(--cine-space-5);
+  border-top: 1px solid var(--cine-hair);
+}
+@media (min-width: 1024px) {
+  .wk__tbs-row { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: clamp(40px, 5vw, 80px); }
+}
+.wk__tbs-word {
+  font-size: var(--cine-text-eyebrow);
+  font-weight: var(--cine-weight-eyebrow);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-cyan);
+}
+.wk__tbs-line {
+  margin-top: var(--cine-space-2);
+  font-size: var(--cine-text-lead);
+  line-height: var(--cine-leading-label);
+  font-weight: var(--cine-weight-name);
+  letter-spacing: var(--cine-tracking-name);
+  color: var(--cine-ink);
+}
+.wk__tbs-summary {
+  max-width: 36rem;
+  font-size: var(--cine-text-body);
+  line-height: var(--cine-leading-lead);
+  color: var(--cine-mist);
+}
+.wk__tbs-example {
+  margin-top: var(--cine-space-3);
+  max-width: 36rem;
+  font-size: var(--cine-text-small);
+  line-height: var(--cine-leading-lead);
+  color: var(--cine-mist);
+}
+.wk__tbs-project { font-weight: var(--cine-weight-control); color: var(--cine-ink); }
+
 /* ── Smaller screens: a phone capture is capped by the screen's width AND height (T Poker's tall screens no longer
    take the whole view), the stage and the panel tighten, and the art-directed phone crops keep their own shape. ── */
 @media (max-width: 639px) {
@@ -405,6 +457,7 @@
   .wk__panel[data-kind="window"] .wk__slide { width: 86%; }
   .wk__about-facts li { padding-block: var(--cine-space-2); }
   .wk__stack-group { gap: var(--cine-space-3); padding-block: var(--cine-space-4); }
+  .wk__tbs-row { padding-block: var(--cine-space-4); }
 }
 /* The narrowest phones: seven 44px targets (previous, five dots, next) need 324px, more than the stage has below 390px.
    The dots take their own row under the capture and the two arrows sit below them; focus still runs previous, the

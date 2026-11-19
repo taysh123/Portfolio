@@ -11,6 +11,8 @@ import { dict } from "@/lib/dict";
 import { panels, DOS_CHIPS, PHONE_CROP } from "@/app/lab/work/panels";
 import { aboutBlock } from "@/app/lab/work/about";
 import { stackBlock, SECURITY_ROWS, SECURITY_EVIDENCE } from "@/app/lab/work/stack";
+import { tbsBlock, DOS_EVIDENCE } from "@/app/lab/work/tbs";
+import { pillars } from "@/data/approach";
 import { skillGroups } from "@/data/skills";
 import { projectsFor, lensProjects } from "@/data/stackLens";
 import { fmt } from "@/lib/fmt";
@@ -332,7 +334,7 @@ describe("About (P3.3): the live About section's own words, and the live site's 
   });
   it("holds still and ships no client code: the page's one reveal stays the only one", () => {
     expect(block).not.toMatch(/data-reveal|"use client"|useState|useEffect/);
-    expect(page).toMatch(/<AboutBlock \/>\n\s*<StackBlock \/>\n\s*<\/main>/);   // Stack follows it (session 13)
+    expect(page).toMatch(/<AboutBlock \/>\n\s*<StackBlock \/>\n\s*<TbsBlock \/>\n\s*<\/main>/);   // Stack (session 13), then Think · Build · Ship (session 14)
   });
   it("adds no token: the layer still defines the same 76, and the About rules read only layer tokens", () => {
     const root = layer.slice(layer.indexOf(".cine[data-theme] {"));
@@ -472,7 +474,7 @@ describe("Stack (P3.4): the live Stack's groups, tools and evidence, with a filt
     expect(code(block)).not.toMatch(/<img|<svg|<picture|<Pic|<Image|<Shot/);
   });
   it("under About inside <main>, and the page keeps its one opening reveal", () => {
-    expect(page).toMatch(/<AboutBlock \/>\n\s*<StackBlock \/>\n\s*<\/main>/);
+    expect(page).toMatch(/<AboutBlock \/>\n\s*<StackBlock \/>\n\s*<TbsBlock \/>\n\s*<\/main>/);   // Think · Build · Ship follows it (session 14)
     expect(page.match(/\sdata-reveal(="settle")?[\s>]/g)).toHaveLength(3);
   });
   it("adds no token; pills outlined under All, filled for a project, evidence only under All; no transition when reduced", () => {
@@ -487,5 +489,84 @@ describe("Stack (P3.4): the live Stack's groups, tools and evidence, with a filt
     expect(rules.match(/transition:/g)).toHaveLength(3);
     expect(rules).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*\.wk__lens-chip \{ transition: none; \}/);
     expect(rules).toMatch(/\[data-reduced-motion="true"\] \.wk__lens-chip \{ transition: none; \}/);
+  });
+});
+
+// Think · Build · Ship (P3.5, session 14): the live section's title and rows, word for word, plus one DeveloperOS line in
+// Tay's wording, so all four flagships appear. Each string is held to its source, and the approved copy is pinned, so
+// a change to either one shows up here.
+describe("Think · Build · Ship (P3.5): the live section's words, with evidence from all four flagships", () => {
+  const block = read("app/lab/work/TbsBlock.tsx");
+  const src = read("app/lab/work/tbs.ts");
+  const { rows } = tbsBlock;
+  const shown = [tbsBlock.title, ...rows.flatMap((r) => [r.word, r.line, r.summary, ...r.evidence.map((e) => e.text)])];
+
+  it("the live title, and no eyebrow (the live section has none)", () => {
+    expect(tbsBlock.title).toBe(dict.tbs.title);
+    expect(tbsBlock.title).toBe("Think. Build. Ship.");
+    expect(Object.keys(tbsBlock)).toEqual(["title", "rows"]);
+  });
+  it("each row's word, line and summary are the live ones, word for word, in the live order", () => {
+    expect(rows.map((r) => [r.word, r.line, r.summary])).toEqual(pillars.map((p) => [p.word, p.line, p.summary]));
+    expect(rows.map((r) => [r.word, r.line, r.summary])).toEqual([
+      ["Think", "Find the hard part.", "Usually, one constraint shapes everything else."],
+      ["Build", "Make the safe path the easy one.", "Encode constraints in types, interfaces, and data models—not just in documentation."],
+      ["Ship", "Ship it honestly.", "Make the project reproducible, testable, and explicit about its known gaps."],
+    ]);
+  });
+  it("each live example is kept word for word, first in its row; DeveloperOS's line joins Build (Tay, session 14)", () => {
+    for (const [i, p] of pillars.entries()) expect(rows[i].evidence[0].text, p.word).toBe(p.example);
+    expect(rows.map((r) => r.evidence.map((e) => e.name))).toEqual([["T Poker"], ["GRAVITY FLOW", "DeveloperOS"], ["Aegis"]]);
+    expect(rows.map((r) => r.evidence.map((e) => e.text))).toEqual([
+      ["T Poker: the money has to be exact to the cent, even in a guest game on a phone with no signal."],
+      ["GRAVITY FLOW: cosmetic items are defined by visual fields only, and every purchase grants cosmetics or ad removal—nothing that changes gameplay.",
+        "DeveloperOS: it declines when the index doesn't support an answer—before the provider is ever reached."],
+      ["Aegis starts from one launcher script, and its repository keeps an audit document that lists the work still open."],
+    ]);
+    for (const e of rows.flatMap((r) => r.evidence)) expect(e.name + e.rest, e.name).toBe(e.text);   // the name, set apart
+  });
+  it("DeveloperOS's line is built only from DeveloperOS's own text: its description and its refusal decision", () => {
+    expect(DOS_EVIDENCE).toBe("DeveloperOS: it declines when the index doesn't support an answer—before the provider is ever reached.");
+    const dos = project("developeros");
+    expect(dos.description).toContain("declines outright when the index doesn't support an answer");
+    const refusal = dos.caseStudy.decisions.find((d) => d.title === "Refusal as a first-class code path")!;
+    expect(refusal.body).toContain("before the provider is ever reached");
+    // Nothing else: the line's words, less the connectives, are all in those two sources.
+    const own = `${dos.name} ${dos.description} ${refusal.body}`.toLowerCase();
+    for (const w of DOS_EVIDENCE.toLowerCase().match(/[a-z']+/g)!.filter((w) => !["it"].includes(w))) expect(own, w).toContain(w);
+  });
+  it("each live example rests on its project's own data", () => {
+    const text = (id: string) => JSON.stringify(project(id));
+    expect(text("poker")).toContain("keeping the money exact to the cent, including in a guest game run entirely on a phone with no signal");
+    expect(text("gravity-flow")).toContain("Cosmetic items are defined by visual fields only, every purchase grants cosmetics or ad removal");
+    expect(text("aegis")).toContain("one launcher script");
+    expect(text("aegis")).toContain("audit document");
+  });
+  it("names all four flagships, each once; no figure, year, institution, AI claim or private repository", () => {
+    const names = rows.flatMap((r) => r.evidence.map((e) => e.name));
+    expect([...names].sort()).toEqual(panels.map((p) => p.name).sort());   // the four flagships the slice shows
+    const text = shown.join(" | ");
+    expect(text).not.toMatch(/\d/);
+    expect(text).not.toMatch(/\bAI\b|LLM|\bmodel\b|machine learning|\bML\b|microservice/i);
+    for (const t of [block, src, text]) expect(namesAny(t)).toBe(false);
+    expect(privateRepoLeaks(block + src + JSON.stringify(tbsBlock))).toEqual([]);
+  });
+  it("a server component under Stack inside <main>: no client code, no reveal, no link, no image", () => {
+    for (const t of [block, src]) expect(t).not.toMatch(/^["']use client["']|useState|useEffect|data-reveal/m);
+    expect(code(block)).not.toMatch(/<a\b|<Link|<button|<img|<svg|<picture|<Pic|<Image|<Shot/);
+    expect(page).toMatch(/<StackBlock \/>\n\s*<TbsBlock \/>\n\s*<\/main>/);
+    expect(page.match(/\sdata-reveal(="settle")?[\s>]/g)).toHaveLength(3);
+    // The live structure: an ordered list of rows, each word an h3 with the live screen-reader colon.
+    expect(block).toMatch(/<ol className="wk__tbs-rows">/);
+    expect(block).toMatch(/<h3 className="wk__tbs-word">\{r\.word\}<span className="sr-only">:<\/span><\/h3>/);
+    expect(block).toMatch(/<span className="wk__tbs-project">\{e\.name\}<\/span>\{e\.rest\}/);
+  });
+  it("adds no token and no motion; the rows sit on About's and Stack's grid from 1024px", () => {
+    const rules = css.slice(css.indexOf("/* ── Think · Build · Ship (P3.5"), css.indexOf("/* ── Smaller screens"));
+    expect(rules.length).toBeGreaterThan(500);
+    expect(rules).not.toMatch(/--cine-[\w-]+:|#[0-9a-fA-F]{3,6}\b|rgba?\(|transition|animation|data-reveal/);
+    expect(rules.match(/var\(--cine-[\w-]+\)/g)!.length).toBeGreaterThan(20);
+    expect(rules).toMatch(/@media \(min-width: 1024px\) \{\s*\.wk__tbs-row \{ grid-template-columns: minmax\(0, 5fr\) minmax\(0, 7fr\); column-gap: clamp\(40px, 5vw, 80px\); \}/);
+    expect(css).toMatch(/\.wk__about-title, \.wk__stack-title, \.wk__tbs-title \{/);
   });
 });

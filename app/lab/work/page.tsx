@@ -9,6 +9,7 @@ import { Shot, ratioOf } from "./Shot";
 import { Reel } from "./Reel";
 import { AboutBlock } from "./AboutBlock";
 import { StackBlock } from "./StackBlock";
+import { TbsBlock } from "./TbsBlock";
 import "./work.css";
 
 export const metadata: Metadata = { title: "Lab: Work section" };
@@ -36,10 +37,12 @@ const sizesOf = (kind: Panel["kind"], reel: boolean) => kind === "phone"
  *
  * Under the panels, About (P3.3, AboutBlock.tsx): who, in about ten seconds, from the live About section's own words.
  * It holds still and ships no client code. Under it, Stack (P3.4, StackBlock.tsx): the live Stack's tools, each with
- * the flagships that use it, plus a Security group from the projects' own text. It holds still too, with no client code.
+ * the flagships that use it, plus a Security group from the projects' own text, and its one small island, "Filter by
+ * project" (StackFilter.tsx). Under Stack, Think · Build · Ship (P3.5, TbsBlock.tsx): the live section's three
+ * principles, each with its evidence from the four flagships. It holds still, with no client code.
  *
- * Headings: the title is this route's h1, and each product, About and Stack an h2 (Stack's groups are h3s). In a
- * composed page, under the hero's h1, they step down one level.
+ * Headings: the title is this route's h1, and each product, About, Stack and Think · Build · Ship an h2 (Stack's groups
+ * and the three principles are h3s). In a composed page, under the hero's h1, they step down one level.
  */
 export default function WorkSlicePage() {
   const newTab = dict.common.newTab;
@@ -98,6 +101,7 @@ export default function WorkSlicePage() {
 
         <AboutBlock />
         <StackBlock />
+        <TbsBlock />
       </main>
     </div>
   );
