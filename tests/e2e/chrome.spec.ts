@@ -129,7 +129,7 @@ test("phones, dark: the header's buttons read on every section they pass over", 
       else await under(page, id, 4);
       const behind = id === "hero" ? await page.evaluate(() => getComputedStyle(document.body).backgroundColor) : await bgOf(page, id);
       const ratios = await headerRatios(page, behind);
-      expect(ratios.filter((r) => r.icon).length, `${theme} ${id}`).toBe(2);                 // theme and menu
+      expect(ratios.filter((r) => r.icon).length, `${theme} ${id}`).toBe(1);                 // the menu (no theme control: R3)
       for (const r of ratios) expect(r.r, `${theme} ${id} ${r.t}`).toBeGreaterThanOrEqual(r.icon ? 3 : 4.5);
     }
     await ctx.close();
