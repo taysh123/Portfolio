@@ -11,6 +11,131 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-19 — Session 12: About (P3.3) on `/lab/work`; the D2 comments reworded (prototype, D1 reopened) (Claude Code)
+
+**Scope (Tay's brief):**
+- List the five NEW layer values awaiting review, without changing them.
+- One task: the About section (P3.3) on `/lab/work`, below the panels. Lab-only: noindex, unlinked, `/` untouched.
+  - No photo, no institution. Readable by a recruiter in about 10 seconds.
+  - Copy only from facts already in the repo. Links: GitHub, LinkedIn and the résumé, at the live site's targets; the
+    résumé PDF unchanged. The `.cine` tokens and motion; no new token without showing why first.
+  - Step 1 a plan only (the exact copy, the layout, every fact's source), then Tay's OK. Step 2 build and measure.
+- Separately: reword the 11 "D2 reopened" comments and test titles. Wording only.
+- Commit, push, update draft PR #18 (no merge, no deploy). Screenshots at 390 and 1440, kept in scratch.
+
+### 1. Preconditions (VL)
+- `git fetch`: PR #19 merged (2026-11-19 01:49Z). `origin/main` = **`1c57789`**; Production `1c57789`.
+- `proto/hero-a-cinematic` at **`5d4610b`**, level with its remote, clean.
+
+### 2. The five NEW layer values (listed for Tay; unchanged)
+| Token | Value | Used at | Replaced |
+|---|---|---|---|
+| `--cine-lift` | −4px | `work.css`: the stage's `translate` on hover, focus-within, `:active`; none with reduced motion | nothing (round 5, `a5f2845`) |
+| `--cine-glow-lift` | `0 0 56px -12px` cyan at 30% | the same rule's halo; stays with reduced motion | nothing (round 5) |
+| `--cine-flow-turn` | 38deg | the side slides' `rotateY` | nothing (round 6, `4a9612a`) |
+| `--cine-flow-scale` | 0.78 | the side slides' `scale()` | nothing (round 6) |
+| `--cine-flow-dim` | 0.55 | the dark layer over each side capture | nothing (round 6) |
+
+**Tay: approved, keep them as they are.**
+
+### 3. The plan and Tay's answers
+- The copy, every word with its source: `docs/CINEMATIC_SYSTEM.md`, "About (P3.3, session 12)".
+- **Tay approved the plan** and chose:
+  - the joined availability line, "Available for software engineering roles: on-site, hybrid, or remote.";
+  - screenshots kept in scratch, not committed.
+
+### 4. What changed
+- **`4dccdf8`, wording only:** the 11 header comments now say "D1 reopened by Tay, 2026-11-18; D2 not reopened, so no
+  WebGL", rewrapped to 120 columns. No test title carried the phrase. No logic, selector, value or assertion changed.
+- **`121d86b`, About:**
+  - `app/lab/work/about.ts` derives every string from `data/about.ts`, `data/socials.ts` and `lib/dict.ts`;
+  - `AboutBlock.tsx`, a server component, renders it after the Work section, inside `<main>`;
+  - `work.css` gains its rules, layer tokens only. The layout: title beside the words from 1024px (5fr / 7fr), stacked
+    below; the facts two by two on hairlines (one column on phones); the résumé the one filled control.
+  - It holds still: no reveal of its own (the page keeps its 3 reveal blocks), no client code.
+  - **No token added:** the layer still defines 76.
+- **`fb3bb41`, CLAUDE.md (a fourth Tailwind leak, below).**
+
+### 5. Found on the way: PR #19 leaked into `/`'s stylesheet, live (VL)
+- The pinned-digest e2e test failed on the first full run: `/`'s Tailwind sheet was 44,829 bytes, not 44,530.
+- **The baseline (`5d4610b`, built in a scratch worktree) had the same 44,829-byte sheet**, so it predates this work.
+- The extra rules are exactly the three earlier leaks: zero opacity (21 bytes), the small elevation (about 248) and
+  the small corner radius (30); 299 bytes in all.
+- **Source:** the session 11 close-out's CLAUDE.md gotcha line, which spelled those three utility names. Tailwind scans
+  the repo root (only `docs/`, `design/`, `.claude/` and `.impeccable/` are skipped).
+- **Live:** `main` has the same line since PR #19. Production (`1c57789`) serves a 44,829-byte Tailwind sheet
+  (read-only `curl`). No element on `/` uses those classes (source and live HTML checked), so nothing renders
+  differently.
+- **Fixed here** (`fb3bb41`): the line describes them in words. `/`'s sheet is back to `868e8b98…`, the pinned digest.
+- **Not fixed on `main`:** that needs a docs PR, on Tay's go.
+
+### 6. Measured (VL; local production builds, interleaved against `5d4610b`, 10 runs each)
+| | before | after |
+|---|---|---|
+| First-load JS `/lab/work` (the budget algorithm) | 181.43 KiB | **181.43 KiB** (every script identical); budget 205.7 |
+| HTML `/lab/work` | 67.46 KB | **73.02 KB** (14.0 KB gzip); budget 568 |
+| LCP desktop (median; range) | 76 ms (72–88) | 80 ms (76–120) |
+| LCP phone, 4× CPU and slow 4G | 950 ms (888–1032) | 932 ms (876–976) |
+| CLS (load) | 0 | 0 |
+| INP desktop / phone (`scripts/lab-hero-a.mjs`, worst per run, median) | 36 / 40 ms | 32 / 32 ms |
+| FPS desktop / phone | 60.5 / 60.6 | 60.5 / 60.5 |
+
+- The LCP element is the first capture, and LCP = FCP in every run.
+- **Scroll-through CLS** (a scratch probe, whole page): 0.0076 before and after, all of it from the chat launcher's fold
+  (pre-existing); 0 from the slice or About.
+- **INP inside About:** desktop 16 ms (clicks on the lede, Tab through its links); phone at 4× CPU 32 ms (taps).
+- **axe-core 4.11.4, WCAG 2.2 A/AA:** 0 violations at 1440 and 390, motion on and reduced (the e2e suite and a probe).
+  - Needs-review items, before → after: at 390 the same two (the lede, T Poker's line).
+  - At 1440, one new: Aegis's line. The violet glow sits at 38% of the section's height, so the taller page moves it
+    down behind that line. Covered by the layer's floor (mist ≥ 7:1 at the glow peak).
+- At page end the three links clear the chat launcher at 320, 390 and 1440 (86–206px).
+
+### 7. Unchanged (VL)
+- **`/`, `/lab/hero-a`, `/privacy`:** every script byte-identical; the markup identical with build IDs masked. The only
+  difference is the Tailwind sheet: here it is the pinned `main` digest, and the baseline carries the leak (section 5).
+- **Every built JS chunk:** 20 of 20 byte-identical to the baseline.
+- **Pixels (reduced motion, full page):** `/` 0 differing at 1440 and 390. The hero 0 with its canvas hidden. Its
+  still frame is random per load: the baseline against itself differs by 92,709 pixels at 1440, the baseline against
+  this build by 90,622.
+- **Guard files** identical to `origin/main`: dead-code, budget, page, tokens, institution, private-repo (test, support,
+  spec), the page support.
+- `components/`, `lib/`, `public/` (the PDF included), `data/`, `app/globals.css` and `app/page.tsx`: unchanged since
+  `5d4610b`.
+
+### 8. Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` | **186/186** (16 files; 179 before, plus 7 About tests) |
+| `npm run typecheck`, `npm run lint` | exit 0 |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test` | **184/184** (176 before, plus 8: no-JS, the PDF, holds still ×2, layout ×4) |
+
+### 9. Pushed: the Preview (Tay's brief)
+- `4dccdf8`, `121d86b` and `fb3bb41` pushed (`5d4610b..fb3bb41`). Vercel built a **Preview** (`production_environment=false`,
+  `success`, 02:31Z). Production stays on `1c57789`.
+- Preview of `/lab/work` (About is at the bottom):
+  - this build: `https://tay-shofer-portfolio-pfdxoepzk-tays-projects-d5aefd6e.vercel.app/lab/work`;
+  - the branch's own link, which follows each push:
+    `https://tay-shofer-portfolio-git-proto-he-65ec6d-tays-projects-d5aefd6e.vercel.app/lab/work`.
+  - Both sit behind Vercel's login (a logged-out request gets a 302 to `vercel.com/sso-api`). The deployed page was not
+    fetched: the connector's fetch would create a 23-hour share link, which the brief did not ask for.
+- This docs commit follows on top, and PR #18's description is updated. It is still a draft.
+
+### 10. Screenshots (scratch, not committed)
+- At 1440 and 390: the About block (motion on and reduced), the view a reader scrolls to, and the full page.
+
+### 11. Limitations (NC unless stated)
+- **No real phone.** Headless raster is SwiftShader.
+- At 320px a title half may wrap to two lines (the layout test allows it there only).
+- The `docs/session-10-closeout` branch (merged as PR #19) is still there, local and remote: not deleted this session.
+
+### Waiting on Tay
+- Review About on the Preview.
+- A go for the one-line CLAUDE.md docs PR on `main` (section 5).
+- Swap the GRAVITY FLOW capture he has in mind.
+- Move F: not started; still his call.
+
+---
+
 ## 2026-11-19 — Session 11 close-out: carousels approved; `main`'s close-out PR refreshed (Claude Code)
 
 **Scope (Tay's brief):**
@@ -1567,3 +1692,4 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-18/19 | Session 10 | Concept A prototype (D1 reopened, D2 not: Tay's correction at the session 11 close; branch `proto/hero-a-cinematic`, draft PR #18, never merged): the `/lab/hero-a` hero, the cinematic layer, the `/lab/work` slice and its carousels (rounds 1–6) | `app/lab/**`, `data/projects.ts` (galleries), `docs/CINEMATIC_SYSTEM.md`, `scripts/lab-hero-a.mjs`, `tests/**/lab-*` |
 | 2026-11-19 | Session 11 | Every flagship's real captures in its carousel (`9569bd8`): 8 captures encoded, the lab's own image list, box reservation for mixed shapes, window carousels, two-row controls below 390px; START-HERE brought up to date | `app/lab/work/*`, `data/lab-images.ts`, `data/projects.ts`, `scripts/m10-images.mjs`, `public/work/*` (48 new), `tests/**/lab-work*`, `docs/CINEMATIC_SYSTEM.md`, `docs/WORKLOG.md`, `claude/START-HERE.md` |
 | 2026-11-19 | Session 11 close | Carousels approved by Tay; the D1/D2 framing corrected (D1 reopened, D2 not); CLAUDE.md brought level with `main`'s plus the prototype; the close-out PR for `main` refreshed from `docs/session-10-closeout`; `docs/session-9-closeout` deleted | `CLAUDE.md`, `claude/START-HERE.md`, `docs/WORKLOG.md`, `docs/CINEMATIC_SYSTEM.md` |
+| 2026-11-19 | Session 12 | About (P3.3) on `/lab/work` from the live About's own words (`121d86b`); the 11 "D2 reopened" comments reworded (`4dccdf8`); the five NEW layer values approved as they are; a fourth Tailwind leak found (PR #19's CLAUDE.md line, live on `main`) and fixed on this branch (`fb3bb41`) | `app/lab/work/{about.ts,AboutBlock.tsx,page.tsx,work.css}`, `tests/{unit,e2e}/lab-work.*`, 11 lab headers, `CLAUDE.md`, `docs/CINEMATIC_SYSTEM.md`, `claude/START-HERE.md`, `docs/WORKLOG.md` |

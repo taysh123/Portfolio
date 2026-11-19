@@ -58,7 +58,9 @@ its first consumer. After the extraction, its computed styles and pixels are unc
   on the block that will be the largest paint (see Motion language).
 - **Don't write utility class names in lab files**, not even in comments, tests or object keys. Tailwind scans `app/`,
   `tests/` and `scripts/`, so a literal one adds a rule to the live page's stylesheet.
-  - It happened twice: a test comment (round 4) and an object key named after a shadow utility (round 5).
+  - It happened four times: a test comment (round 4), an object key named after a shadow utility (round 5), a test
+    comment (session 11), and the root `CLAUDE.md`'s own gotcha line (session 12). The repo root and `claude/` are
+    scanned too: only `docs/`, `design/`, `.claude/` and `.impeccable/` are skipped.
   - `tests/e2e/lab-work.spec.ts` now pins `/`'s stylesheets to `origin/main`'s bytes, so a leak fails the suite.
 - **Docs go in `docs/`**, which Tailwind skips.
 
@@ -158,7 +160,8 @@ The slice keeps a copy, and the test holds it equal.
   `--cine-section-y` (= `--section-y`), `--cine-radius-stage` (24px, the site's `--radius-xl`),
   `--cine-radius-device` (28px, `--radius-2xl`), `--cine-radius-window` (12px, `--radius-sm`), and
   `--cine-elevation` (= the dark theme's `--shadow-object`).
-- **Two NEW values, for Tay's review:** `--cine-lift` (−4px) and `--cine-glow-lift` (a cyan halo at 30%).
+- **Two NEW values:** `--cine-lift` (−4px) and `--cine-glow-lift` (a cyan halo at 30%). **Approved by Tay as they are
+  (session 12).**
 
 ### Galleries and the carousel (round 6)
 
@@ -240,8 +243,37 @@ The slice keeps a copy, and the test holds it equal.
 - Aegis and DeveloperOS swap in the live chapters' phone crops below 640px. Each crop's own ratio reserves its box, so
   nothing shifts (an e2e test holds every pending capture's height).
 
-**Tokens it added:** `--cine-dur-move` (= the site's `--dur-slow`), plus three NEW values for Tay's review:
-`--cine-flow-turn` 38deg, `--cine-flow-scale` 0.78, `--cine-flow-dim` 0.55.
+**Tokens it added:** `--cine-dur-move` (= the site's `--dur-slow`), plus three NEW values, **approved by Tay as they
+are (session 12)**: `--cine-flow-turn` 38deg, `--cine-flow-scale` 0.78, `--cine-flow-dim` 0.55. The layer's comments
+still mark all five `NEW:` (a unit test pins those markers).
 
 Session 11 added no token. Its new values are the slice's own geometry in `work.css`: the window slide's 80% / 86%, and
 the two-row controls below 390px.
+
+### About (P3.3, session 12)
+
+Under the four panels, after a hairline: who, in about ten seconds. Tay approved every word before it was built.
+
+| Element | Text | Source |
+|---|---|---|
+| Eyebrow | About | `dict.nav.about` |
+| Title (h2) | Engineer by training. / Builder by nature. | `about.title`, word for word, each half on its own line |
+| Lede | I'm a Computer Science graduate who enjoys turning complex ideas into useful, dependable software. Today, I work with C#/.NET, TypeScript, and Python, taking projects from an initial idea to working software. | the first sentence of `about.paragraphs[0]` and the second of `about.paragraphs[1]`, word for word |
+| Facts | B.Sc. in Computer Science · Full-stack: web, mobile, and backend · Based in Israel · Working in English and Hebrew | `about.facts`, word for word |
+| Availability | Available for software engineering roles: on-site, hybrid, or remote. | `availability.label` + the end of `availability.detail`: the one joined line (Tay's choice). Shown only while `availability.open`. |
+| Links | Download résumé · GitHub · LinkedIn | `resume.href` (the locked hero's control: label, screen-reader note, `download`), `socials.github.url`, `socials.linkedin.url` (new tab, `noopener noreferrer`) |
+
+- **Files:** `app/lab/work/about.ts` derives every string; `AboutBlock.tsx` is a server component (no client code).
+  `tests/unit/lab-work.test.ts` holds each string to its source and pins the approved copy.
+- **Left out on purpose:** the photo, any institution, the graduation year, email, the rest of the live paragraphs, and
+  the live About visual (the products sit right above).
+- **Layout:** from 1024px the title takes the panels' words share (5fr) and the words take the capture's (7fr); stacked
+  below. The facts are a two-by-two list on hairlines (one column on phones).
+- **Controls:** the résumé is the one filled control (`.wk__go--fill`, the hero's primary in the panels' shape); GitHub
+  and LinkedIn are the panels' outlined `.wk__go`.
+- **Motion:** none of its own. It holds still (rule 1): the opening's one reveal stays the only one, and its links
+  answer a hover in colour at `--cine-dur-hover`.
+- **Tokens:** none added. Its rules read only layer tokens; the layer still defines 76, and a unit test holds that.
+- **A side effect to know:** the violet glow sits at 38% of the section's height, so the taller page moves it down. At
+  1440 it now lies behind the Aegis line, which axe lists as "needs review" (covered by the floor: mist ≥ 7:1 at the glow
+  peak). axe: 0 violations.

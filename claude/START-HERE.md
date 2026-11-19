@@ -4,8 +4,8 @@ Orientation doc for the Portfolio Project. Read this first in any new chat here 
 Claude Code session, then continue with the current task. Update it before each transition
 (new chat / new session) so the next one starts informed.
 
-> **This copy is on `proto/hero-a-cinematic`** (session 11 close, 2026-11-19). It has more prototype detail than `main`'s
-> copy, which the session 11 close-out PR brings level on the essentials. The branch is never merged.
+> **This copy is on `proto/hero-a-cinematic`** (session 12, 2026-11-19). It has more prototype detail than `main`'s
+> copy (`main` has the essentials since PR #19). The branch is never merged.
 
 ## What the product is
 Tay Shofer's live software-engineering portfolio at https://www.tayshofer.dev/.
@@ -34,8 +34,12 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   The site has no WebGL, and tests on `main` enforce that. `tokens.test.ts` also guards the "Email me" fill (≥ 3:1
   against `--bg-raised` and `--bg`, both themes).
 - **Production** = GitHub `taysh123/Portfolio` **`main`**, the source of truth.
-  - Deployed **`fb0f575`**: PR #17, the session 9 close-out docs. GitHub status `success`, 2026-11-19 00:26Z.
-  - The site code is still PR #12's, since `fb0f575` and `a7a89fd` change docs only.
+  - Deployed **`1c57789`**: PR #19, the session 11 close-out docs, 2026-11-19 01:50Z.
+  - The site code is still PR #12's, since PRs #13–#19 change docs only.
+  - **But PR #19 changed `/`'s CSS** (found in session 12). Tailwind scans the repo root, and one line of its
+    CLAUDE.md spelled three utility names. That adds three rules no element uses: the Tailwind sheet went from 44,530
+    to 44,829 bytes, live. Nothing renders differently. The fix is one reworded line, already on this branch
+    (`fb3bb41`); on `main` it waits for Tay's go.
   - `main` was green at the session 9 close: unit 122/122, typecheck and lint, and Playwright 132/132 on PR #12's code.
   - First-load JS on `/` is 181.79 KiB gzip (budget 205.7); HTML is 156.44 KB (budget 568).
 - **Cloudflare proxies the site in front of Vercel** (N7). Tay turned its two HTML changes off on 2026-11-18: Web
@@ -46,14 +50,14 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 - **Check your branch first.** Live work branches from an up-to-date `main`, and changes go through a PR that Tay
   merges. `reference/premium-redesign-package` is a stale September design branch: never build or deploy from it.
 
-## The Concept A prototype (session 10, then session 11)
-- **Branch** `proto/hero-a-cinematic`: code at **`9569bd8`** (session 11), with the docs on top.
+## The Concept A prototype (sessions 10–12)
+- **Branch** `proto/hero-a-cinematic`: code at **`121d86b`** (session 12), with the docs on top.
   - Draft **PR #18**: never merge it, never deploy it.
   - Every push builds a Vercel **Preview**, behind Vercel's login. Production is untouched.
 - **Routes** (noindex, not in the sitemap, never linked from `/`):
   - **`/lab/hero-a`**: the locked hero, a 2D-canvas constellation field (no WebGL). First-load JS 183.71 KiB.
   - **`/lab/work`**: the Work slice, four product panels in the cinematic language. Each has a CSS 3D coverflow of the
-    project's real captures. First-load JS 181.43 KiB, HTML 67.46 KB.
+    project's real captures. Below them, **About** (session 12). First-load JS 181.43 KiB, HTML 73.02 KB.
 - **The system:** `docs/CINEMATIC_SYSTEM.md` covers the `--cine-*` layer (extracted from the hero, value for value), the
   motion rules, the Work slice, the galleries and the carousel. Read it before touching `/lab`.
 - **Session 11:** every flagship's real captures are now in its carousel. **Tay approved the carousels** at the close.
@@ -61,6 +65,12 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - Tay left out a duplicate "final count", the DeveloperOS refusal strip and its AI-features capture.
   - The new captures are listed in `data/lab-images.ts`. **Never in `data/images.ts`:** the live About visual is client
     code that bundles that whole table into `/`.
+- **Session 12: About (P3.3)** under the panels, built from the live About's own words. Tay approved every word.
+  - The title, two sentences of the live copy, the four live facts, Tay's joined availability line, and three links at
+    the live targets: the résumé, GitHub, LinkedIn.
+  - No photo, no institution, no new claim. A server component; it holds still. No token added.
+  - The five NEW layer values are **approved by Tay as they are** (session 12).
+  - The "D2 reopened" comments in 11 code and test files now say D1 reopened, D2 not, no WebGL (`4dccdf8`).
 - **Preview of `/lab/work`** (the branch's own link, which follows each push):
   `https://tay-shofer-portfolio-git-proto-he-65ec6d-tays-projects-d5aefd6e.vercel.app/lab/work`.
 - **Kept identical on this branch** (tests hold it):
@@ -81,7 +91,7 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - The `three`/`lenis`/WebGL/`<canvas>` guard tests and the first-load JS budget are unchanged, and the prototype is
     held to the same 205.7 KiB.
   - Session 10's docs and the branch's code comments called this "D2 reopened". Tay corrected that at the session 11
-    close; the comments are still to be reworded.
+    close; the comments were reworded in session 12 (`4dccdf8`).
 - **D5** Public git history left as-is (no rewrite, repo stays public).
 - **D7** Claude Code ↔ Tay in **English**; Chat Claude ↔ Tay in **Hebrew**.
 - D3 docs merged (PR #4) · D4 duplicate ui-ux-pro-max removed · D6 content fixes merged (PR #5) ·
@@ -103,19 +113,17 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   AI-features captures are left out. GRAVITY FLOW's existing two stay; Tay will swap one himself.
 
 ## What's next
-- **Concept A:** the carousels are approved. Tay decides what the prototype takes on next.
-- **With the next prototype commit:** reword "D2 reopened" to the corrected framing in the 11 code and test files that
-  carry it. They are comments and test titles under `app/lab/`, `tests/` and `scripts/lab-hero-a.mjs`; the docs were
-  fixed at the session 11 close.
+- **Concept A:** the carousels, the five layer values and the About copy are approved. Tay reviews About on the
+  Preview and decides what the prototype takes on next.
 - **Move F** on `main`: still Tay's plan from the session 9 close, not started.
   - It needs one additive floor case in `tokens.test.ts` (plan §11), and that is its only test change.
   - Branch from an up-to-date `main`; Tay merges.
 - After M1, the next phase is in `docs/ROADMAP.md`.
 
-## Open PRs / branches (session 11 close, 2026-11-19)
+## Open PRs / branches (session 12, 2026-11-19)
 - **PR #18** (`proto/hero-a-cinematic`, draft): the Concept A prototype. Never merge, never delete; Preview only.
-- **`docs/session-10-closeout`** → the session 11 close-out PR into `main`, docs only. It brings `main`'s START-HERE,
-  CLAUDE.md, WORKLOG and RESEARCH_AND_DECISIONS level with this prototype's state. Tay merges.
+- **`docs/session-10-closeout`**: merged as PR #19 (tip `2101ef6`). The branch is still there, local and remote; delete
+  it at the next close-out after `git merge-base --is-ancestor`.
 - Merged and deleted (each checked with `git merge-base --is-ancestor` first):
   - `docs/session-9-closeout` (#17, tip `c9696d6`, local and remote, at the session 11 close);
   - `fix/n8-gravity-flow-slug` (#16), `docs/session-8-closeout` (#15), `docs/session-7-closeout` (#13);
@@ -124,10 +132,11 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Merge the session 11 close-out PR** (docs only), from `docs/session-10-closeout`.
+- **Review About on the Preview** (`/lab/work`, at the bottom), and decide what Concept A takes on next.
+- **`main`'s CSS leak from PR #19** (session 12): a go for a one-line docs PR on `main` that rewords the CLAUDE.md
+  Tailwind gotcha line the way `fb3bb41` does here. Unused rules only, so nothing renders differently; the live sheet is
+  299 bytes larger until then.
 - **Swap the GRAVITY FLOW capture** he has in mind (the carousels themselves are approved).
-- **Decide whether Concept A goes further.** Five NEW values still wait for review: `--cine-lift`, `--cine-glow-lift`,
-  `--cine-flow-turn`, `--cine-flow-scale` and `--cine-flow-dim` (`docs/CINEMATIC_SYSTEM.md`).
 - **Move F:** confirm it is still next on `main`.
 - **Optional, on `main`:** the site's chat launcher folds its label as the page scrolls. That is 0.0076 CLS on `/` at
   1440 and 390 (measured in session 11), well inside "good". Untouched.
