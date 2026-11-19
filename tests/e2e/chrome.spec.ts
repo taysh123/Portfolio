@@ -258,12 +258,12 @@ for (const vp of [[1440, 900], [390, 844]] as const) {
   });
 }
 
-test("the focus ring is the solid accent: iris on paper, light iris on a dark plate", async ({ page }) => {
+test("the focus ring is the layer's solid cyan, in the hero and on a product panel", async ({ page }) => {
   await page.goto("/");
-  const hero = page.getByRole("link", { name: "See the work" }); await hero.focus();
-  expect(await hero.evaluate((e) => getComputedStyle(e).outlineColor)).toBe("rgb(74, 63, 224)");
-  const store = page.locator("#work-poker a[href*='apps.apple.com']"); await store.focus();
-  expect(await store.evaluate((e) => getComputedStyle(e).outlineColor)).toBe("rgb(177, 180, 255)");
+  const hero = page.getByRole("link", { name: "Explore my work" }); await hero.focus();
+  expect(await hero.evaluate((e) => getComputedStyle(e).outlineColor)).toBe("rgb(46, 230, 214)");
+  const live = page.locator("#work-poker a[data-primary]"); await live.focus();
+  expect(await live.evaluate((e) => getComputedStyle(e).outlineColor)).toBe("rgb(46, 230, 214)");
 });
 
 test("every external link opens safely and says so", async ({ page }) => {
