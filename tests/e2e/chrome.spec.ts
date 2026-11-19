@@ -33,14 +33,6 @@ test("dark is the only theme, cookie or not", async ({ browser }) => {
   }
 });
 
-test("a theme toggle shifts no layout", async ({ page }) => {
-  await page.goto("/");
-  await page.evaluate(() => { (window as unknown as { __cls: number }).__cls = 0; new PerformanceObserver((l) => { for (const e of l.getEntries() as unknown as { value: number; hadRecentInput: boolean }[]) if (!e.hadRecentInput) (window as unknown as { __cls: number }).__cls += e.value; }).observe({ type: "layout-shift" }); });
-  await page.evaluate(() => document.getElementById("about")!.scrollIntoView({ behavior: "instant" as ScrollBehavior }));
-  await page.getByRole("button", { name: /Switch to (dark|light) mode/ }).click(); await page.waitForTimeout(400);
-  expect(await page.evaluate(() => (window as unknown as { __cls: number }).__cls)).toBeLessThan(0.02);
-});
-
 const headerBg = (page: Page) => page.locator("header[data-site-nav]").evaluate((h) => getComputedStyle(h).backgroundColor);
 const bgOf = (page: Page, id: string) => page.locator(`#${id}`).evaluate((e) => getComputedStyle(e).backgroundColor);
 /** Puts the top of #id right under the header (plus `nudge` px), then waits for the next painted frame. */
