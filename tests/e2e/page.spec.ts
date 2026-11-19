@@ -3,16 +3,16 @@ import { test, expect } from "playwright/test";
 import fs from "node:fs";
 import { open, VIEWPORTS, COUNT_WEBGL, scrollThrough, decodedImages } from "../support/page";
 
-test("landmarks and heading outline: one h1, then each product and section as an h2", async ({ page }) => {
+test("landmarks and heading outline: one h1, then each section as an h2 and each product as an h3", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("main")).toHaveCount(1); await expect(page.locator("footer")).toHaveCount(1);
   await expect(page.locator("h1")).toHaveCount(1);
-  await expect(page.locator("h1")).toHaveText("I build software end to end.");
+  await expect(page.locator("h1")).toHaveText("Building software. Turning ideas into products.");
   const outline = await page.evaluate(() => [...document.querySelectorAll("main h1, main h2, main h3")].map((h) => Number(h.tagName[1])));
   for (let i = 1; i < outline.length; i++) expect(outline[i] - outline[i - 1], `h${outline[i - 1]} → h${outline[i]} at ${i}`).toBeLessThanOrEqual(1);
   expect(await page.locator("main h2").allTextContents()).toEqual([
-    "T Poker: Your home game, handled.", "Aegis", "DeveloperOS", "GRAVITY FLOW", "Two more",
-    "Engineer by training.Builder by nature.", "Tools behind the work.", "Think. Build. Ship.", "Let's build somethingpeople use."]);
+    "Featured work", "Four projects, built end to end.", "Two more",
+    "Engineer by training. Builder by nature.", "Tools behind the work.", "Think. Build. Ship.", "Let's build something people use."]);
 });
 
 test("no eyebrow, no chapter numbers, no metric tiles, no tracked monospace labels on the page", async ({ page }) => {
