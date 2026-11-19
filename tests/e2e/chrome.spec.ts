@@ -244,12 +244,13 @@ async function tabThrough(page: Page, max = 90): Promise<Stop[]> {
 }
 
 for (const vp of [[1440, 900], [390, 844]] as const) {
-  test(`${vp[0]}×${vp[1]}: Tab runs skip link → header → hero → the four chapters → contact → footer, every stop ringed and unobscured`, async ({ browser }) => {
+  test(`${vp[0]}×${vp[1]}: Tab runs skip link → header → hero → the four panels → contact → footer, every stop ringed and unobscured`, async ({ browser }) => {
     const { ctx, page } = await open(browser, vp);
     const stops = await tabThrough(page);
     expect(stops[0].name).toBe("Skip to content");
     const at = (re: RegExp) => stops.findIndex((s) => re.test(s.name));
-    const order = [at(/^See the work/), at(/^T Poker/), at(/^Case study/), at(/^Email me/), at(/^Download résumé/), at(/^Back to top/)];
+    // Contact's résumé by its whole name: the hero's own résumé action comes first, and its name starts the same way.
+    const order = [at(/^Explore my work/), at(/^T Poker/), at(/^Case study/), at(/^Email me/), at(/^Download résumé \(PDF\)$/), at(/^Back to top/)];
     for (const i of order) expect(i, JSON.stringify(stops.map((s) => s.name))).toBeGreaterThan(0);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
     for (const s of stops) { expect(s.ring, `focus ring on ${s.name}`).toBe(true); expect(s.obscured, `${s.name} under the header`).toBe(false); }
