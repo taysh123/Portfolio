@@ -9,7 +9,7 @@ Tay Shofer's live software-engineering portfolio at https://www.tayshofer.dev/.
 Goal: get Tay interviews for junior/entry software roles. Next.js 16 / React 19 / TypeScript /
 Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONTEXT.md`.
 
-## What's live now (verified 2026-11-18, session 9 close)
+## What's live now (Production still `a7a89fd` at the session 10 close, 2026-11-19; the rest as verified at the session 9 close)
 - The current site is the calm, light **"Product Plates"** editorial design (M10), now with the whole **M1 core,
   moves A–E**:
   - **A**, the iris accent: `#4a3fe0` light, `#a5a8ff` dark, `#b1b4ff` on the dark plates.
@@ -36,13 +36,31 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 - **Check your branch first.** Branch from an up-to-date `main`; changes go through a PR that Tay
   merges. `reference/premium-redesign-package` is a stale September design branch; never build or deploy from it.
 
+## Active prototype: Concept A, cinematic (session 10; NOT live, never merged)
+- **Branch** `proto/hero-a-cinematic` at **`0f38825`** (pushed; equal to its remote). **Draft PR #18**: keep it a draft
+  and never merge it.
+- **The Vercel Preview** of `0f38825` is behind Vercel Deployment Protection (sign in to view):
+  `https://tay-shofer-portfolio-3k9u4yr0a-tays-projects-d5aefd6e.vercel.app/lab/work` (and `/lab/hero-a`).
+- **The hero is LOCKED** (`/lab/hero-a`): a dark base, duotone cyan and violet, and a 2D-canvas constellation (no
+  WebGL).
+- **The design system** is built: `app/lab/_cinematic/cinematic.css` (`--cine-*` tokens on a `.cine` root, lab-only),
+  documented in `docs/CINEMATIC_SYSTEM.md` on the branch.
+- **The Projects section is done** (`/lab/work`): four honest product panels, per-project CSS 3D coverflow carousels
+  fed by `PROJECT_GALLERIES` in `data/projects.ts`, and the phone-proportions fix.
+- **Budgets and tests:** first-load JS is 181–184 KiB (budget 205.7); axe has 0 violations with motion on and off; unit
+  177/177; Playwright 173/173.
+- **`/` is untouched:** its CSS is pinned to `main`'s bytes, and `PROJECT_GALLERIES` reaches no live bundle. Details:
+  `docs/WORKLOG.md` session 10.
+
 ## Decided (Tay, 2026-11-18; details in `docs/RESEARCH_AND_DECISIONS.md` §1)
 - **D1 Direction: calm / premium. Evolve Product Plates; don't replace it.** Restrained cyan/violet
   accents. Follow the reference README's take / do-NOT-take (its text: `docs/references/premium-redesign-README.md`):
   no RGB wash, no holographic cube, no fabricated on-screen stats. CREATIVE_DIRECTION's dark-cinematic/3D art
   direction is superseded.
 - **D2 3D: not now.** A future, separate, measured prototype only. Do not modify the
-  `three`/`lenis`/WebGL/`<canvas>` guard tests or the first-load JS budget.
+  `three`/`lenis`/WebGL/`<canvas>` guard tests or the first-load JS budget. **Reopened for one measured prototype**
+  (Tay, 2026-11-18): Concept A on `proto/hero-a-cinematic` only (2D canvas and CSS 3D, no WebGL). `main`'s guards
+  are unchanged, and none needed editing.
 - **D5** Public git history left as-is (no rewrite, repo stays public).
 - **D7** Claude Code ↔ Tay in **English**; Chat Claude ↔ Tay in **Hebrew**.
 - D3 docs merged (PR #4) · D4 duplicate ui-ux-pro-max removed · D6 content fixes merged (PR #5) ·
@@ -51,8 +69,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 - **N5** GRAVITY FLOW repo **stays private**; the site marks it private like T Poker, and the dead link
   is removed from the served résumé PDF (PR #5, live).
 - **M1** (`docs/M1_VISUAL_PLAN.md`): the core, moves **A–E**, is approved and **live** (PRs #8, #11, #12). **F**
-  (desk plate): Tay's plan at the session 9 close is to **build it next session, on a preview branch**. It is not
-  started. **Keep Geist** (no display-face study). Use the plan's token values exactly; invent none.
+  (desk plate): planned at the session 9 close for the next session, but session 10 took Concept A instead. It is
+  **not started**, and still Tay's call. **Keep Geist** (no display-face study). Use the plan's token values exactly; invent none.
 - **N1, N2** (Tay's brief, session 8; merged in PR #14):
   - N1: the reference README's text, byte for byte, is in `docs/references/`, with no image.
   - N2: the agent docs say "the institution" instead of its abbreviation.
@@ -62,24 +80,39 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   private-repo guard now pins both private repos, T Poker and GRAVITY FLOW, by SHA-256 digest.
 
 ## What's next
-- **Next session: build Move F on a preview branch** (Tay, session 9 close). F is the optional desk plate under Contact
-  (plan §4, §8). It needs one additive floor case in `tokens.test.ts` (plan §11), and that is the only test change it
-  needs. Branch from an up-to-date `main`; Tay merges.
-- After M1, the next phase is in `docs/ROADMAP.md`.
-- N1 and N2 are merged (PR #14), and N8 is merged (PR #16). N7's dashboard steps are done. Its `/privacy` wording is
-  deferred to the end of the build, so it is not a now-task.
+- **Next session: encode the ready-made captures** so the Projects carousels grow.
+  - Aegis and DeveloperOS have **one capture each** today; T Poker has 3 and GRAVITY FLOW 2.
+  - **Steps:** encode the files into `public/work/` (`scripts/m10-images.mjs`), list them in `data/images.ts`, then
+    append them to `PROJECT_GALLERIES` (`data/projects.ts`, on the prototype branch). An entry without alt text stops
+    the build.
+  - Real captures with reviewed alt text already exist in `public/projects/` (each project's `media.gallery`):
+    - **T Poker:** podium, stats, final count;
+    - **DeveloperOS:** AI features, learning, career, refusal, dashboard;
+    - **GRAVITY FLOW:** gravity run, cosmetics, win.
+  - **Aegis:** `public/work/hero-aegis`, the Incidents board, is already encoded: just append it.
+- Work on the prototype branch (it is the active one), never on `main`. Each push needs Tay's go, and so does each
+  Preview.
+- Tay to review the five NEW cinematic tokens (below).
+- Move F: not started; Tay's call. The N7 `/privacy` wording: deferred to the end of the build.
 - Phases and acceptance criteria: `docs/ROADMAP.md`.
 
-## Open PRs / branches (session 9 close, 2026-11-18)
-- **`docs/session-9-closeout`** → a docs-only close-out PR into `main` with these state docs. Tay merges.
-- Merged and deleted (local and remote, each checked with `git merge-base --is-ancestor` first):
+## Open PRs / branches (session 10 close, 2026-11-19)
+- **PR #17** `docs/session-9-closeout` (open): the session 9 state docs. Tay merges.
+- **PR #18** `proto/hero-a-cinematic` (**draft, never merge**): the Concept A prototype, `0f38825`.
+- **`docs/session-10-closeout`** (local, not pushed): these state docs, stacked on #17's branch. Push it and PR it into
+  `main` after #17 merges.
+- Nothing was deleted at the session 10 close: no branch is merged (each checked with `git merge-base --is-ancestor`).
+- Merged and deleted earlier (local and remote, each checked with `git merge-base --is-ancestor` first):
   `fix/n8-gravity-flow-slug` (#16, tip `5a9d8a3`, at the session 9 close); `docs/session-8-closeout` (#15, tip
   `f1f147a`) and `docs/session-7-closeout` (#13, tip `7a235a3`), both in session 9; `docs/backlog-n1-n2-n7` (#14, tip `ee96fc3`, at the session 8 close), `feature/m1-lower-half` (#12), `feature/m1-studio-light` (#11; session 8 re-checked: tip `63073bf` is in `main`, and
   GitHub returns 404 for the branch), `docs/m1-pr1-closeout` (#10). Earlier: `feature/m1-iris-type-motion` (#8),
   `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Review and merge the session 9 close-out PR** (docs only).
+- **Merge PR #17** (session 9 docs), then push and PR `docs/session-10-closeout` (session 10 docs). Both are docs only.
+- **Review the five NEW cinematic tokens** on the prototype branch: `--cine-lift`, `--cine-glow-lift`,
+  `--cine-flow-turn`, `--cine-flow-scale` and `--cine-flow-dim` (marked NEW in `app/lab/_cinematic/cinematic.css`).
+- Decide how far Concept A goes. It stays a draft PR #18 until then.
 - A note from session 7's preview shots: at 390px the TBS row word (20.3px, 600) is close to the row's lead line
   `.tbs__line` (19px, 600). It follows the plan exactly, and no change was made. Worth a look when previewing F.
 - **Not pending: the N7 `/privacy` wording is deferred to the end of the build** (Tay, session 9 close). Don't raise it

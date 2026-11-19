@@ -37,6 +37,11 @@ Tay decides everything here.
 - The production guard tests are **not** modified in this work: the `three`/`lenis`/WebGL/`<canvas>`
   bans in `tests/unit/dead-code.test.ts`, `tests/e2e/budget.spec.ts:47` and `tests/e2e/page.spec.ts`,
   and the first-load JS budget (≤ 205.7 KiB gzip) in `tests/e2e/budget.spec.ts:7`.
+- **Reopened for one measured prototype** (Tay, 2026-11-18, session 10): Concept A, a dark cinematic direction.
+  - It lives only on `proto/hero-a-cinematic` (draft PR #18; never merged; `/lab` routes under noindex).
+  - Its live elements are a 2D canvas and CSS 3D, with **no WebGL, three or lenis**.
+  - `main`'s guards are unchanged; none needed editing. The prototype routes meet the same 205.7 KiB budget.
+  - For `main`, D1 and D2 still stand.
 
 **D3 — Docs branch:** done. The M0 docs are on `docs/m0-audit`, cut from `origin/main` (`3f0c5e5`),
 **PR #4, merged 2026-11-18** (merge commit `661dce1`).
@@ -333,6 +338,7 @@ Playwright MCP, Superpowers, UI UX Pro Max, Frontend Design, the Figma plugin (c
 
 | Date | Decision | By |
 |---|---|---|
+| 2026-11-18/19 | Session 10: D2 reopened for one measured prototype, Concept A, on `proto/hero-a-cinematic` (draft PR #18, never merged; no WebGL; `main`'s guards unchanged). Hero locked; the `--cine-*` design system extracted; the Projects section with 3D coverflow carousels and the phone fix, on the Preview at `0f38825`. The Projects title is "Four projects, built end to end." (not all four are shipped). | Tay |
 | 2026-11-18 | Session 9 close: PR #16 (N8) merged (`a7a89fd`, live). The N7 `/privacy` wording is deferred to the end of the build. Move F is to be built on a preview branch next session | Tay |
 | 2026-11-18 | Session 9: N8. GRAVITY FLOW's private repository name is out of the docs, and the private-repo guard pins both private repos by digest (a guard-test change for Tay's approval at merge). `docs/session-7-closeout` and `docs/session-8-closeout` deleted | Tay (brief) |
 | 2026-11-18 | Session 8 close: PR #14 (N1, N2) merged (`d80cb4c`). N7: Cloudflare Web Analytics set to Disable and Email Address Obfuscation set to Off. Still open: the `/privacy` wording; N8 goes to the next session | Tay |

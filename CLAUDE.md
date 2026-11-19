@@ -4,8 +4,9 @@
 
 Concise, durable instructions for every Claude Code session in this repo.
 Detailed material lives in `docs/`; this file stays short and points to it.
-M0 (audit + decisions) closed 2026-11-18. The M1 core (moves A–E) is live; F is deferred to Tay's call after
-previewing A–E live (`docs/WORKLOG.md`).
+M0 (audit + decisions) closed 2026-11-18. The M1 core (moves A–E) is live; F is not started (Tay's call).
+Session 10 built **Concept A**, a measured cinematic prototype, on `proto/hero-a-cinematic` (draft PR #18; never
+merged; `docs/WORKLOG.md` session 10).
 Keep refining this file with verified facts only.
 
 ## What this is
@@ -26,6 +27,10 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
   `https://github.com/taysh123/Portfolio.git` (the old name `Tay-Shofer---Portfolio` redirects). The repo
   is **public**. Changes go through a branch and a PR; Tay merges. Claude pushes or opens a PR only when the
   brief says so, and never merges.
+- **Active prototype: `proto/hero-a-cinematic`** (draft PR #18, `0f38825`).
+  - It holds the locked hero `/lab/hero-a`, the lab-only design system `app/lab/_cinematic/` (doc
+    `docs/CINEMATIC_SYSTEM.md` there), and the Projects section `/lab/work`.
+  - **Never merge it.** Do Concept A work there. Each push or Vercel Preview needs Tay's go.
 - `reference/premium-redesign-package` is **stale** (Next 16.2.6, old names, institution label, private
   repo URLs). Never build, deploy, or copy content from it. (The local `feature/premium-portfolio-redesign`,
   fully merged, was deleted 2026-11-18.)
@@ -62,7 +67,8 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
 - Reference images in the pack are AI-generated direction only, never production assets.
 - Direction (Tay, 2026-11-18; D1/D2 in `docs/RESEARCH_AND_DECISIONS.md`): **evolve** Product
   Plates, calm/premium, restrained cyan/violet accents; no RGB wash, holographic cube, or
-  fabricated stats. **No 3D now**: don't touch the 3D-guard tests or the JS budget.
+  fabricated stats. **No 3D now**: don't touch the 3D-guard tests or the JS budget. D2 was reopened only for the Concept A
+  prototype on its branch (2D canvas and CSS 3D, no WebGL); `main`'s guards are unchanged.
   CREATIVE_DIRECTION's dark-cinematic/3D parts are superseded. M1 plan `docs/M1_VISUAL_PLAN.md`: moves A–E
   are live. F is deferred: don't build it until Tay says yes after previewing A–E live. Geist stays; use the plan's token
   values exactly.
@@ -105,4 +111,13 @@ Verified gotchas (2026-11-18):
 - After leaving an old branch, run `npx next typegen` before `npm run typecheck` (stale `.next/types`).
 - The résumé PDF's exact byte size is pinned in `tests/e2e/lower.spec.ts`, and its size label is in
   `lib/dict.ts` (`resumeNote`). Update both whenever the PDF changes.
+- **Tailwind v4 scans `app/`, `data/`, `tests/` and `scripts/`, comments and object keys included.** A utility name
+  written there (`opacity-0`, `shadow`…) adds a rule to `/`'s stylesheet.
+  - Write docs in `docs/` (excluded).
+  - The prototype branch pins `/`'s CSS to `main`'s SHA-256 in an e2e test.
+- **A client component can change `/`'s first-load chunks** by importing a shared module (`data/images.ts`, an icon from
+  `components/ui/icons.tsx`). Verify by hashing `.next/static/chunks` before and after.
+- **A CSS reveal from `opacity: 0` hides text from LCP.** Headless Chromium's GPU is SwiftShader, so canvas cost
+  measured headless is pessimistic.
+- **In Git Bash, prefix `MSYS_NO_PATHCONV=1`** when passing a `/route` argument.
 Also `npm run measure` / `scan:controls` / `shoot` (scripts/). Prefer targeted tests while iterating.
