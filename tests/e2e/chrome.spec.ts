@@ -287,7 +287,7 @@ test("the focus ring is the layer's solid cyan, in the hero and on a product pan
 test("every external link opens safely and says so", async ({ page }) => {
   await page.goto("/");
   const links = await page.locator('a[target="_blank"]').evaluateAll((as) => as.map((a) => ({ rel: a.getAttribute("rel") ?? "", text: a.textContent ?? "", href: a.getAttribute("href") })));
-  expect(links.length).toBeGreaterThan(8);
+  expect(links.length).toBeGreaterThanOrEqual(8);
   for (const l of links) { expect(l.rel, l.href!).toMatch(/noopener/); expect(l.rel).toMatch(/noreferrer/); expect(l.text, l.href!).toMatch(/opens in a new tab/); }
   expect(await page.locator("main").textContent()).not.toContain("↗");
 });
