@@ -282,8 +282,8 @@ Under the four panels, after a hairline: who, in about ten seconds. Tay approved
 ### Stack (P3.4, session 13)
 
 Under About, after a hairline: the tools behind the work, **as the live Stack shows them** (`components/sections/Stack.tsx`),
-restyled in the layer. A first build gave each tool its own project line; Tay found that too busy and asked for this
-rebuild (session 13).
+restyled in the layer. A first build gave each tool its own project line; Tay found that too busy. A second dimmed the
+tools a project doesn't use; Tay liked the colour but asked for a clearer filter. This is the third (session 13).
 
 | Element | Text | Source |
 |---|---|---|
@@ -306,7 +306,7 @@ rebuild (session 13).
 | CSRF token | DeveloperOS | DeveloperOS decision "Loopback API hardened like a public one": "A per-instance CSRF token compared with hmac.compare_digest" |
 
 - **Tools no flagship uses** (Java, C++, C, JavaFX, Framer Motion, pytest, Playwright) and Everyday tools (Git, Linux,
-  Claude Code) carry no project: they show under All and dim under every project. Their live notes are not shown.
+  Claude Code) carry no project: they show under All only. Their live notes are not shown.
 - **Two live evidence sentences name the other two projects**, word for word as Tay asked: Languages ("…Python
   DeveloperOS and Job Assistant; Java runs Orders & Delivery.") and Product and interface ("…JavaFX is Orders &
   Delivery's client.").
@@ -315,30 +315,35 @@ rebuild (session 13).
 
 **The filter** (`StackFilter.tsx`, the one client island in Stack):
 - **Buttons** with `aria-pressed`, one pressed at a time, in a group labelled "Filter by project". Each is a 44px
-  target with the layer's cyan ring.
-- **Pressing a project** sets `data-lens` on the groups. The highlight is CSS written from the options in
-  `stack.ts`, as the live Stack writes its FILTER:
-  - a tool whose `data-p` names the project turns cyan;
-  - every other tool, and the name of a group it lights nothing in, turns the faintest ink (≥ 5.4:1).
-  - Colour only, so nothing moves (an e2e test compares every box before and after).
-  - The polite line says "Showing the {n} tools {name} uses."
+  target with the layer's cyan ring; the pressed one is filled in cyan. They stay mounted, so focus stays on the one
+  pressed.
+- **Pressing a project** sets `data-lens` on the groups. The filtering is CSS written from the options in `stack.ts`,
+  exactly as the live Stack writes its FILTER: every tool whose `data-p` doesn't name the project, and every group left
+  with none, take `display: none`.
+  - The tools that remain are filled cyan pills (on-accent ink); the evidence sentences hide (the pills are the evidence).
+  - The live status line, "Showing the {n} tools {name} uses.", sits above the groups at the lead size, in ink, and is
+    `aria-live="polite"`. Under All it is empty, as on the live page.
+- **No scroll jump:** Stack ends the page, so a shorter list would pull the page up under the reader. On each press the
+  results (the status line and the groups) take a `min-height` that keeps the page's end at or below the view's bottom
+  edge; All lets it go. The status line is held too because its height changes with the name (two lines at 390 for
+  GRAVITY FLOW, one for T Poker: that 26px was found by the e2e test).
 - **Without JavaScript,** and until hydration: the full list (All). The buttons are not shown (they would do nothing),
   and their space is kept, so nothing shifts when they appear.
-- **Reduced motion:** the chips and the highlight change at once (no transitions).
+- **Reduced motion:** no transitions (the buttons' hover fade is the only one, and it goes).
 - **It imports only React:** the server hands in the options, their status lines and the groups (as children), so
   no data reaches the client.
 
 **Layout:** one row per group, each on its own hairline. From 1024px its name takes the panels' words share (5fr) and
-its tools and evidence the capture's (7fr), lined up under About's words; stacked below. The tools share one line,
-wrapping as needed (ink, body size); the evidence sits under them (mist, small).
+its tools and evidence the capture's (7fr), lined up under About's words; stacked below. Every tool is a pill (small
+text, the control edge at ≥ 3:1, the glass fill), wrapping as needed; the evidence sits under them (mist, small).
 
-- **Files:** `app/lab/work/stack.ts` derives every string and the highlight rules; `StackBlock.tsx` is a server component;
+- **Files:** `app/lab/work/stack.ts` derives every string and the filter's rules; `StackBlock.tsx` is a server component;
   `StackFilter.tsx` is the island. `tests/unit/lab-work.test.ts` holds each string to its source and pins the mapping.
 - **Tokens:** none added. Its eyebrow and title share About's rules; its own rules read only layer tokens.
 - **Its cost (measured against `d64763d`, session 13):**
-  - first-load JS +239 bytes gzip (the island shares the carousel's chunk: 181.43 → 181.66 KiB);
-  - HTML 73.02 → 98.60 KB (14.0 → 17.9 KB gzip; about two-thirds is Next's flight copy of the same tree);
-  - LCP +16 ms desktop and +54 ms on a phone at 4× CPU (medians; LCP = FCP);
-  - the filter's buttons answer in under 16 ms on desktop and 64–72 ms on that phone.
+  - first-load JS +351 bytes gzip (the island shares the carousel's chunk: 181.43 → 181.77 KiB);
+  - HTML 73.02 → 97.66 KB (14.0 → 17.8 KB gzip; about two-thirds is Next's flight copy of the same tree);
+  - LCP +14 ms desktop and +46 ms on a phone at 4× CPU (medians; the LCP and FCP medians are equal);
+  - the filter's buttons answer in 24 ms on desktop and 48–80 ms on that phone.
   - `content-visibility: auto` would skip Stack's off-screen layout, but the violet glow (at 38% of the page's height)
     then moves when Stack renders: slice CLS 0.353 at 320px, measured on the first build. Not used; Tay's call.

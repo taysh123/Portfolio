@@ -11,6 +11,84 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-19 — Session 13, third pass: Stack's filter shows only the chosen project's tools, as pills (prototype, D1 reopened) (Claude Code)
+
+**Scope (Tay's review of the second build):** he likes the colour change, but the filter is not clear enough.
+- Every tool a pill: outlined under All, filled cyan for the chosen project's tools. Existing `.cine` tokens only.
+- A project shows ONLY its tools: hide the rest, and any group left empty. All shows everything, as before.
+- The live status line visible and prominent above the groups ("Showing the 19 tools Aegis uses."), `aria-live="polite"`.
+- Evidence sentences under All only (the pills are the evidence for a project).
+- Focus stays on the pressed button; no scroll jump when the section gets shorter; no transitions with reduced motion;
+  the full list without JS; axe 0; 44px targets; keyboard operable.
+- Re-measure first-load JS (the added KiB), LCP/CLS/INP on phone and desktop, INP on the filter's buttons; `/`, its
+  stylesheet bytes, pixels and the guard files unchanged; the full tests. Screenshots at 390 and 1440 (All, Aegis,
+  GRAVITY FLOW) in scratch. Commit, push, update PR #18. Don't close the session.
+
+### 1. What changed (`8955039`)
+- **The filter's rules** (`stack.ts`) are now the live FILTER's own: for the chosen project, every tool whose `data-p`
+  doesn't name it, and every group left with none, take `display: none`. Still written from the four options.
+- **Pills** (`work.css`): every tool is a pill (small text, the control edge `--cine-edge` at ≥ 3:1, the glass fill).
+  With a project chosen, the tools that remain are filled cyan with on-accent ink, and the evidence sentences hide.
+- **The status line** is at the lead size, in ink, between the buttons and the groups; empty under All, as live.
+- **No scroll jump** (`StackFilter.tsx`): Stack ends the page, so a shorter list pulled the page up under the reader.
+  On each press the results (the status line and the groups) take a `min-height` that keeps the page's end at or below
+  the view's bottom edge; All lets go. Red/green at the page's end, GRAVITY FLOW pressed: the view moves 0px with it,
+  815px (1440) and 1,214px (390) without it.
+  - **Found by the e2e test:** a first version held only the groups. The status line is two lines at 390 for GRAVITY
+    FLOW and one for T Poker, so going from one to the other moved the view 26px. The hold now includes the line.
+- The buttons stay mounted, so focus stays on the one pressed (the e2e tests check it after a click, Enter and Space).
+- Tests: the Stack unit tests follow the new rules (the live FILTER's own strings checked in
+  `components/sections/Stack.tsx`; the hold; the pills; the evidence; one transition, dropped when reduced). E2E: 11
+  Stack tests (no JS; the filter by the live mapping, with the groups each project leaves and focus; the keyboard; no
+  scroll jump at 1440 and 390, with the buttons near the top of the view and at the page's end; holds still ×2; layout at
+  1440, 1024, 390 and 320).
+
+### 2. Measured (VL; local production builds, `d64763d` in a scratch worktree vs `8955039`)
+| | before | after |
+|---|---|---|
+| First-load JS `/lab/work` (the budget algorithm) | 181.43 KiB | **181.77 KiB** (+351 bytes gzip); budget 205.7 |
+| HTML `/lab/work` | 73.02 KB (14.0 KB gzip) | **97.66 KB** (17.8 KB gzip); budget 568 |
+| LCP desktop, median (range), 10 interleaved | 90 ms (68–108) | 104 ms (96–112) |
+| LCP phone, 4× CPU and slow 4G, median (range), 10 interleaved | 908 ms (884–944) | 954 ms (928–1028) |
+| CLS (load) | 0 | 0 |
+| INP desktop / phone (`scripts/lab-hero-a.mjs`, worst per run, median) | 24 / 32 ms | 24 / 32 ms |
+| FPS desktop / phone | 60.4 / 60.5 | 60.4 / 60.5 |
+
+- **LCP:** the same +14 ms desktop / +46 ms phone as the second build: more to lay out before the first paint (the LCP
+  and FCP medians are equal). `content-visibility` stays unused (the glow; the first entry's section 5).
+- **The added JS:** one chunk changed, the carousel's (it holds the island): 4,870 → 5,221 bytes gzip. Every other JS
+  chunk is byte-identical to the baseline's.
+- **INP on the filter's buttons** (3 runs): desktop 24 ms; phone at 4× CPU 48–80 ms. On About's words, the same in both
+  builds (< 16 / 32 ms).
+- **Scroll-through CLS:** the slice 0 before and after; 0.0076 outside it (the chat launcher's fold, pre-existing).
+- **axe-core 4.11.4, WCAG 2.2 A/AA:** 0 violations at 1440 and 390, motion on and reduced, with All, Aegis and GRAVITY
+  FLOW pressed. Needs review: at 390 the same two as before; at 1440 none.
+- At page end the chat launcher clears the last line by 150px at 1440 and 102px at 390 and 320.
+
+### 3. Unchanged (VL)
+- **`/`, `/lab/hero-a`, `/privacy`:** every script and stylesheet byte-identical; the markup identical with build IDs
+  masked. `/`'s stylesheets keep the pinned digests (`868e8b98…` 44,530 bytes; `4b84cc35…` 31,805).
+- **Pixels (reduced motion, full page):** `/` 0 differing at 1440 and 390; the hero 0 with its canvas hidden;
+  `/lab/work` from the top to About's end (glows hidden) 0.
+- **Guard files** identical to `origin/main` (`443a1f9`).
+
+### 4. Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` | **200/200** |
+| `npm run typecheck`, `npm run lint` | exit 0 |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test` | **195/195** (184 before Stack, plus 11) |
+
+### 5. Screenshots (scratch, not committed)
+- At 1440 and 390: Stack with All, Aegis and GRAVITY FLOW pressed, and the full page.
+
+### Waiting on Tay
+- Review the filter on the Preview.
+- The LCP cost: keep it, or anchor the violet glow so the off-screen Stack can skip its layout.
+- Two live evidence sentences (under All) name Job Assistant and Orders & Delivery: fine, or trim them for the lab?
+
+---
+
 ## 2026-11-19 — Session 13, continued: Stack rebuilt like the live Stack, with a filter (prototype, D1 reopened) (Claude Code)
 
 **Scope (Tay's review of the first build):** one project line per tool is too busy. Rebuild Stack to work like the live
