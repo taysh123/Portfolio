@@ -11,6 +11,64 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-19 — Session 15 close-out: Contact approved with the 1100px fix; P3 complete (Claude Code)
+
+**Scope (Tay's brief):**
+- Contact is approved, with one fix: from 1024 to 1100px Contact stacks (the title above the content), so the title keeps
+  its two lines; its two columns start at 1100px. Contact only; the other sections unchanged. A layout test at 1024 and
+  1100, and everything above Contact still pixel-identical.
+- Decisions: Contact's phone LCP cost joins ROADMAP #13's P5 fix; #14, keep the hold as it is.
+- Close out: WORKLOG, START-HERE, CLAUDE.md and the memory, on this branch, with the final state (P3 complete: all six
+  sections approved). Full tests, push; PR #18 stays a draft. Remove the `a625c75` baseline worktree, clean scratch, and
+  confirm `main` is clean and level with `origin/main`.
+
+### Decisions (Tay)
+- **Contact is approved** (`56e3dea`), with the 1100px fix (`1369b00`).
+- **P3 is complete: all six sections are approved:** the hero (`/lab/hero-a`), the Work panels and their carousels,
+  About, Stack, Think · Build · Ship and Contact.
+- **Contact's phone LCP cost stays;** Contact joins `docs/ROADMAP.md` #13's P5 fix (`content-visibility` with the glow
+  anchored), beside Stack and Think · Build · Ship.
+- **#14: the hold stays as it is.**
+- **#15 (P5), logged at Step 1:** Contact repeats About's availability wording and its three links; re-check whether
+  About keeps its links once the full page is assembled.
+
+### What changed
+- **`1369b00`:** `.wk__contact`'s two columns start at 1100px (the sections above keep 1024). From 1024 to 1100 Contact
+  stacks, and the title keeps its two lines. The e2e layout test now also runs at 1100 (two columns) and checks 1024
+  (stacked, with About still in two columns, and each half of the title on one line); the unit test pins the 1100px rule
+  and that Contact's rules have no 1024px one.
+- **Pixels (VL; reduced motion, sky and launcher hidden):** `/lab/work` from the top to Think · Build · Ship's end, 0
+  differing pixels against `a625c75` at 1440, 1100, 1024, 390 and 320.
+- **Bytes (VL):** every JS file byte-identical to `a625c75`; only the lab's Work stylesheet differs (16,758 bytes, the
+  same size as before the fix). `/`, `/lab/hero-a` and `/privacy` identical with build IDs masked.
+- **Docs:** CLAUDE.md (the prototype's code is `1369b00`; Contact on `/lab/work`; P3 complete; sessions 10–15; unit
+  216/216), START-HERE, CINEMATIC_SYSTEM (Contact approved, the 1100px rule, the cost and the hold kept), ROADMAP (#13
+  with Contact; #14 kept), this entry. The memory's state note and two measurement lessons.
+
+### Validation (Git Bash, the final tree)
+| Command | Result |
+|---|---|
+| `npm test` | **216/216** |
+| `npm run typecheck`, `npm run lint` | exit 0 |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test` | **213/213** (212, plus the layout test at 1100) |
+
+- `/`'s Tailwind sheet keeps `868e8b98…` (44,530 bytes) after these docs (CLAUDE.md and START-HERE are scanned).
+- axe (the e2e suite): 0 violations at 1440 and 390, motion on and reduced.
+
+### Clean-up
+- Removed the `a625c75` baseline worktree; cleaned the scratchpad (probes, logs, screenshots, PR-body drafts).
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production (deployment of 2026-11-19 03:20Z). Local `main` level with it, and clean.
+- This branch: the code is `1369b00`; the docs are on top. PR #18 is a draft.
+
+### Waiting on Tay
+- **Decide what Concept A takes on next** (P3 complete). P5 items: ROADMAP #13, #14 and #15.
+- Swap the GRAVITY FLOW capture he has in mind. Move F: still his call.
+- Optional, on `main`: the chat launcher's fold on scroll (0.0076 CLS).
+
+---
+
 ## 2026-11-19 — Session 15: Contact (P3.6) ends `/lab/work` (prototype, D1 reopened) (Claude Code)
 
 **Scope (Tay's brief):**
@@ -2423,3 +2481,4 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-19 | Session 14 | Think · Build · Ship (P3.5) under Stack from the live section's own words, plus one DeveloperOS line in Tay's wording (`8382889`); the #14 hold re-checked (keep, recommended); no glow is a scroll anchor (`d1c53a3`) | `app/lab/work/{tbs.ts,TbsBlock.tsx,page.tsx,work.css}`, `tests/{unit,e2e}/lab-work.*`, `docs/{CINEMATIC_SYSTEM,ROADMAP,WORKLOG}.md`, `claude/START-HERE.md` |
 | 2026-11-19 | Session 14 close | Think · Build · Ship approved; the hold kept and its test's comment reworded (`a8062e6`); the glow fix kept; the section's LCP cost kept and added to ROADMAP #13; #14's visible gap case logged for P5; baseline worktree removed, scratch cleaned | `tests/e2e/lab-work.spec.ts` (comment), `CLAUDE.md`, `claude/START-HERE.md`, `docs/{WORKLOG,ROADMAP,CINEMATIC_SYSTEM}.md` |
 | 2026-11-19 | Session 15 | Contact (P3.6) ends `/lab/work`, from the live Contact's own words and links (`56e3dea`); `StackFilter.tsx`'s header comment fixed (`bbd9d55`, comment only); #14 re-measured (the tall-screen case shrinks, the end case unchanged); About's repetition logged for P5 (ROADMAP #15) | `app/lab/work/{contact.ts,ContactBlock.tsx,page.tsx,work.css,StackFilter.tsx}`, `tests/{unit,e2e}/lab-work.*`, `docs/{CINEMATIC_SYSTEM,ROADMAP,WORKLOG}.md`, `claude/START-HERE.md` |
+| 2026-11-19 | Session 15 close | Contact approved, with its two columns from 1100px (`1369b00`); P3 complete (all six sections approved); Contact's LCP cost kept and added to ROADMAP #13; the hold kept (#14); baseline worktree removed, scratch cleaned | `app/lab/work/work.css`, `tests/{unit,e2e}/lab-work.*`, `CLAUDE.md`, `claude/START-HERE.md`, `docs/{WORKLOG,ROADMAP,CINEMATIC_SYSTEM}.md` |
