@@ -2,13 +2,12 @@
 import { test, expect, type Page } from "playwright/test";
 import { open, CHAPTERS } from "../support/page";
 
-test("desktop header: name, four destinations, accessibility, theme and one Contact action — no language switch, no palette; the chat is not in the header", async ({ page }) => {
+test("desktop header: name, four destinations, accessibility and one Contact action — no language switch, no palette; the chat is not in the header", async ({ page }) => {
   await page.goto("/");
   const header = page.locator("header[data-site-nav]");
   await expect(header.getByRole("link", { name: "Tay Shofer — home" })).toBeVisible();
   for (const name of ["Work", "About", "Stack", "Contact"]) await expect(header.getByRole("link", { name, exact: true })).toBeVisible();
   await expect(header.getByRole("button", { name: "Accessibility settings" })).toBeVisible();
-  await expect(header.getByRole("button", { name: /Switch to (dark|light) mode/ })).toBeVisible();
   await expect(header.getByRole("link", { name: "Get in touch" })).toHaveAttribute("href", "#contact");
   // English only (the owner's decision, 2026-10-13): no language switch, and nothing links to another language.
   await expect(page.getByRole("group", { name: /language/i })).toHaveCount(0);
