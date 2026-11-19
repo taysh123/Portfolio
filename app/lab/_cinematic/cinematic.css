@@ -1,0 +1,181 @@
+/* app/lab/_cinematic/cinematic.css — the cinematic design language (Concept A). PROTOTYPE, lab only (D1 reopened by
+   Tay, 2026-11-18; D2 not reopened, so no WebGL; branch proto/hero-a-cinematic, never merged).
+
+   Extracted from the locked hero (app/lab/hero-a), value for value: nothing here was invented. The hero is its first
+   consumer. docs/CINEMATIC_SYSTEM.md says how a section reuses it.
+
+   Scope, twice over:
+   - only app/lab/layout.tsx imports this sheet, so only /lab routes ever load it;
+   - every selector needs a `.cine` root (`<div className="cine" data-theme="dark">`), or `:has(.cine)` outside it, so
+     even a sheet that outlives a client navigation is inert on the live page.
+   The live paper theme (app/globals.css) is untouched: this layer re-binds the shared names (--bg, --fg, --accent…)
+   only inside the scope. Contrast floors for every ink here: tests/unit/lab-hero-a.test.ts. */
+
+/* ── Scope chrome: the page around a cinematic root ───────────────────────────────────────────────────────────── */
+/* The page behind matches the field, so an overscroll never flashes paper. */
+:root:has(.cine), body:has(.cine) { background-color: #04060d; }
+/* Site chrome outside the root (the skip link, the chat launcher) rings its focus in the field's cyan: the paper
+   theme's iris is under 3:1 against this dark field. */
+body:has(.cine) { --accent: #2ee6d6; }
+/* The site's chat launcher (root layout) takes the dark tone instead of the visitor's paper one. */
+body:has(.cine) .chat-launcher {
+  --bg-raised: #0d1426;
+  --fg: #eef2fb;
+  --border-strong: rgba(238, 242, 251, 0.22);
+  --accent-line: rgba(46, 230, 214, 0.5);
+  --accent-solid: #5651f0;
+  --shadow-float: 0 6px 14px -4px rgba(0, 0, 0, 0.5), 0 40px 88px -28px rgba(0, 0, 0, 0.8);
+}
+
+/* ── Tokens ───────────────────────────────────────────────────────────────────────────────────────────────────── */
+.cine[data-theme] {
+  /* Colour: two bases, three inks, one accent pair. Floors (tests): ink ≥ 12:1, mist ≥ 7:1, faint ≥ 5.4:1, cyan ≥ 4.5:1
+     on both bases and under the brightest glow; violet ≥ 4.5:1 on the bases, ≥ 3:1 everywhere (large text only). */
+  --cine-abyss: #04060d;            /* the base field */
+  --cine-navy: #0a1020;             /* the base's lower end (the sky gradient) */
+  --cine-ink: #eef2fb;              /* headings, names, control labels */
+  --cine-mist: #acb6c9;             /* body copy, the lede */
+  --cine-faint: #95a0b6;            /* small labels and states */
+  --cine-cyan: #2ee6d6;             /* the accent: action, focus, the eyebrow; the gradient's start */
+  --cine-cyan-hover: #6cf1e5;
+  --cine-violet: #9b6bff;           /* only ever beside cyan, in the duotone; never alone on text */
+  --cine-status: var(--cine-cyan);  /* the live dot: the brand cyan (it reads teal-green), not a second green */
+  --cine-on-accent: var(--cine-abyss);   /* a label on a cyan fill (13:1) */
+  --cine-hair: rgba(238, 242, 251, 0.12);         /* hairline rules */
+  --cine-edge: rgba(238, 242, 251, 0.4);          /* a ghost control's edge (≥ 3:1 against the field) */
+  --cine-edge-hover: rgba(238, 242, 251, 0.7);
+
+  /* Surfaces: the sky, its glows, glass. Glow peaks are fixed: motion may only dim them (the contrast floors are
+     measured at these peaks). */
+  --cine-duotone: linear-gradient(90deg, var(--cine-cyan) 0%, var(--cine-violet) 100%);
+  --cine-sky: linear-gradient(180deg, var(--cine-abyss) 0%, var(--cine-navy) 100%);
+  --cine-vignette: radial-gradient(130% 100% at 50% 45%, transparent 52%, rgba(0, 0, 0, 0.6) 100%);
+  --cine-glow-cyan: radial-gradient(closest-side, rgba(46, 230, 214, 0.17), transparent);
+  --cine-glow-violet: radial-gradient(closest-side, rgba(155, 107, 255, 0.2), transparent);
+  --cine-glass-accent: rgba(46, 230, 214, 0.06);        /* tinted glass: the status pill */
+  --cine-glass-accent-edge: rgba(46, 230, 214, 0.26);
+  --cine-glass-ink: rgba(238, 242, 251, 0.03);          /* neutral glass: the ghost control */
+  --cine-glass-ink-hover: rgba(238, 242, 251, 0.07);
+  --cine-glow-dot: 0 0 0 3px rgba(46, 230, 214, 0.16), 0 0 12px rgba(46, 230, 214, 0.55);
+
+  /* Type: Geist (the site's own), one family. Sizes, weights, leading and tracking as the hero sets them. */
+  --cine-text-display: clamp(2.25rem, 1.3rem + 4vw, 5rem);   /* 36 → 80 */
+  --cine-text-lead: var(--text-lead);                         /* 18 → 21, the site's */
+  --cine-text-body: 1rem;
+  --cine-text-eyebrow: 0.9375rem;
+  --cine-text-small: 0.875rem;
+  --cine-text-label: 0.8125rem;
+  --cine-text-label-sm: 0.75rem;                              /* labels below 640px */
+  --cine-weight-display: 620;
+  --cine-weight-name: 650;                                    /* the name in the wordmark */
+  --cine-weight-control: 600;                                 /* controls and project names */
+  --cine-weight-eyebrow: 550;
+  --cine-weight-label: 500;
+  --cine-leading-display: 1.02;
+  --cine-leading-lead: 1.55;
+  --cine-leading-label: 1.4;
+  --cine-tracking-display: var(--tracking-display);           /* −0.04em, the site's floor */
+  --cine-tracking-name: -0.01em;
+  --cine-tracking-control: -0.005em;
+  --cine-tracking-caps: 0.14em;                               /* the wordmark only; 0.1em below 640px */
+
+  /* Spacing: the hero's recurring steps (one-off component insets stay with their component). */
+  --cine-space-1: 4px;
+  --cine-space-2: 8px;
+  --cine-space-3: 12px;
+  --cine-space-4: 16px;
+  --cine-space-5: 24px;
+  --cine-space-6: 28px;
+  --cine-space-7: 36px;
+  --cine-control-h: 52px;          /* a primary control; 48px below 640px */
+  --cine-control-h-sm: 48px;
+  --cine-target-min: 44px;         /* the smallest interactive target */
+
+  /* Radius */
+  --cine-radius-pill: 999px;       /* controls, the status pill */
+  --cine-radius-md: 10px;          /* the wordmark's focus shape */
+  --cine-radius-sm: 8px;           /* list links */
+
+  /* Motion: built on the site's motion tokens (globals.css M1 D). */
+  --cine-reveal-duration: var(--dur-light);   /* 700ms, each block's rise */
+  --cine-reveal-stagger: var(--stagger);      /* 70ms between blocks, in reading order */
+  --cine-reveal-distance: 16px;
+  --cine-ease-reveal: var(--ease-out-expo);
+  --cine-ease: var(--ease-out);
+  --cine-dur-hover: var(--dur-fast);          /* 180ms: hover and press feedback */
+  --cine-field-fade: 1400ms;                  /* a live field's fade-in, once it has drawn */
+  --cine-field-delay: 200ms;
+
+  /* Added by the Work slice (round 5, Tay's brief: product panels, glass stages, elevation on hover, focus and touch).
+     Each is the site's own value (globals.css) where one exists; the two values that are new are marked NEW, for
+     Tay's review. */
+  --cine-text-section: var(--text-chapter);   /* 36 → 64: a section's title (the site's chapter tier) */
+  --cine-text-name: var(--text-h2);           /* 30 → 42: a product's name (the site's section tier) */
+  --cine-section-y: var(--section-y);         /* 72 → 120: the rhythm between product panels */
+  --cine-radius-stage: 24px;                  /* a capture's glass stage (= the site's --radius-xl) */
+  --cine-radius-device: 28px;                 /* a phone capture's screen (= the site's --radius-2xl) */
+  --cine-radius-window: 12px;                 /* a desktop capture's window (= the site's --radius-sm) */
+  --cine-elevation: var(--shadow-object);     /* a capture at rest: the dark theme's object shadow */
+  --cine-lift: -4px;                          /* NEW: how far a stage rises on hover, focus or touch */
+  --cine-glow-lift: 0 0 56px -12px rgba(46, 230, 214, 0.3);   /* NEW: the cyan halo of a lifted stage */
+
+  /* Added by the carousel (round 6, Tay's brief: a CSS 3D coverflow, "dimmed, smaller sides"). The movement's timing is
+     the site's own; the coverflow's three shapes are NEW, for Tay's review. */
+  --cine-dur-move: var(--dur-slow);           /* 520ms: a capture moving to or from the front */
+  --cine-flow-turn: 38deg;                    /* NEW: how far a side capture turns away (rotateY) */
+  --cine-flow-scale: 0.78;                    /* NEW: a side capture's size, against the front one */
+  --cine-flow-dim: 0.55;                      /* NEW: how much of the field covers a side capture */
+
+  /* The shared names the site's base rules read inside the scope: the [data-theme] ink, the selection, sr-only. */
+  --bg: var(--cine-abyss);
+  --fg: var(--cine-ink);
+  --fg-muted: var(--cine-mist);
+  --accent: var(--cine-cyan);
+  --accent-soft: rgba(46, 230, 214, 0.24);
+
+  background: var(--cine-abyss);
+  color: var(--cine-ink);
+  color-scheme: dark;
+}
+/* The site's high-contrast switch: brighter inks and edges, the same field. */
+[data-high-contrast="true"] .cine[data-theme] {
+  --cine-ink: #ffffff;
+  --cine-mist: #e3e7f0;
+  --cine-faint: #c9cfdc;
+  --cine-hair: rgba(255, 255, 255, 0.34);
+  --cine-edge: rgba(255, 255, 255, 0.7);
+}
+
+/* ── Focus: one visible ring on every control, clear of its edge (a 3px gap of the dark field) ─────────────────── */
+.cine :focus-visible { outline: 2px solid var(--cine-cyan); outline-offset: 3px; }
+[data-high-contrast="true"] .cine :focus-visible { outline-color: #ffffff; }
+
+/* ── Duotone text: a whole clause, never one word. An inline box, so the gradient runs across every line it wraps to.
+   High contrast and forced colours fall back to solid ink. Large text only (violet's floor is 3:1). ── */
+.cine .cine-duotone-text {
+  background: var(--cine-duotone);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-box-decoration-break: slice;
+  box-decoration-break: slice;
+  color: transparent;
+}
+[data-high-contrast="true"] .cine .cine-duotone-text { background: none; color: var(--cine-ink); }
+@media (forced-colors: active) { .cine .cine-duotone-text { background: none; color: CanvasText; } }
+
+/* ── The one load sequence (docs/CINEMATIC_SYSTEM.md, "Motion language") ──────────────────────────────────────────
+   Mark each block of a section's opening with data-reveal and give it its place in reading order as --reveal-i
+   (0, 1, 2…): it rises once, --cine-reveal-stagger after the one before. The block that is the largest paint (a
+   headline) takes data-reveal="settle": it rises WITHOUT fading, because a text first painted at opacity 0 inside a
+   compositor animation is never reported as LCP (measured on the hero: no LCP entry at all, FCP ~1.75 s). It is CSS,
+   so it runs, and ends visible, without JavaScript. Off with reduced motion (the OS or the site's switch). ── */
+@keyframes cine-rise { from { opacity: 0; translate: 0 var(--cine-reveal-distance); } }
+@keyframes cine-settle { from { translate: 0 var(--cine-reveal-distance); } }
+.cine [data-reveal] {
+  animation: cine-rise var(--cine-reveal-duration) var(--cine-ease-reveal) calc(var(--reveal-i, 0) * var(--cine-reveal-stagger)) both;
+}
+.cine [data-reveal="settle"] { animation-name: cine-settle; }
+@media (prefers-reduced-motion: reduce) {
+  .cine [data-reveal] { animation: none; }
+}
+[data-reduced-motion="true"] .cine [data-reveal] { animation: none; }
