@@ -1,26 +1,25 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment -- TEMPORARY (S18+S19), with the next line: this prototype test still
-   imports the deleted /lab modules, and the production build type-checks every test file. S20 ports it to / and removes
-   both lines (docs/ROADMAP.md, "Concept A: P4–P6"). */
-// @ts-nocheck
-// tests/unit/lab-hero-a.test.ts — Concept A, the cinematic hero (PROTOTYPE; D1 reopened by Tay, 2026-11-18; D2 not
-// reopened, so no WebGL). Branch proto/hero-a-cinematic only, never merged. It pins what the prototype promised: honest
-// copy, never indexed or linked from the live page, and progressive enhancement. Round 4 extracted its design language
-// into the lab-scoped layer app/lab/_cinematic/cinematic.css: the contrast floors are read from there, and the last
-// block pins the layer's scope.
+// tests/unit/lab-hero-a.test.ts — Concept A's cinematic hero, now the first screen of / (the release, R1–R15; D1
+// reopened by Tay, 2026-11-18; D2 not reopened, so no WebGL). Ported in S20 from the prototype's /lab/hero-a test (the
+// file keeps its name: the code's comments and docs/CINEMATIC_SYSTEM.md point here). It pins what the hero promised:
+// honest copy, an indexed page with no /lab left behind, progressive enhancement, the contrast floors of the cinematic
+// layer (app/cinematic.css), and the layer's scope.
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import { projects } from "@/data/projects";
 import { flagships } from "@/data/work";
-import { FEATURED_KIND } from "@/app/lab/hero-a/featured";
-import { metadata as labMeta } from "@/app/lab/layout";
+import { siteMeta } from "@/data/socials";
+import { FEATURED_KIND } from "@/components/sections/featured";
 
 const read = (f: string) => fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
 const files = (d: string): string[] => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? files(path.join(d, e.name)) : [path.join(d, e.name)]));
-const page = read("app/lab/hero-a/page.tsx");
-const field = read("app/lab/hero-a/Constellation.tsx");
-const css = read("app/lab/hero-a/hero-a.css");
-const layer = read("app/lab/_cinematic/cinematic.css");
+const page = read("components/sections/Hero.tsx");
+const field = read("components/sections/Constellation.tsx");
+const css = read("components/sections/hero.css");
+const layer = read("app/cinematic.css");
+const pill = read("components/layout/AvailabilityPill.tsx");
+const nav = read("components/layout/Navbar.tsx");
+const mark = read("components/ui/Logo.tsx");
 
 describe("honest content", () => {
   it("features exactly the four flagships, in Work order, with the correct names", () => {
@@ -37,31 +36,44 @@ describe("honest content", () => {
   it("shows no figures at all: no stats, counts or metrics in the hero's copy", () => {
     const copy = page.replace(/<svg[\s\S]*?<\/svg>/, "").replace(/className="[^"]*"/g, "");
     expect([...copy.matchAll(/>([^<>{}]+)</g)].map((m) => m[1]).join(" ")).not.toMatch(/\d/);
+    expect(pill.replace(/className=\{[^}]*\}/g, "")).not.toMatch(/>[^<>{}]*\d[^<>{}]*</);   // the pill's words too
   });
   it("the role, availability and every project state come from the site's data, not new literals", () => {
     expect(page).toMatch(/\{siteMeta\.role\}/);
-    expect(page).toMatch(/availability\.open &&/);
+    // The pill shows only while the site says it is open, in the header from 1280px and in the hero below that (R2).
+    expect(pill).toMatch(/if \(!availability\.open\) return null;/);
+    expect(page).toMatch(/<AvailabilityPill className="hxa__pill--hero" reveal \/>/);
+    expect(nav).toMatch(/<AvailabilityPill className="site-nav__pill" \/>/);
     expect(page).toMatch(/heroIndex\.map/);
     expect(page).toMatch(/\{x\.state\}/);
     expect(page).toMatch(/href=\{resume\.href\} download=\{resume\.fileName\}/);
-    expect(page).toMatch(/Download résumé<span aria-hidden="true">↓<\/span>/);   // Tay, round 3: résumé, not CV
-    expect(page).not.toMatch(/Download CV/);
+    // Tay, round 3: résumé, not CV. R9: both arrows are the site's SVG icons, so no arrow glyph is left in the copy.
+    expect(page).toMatch(/Download résumé<ArrowDownIcon size=\{17\} \/>/);
+    expect(page).toMatch(/Explore my work<ArrowUpRightIcon size=\{17\} \/>/);
+    expect(page).not.toMatch(/Download CV|[↗↓]/);
   });
 });
 
-describe("never indexed, never linked", () => {
-  it("every /lab page is noindex, nofollow, and claims no canonical", () => {
-    expect(labMeta.robots).toMatchObject({ index: false, follow: false, googleBot: { index: false, follow: false } });
-    expect(labMeta.alternates?.canonical).toBeNull();
+// The release (R1, R12): the prototype's "never indexed, never linked" turns round. / is the page and is indexed; the
+// /lab segment that carried the prototype is deleted, and nothing points at it.
+describe("indexed, and no /lab left behind", () => {
+  it("the root layout makes / index, follow, with the canonical /, on the site's own origin; the page overrides neither", () => {
+    const layout = read("app/layout.tsx");
+    expect(layout).toMatch(/metadataBase: new URL\(siteMeta\.url\),/);
+    expect(siteMeta.url).toBe("https://tayshofer.dev");
+    expect(layout).toMatch(/alternates: \{ canonical: "\/" \},/);
+    expect(layout).toMatch(/robots: \{\n\s+index: true,\n\s+follow: true,\n\s+googleBot: \{\n\s+index: true,\n\s+follow: true,/);
+    expect(layout).not.toMatch(/noindex|index: false|follow: false/);
+    expect(read("app/page.tsx")).not.toMatch(/export const metadata|generateMetadata|robots|canonical/);
   });
-  it("the sitemap and robots.txt do not mention it", async () => {
+  it("no /lab route remains, and the sitemap and robots.txt do not mention it", async () => {
+    expect(fs.existsSync("app/lab")).toBe(false);
     const { default: sitemap } = await import("@/app/sitemap");
-    expect(sitemap().map((e) => e.url).join(" ")).not.toMatch(/\/lab/);
+    expect(sitemap().map((e) => e.url)).toEqual([siteMeta.url]);
     expect(read("app/robots.ts")).not.toMatch(/\/lab/);
   });
-  it("nothing in the live site's source links to /lab", () => {
-    const live = ["app", "components", "data", "lib"].flatMap(files)
-      .filter((f) => /\.(tsx?|css|json)$/.test(f) && !f.startsWith(path.join("app", "lab") + path.sep));
+  it("nothing in the site's source links to /lab", () => {
+    const live = ["app", "components", "data", "lib"].flatMap(files).filter((f) => /\.(tsx?|css|json)$/.test(f));
     for (const f of live) expect(read(f), f).not.toMatch(/["'`(]\/lab(\/|["'`)])/);
   });
 });
@@ -95,16 +107,23 @@ describe("progressive enhancement", () => {
   it("the reveal is the layer's CSS: it ends visible, the headline settles without fading, it is off with reduced motion", () => {
     expect(layer).toMatch(/@keyframes cine-rise \{ from \{ opacity: 0; translate: 0 var\(--cine-reveal-distance\); \} \}/);   // a `from` only: it ends on the real values
     // The headline (the largest paint) never starts invisible: starting it at opacity 0 left Chromium with no LCP at all.
-    // (Comments in tests are scanned by Tailwind too: a literal utility name here would add a rule to the live page's
-    // stylesheet, as one did on this branch until round 4.)
+    // (Comments in tests are scanned by Tailwind too: a literal utility name here would add a rule to the page's
+    // stylesheet, as one did on the prototype branch until round 4.)
     expect(layer).toMatch(/@keyframes cine-settle \{ from \{ translate: 0 var\(--cine-reveal-distance\); \} \}/);
     expect(layer).toMatch(/\.cine \[data-reveal="settle"\] \{ animation-name: cine-settle; \}/);
     expect(layer).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\n\s+\.cine \[data-reveal\] \{ animation: none; \}/);
     expect(layer).toMatch(/\[data-reduced-motion="true"\] \.cine \[data-reveal\] \{ animation: none; \}/);
-    // The hero is its consumer: six blocks in reading order; the h1 settles.
-    expect(page.match(/\sdata-reveal(="settle")?[\s>]/g)).toHaveLength(6);   // attributes, not the doc comment
+    // The hero is its consumer, and the page's one reveal (R10), in reading order. The locked hero's top line is the
+    // site header's row now (R2), and it rises first, as the top line did; below 1280px the pill opens the hero instead,
+    // at the same step (CSS shows exactly one of the two). Then the eyebrow, the h1 (it settles), the lede, the actions
+    // and Featured work.
+    expect(nav).toMatch(/<nav aria-label=\{t\.nav\.label\} className="site-nav__row[^"]*" data-reveal>/);
+    expect(pill).toMatch(/\{\.\.\.\(reveal \? \{ "data-reveal": "" \} : \{\}\)\}/);
+    expect(page.match(/\sdata-reveal(="settle")?[\s>]/g)).toHaveLength(5);   // attributes, not the doc comment
     expect(page).toMatch(/<h1[^>]*data-reveal="settle"/);
-    expect([...css.matchAll(/--reveal-i: (\d+);/g)].map((m) => Number(m[1]))).toEqual([0, 1, 2, 3, 4, 5]);
+    expect([...css.matchAll(/--reveal-i: (\d+);/g)].map((m) => Number(m[1]))).toEqual([0, 0, 1, 2, 3, 4, 5]);
+    expect(css).toMatch(/^\.site-nav__row \{ --reveal-i: 0; \}$/m);
+    expect(css).toMatch(/^\.hxa__pill\.hxa__pill--hero \{ --reveal-i: 0;/m);
   });
   it("the glows drift and breathe from the field's clock: transform and opacity only, 5 Hz, never brighter, never with reduced motion", () => {
     // No CSS animation: measured, it cost +5.3 pp of phone main thread. The loop drives them instead.
@@ -129,7 +148,10 @@ describe("progressive enhancement", () => {
     const selectors = (sheet: string) => [...sheet.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{/g)].map((m) => m[1].trim())
       .filter((s) => !s.startsWith("@") && !/^(from|to|\d+%)$/.test(s));
     expect(selectors(css).length).toBeGreaterThan(30);
-    for (const sel of selectors(css)) for (const part of sel.split(/,(?![^(]*\))/)) expect(part.trim(), sel).toMatch(/\.hxa\b|\.hxa__/);
+    // One rule here is not the hero's: the header's row, which takes the reveal's first step (R2). It sets only that.
+    const own = selectors(css).filter((s) => s !== ".site-nav__row");
+    expect(selectors(css).length - own.length).toBe(1);
+    for (const sel of own) for (const part of sel.split(/,(?![^(]*\))/)) expect(part.trim(), sel).toMatch(/\.hxa\b|\.hxa__/);
     expect(selectors(layer).length).toBeGreaterThan(8);
     for (const sel of selectors(layer)) for (const part of sel.split(/,(?![^(]*\))/)) expect(part.trim(), sel).toMatch(/(^|[\s(])\.cine([\s[):]|$)/);
   });
@@ -178,19 +200,19 @@ describe("contrast floors", () => {
   });
 });
 
-// ── The cinematic system (round 4): lab-scoped, extracted, and the single source of the hero's look ──
-describe("the cinematic system (app/lab/_cinematic/cinematic.css)", () => {
-  it("is loaded by the /lab layout and nothing else: never by the live page, its layout or the site's components", () => {
+// ── The cinematic system: the single source of the page's look, loaded by / alone ──
+describe("the cinematic system (app/cinematic.css)", () => {
+  it("is imported by the home page and nothing else; the root layout and the site's own sheet never name it", () => {
     const importers = ["app", "components", "lib"].flatMap(files).filter((f) => /\.tsx?$/.test(f))
-      .filter((f) => /^import\s+["'][^"']*_cinematic\/cinematic\.css["']/m.test(read(f)));   // real imports, not mentions
-    expect(importers).toEqual([path.join("app", "lab", "layout.tsx")]);
-    for (const f of ["app/layout.tsx", "app/page.tsx", "app/globals.css"]) expect(read(f), f).not.toMatch(/cinematic|\.cine\b|--cine-|app\/lab|\.\/lab/);
+      .filter((f) => /^import\s+["'][^"']*\bcinematic\.css["']/m.test(read(f)));   // real imports, not mentions
+    expect(importers).toEqual([path.join("app", "page.tsx")]);
+    for (const f of ["app/layout.tsx", "app/globals.css"]) expect(read(f), f).not.toMatch(/cinematic|\.cine\b|--cine-/);
   });
   it("the hero declares no colour of its own: every hex is a layer token, and no hero-local tokens remain", () => {
     expect(css).not.toMatch(/#[0-9a-fA-F]{6}\b/);
     expect(css).not.toMatch(/--hxa-[\w-]+:/);
   });
-  it("every --cine-* token read anywhere in the lab is defined in the layer", () => {
+  it("every --cine-* token the hero reads is defined in the layer", () => {
     const defined = new Set([...layer.matchAll(/(--cine-[\w-]+):/g)].map((m) => m[1]));
     const used = new Set([layer, css, page].flatMap((t) => [...t.matchAll(/var\((--cine-[\w-]+)/g)].map((m) => m[1])));
     expect([...used].filter((u) => !defined.has(u))).toEqual([]);
@@ -200,15 +222,16 @@ describe("the cinematic system (app/lab/_cinematic/cinematic.css)", () => {
     const hex = (arr: string) => "#" + arr.split(",").map((n) => Number(n.trim()).toString(16).padStart(2, "0")).join("");
     expect(hex(field.match(/const CYAN = \[([^\]]+)\]/)![1])).toBe(tok("cyan"));
     expect(hex(field.match(/const VIOLET = \[([^\]]+)\]/)![1])).toBe(tok("violet"));
-    expect([...page.matchAll(/stopColor="(#[0-9a-f]{6})"/g)].map((m) => m[1])).toEqual([tok("cyan"), tok("violet")]);
+    // The wordmark is the header's now (R2, components/ui/Logo.tsx), drawn as the locked hero drew it.
+    expect([...mark.matchAll(/stopColor="(#[0-9a-f]{6})"/g)].map((m) => m[1])).toEqual([tok("cyan"), tok("violet")]);
   });
   it("the status dot is the brand cyan, not a second green (nothing invented)", () => {
     expect(layer).toMatch(/--cine-status: var\(--cine-cyan\);/);
     expect(css).toMatch(/\.hxa__dot \{[^}]*background: var\(--cine-status\);/);
   });
-  it("is documented where it can't leak into the live stylesheet: docs/ (Tailwind excludes it), not app/", () => {
+  it("is documented where it can't leak into the page's stylesheet: docs/ (Tailwind excludes it), not app/ or components/", () => {
     expect(fs.existsSync("docs/CINEMATIC_SYSTEM.md")).toBe(true);
     expect(read("app/globals.css")).toMatch(/@source not "\.\.\/docs";/);
-    expect(files("app/lab").filter((f) => /\.mdx?$/.test(f))).toEqual([]);
+    expect(["app", "components"].flatMap(files).filter((f) => /\.mdx?$/.test(f))).toEqual([]);
   });
 });
