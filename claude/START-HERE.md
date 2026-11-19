@@ -4,14 +4,26 @@ Orientation doc for the Portfolio Project. Read this first in any new chat here 
 Claude Code session, then continue with the current task. Update it before each transition
 (new chat / new session) so the next one starts informed.
 
+> **This is `main`'s copy** (the session 11 close-out, 2026-11-19). **The active direction is the Concept A prototype on
+> `proto/hero-a-cinematic`**, not this branch. Tay reopened D1 for it on 2026-11-18; D2 is still not reopened, so no
+> WebGL. The prototype branch has its own copy of this file, with the full prototype detail.
+
 ## What the product is
 Tay Shofer's live software-engineering portfolio at https://www.tayshofer.dev/.
 Goal: get Tay interviews for junior/entry software roles. Next.js 16 / React 19 / TypeScript /
 Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONTEXT.md`.
 
-## What's live now (Production still `a7a89fd` at the session 10 close, 2026-11-19; the rest as verified at the session 9 close)
-- The current site is the calm, light **"Product Plates"** editorial design (M10), now with the whole **M1 core,
-  moves A–E**:
+## Two tracks
+1. **The live site, on `main`:** calm Product Plates with the M1 core (A–E). Nothing on the prototype branch reaches
+   it.
+2. **The Concept A prototype, on `proto/hero-a-cinematic`: the active direction.** A cinematic direction, measured,
+   under the noindex `/lab` segment.
+   - Tay reopened **D1** for it (2026-11-18). **D2 is still not reopened, so no WebGL.**
+   - Draft PR #18, never merged, Vercel Preview only.
+
+## What's live now (verified 2026-11-19, session 11)
+- The current site is the calm, light **"Product Plates"** editorial design (M10), with the whole **M1 core, moves
+  A–E**:
   - **A**, the iris accent: `#4a3fe0` light, `#a5a8ff` dark, `#b1b4ff` on the dark plates.
   - **C**, two heading tiers: `--text-chapter` 36→64 for the four products; `--text-h2` 30→42 for every paper section.
   - **D**, the motion tokens.
@@ -20,47 +32,57 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - **E**, the lower half: "Two more" as two lit paper plates; the About and Contact titles fully in ink.
   - Think · Build · Ship row words on the h3 tier (`--text-h3` 20→26), under the 42px title.
 
-  The site has no WebGL, and tests on `main` enforce that. `tokens.test.ts` now also guards the "Email me" fill
-  (≥ 3:1 against `--bg-raised` and `--bg`, both themes).
-- Production = GitHub `taysh123/Portfolio` **`main`**, the source of truth. Deployed **`a7a89fd`** on 2026-11-18
-  (PR #16, N8: docs and the private-repo guard, on top of PR #15; the site code is still PR #12's). GitHub's Production
-  deployment status is `success`. `main` is green: unit 122/122 (re-run on `a7a89fd` at the session 9 close),
-  typecheck and lint; Playwright 132/132 on PR #12's code. First-load JS is 181.79 KiB gzip (budget 205.7), HTML
-  156.44 KB (budget 568).
+  The site has no WebGL, and tests on `main` enforce that. `tokens.test.ts` also guards the "Email me" fill (≥ 3:1
+  against `--bg-raised` and `--bg`, both themes).
+- **Production** = GitHub `taysh123/Portfolio` **`main`**, the source of truth.
+  - Deployed **`fb0f575`**: PR #17, the session 9 close-out docs. GitHub status `success`, 2026-11-19 00:26Z.
+  - The site code is still PR #12's, since `fb0f575` and `a7a89fd` change docs only.
+  - `main` was green at the session 9 close: unit 122/122, typecheck and lint, and Playwright 132/132 on PR #12's code.
+  - First-load JS on `/` is 181.79 KiB gzip (budget 205.7); HTML is 156.44 KB (budget 568).
 - **Cloudflare proxies the site in front of Vercel** (N7). Tay turned its two HTML changes off on 2026-11-18: Web
-  Analytics is Disabled and Email Address Obfuscation is Off. Verified live at the close: no beacon, no decode
-  script, and plain `mailto:` links on `/` and `/privacy`.
-- Flagship projects shown: **T Poker, Aegis, DeveloperOS, GRAVITY FLOW**; plus Job Assistant
-  and Orders & Delivery. Statuses/limitations: see PROJECT_CONTEXT §4. T Poker and GRAVITY FLOW
-  repos are private ("Private repository" label).
-- **Check your branch first.** Branch from an up-to-date `main`; changes go through a PR that Tay
-  merges. `reference/premium-redesign-package` is a stale September design branch; never build or deploy from it.
+  Analytics is Disabled and Email Address Obfuscation is Off.
+- **Flagship projects shown:** T Poker, Aegis, DeveloperOS, GRAVITY FLOW; plus Job Assistant and Orders & Delivery.
+  Statuses and limitations: PROJECT_CONTEXT §4. T Poker's and GRAVITY FLOW's repositories are private ("Private
+  repository" label).
+- **Check your branch first.** Live work branches from an up-to-date `main`, and changes go through a PR that Tay
+  merges. `reference/premium-redesign-package` is a stale September design branch: never build or deploy from it.
 
-## Active prototype: Concept A, cinematic (session 10; NOT live, never merged)
-- **Branch** `proto/hero-a-cinematic` at **`0f38825`** (pushed; equal to its remote). **Draft PR #18**: keep it a draft
-  and never merge it.
-- **The Vercel Preview** of `0f38825` is behind Vercel Deployment Protection (sign in to view):
-  `https://tay-shofer-portfolio-3k9u4yr0a-tays-projects-d5aefd6e.vercel.app/lab/work` (and `/lab/hero-a`).
-- **The hero is LOCKED** (`/lab/hero-a`): a dark base, duotone cyan and violet, and a 2D-canvas constellation (no
-  WebGL).
-- **The design system** is built: `app/lab/_cinematic/cinematic.css` (`--cine-*` tokens on a `.cine` root, lab-only),
-  documented in `docs/CINEMATIC_SYSTEM.md` on the branch.
-- **The Projects section is done** (`/lab/work`): four honest product panels, per-project CSS 3D coverflow carousels
-  fed by `PROJECT_GALLERIES` in `data/projects.ts`, and the phone-proportions fix.
-- **Budgets and tests:** first-load JS is 181–184 KiB (budget 205.7); axe has 0 violations with motion on and off; unit
-  177/177; Playwright 173/173.
-- **`/` is untouched:** its CSS is pinned to `main`'s bytes, and `PROJECT_GALLERIES` reaches no live bundle. Details:
-  `docs/WORKLOG.md` session 10.
+## The Concept A prototype (session 10, then session 11)
+- **Branch** `proto/hero-a-cinematic` at **`5d4610b`** (session 11 close). The code is **`9569bd8`**, with docs on top.
+  - Draft **PR #18**: never merge it, never deploy it.
+  - Every push builds a Vercel **Preview**, behind Vercel's login. Production is untouched.
+- **Routes** (noindex, not in the sitemap, never linked from `/`):
+  - **`/lab/hero-a`**: the locked hero, a 2D-canvas constellation field (no WebGL). First-load JS 183.71 KiB.
+  - **`/lab/work`**: the Work slice, four product panels in the cinematic language. Each has a CSS 3D coverflow of the
+    project's real captures. First-load JS 181.43 KiB, HTML 67.46 KB.
+- **The system:** `docs/CINEMATIC_SYSTEM.md` covers the `--cine-*` layer (extracted from the hero, value for value), the
+  motion rules, the Work slice, the galleries and the carousel. Read it before touching `/lab`.
+- **Session 11:** every flagship's real captures are now in its carousel. **Tay approved the carousels** at the close.
+  - T Poker 5, Aegis 2, DeveloperOS 4, GRAVITY FLOW 5;
+  - Tay left out a duplicate "final count", the DeveloperOS refusal strip and its AI-features capture.
+  - The new captures are listed in `data/lab-images.ts`. **Never in `data/images.ts`:** the live About visual is client
+    code that bundles that whole table into `/`.
+- **Preview of `/lab/work`** (the branch's own link, which follows each push):
+  `https://tay-shofer-portfolio-git-proto-he-65ec6d-tays-projects-d5aefd6e.vercel.app/lab/work`.
+- **Kept identical to `main` on the prototype branch** (tests hold it):
+  - `/`'s stylesheets, pinned to `origin/main`'s digests;
+  - every guard file;
+  - `/`, `/lab/hero-a` and `/privacy`'s first-load assets (checked against the build before each round).
+- **Watch for Tailwind:** it scans `app/`, `data/`, `tests/` and `scripts/`. A utility name in a lab file, even in a
+  comment, adds a rule to `/`'s stylesheet. It has happened three times; the digest test catches it.
 
 ## Decided (Tay, 2026-11-18; details in `docs/RESEARCH_AND_DECISIONS.md` §1)
-- **D1 Direction: calm / premium. Evolve Product Plates; don't replace it.** Restrained cyan/violet
-  accents. Follow the reference README's take / do-NOT-take (its text: `docs/references/premium-redesign-README.md`):
-  no RGB wash, no holographic cube, no fabricated on-screen stats. CREATIVE_DIRECTION's dark-cinematic/3D art
-  direction is superseded.
-- **D2 3D: not now.** A future, separate, measured prototype only. Do not modify the
-  `three`/`lenis`/WebGL/`<canvas>` guard tests or the first-load JS budget. **Reopened for one measured prototype**
-  (Tay, 2026-11-18): Concept A on `proto/hero-a-cinematic` only (2D canvas and CSS 3D, no WebGL). `main`'s guards
-  are unchanged, and none needed editing.
+- **D1 Direction: reopened by Tay on 2026-11-18 for Concept A.** The cinematic prototype on `proto/hero-a-cinematic` is
+  the active direction.
+  - The live site stays calm / premium Product Plates (evolve, don't replace) until Tay decides otherwise.
+  - On `main`: restrained cyan/violet accents, and the reference README's take / do-NOT-take (its text:
+    `docs/references/premium-redesign-README.md`): no RGB wash, no holographic cube, no fabricated on-screen stats.
+- **D2 3D: still not reopened. No WebGL**, on `main` or on the prototype.
+  - The prototype's field is a 2D canvas; its carousels are CSS perspective on 2D elements.
+  - The `three`/`lenis`/WebGL/`<canvas>` guard tests and the first-load JS budget are unchanged, and the prototype is
+    held to the same 205.7 KiB.
+  - Session 10's docs and the branch's code comments called this "D2 reopened". Tay corrected that at the session 11
+    close; the comments are still to be reworded.
 - **D5** Public git history left as-is (no rewrite, repo stays public).
 - **D7** Claude Code ↔ Tay in **English**; Chat Claude ↔ Tay in **Hebrew**.
 - D3 docs merged (PR #4) · D4 duplicate ui-ux-pro-max removed · D6 content fixes merged (PR #5) ·
@@ -68,70 +90,70 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   Impeccable skipped.
 - **N5** GRAVITY FLOW repo **stays private**; the site marks it private like T Poker, and the dead link
   is removed from the served résumé PDF (PR #5, live).
-- **M1** (`docs/M1_VISUAL_PLAN.md`): the core, moves **A–E**, is approved and **live** (PRs #8, #11, #12). **F**
-  (desk plate): planned at the session 9 close for the next session, but session 10 took Concept A instead. It is
-  **not started**, and still Tay's call. **Keep Geist** (no display-face study). Use the plan's token values exactly; invent none.
-- **N1, N2** (Tay's brief, session 8; merged in PR #14):
-  - N1: the reference README's text, byte for byte, is in `docs/references/`, with no image.
-  - N2: the agent docs say "the institution" instead of its abbreviation.
-- **N7, the Cloudflare toggles** (Tay, 2026-11-18): Web Analytics is Disabled and Email Address Obfuscation is Off.
-  The `/privacy` wording is **deferred to the end of the build** (Tay, session 9 close).
-- **N8** (Tay's brief, session 9; merged in PR #16): GRAVITY FLOW's private repository name is out of the docs. The
-  private-repo guard now pins both private repos, T Poker and GRAVITY FLOW, by SHA-256 digest.
+- **M1** (`docs/M1_VISUAL_PLAN.md`): the core, moves **A–E**, is approved and **live** (PRs #8, #11, #12).
+  - **F** (the desk plate): Tay's plan at the session 9 close was to build it next session, on a preview branch.
+  - It is **not started**: sessions 10 and 11 went to Concept A.
+  - **Keep Geist** (no display-face study). Use the plan's token values exactly; invent none.
+- **N1, N2** (merged in PR #14): the reference README's text is in `docs/references/`, byte for byte, with no image; the
+  agent docs say "the institution" instead of its abbreviation.
+- **N7, the Cloudflare toggles:** done. The `/privacy` wording is **deferred to the end of the build** (Tay, session 9
+  close). Don't raise it before then.
+- **N8** (merged in PR #16): GRAVITY FLOW's private repository name is out of the docs. The private-repo guard pins both
+  private repos, T Poker and GRAVITY FLOW, by SHA-256 digest.
+- **Session 11 (Tay's answers):** T Poker has 5 captures, not 6 (no duplicate). The DeveloperOS refusal and
+  AI-features captures are left out. GRAVITY FLOW's existing two stay; Tay will swap one himself.
 
 ## What's next
-- **Next session: encode the ready-made captures** so the Projects carousels grow.
-  - Aegis and DeveloperOS have **one capture each** today; T Poker has 3 and GRAVITY FLOW 2.
-  - **Steps:** encode the files into `public/work/` (`scripts/m10-images.mjs`), list them in `data/images.ts`, then
-    append them to `PROJECT_GALLERIES` (`data/projects.ts`, on the prototype branch). An entry without alt text stops
-    the build.
-  - Real captures with reviewed alt text already exist in `public/projects/` (each project's `media.gallery`):
-    - **T Poker:** podium, stats, final count;
-    - **DeveloperOS:** AI features, learning, career, refusal, dashboard;
-    - **GRAVITY FLOW:** gravity run, cosmetics, win.
-  - **Aegis:** `public/work/hero-aegis`, the Incidents board, is already encoded: just append it.
-- Work on the prototype branch (it is the active one), never on `main`. Each push needs Tay's go, and so does each
-  Preview.
-- Tay to review the five NEW cinematic tokens (below).
-- Move F: not started; Tay's call. The N7 `/privacy` wording: deferred to the end of the build.
-- Phases and acceptance criteria: `docs/ROADMAP.md`.
+- **Concept A:** the carousels are approved. Tay decides what the prototype takes on next.
+- **With the next prototype commit:** reword "D2 reopened" to the corrected framing in the 11 code and test files that
+  carry it. They are comments and test titles under `app/lab/`, `tests/` and `scripts/lab-hero-a.mjs`; the docs were
+  fixed at the session 11 close.
+- **Move F** on `main`: still Tay's plan from the session 9 close, not started.
+  - It needs one additive floor case in `tokens.test.ts` (plan §11), and that is its only test change.
+  - Branch from an up-to-date `main`; Tay merges.
+- After M1, the next phase is in `docs/ROADMAP.md`.
 
-## Open PRs / branches (session 10 close, 2026-11-19)
-- **PR #17** `docs/session-9-closeout` (open): the session 9 state docs. Tay merges.
-- **PR #18** `proto/hero-a-cinematic` (**draft, never merge**): the Concept A prototype, `0f38825`.
-- **`docs/session-10-closeout`** (local, not pushed): these state docs, stacked on #17's branch. Push it and PR it into
-  `main` after #17 merges.
-- Nothing was deleted at the session 10 close: no branch is merged (each checked with `git merge-base --is-ancestor`).
-- Merged and deleted earlier (local and remote, each checked with `git merge-base --is-ancestor` first):
-  `fix/n8-gravity-flow-slug` (#16, tip `5a9d8a3`, at the session 9 close); `docs/session-8-closeout` (#15, tip
-  `f1f147a`) and `docs/session-7-closeout` (#13, tip `7a235a3`), both in session 9; `docs/backlog-n1-n2-n7` (#14, tip `ee96fc3`, at the session 8 close), `feature/m1-lower-half` (#12), `feature/m1-studio-light` (#11; session 8 re-checked: tip `63073bf` is in `main`, and
-  GitHub returns 404 for the branch), `docs/m1-pr1-closeout` (#10). Earlier: `feature/m1-iris-type-motion` (#8),
-  `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
+## Open PRs / branches (session 11 close, 2026-11-19)
+- **PR #18** (`proto/hero-a-cinematic`, draft): the Concept A prototype. Never merge, never delete; Preview only.
+- **`docs/session-10-closeout`** → this close-out PR into `main`, docs only. It brings `main`'s START-HERE, CLAUDE.md,
+  WORKLOG and RESEARCH_AND_DECISIONS level with the prototype's state. Tay merges.
+- Merged and deleted (each checked with `git merge-base --is-ancestor` first):
+  - `docs/session-9-closeout` (#17, tip `c9696d6`, local and remote, at the session 11 close);
+  - `fix/n8-gravity-flow-slug` (#16), `docs/session-8-closeout` (#15), `docs/session-7-closeout` (#13);
+  - `docs/backlog-n1-n2-n7` (#14), `feature/m1-lower-half` (#12), `feature/m1-studio-light` (#11),
+    `docs/m1-pr1-closeout` (#10);
+  - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Merge PR #17** (session 9 docs), then push and PR `docs/session-10-closeout` (session 10 docs). Both are docs only.
-- **Review the five NEW cinematic tokens** on the prototype branch: `--cine-lift`, `--cine-glow-lift`,
-  `--cine-flow-turn`, `--cine-flow-scale` and `--cine-flow-dim` (marked NEW in `app/lab/_cinematic/cinematic.css`).
-- Decide how far Concept A goes. It stays a draft PR #18 until then.
-- A note from session 7's preview shots: at 390px the TBS row word (20.3px, 600) is close to the row's lead line
-  `.tbs__line` (19px, 600). It follows the plan exactly, and no change was made. Worth a look when previewing F.
-- **Not pending: the N7 `/privacy` wording is deferred to the end of the build** (Tay, session 9 close). Don't raise it
-  before then. The draft is in `docs/RESEARCH_AND_DECISIONS.md` N7. When it ships, it needs an approved edit to
-  `tests/e2e/privacy.spec.ts`, which pins 2 outbound links.
-- D8 remainder: six unmerged remote branches kept (`feature/portfolio-polish`,
-  `feature/premium-portfolio-redesign-1mqmgf`, four `review/m10-*`) plus `reference/premium-redesign-package`;
-  delete only on a per-branch yes.
+- **Merge this close-out PR** (docs only), from `docs/session-10-closeout`.
+- **Swap the GRAVITY FLOW capture** he has in mind (the carousels themselves are approved).
+- **Decide whether Concept A goes further.** Five NEW values still wait for review: `--cine-lift`, `--cine-glow-lift`,
+  `--cine-flow-turn`, `--cine-flow-scale` and `--cine-flow-dim` (`docs/CINEMATIC_SYSTEM.md`).
+- **Move F:** confirm it is still next on `main`.
+- **Optional, on `main`:** the site's chat launcher folds its label as the page scrolls. That is 0.0076 CLS on `/` at
+  1440 and 390 (measured in session 11), well inside "good". Untouched.
+- **A note from session 7's preview shots:** at 390px the TBS row word (20.3px, 600) is close to the row's lead line
+  `.tbs__line` (19px, 600). It follows the plan exactly, and no change was made.
+- **Not pending:** the N7 `/privacy` wording is deferred to the end of the build.
+  - The draft is in `docs/RESEARCH_AND_DECISIONS.md` N7.
+  - When it ships, it needs an approved edit to `tests/e2e/privacy.spec.ts`, which pins 2 outbound links.
+- **D8 remainder:** six unmerged remote branches are kept (`feature/portfolio-polish`,
+  `feature/premium-portfolio-redesign-1mqmgf`, four `review/m10-*`), plus `reference/premium-redesign-package`. Delete
+  only on a per-branch yes.
 
 ## Standing rules
 - Live production site: no deploy/push/merge/secret/DNS change without Tay's explicit ask.
 - Don't break working features. Keep accessibility, privacy, SEO, security headers, and
   performance budgets intact.
 - The institution is not named, not even by abbreviation. Honest project facts only — no invented metrics/claims.
+- Never write either private repository's name (T Poker's, GRAVITY FLOW's) in docs, commits or PR bodies. Run
+  `npm test` (Git Bash) after a docs edit.
 - Evidence before conclusions; don't claim done before verified.
 
 ## Handoff / state doc
 Claude Code records session state in `docs/WORKLOG.md` (plus `docs/ROADMAP.md` for phases).
-Update them at the end of each milestone.
+Update them at the end of each milestone. `main`'s `docs/WORKLOG.md` has a summary of sessions 10–11. The prototype
+branch's has them in full, with every number, and its `docs/CINEMATIC_SYSTEM.md` documents the `/lab` system.
 
 ## Transition prompts (fill the task, paste into Claude Code)
 
@@ -140,6 +162,11 @@ Update them at the end of each milestone.
 > memory with the current state; clean up scratch; delete merged work branches (verify each first);
 > commit or PR anything uncommitted; then confirm main is clean.
 
-**Open a new session:**
-> New session. First read claude/START-HERE.md, docs/WORKLOG.md, and CLAUDE.md to load the
+**Open a new session (the prototype):**
+> New session. First check out and update `proto/hero-a-cinematic` (`git fetch && git checkout proto/hero-a-cinematic
+> && git pull`), then read claude/START-HERE.md, docs/WORKLOG.md, CLAUDE.md and docs/CINEMATIC_SYSTEM.md on that
+> branch. Then: <the new task>.
+
+**Open a new session (the live site):**
+> New session. First read claude/START-HERE.md, docs/WORKLOG.md, and CLAUDE.md on `main` to load the
 > current state. Then: <the new task>.

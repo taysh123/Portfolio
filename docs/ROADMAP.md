@@ -35,6 +35,8 @@ studies on a branch cut from production `main`. Release through a Vercel Preview
   the reference README's do-NOT-take list applies (no RGB wash, no holographic cube, no fabricated stats).
 - **No 3D now (D2):** the 3D-guard tests and the JS budget are not modified by any phase below unless
   Tay later approves a separate M2 prototype.
+- **Concept A is not M2.** It is the active direction under the reopened D1 (Tay, 2026-11-18): a measured cinematic
+  prototype on `proto/hero-a-cinematic`, never merged, with no WebGL. D2 is still not reopened.
 
 ## Review focus (what is most likely to go wrong)
 
