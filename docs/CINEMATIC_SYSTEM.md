@@ -356,7 +356,7 @@ text, the control edge at ≥ 3:1, the glass fill), wrapping as needed; the evid
 
 Under Stack, after a hairline: how the work gets done, **as the live section says it**
 (`components/sections/ThinkBuildShip.tsx`), restyled in the layer. Tay approved every word before it was built, with one
-change: the plainer DeveloperOS line.
+change: the plainer DeveloperOS line. **Tay approved the built section** at the session 14 close.
 
 | Element | Text | Source |
 |---|---|---|
@@ -392,7 +392,8 @@ change: the plainer DeveloperOS line.
   - first-load JS unchanged (every JS file byte-identical); HTML 97.66 → 102.79 KB (17.7 → 18.9 KB gzip);
   - LCP +2 ms desktop and +42 ms on a phone at 4× CPU (medians of 10 interleaved; a first round gave +8 and +72). Most of
     the phone cost is laying out the section before the first paint (diagnosed by cutting its markup, and by
-    `content-visibility: auto`), the same kind as Stack's: `docs/ROADMAP.md` #13 would win it back.
+    `content-visibility: auto`), the same kind as Stack's. **Tay keeps the cost** (session 14 close) and added the
+    section to `docs/ROADMAP.md` #13's P5 fix.
 
 ### No glow is a scroll anchor (session 14)
 
@@ -404,8 +405,10 @@ The two glows carry `overflow-anchor: none`.
 - Only the glows are left out, so everything else anchors as before. Leaving out the whole sky also fixed the jump, but
   at the page's end it moved the view by the hold's 1px rounding.
 - `tests/e2e/lab-work.spec.ts` presses each project with the buttons low in the view at 1440 and 390.
+- **Kept by Tay** (session 14 close).
 
 **Stack's hold with this section below it (`docs/ROADMAP.md` #14, re-checked in session 14):** 0 at 1440×900 and
 390×844 whenever the buttons are in view. It engages on tall screens with the buttons near the top (128–729px), and
 after a project is pressed with the buttons out of view above (keyboard only; 1,096–1,619px). Its space then sits
-between the filtered list and this section. Without it the view jumps by that much. Recommended: keep it as it is.
+between the filtered list and this section. Without it the view jumps by that much. **Tay keeps it as it is** (session 14
+close); its test's comment is reworded, and the visible gap case is re-checked in P5 (#14).

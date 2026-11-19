@@ -27,15 +27,16 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
   `https://github.com/taysh123/Portfolio.git` (the old name `Tay-Shofer---Portfolio` redirects). The repo
   is **public**. Changes go through a branch and a PR; Tay merges. Claude pushes or opens a PR only when the
   brief says so, and never merges.
-- **The active prototype: `proto/hero-a-cinematic`** (draft PR #18; its code is `8955039`, session 13). **Never merge
+- **The active prototype: `proto/hero-a-cinematic`** (draft PR #18; its code is `a8062e6`, session 14). **Never merge
   it, never delete it.**
   - Concept A work happens there, not on `main`. Push or make a Preview only on Tay's go.
   - Its routes are all noindex under `/lab`: the locked hero `/lab/hero-a`, and the Work slice `/lab/work`. Below its
-    panels sit About (approved, session 12) and Stack with its project filter (approved, session 13).
+    panels sit About (approved, session 12), Stack with its project filter (approved, session 13), and Think · Build ·
+    Ship (approved, session 14).
   - The Work slice has four carousels of real captures: T Poker 5, Aegis 2, DeveloperOS 4, GRAVITY FLOW 5 (approved by
     Tay, session 11).
   - Its lab-only design system is `app/lab/_cinematic/`. The doc, `docs/CINEMATIC_SYSTEM.md`, is on that branch, with
-    the branch's own START-HERE and WORKLOG (sessions 10–13).
+    the branch's own START-HERE and WORKLOG (sessions 10–14).
   - On that branch `/` and every guard file stay identical to `main`; an e2e test pins `/`'s stylesheets.
 - `reference/premium-redesign-package` is **stale** (Next 16.2.6, old names, institution label, private
   repo URLs). Never build, deploy, or copy content from it. (The local `feature/premium-portfolio-redesign`,
@@ -115,7 +116,7 @@ Verified gotchas (2026-11-18):
   old build. Serve manual checks on another port. On Windows, stopping a backgrounded `npx next start` can leave
   its `node` child holding the port: check `Get-NetTCPConnection -LocalPort <port> -State Listen` and stop that PID.
 - The Windows-only `tests/unit/site.test.ts:78` failure (N6) is fixed (`b4d5c73`, PR #7): the unit suite is
-  122/122 on Windows (`main` `1c57789`; PR #20 changed docs only; 200/200 on the prototype branch). Run `npm test` from Git Bash: a test shells out `git grep … || true`,
+  122/122 on Windows (`main` `1c57789`; PR #20 changed docs only; 208/208 on the prototype branch). Run `npm test` from Git Bash: a test shells out `git grep … || true`,
   and cmd.exe (PowerShell's child shell) has no `true`, so it fails there spuriously.
 - After leaving an old branch, run `npx next typegen` before `npm run typecheck` (stale `.next/types`).
 - `npm run build` fetches Geist from Google Fonts (`next/font`). A network blip fails it ("Failed to fetch Geist");

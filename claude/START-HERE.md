@@ -4,7 +4,7 @@ Orientation doc for the Portfolio Project. Read this first in any new chat here 
 Claude Code session, then continue with the current task. Update it before each transition
 (new chat / new session) so the next one starts informed.
 
-> **This copy is on `proto/hero-a-cinematic`** (session 14, 2026-11-19). It has more prototype detail than `main`'s
+> **This copy is on `proto/hero-a-cinematic`** (session 14 close, 2026-11-19). It has more prototype detail than `main`'s
 > copy (`main` has the essentials since PR #19). The branch is never merged.
 
 ## What the product is
@@ -49,15 +49,15 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 - **Check your branch first.** Live work branches from an up-to-date `main`, and changes go through a PR that Tay
   merges. `reference/premium-redesign-package` is a stale September design branch: never build or deploy from it.
 
-## The Concept A prototype (sessions 10–13)
-- **Branch** `proto/hero-a-cinematic`: code at **`8955039`** (session 13), with the docs on top.
+## The Concept A prototype (sessions 10–14)
+- **Branch** `proto/hero-a-cinematic`: code at **`a8062e6`** (session 14), with the docs on top.
   - Draft **PR #18**: never merge it, never deploy it.
   - Every push builds a Vercel **Preview**, behind Vercel's login. Production is untouched.
 - **Routes** (noindex, not in the sitemap, never linked from `/`):
   - **`/lab/hero-a`**: the locked hero, a 2D-canvas constellation field (no WebGL). First-load JS 183.71 KiB.
   - **`/lab/work`**: the Work slice, four product panels in the cinematic language. Each has a CSS 3D coverflow of the
     project's real captures. Below them, **About** (session 12, approved), then **Stack** (session 13, approved), then
-    **Think · Build · Ship** (session 14, for review). First-load JS 181.77 KiB, HTML 102.79 KB.
+    **Think · Build · Ship** (session 14, approved). First-load JS 181.77 KiB, HTML 102.79 KB.
 - **The system:** `docs/CINEMATIC_SYSTEM.md` covers the `--cine-*` layer (extracted from the hero, value for value), the
   motion rules, the Work slice, the galleries and the carousel. Read it before touching `/lab`.
 - **Session 11:** every flagship's real captures are now in its carousel. **Tay approved the carousels** at the close.
@@ -91,19 +91,20 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
     (`docs/ROADMAP.md` #13).
   - **Before the Contact session:** the filter's no-scroll-jump hold assumed Stack ends the page. Re-checked in session
     14 (below; `docs/ROADMAP.md` #14).
-- **Session 14: Think · Build · Ship (P3.5)** under Stack (`8382889`), **for Tay's review**:
+- **Session 14: Think · Build · Ship (P3.5)** under Stack (`8382889`), **approved by Tay** at the close:
   - The live section's title and rows word for word (`dict.tbs.title`, `pillars`), plus one DeveloperOS line under
     Build in Tay's wording, so all four flagships appear: "DeveloperOS: it declines when the index doesn't support an
     answer—before the provider is ever reached."
   - Three ruled rows on About's and Stack's grid; each piece of evidence opens with its project's name in ink. A server
     component: no client code, no control, no reveal; no token added.
   - **Measured:** JS unchanged; HTML 97.66 → 102.79 KB; LCP +2 ms desktop and +42 ms phone (a first round +8 / +72),
-    most of it the section's layout before the first paint (#13's fix would win it back).
+    most of it the section's layout before the first paint. **Tay keeps the cost;** the section joins #13's P5 fix.
   - **#14 re-checked:** the hold is 0 at 1440×900 and 390×844 with the buttons in view. It engages on tall screens and
     after a press with the buttons out of view, and its space then sits between the filtered list and this section.
-    Recommended: keep it.
+    **Tay keeps it as it is;** its test's comment is reworded (`a8062e6`, comment only). The visible gap case is a P5
+    re-check (#14). `StackFilter.tsx`'s own header comment still says Stack ends the page (not in the brief; left).
   - **Found and fixed (`d1c53a3`):** with the buttons low in the view, the browser's scroll anchoring followed the violet
-    glow up (220–462px). The glows no longer anchor scrolling; the hold and its test are unchanged.
+    glow up (220–462px). The glows no longer anchor scrolling; the hold and its test are unchanged. **Kept by Tay.**
 - **Preview of `/lab/work`** (the branch's own link, which follows each push):
   `https://tay-shofer-portfolio-git-proto-he-65ec6d-tays-projects-d5aefd6e.vercel.app/lab/work`.
 - **Kept identical on this branch** (tests hold it):
@@ -148,16 +149,16 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   AI-features captures are left out. GRAVITY FLOW's existing two stay; Tay will swap one himself.
 
 ## What's next
-- **Concept A:** the carousels, the five layer values, About and Stack are approved. Tay decides what the prototype
-  takes on next.
-  - Logged: the P5 (integration) item for Stack's LCP (`docs/ROADMAP.md` #13), and the Contact session's re-check of
-    the filter's hold (#14).
+- **Concept A:** the carousels, the five layer values, About, Stack and Think · Build · Ship are approved. Tay decides
+  what the prototype takes on next.
+  - Logged for P5 (integration): the LCP of Stack and Think · Build · Ship (`docs/ROADMAP.md` #13), and a re-check of
+    the filter hold's visible gap case (#14).
 - **Move F** on `main`: still Tay's plan from the session 9 close, not started.
   - It needs one additive floor case in `tokens.test.ts` (plan §11), and that is its only test change.
   - Branch from an up-to-date `main`; Tay merges.
 - After M1, the next phase is in `docs/ROADMAP.md`.
 
-## Open PRs / branches (session 13, 2026-11-19)
+## Open PRs / branches (session 14, 2026-11-19)
 - **PR #18** (`proto/hero-a-cinematic`, draft): the Concept A prototype. Never merge, never delete; Preview only.
 - Merged and deleted (each checked with `git merge-base --is-ancestor` first):
   - `docs/claude-md-tailwind-leak` (#20, tip `2e73766`, local and remote, in session 13);
@@ -169,10 +170,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Review Think · Build · Ship** (session 14) on the Preview; the #14 hold (keep it, recommended) and a go to reword its
-  test's out-of-date comment; keep or drop the glow fix (`d1c53a3`); the section's phone LCP cost (keep it, or fold it
-  into #13).
-- **Decide what Concept A takes on next.** The carousels, the five layer values, About and Stack are approved.
+- **Decide what Concept A takes on next.** The carousels, the five layer values, About, Stack and Think · Build · Ship
+  are approved.
 - **Swap the GRAVITY FLOW capture** he has in mind (the carousels themselves are approved).
 - **Move F:** confirm it is still next on `main`.
 - **Optional, on `main`:** the site's chat launcher folds its label as the page scrolls. That is 0.0076 CLS on `/` at
@@ -197,7 +196,7 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 
 ## Handoff / state doc
 Claude Code records session state in `docs/WORKLOG.md` (plus `docs/ROADMAP.md` for phases).
-Update them at the end of each milestone. On this branch, `docs/WORKLOG.md` also carries sessions 10 to 13; `main`'s
+Update them at the end of each milestone. On this branch, `docs/WORKLOG.md` also carries sessions 10 to 14; `main`'s
 copy ends with a summary of sessions 10–11.
 
 ## Transition prompts (fill the task, paste into Claude Code)

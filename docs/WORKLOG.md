@@ -11,6 +11,58 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-19 — Session 14 close-out: Think · Build · Ship approved; the hold kept; the glow fix kept (Claude Code)
+
+**Scope (Tay's brief):**
+- Think · Build · Ship is approved.
+- #14: keep the hold as it is; reword its test's out-of-date comment (comment only); log in ROADMAP #14 a P5 re-check
+  of the visible gap case.
+- Keep the glow scroll-anchoring fix (`d1c53a3`).
+- Phone LCP: keep the cost, and add this section to ROADMAP #13's P5 fix.
+- Close out: WORKLOG, START-HERE, CLAUDE.md and the memory, on this branch. `npm test`, push; PR #18 stays a draft.
+  Remove the baseline worktree, clean scratch, and confirm `main` is clean and level with `origin/main`.
+
+### Decisions (Tay)
+- **Think · Build · Ship is approved** as built (`8382889`).
+- **The hold stays as it is.** Its test's comment no longer says Stack ends the page (`a8062e6`, comment only: no
+  assertion, value or logic changed). `StackFilter.tsx`'s own header comment still says it; not in the brief, left.
+- **The glow fix stays** (`d1c53a3`).
+- **The phone LCP cost stays;** this section joins `docs/ROADMAP.md` #13's P5 fix (`content-visibility` with the glow
+  anchored).
+- **Logged for P5 as `docs/ROADMAP.md` #14:** re-check the visible gap case, the hold's space between the filtered list
+  and the next section on tall screens or after a press with the buttons out of view.
+
+### Docs and memory
+- `CLAUDE.md`: the prototype's code is `a8062e6`; Think · Build · Ship named on `/lab/work`; the branch's WORKLOG covers
+  sessions 10–14; the prototype's unit suite is 208/208.
+- `claude/START-HERE.md`: the section approved, the three decisions, what waits on Tay.
+- `docs/CINEMATIC_SYSTEM.md`: the section approved; the cost, the glow fix and the hold marked as Tay's decisions.
+- `docs/ROADMAP.md`: #13 now names both sections; #14 records the session 14 check and the P5 re-check.
+- The memory's state note, and three measurement lessons (a decorative layer at a share of the page's height can become
+  the browser's scroll anchor; a full-page gradient stretches with the page, so pixel checks hide it; cutting a
+  section's markup through one interception separates its layout cost from its bytes).
+
+### Clean-up
+- Removed the `47998ee` baseline worktree (`git worktree list` shows only the main checkout).
+- Cleaned the scratchpad: the probes, logs, screenshots and PR-body drafts.
+
+### Validation (Git Bash)
+- After the comment change: `npm run build`, then `npm test` 208/208 and `GROQ_API_KEY= npx playwright test` 204/204.
+  `/`'s Tailwind sheet keeps `868e8b98…` (44,530 bytes).
+- After these docs: `npm test` 208/208; a production build's `/` Tailwind sheet at `868e8b98…` (44,530 bytes), and the
+  pinned-stylesheet e2e test passes.
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production. Local `main` level with it, and clean.
+- This branch: the code is `a8062e6`; the docs are on top. PR #18 is a draft.
+
+### Waiting on Tay
+- **Decide what Concept A takes on next.**
+- Swap the GRAVITY FLOW capture he has in mind. Move F: still his call.
+- Optional, on `main`: the chat launcher's fold on scroll (0.0076 CLS).
+
+---
+
 ## 2026-11-19 — Session 14: Think · Build · Ship (P3.5) on `/lab/work`; a glow scroll-anchor fix (prototype, D1 reopened) (Claude Code)
 
 **Scope (Tay's brief):**
@@ -2237,3 +2289,4 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-19 | Session 13 | PR #20 merged and its branch deleted. Stack (P3.4) on `/lab/work`, in three passes on Tay's reviews: a project line per tool (`757c377`); the live Stack's layout with a dimming filter (`d3373b6`); a filter that shows only the chosen project's tools, as pills, with a no-scroll-jump hold (`8955039`). Security group; one small island (+351 bytes gzip) | `app/lab/work/{stack.ts,StackBlock.tsx,StackFilter.tsx,page.tsx,work.css}`, `tests/{unit,e2e}/lab-work.*`, `docs/CINEMATIC_SYSTEM.md`, `claude/START-HERE.md`, `docs/WORKLOG.md` |
 | 2026-11-19 | Session 13 close | Stack approved; its LCP cost kept and logged as a P5 item (ROADMAP #13); the Contact re-check logged (#14); CLAUDE.md's stale code reference, verified commit and counts updated | `CLAUDE.md`, `claude/START-HERE.md`, `docs/{WORKLOG,ROADMAP,CINEMATIC_SYSTEM}.md` |
 | 2026-11-19 | Session 14 | Think · Build · Ship (P3.5) under Stack from the live section's own words, plus one DeveloperOS line in Tay's wording (`8382889`); the #14 hold re-checked (keep, recommended); no glow is a scroll anchor (`d1c53a3`) | `app/lab/work/{tbs.ts,TbsBlock.tsx,page.tsx,work.css}`, `tests/{unit,e2e}/lab-work.*`, `docs/{CINEMATIC_SYSTEM,ROADMAP,WORKLOG}.md`, `claude/START-HERE.md` |
+| 2026-11-19 | Session 14 close | Think · Build · Ship approved; the hold kept and its test's comment reworded (`a8062e6`); the glow fix kept; the section's LCP cost kept and added to ROADMAP #13; #14's visible gap case logged for P5; baseline worktree removed, scratch cleaned | `tests/e2e/lab-work.spec.ts` (comment), `CLAUDE.md`, `claude/START-HERE.md`, `docs/{WORKLOG,ROADMAP,CINEMATIC_SYSTEM}.md` |
