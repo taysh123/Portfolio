@@ -142,6 +142,7 @@ describe("the framework (security review, 2026-10-13)", () => {
 });
 
 describe("privacy (the owner's decisions, 2026-10-13)", () => {
+  // R12 (Tay, session 16): the site is dark only, so the one preference cookie written is a11y.
   it("the preference cookies get Secure over HTTPS, keep SameSite=Lax, path and a one-year life, and hold only the value", async () => {
     const { writeCookie } = await import("@/lib/theme");
     const g = globalThis as unknown as { document?: unknown; location?: unknown };
@@ -149,10 +150,10 @@ describe("privacy (the owner's decisions, 2026-10-13)", () => {
     const written: string[] = [];
     g.document = { set cookie(v: string) { written.push(v); } };
     try {
-      g.location = { protocol: "https:" }; writeCookie("theme", "dark");
-      g.location = { protocol: "http:" }; writeCookie("theme", "light");
+      g.location = { protocol: "https:" }; writeCookie("a11y", '{"largeText":true}');
+      g.location = { protocol: "http:" }; writeCookie("a11y", '{"largeText":false}');
     } finally { g.document = saved.document; g.location = saved.location; }
-    expect(written).toEqual(["theme=dark; path=/; max-age=31536000; samesite=lax; secure", "theme=light; path=/; max-age=31536000; samesite=lax"]);
+    expect(written).toEqual(["a11y=%7B%22largeText%22%3Atrue%7D; path=/; max-age=31536000; samesite=lax; secure", "a11y=%7B%22largeText%22%3Afalse%7D; path=/; max-age=31536000; samesite=lax"]);
   });
   it("the chat discloses Groq in the owner's words, and the Privacy page matches the code it describes", () => {
     expect(dict.chat.disclosure).toBe("AI answers are generated via Groq. Please don't share personal or sensitive information.");
