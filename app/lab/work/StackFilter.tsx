@@ -13,9 +13,11 @@ type Option = { id: string; name: string; status: string };
  * that project's tools remain, and a polite line says so, in the live Stack's words.
  *
  * - The buttons stay mounted, so focus stays on the one pressed.
- * - No scroll jump: Stack ends the page, so a shorter list would pull the page up under the reader. On each press the
- *   results (the status line and the groups) hold just enough height that the page still reaches the bottom of the view;
- *   All lets go (it is the tallest).
+ * - No scroll jump: a shorter list would pull the page up under the reader whenever what follows Stack (Think · Build ·
+ *   Ship and Contact since sessions 14 and 15, then the page's bottom padding) can't fill the rest of the view. On each
+ *   press the results (the status line and the groups) hold just enough height that the page still reaches the bottom
+ *   of the view, and no more: the hold is 0 whenever that is already so (docs/ROADMAP.md #14). All lets go (it is the
+ *   tallest).
  * - Without JavaScript, and until hydration: the full list (All), and the buttons are not shown (they would do nothing).
  *   Their space is kept, so nothing shifts when they appear.
  * - It imports no data: the server hands in the options, their status lines and the groups.
@@ -30,9 +32,9 @@ export function StackFilter({ label, all, options, children }: { label: string; 
   const press = (id: string) => {
     const g = results.current;
     if (id && g) {
-      // What follows the results (the section's end, the page's bottom padding) stays; the results (the status line and
-      // the groups: the line's height changes with the name, so it is held too) must reach far enough that the page
-      // still ends at or below the view's bottom edge.
+      // What follows the results (the rest of Stack, the sections below it, the page's bottom padding) stays; the
+      // results (the status line and the groups: the line's height changes with the name, so it is held too) must reach
+      // far enough that the page still ends at or below the view's bottom edge.
       const r = g.getBoundingClientRect();
       const after = document.documentElement.scrollHeight - (scrollY + r.bottom);
       setHold(Math.max(0, Math.ceil(innerHeight - r.top - after)));
