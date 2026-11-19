@@ -281,48 +281,64 @@ Under the four panels, after a hairline: who, in about ten seconds. Tay approved
 
 ### Stack (P3.4, session 13)
 
-Under About, after a hairline: the tools behind the work, each with the flagships that use it. Tay approved the plan with
-four changes (session 13): the tools no flagship uses stay listed with no project line; a Security group from the
-projects' own text, with JWT moved into it; two tool columns at 390px, one only at 320px; Everyday tools kept.
+Under About, after a hairline: the tools behind the work, **as the live Stack shows them** (`components/sections/Stack.tsx`),
+restyled in the layer. A first build gave each tool its own project line; Tay found that too busy and asked for this
+rebuild (session 13).
 
 | Element | Text | Source |
 |---|---|---|
 | Eyebrow | Stack | `dict.nav.stack` |
 | Title (h2) | Tools behind the work. | `dict.stack.title`, the live Stack's title. No lede. |
-| Groups (h3) | Languages · Product and interface · Services and APIs · Security · Data, search and models · Delivery and testing · Everyday tools | the live `skillGroups` titles, in order; "Security" is Tay's group, after Services and APIs |
+| Filter | Filter by project · All · T Poker · Aegis · DeveloperOS · GRAVITY FLOW | `dict.stack.filter`, `dict.stack.all`, the four flagships' names (the live lens has six; the lab keeps the four it shows) |
+| Filter status | Showing the {n} tools {name} uses. | `dict.stack.showing`, the live lens's polite line; n counts the tools the project lights here |
+| Groups (h3) | Languages · Product and interface · Services and APIs · Security · Data, search and models · Delivery and testing · Everyday tools | the live `skillGroups` titles, in order; "Security" is Tay's group |
 | Tools | the live labels, word for word, in the live order; JWT moves to Security | `data/skills.ts` |
-| Projects under a tool | T Poker · Aegis · DeveloperOS · GRAVITY FLOW, as they apply | `projectsFor()` in `data/stackLens.ts` (each project's published text), kept to the four flagships; names from `data/projects.ts` |
-| "(optional)" | on Ollama only | DeveloperOS's stack entry "Ollama (optional)" |
+| Evidence (one per group) | the live group's sentence, word for word | `skillGroups[].evidence` |
+| Security evidence | Aegis authenticates agent ingestion by body HMAC and uses JWT (RS256); DeveloperOS compares a per-instance CSRF token with hmac.compare_digest. | built only from the cited source lines below (Tay, session 13) |
+| A tool's accessible text and hover title | its flagships, comma-separated, e.g. "C# (T Poker, Aegis)" | the live Stack's own pattern; `projectsFor()` kept to the four |
 
-**Security, in the projects' own words:**
+**Security:**
 
-| Label | Project | Source line (`data/projects.ts`) |
+| Row | Projects | Source (`data/projects.ts`) |
 |---|---|---|
-| JWT (RS256) | Aegis | Aegis `stack`: "JWT (RS256)" |
-| Body HMAC | Aegis | Aegis decision title: "Agent ingestion authenticated by body HMAC" (first letter capitalised) |
+| JWT | T Poker · Aegis | the live tool, moved from Services and APIs; `projectsFor("JWT")` (T Poker's stack "JWT", Aegis's "JWT (RS256)") |
+| Body HMAC | Aegis | Aegis decision title: "Agent ingestion authenticated by body HMAC" |
 | CSRF token | DeveloperOS | DeveloperOS decision "Loopback API hardened like a public one": "A per-instance CSRF token compared with hmac.compare_digest" |
 
-- T Poker's stack says "JWT", not RS256 (it signs its own tokens with HS256, per the `data/skills.ts` comment), so it is
-  not on the JWT (RS256) row. The lab Stack therefore shows no JWT for T Poker.
-- **No project line** for Java, C++, C, JavaFX, Framer Motion, pytest and Playwright (no flagship uses them), nor for
-  Everyday tools (Git, Linux, Claude Code). Their live notes ("where I started", "this site", …) are not shown, and Job
-  Assistant and Orders & Delivery are never named.
+- **Tools no flagship uses** (Java, C++, C, JavaFX, Framer Motion, pytest, Playwright) and Everyday tools (Git, Linux,
+  Claude Code) carry no project: they show under All and dim under every project. Their live notes are not shown.
+- **Two live evidence sentences name the other two projects**, word for word as Tay asked: Languages ("…Python
+  DeveloperOS and Job Assistant; Java runs Orders & Delivery.") and Product and interface ("…JavaFX is Orders &
+  Delivery's client.").
 - **No AI group:** Aegis's analysis is a deterministic mock and DeveloperOS's default is offline; Ollama is the only
-  model tool, and its row says optional.
-- **Not used:** the live per-group evidence sentences (each tool names its projects instead), logos, levels, years, the
-  live filter.
-- **Files:** `app/lab/work/stack.ts` derives every string; `StackBlock.tsx` is a server component.
-  `tests/unit/lab-work.test.ts` holds each string to its source and pins the approved rows.
-- **Layout:** each group is a row on its own hairline. From 1024px its name takes the panels' words share (5fr) and its
-  tools the capture's (7fr), so the tools line up under About's words; stacked below. Two tool columns from 360px, one
-  below (320). Each tool in ink at the body size, its projects under it in mist at the label size.
-  - A project's name never splits across two lines ("GRAVITY FLOW" stays whole): each name is one unbreakable span
-    with its separator after it, so the line breaks only between names. The e2e layout test holds it at every width.
-- **Semantics:** each group's tools are a list named by its heading (h3). Nothing in it is a link or a control.
-- **Motion:** none. It holds still; nothing in it animates or eases.
+  model tool, and the Data evidence says "an optional local model".
+
+**The filter** (`StackFilter.tsx`, the one client island in Stack):
+- **Buttons** with `aria-pressed`, one pressed at a time, in a group labelled "Filter by project". Each is a 44px
+  target with the layer's cyan ring.
+- **Pressing a project** sets `data-lens` on the groups. The highlight is CSS written from the options in
+  `stack.ts`, as the live Stack writes its FILTER:
+  - a tool whose `data-p` names the project turns cyan;
+  - every other tool, and the name of a group it lights nothing in, turns the faintest ink (≥ 5.4:1).
+  - Colour only, so nothing moves (an e2e test compares every box before and after).
+  - The polite line says "Showing the {n} tools {name} uses."
+- **Without JavaScript,** and until hydration: the full list (All). The buttons are not shown (they would do nothing),
+  and their space is kept, so nothing shifts when they appear.
+- **Reduced motion:** the chips and the highlight change at once (no transitions).
+- **It imports only React:** the server hands in the options, their status lines and the groups (as children), so
+  no data reaches the client.
+
+**Layout:** one row per group, each on its own hairline. From 1024px its name takes the panels' words share (5fr) and
+its tools and evidence the capture's (7fr), lined up under About's words; stacked below. The tools share one line,
+wrapping as needed (ink, body size); the evidence sits under them (mist, small).
+
+- **Files:** `app/lab/work/stack.ts` derives every string and the highlight rules; `StackBlock.tsx` is a server component;
+  `StackFilter.tsx` is the island. `tests/unit/lab-work.test.ts` holds each string to its source and pins the mapping.
 - **Tokens:** none added. Its eyebrow and title share About's rules; its own rules read only layer tokens.
-- **Its cost (measured, session 13):** no script changes (every JS chunk identical); the page's HTML grows 73.02 →
-  100.05 KB (14.0 → 16.5 KB gzip). On a phone at 4× CPU, laying out its 201 elements before the first paint moves LCP
-  by about 40–76 ms (desktop flat). `content-visibility: auto` on the section wins most of that back, but it is not
-  used: the page then grows when Stack first renders, and the violet glow, placed at 38% of the page's height, moves
-  with it (slice CLS 0.353 at 320px). It would need the glow to stop depending on the page's height. Tay's call.
+- **Its cost (measured against `d64763d`, session 13):**
+  - first-load JS +239 bytes gzip (the island shares the carousel's chunk: 181.43 → 181.66 KiB);
+  - HTML 73.02 → 98.60 KB (14.0 → 17.9 KB gzip; about two-thirds is Next's flight copy of the same tree);
+  - LCP +16 ms desktop and +54 ms on a phone at 4× CPU (medians; LCP = FCP);
+  - the filter's buttons answer in under 16 ms on desktop and 64–72 ms on that phone.
+  - `content-visibility: auto` would skip Stack's off-screen layout, but the violet glow (at 38% of the page's height)
+    then moves when Stack renders: slice CLS 0.353 at 320px, measured on the first build. Not used; Tay's call.

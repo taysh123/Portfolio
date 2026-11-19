@@ -11,6 +11,106 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-19 — Session 13, continued: Stack rebuilt like the live Stack, with a filter (prototype, D1 reopened) (Claude Code)
+
+**Scope (Tay's review of the first build):** one project line per tool is too busy. Rebuild Stack to work like the live
+Stack on `/` (`data/skills.ts`, `data/stackLens.ts`, its filter), restyled in `.cine`:
+- one row per group: its name, its tools inline (wrapping), the live evidence sentence under them, word for word;
+- "Filter by project": All and the four flagships only; a project lights its tools and dims the rest, by the live
+  `projectsFor()`; reuse the live filter's logic, don't fork the data;
+- keep Security (Body HMAC, CSRF token) plus ONE "JWT" row mapped to T Poker · Aegis (replacing "JWT (RS256)"); write
+  Security one sentence from the cited source lines only;
+- tools with no featured project show under All and dim under every project;
+- real buttons with `aria-pressed`, keyboard operable, 44px, visible focus; the full list without JS; no transitions
+  with reduced motion; axe 0;
+- one small island; report the exact added KiB; `/` unchanged. Re-measure against `d64763d`; screenshots (All and one
+  project) at 390 and 1440 in scratch. Commit, push, update PR #18. Don't close the session.
+
+### 1. What changed (`d3373b6`)
+- `app/lab/work/stack.ts`: the live groups, tools and evidence sentences; each tool's flagships from `projectsFor`
+  (kept to the four); Security; the filter's options (count and the live status line, `dict.stack.showing`); and the
+  highlight rules, written from the options as the live Stack writes its FILTER.
+- `StackBlock.tsx` (server): one row per group (an h3, the tools as a list named by it, the evidence). Each tool carries
+  `data-p` and says its flagships in its accessible text and hover title, as the live Stack does ("C# (T Poker, Aegis)").
+- `StackFilter.tsx` (client, the one new island): five toggle buttons in a group labelled "Filter by project", one
+  pressed at a time; pressing one sets `data-lens` on the groups (server-rendered children) and fills the polite status
+  line. It imports only React. Without JS, and until hydration, the buttons are not shown and their space is kept.
+- `work.css`: the chips (the panels' pill at 44px, the pressed one filled in cyan), the rows, and the highlight's
+  transitions, dropped with reduced motion. No token added.
+- **The highlight:** the pressed project's tools turn cyan; every other tool, and the name of a group it lights nothing
+  in, turns the faintest ink (≥ 5.4:1). Colour only: an e2e test compares every box before and after.
+- Tests: 14 unit (every string held to its source, the mapping pinned, the Security sources, the island's imports and
+  markup, reduced motion) and 9 e2e (no JS, the filter by the live mapping, the keyboard, holds still ×2, layout at 1440,
+  1024, 390 and 320). The keyboard walk now has 29 stops (the five buttons after About's links); the axe runs press
+  Aegis first, so the dimmed tools are checked; the no-JS test checks the filter is not shown.
+
+**Security:**
+
+| Row | Projects | Source |
+|---|---|---|
+| JWT | T Poker · Aegis | the live tool, moved from Services and APIs; `projectsFor("JWT")` |
+| Body HMAC | Aegis | Aegis decision title: "Agent ingestion authenticated by body HMAC" |
+| CSRF token | DeveloperOS | DeveloperOS decision: "A per-instance CSRF token compared with hmac.compare_digest" |
+
+Security's sentence: "Aegis authenticates agent ingestion by body HMAC and uses JWT (RS256); DeveloperOS compares a
+per-instance CSRF token with hmac.compare_digest." Built from Aegis's decision title, Aegis's stack entry "JWT (RS256)"
+and DeveloperOS's decision; a unit test checks each phrase against its project's text.
+
+**Worth knowing:** two live evidence sentences, kept word for word as asked, name the other two projects (Languages: Job
+Assistant and Orders & Delivery; Product and interface: Orders & Delivery).
+
+### 2. Found on the way (VL)
+- A first "holds still" check compared viewport boxes, and a click scrolled the page by 1px. It now compares page
+  coordinates; nothing moves.
+
+### 3. Measured (VL; local production builds, `d64763d` rebuilt in a scratch worktree vs `d3373b6`)
+| | before | after |
+|---|---|---|
+| First-load JS `/lab/work` (the budget algorithm) | 181.43 KiB | **181.66 KiB** (+239 bytes gzip); budget 205.7 |
+| HTML `/lab/work` | 73.02 KB (14.0 KB gzip) | **98.60 KB** (17.9 KB gzip); budget 568 |
+| LCP desktop, median (range), 10 interleaved | 92 ms (68–104) | 108 ms (96–112) |
+| LCP phone, 4× CPU and slow 4G, median (range), 10 interleaved | 934 ms (892–960) | 988 ms (952–1108) |
+| CLS (load) | 0 | 0 |
+| INP desktop / phone (`scripts/lab-hero-a.mjs`, worst per run, median) | 24 / 32 ms | 24 / 32 ms |
+| FPS desktop / phone | 60.5 / 60.5 | 60.5 / 60.5 |
+
+- **The added JS:** one chunk changed, the carousel's (Turbopack put the island in it): 4,870 → 5,109 bytes gzip. Every
+  other JS chunk is byte-identical to the baseline's.
+- **The HTML:** Stack's own markup is 10.1 KB (1.8 KB gzip); most of the rest is Next's flight copy of the same tree.
+- **LCP** is the first capture, and the LCP and FCP medians are equal. The shift is the same kind as the first build's (more to lay
+  out before the first paint; diagnosed then). `content-visibility` stays unused (the glow, section 5 of the first entry).
+- **INP on the filter's buttons** (3 runs): desktop < 16 ms; phone at 4× CPU 64–72 ms. On About's words, the same in
+  both builds (< 16 / 32 ms).
+- **Scroll-through CLS:** the slice 0 before and after; 0.0076 outside it (the chat launcher's fold, pre-existing).
+- **axe-core 4.11.4, WCAG 2.2 A/AA:** 0 violations at 1440 and 390, motion on and reduced, with All, Aegis and GRAVITY
+  FLOW pressed. Needs review: at 390 the same two as before; at 1440 none (it was one, Aegis's line).
+- At page end the chat launcher clears the last line by 150px at 1440 and 102px at 390 and 320.
+
+### 4. Unchanged (VL)
+- **`/`, `/lab/hero-a`, `/privacy`:** every script and stylesheet byte-identical; the markup identical with build IDs
+  masked. `/`'s stylesheets keep the pinned digests (`868e8b98…` 44,530 bytes; `4b84cc35…` 31,805).
+- **Pixels (reduced motion, full page):** `/` 0 differing at 1440 and 390; the hero 0 with its canvas hidden;
+  `/lab/work` from the top to About's end (glows hidden) 0.
+- **Guard files** identical to `origin/main` (`443a1f9`).
+
+### 5. Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` | **200/200** (186 before Stack, plus 14) |
+| `npm run typecheck`, `npm run lint` | exit 0 |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test` | **193/193** (184 before Stack, plus 9) |
+
+### 6. Screenshots (scratch, not committed)
+- At 1440 and 390: Stack with All, Stack with Aegis pressed, and the full page.
+
+### Waiting on Tay
+- Review the rebuilt Stack on the Preview, and Security's sentence.
+- The LCP cost (+16 ms desktop, +54 ms phone): keep it, or anchor the violet glow so the off-screen Stack can skip its
+  layout.
+- Two live evidence sentences name Job Assistant and Orders & Delivery: fine, or trim them for the lab?
+
+---
+
 ## 2026-11-19 — Session 13: Stack (P3.4) on `/lab/work` (prototype, D1 reopened) (Claude Code)
 
 **Scope (Tay's brief):**

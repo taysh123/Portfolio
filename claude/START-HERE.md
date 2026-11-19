@@ -50,14 +50,14 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   merges. `reference/premium-redesign-package` is a stale September design branch: never build or deploy from it.
 
 ## The Concept A prototype (sessions 10–13)
-- **Branch** `proto/hero-a-cinematic`: code at **`757c377`** (session 13), with the docs on top.
+- **Branch** `proto/hero-a-cinematic`: code at **`d3373b6`** (session 13), with the docs on top.
   - Draft **PR #18**: never merge it, never deploy it.
   - Every push builds a Vercel **Preview**, behind Vercel's login. Production is untouched.
 - **Routes** (noindex, not in the sitemap, never linked from `/`):
   - **`/lab/hero-a`**: the locked hero, a 2D-canvas constellation field (no WebGL). First-load JS 183.71 KiB.
   - **`/lab/work`**: the Work slice, four product panels in the cinematic language. Each has a CSS 3D coverflow of the
     project's real captures. Below them, **About** (session 12, approved), then **Stack** (session 13, for Tay's
-    review). First-load JS 181.43 KiB, HTML 100.05 KB.
+    review). First-load JS 181.66 KiB, HTML 98.60 KB.
 - **The system:** `docs/CINEMATIC_SYSTEM.md` covers the `--cine-*` layer (extracted from the hero, value for value), the
   motion rules, the Work slice, the galleries and the carousel. Read it before touching `/lab`.
 - **Session 11:** every flagship's real captures are now in its carousel. **Tay approved the carousels** at the close.
@@ -72,17 +72,18 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - No photo, no institution, no new claim. A server component; it holds still. No token added.
   - The five NEW layer values are **approved by Tay as they are** (session 12).
   - The "D2 reopened" comments in 11 code and test files now say D1 reopened, D2 not, no WebGL (`4dccdf8`).
-- **Session 13: Stack (P3.4)** under About. Tay approved the plan with four changes, all built.
-  - The live Stack's groups and tools, word for word. Under each tool, the flagships the live site's own mapping finds
-    for it (`projectsFor`), kept to the four.
-  - Tools no flagship uses are listed with no project line; the other two projects are never named.
-  - A **Security** group in `data/projects.ts`'s own words: JWT (RS256) and Body HMAC (Aegis), CSRF token
-    (DeveloperOS). JWT moved there from Services and APIs. T Poker's own JWT (HS256) is therefore not shown.
-  - Two tool columns from 360px, one at 320. Everyday tools kept, with no projects.
-  - A server component; it holds still. No token added.
-  - **Measured:** scripts identical; on a phone at 4× CPU, LCP moves about 40–76 ms (desktop flat). Skipping Stack's
-    off-screen layout would win most of it back, but it moves the violet glow at 320px. Tay's call
-    (`docs/WORKLOG.md`, session 13).
+- **Session 13: Stack (P3.4)** under About, rebuilt on Tay's review (a first build, `757c377`, gave each tool its own
+  project line: too busy). It now works like the live Stack, in the layer:
+  - One row per group: its name, its tools on one wrapping line, and the live evidence sentence, word for word.
+  - **"Filter by project":** All and the four flagships, as toggle buttons (`aria-pressed`, 44px). A project lights its
+    tools (the live `projectsFor`, through `data-p`) and dims the rest; colour only. One small island
+    (`StackFilter.tsx`, React only): +239 bytes gzip. Without JS the full list shows.
+  - **Security:** JWT (T Poker, Aegis; moved from Services and APIs), Body HMAC (Aegis), CSRF token (DeveloperOS), and
+    one sentence built from their source lines.
+  - Tools no flagship uses show under All and dim under every project. Everyday tools kept.
+  - **Measured:** LCP +16 ms desktop, +54 ms phone at 4× CPU (more to lay out before the first paint). Skipping Stack's
+    off-screen layout would win it back, but it moves the violet glow at 320px. Tay's call (`docs/WORKLOG.md`, session
+    13).
 - **Preview of `/lab/work`** (the branch's own link, which follows each push):
   `https://tay-shofer-portfolio-git-proto-he-65ec6d-tays-projects-d5aefd6e.vercel.app/lab/work`.
 - **Kept identical on this branch** (tests hold it):
@@ -146,9 +147,9 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Review Stack** (session 13) on the Preview, and two choices it raised:
-  - the phone LCP cost: keep it, or anchor the violet glow so the off-screen Stack can skip its layout;
-  - T Poker's JWT (HS256) is not shown: fine, or a separate "JWT" row for T Poker in Security?
+- **Review the rebuilt Stack** (session 13) on the Preview, Security's sentence, and two choices it raised:
+  - the LCP cost: keep it, or anchor the violet glow so the off-screen Stack can skip its layout;
+  - two live evidence sentences name Job Assistant and Orders & Delivery: fine, or trim them for the lab?
 - **Decide what Concept A takes on next.** The carousels, the five layer values and About are approved.
 - **Swap the GRAVITY FLOW capture** he has in mind (the carousels themselves are approved).
 - **Move F:** confirm it is still next on `main`.
