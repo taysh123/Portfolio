@@ -120,11 +120,11 @@ Verified gotchas (2026-11-18):
 - The résumé PDF's exact byte size is pinned in `tests/e2e/lower.spec.ts`, and its size label is in
   `lib/dict.ts` (`resumeNote`). Update both whenever the PDF changes.
 - **Tailwind v4 scans every source folder except `docs/`, `design/`, `.claude/` and `.impeccable/`** (`@source not` in
-  `app/globals.css`), comments and object keys included.
-  - A utility name written anywhere else (`opacity-0`, `shadow`, `rounded`…) adds a rule to `/`'s stylesheet. Write
-    docs in `docs/`.
-  - It happened three times on the prototype branch. Its e2e test pins `/`'s CSS to `main`'s SHA-256; rebuild before
-    trusting it.
+  `app/globals.css`), comments and object keys included. That covers this file, `README.md` and `claude/` too.
+  - A utility's name written anywhere else (zero opacity, an elevation, a small corner radius…) adds a rule to `/`'s
+    stylesheet. Describe one in words, never by its class name, and write docs in `docs/`.
+  - It happened three times on the prototype branch, then a fourth time from this file (session 12). Its e2e test pins
+    `/`'s CSS to `main`'s SHA-256; rebuild before trusting it.
 - **A client component can change `/`'s first-load JS** by importing a shared module.
   - `components/sections/AboutVisual.tsx` (client) imports `data/images.ts` whole, so a new entry there ships in `/`.
     The prototype lists its own captures in `data/lab-images.ts`.
