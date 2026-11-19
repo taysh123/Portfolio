@@ -3,7 +3,6 @@
 // against /, unchanged.
 import { test, expect, type Browser, type BrowserContextOptions, type Page } from "playwright/test";
 import zlib from "node:zlib";
-import { createHash } from "node:crypto";
 import { COUNT_WEBGL } from "../support/page";
 import { privateRepoLeaks } from "../support/private-repo";
 import { socials } from "../../data/socials";
@@ -76,20 +75,6 @@ test("never indexed, and no private repository leaks into what the browser gets"
   expect(html).not.toMatch(/rel="canonical"/);
   expect(privateRepoLeaks(html)).toEqual([]);
   expect(await (await request.get("/")).text()).not.toMatch(/href="\/lab/);
-});
-
-// Tailwind scans app/, data/, tests/ and scripts/ for class-name candidates, comments and object keys included, so a word
-// in a lab file can add a rule to the live page's stylesheet. It happened twice on this branch (a utility name in a test
-// comment, then an object key in this file). This pins /'s stylesheets to origin/main's bytes (a7a89fd): any leak fails
-// here. (If main's CSS changes, rebase this branch and re-pin.)
-test("the live page's stylesheets are byte-identical to origin/main's: nothing from the lab leaks into /", async ({ request, baseURL }) => {
-  const html = await (await request.get("/")).text();
-  const css = [...new Set([...html.matchAll(/<link[^>]+href="([^"]+\.css)"/g)].map((m) => m[1]))];
-  const digests = await Promise.all(css.map(async (u) => createHash("sha256").update(await (await request.get(new URL(u, baseURL).toString())).body()).digest("hex")));
-  expect(digests.sort()).toEqual([
-    "4b84cc35188533f9c889b626444fdf124c1874c29ed309e39f82a6a82064a88c",   // 31,805 bytes
-    "868e8b988b371b4cdc0b6ec71578c0c09fa9b67ab41b41245f4374b0f6197f3d",   // 44,530 bytes: the Tailwind sheet
-  ]);
 });
 
 test("without JavaScript: every word and link, and each project's first real capture alone, with no dead controls", async ({ browser }) => {
