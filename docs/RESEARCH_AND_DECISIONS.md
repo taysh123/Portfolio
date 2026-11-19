@@ -231,18 +231,22 @@ with its gap audit and test list, is in `docs/WORKLOG.md` (session 16), and the 
     - `chrome.spec.ts:70` and `:178` move to the panels.
 
     The ported lab specs carry their intent.
-  - **Still to name, one by one:** these changes follow from R7–R9, but Tay has not named them yet. Confirm each in
-    S18+S19 before it is committed:
+  - **Approved by Tay as a group in S17 (2026-11-19).** These follow from R7–R9; session 16 logged them as "still to
+    name, one by one":
     - `page.spec.ts:10,13`: the new h1 and h2 strings;
     - `chrome.spec.ts:268`: the focus ring becomes the layer's cyan;
     - `chrome.spec.ts:255`: the Tab order's new labels;
     - `content.test.ts:20,22`: the new headline strings (R8);
     - `work.test.ts:99` and `:163–176`: they read `GravityChapter.tsx` and `AboutVisual.tsx`, which are deleted.
+
+    The approval covers the group, but each change still goes in its own commit naming it, as the other R12 changes
+    do. None is made in S17: they land with the swap (S18+S19) or the test port (S20).
 - **R13 — N7.** Its Cloudflare sentence goes into the `/privacy` edit in S21+S22, with R3's cookie change. **Tay
   approves the exact final wording there, before it is committed.**
 - **R14 — Move F** (`docs/M1_VISUAL_PLAN.md`) is retired. It was a Product Plates move, and the release supersedes it.
 - **R15 — The tag.** Before the merge, `443a1f9` (the last Product Plates commit, live) is tagged
-  `product-plates-final`, and the tag is pushed.
+  `product-plates-final`, and the tag is pushed. **Done in S17** (Tay's brief brought it forward from S24): an
+  annotated tag, `8f0a96a`, pointing at `443a1f9`, and pushed to `origin`.
 - **The sessions** (`docs/ROADMAP.md`):
   - S18 and S19 are paired, and so are S21 and S22.
   - S23 adds Playwright WebKit and Firefox runs, Tay's review on his own phone through the Preview, and the GRAVITY
@@ -443,6 +447,7 @@ Playwright MCP, Superpowers, UI UX Pro Max, Frontend Design, the Figma plugin (c
 
 | Date | Decision | By |
 |---|---|---|
+| 2026-11-19 | S17: R12's "still to name" test changes (the h1/h2 strings, the focus ring's colour, the Tab order's labels, the headline pins, the two `work.test.ts` cases that read deleted files) approved as a group, each still in its own commit. The five state docs that changed on both sides come over by a three-way merge; the other 77 paths are copied unchanged | Tay |
 | 2026-11-19 | Session 16: the P5/P6 plan approved (R1–R15): the release branch, the header, dark only, case studies and Two more, the explainers retired with a P4 restore record, live anchors, the headline and card, the "↗" icon, #15 and the Work lede, #13 measured, the approved test changes (WebGL guards unchanged), N7 in the `/privacy` edit with its wording approved first, Move F retired, `443a1f9` tagged `product-plates-final` before the merge. Sessions S17–S24 (S18+S19 and S21+S22 paired) | Tay |
 | 2026-11-19 | Session 11 close: the carousels approved (T Poker 5, Aegis 2, DeveloperOS 4, GRAVITY FLOW 5; no duplicate "final count"; the DeveloperOS refusal and AI-features captures left out). The framing corrected: D1 was reopened for Concept A, and D2 is still not reopened (no WebGL). Concept A is the active direction; `proto/hero-a-cinematic` at `5d4610b` | Tay |
 | 2026-11-18/19 | Session 10: D1 reopened for one measured prototype, Concept A, on `proto/hero-a-cinematic` (draft PR #18, never merged; no WebGL; `main`'s guards unchanged; first recorded as "D2 reopened", corrected at the session 11 close). Hero locked; the `--cine-*` design system extracted; the Projects section with 3D coverflow carousels and the phone fix. The Projects title is "Four projects, built end to end." (not all four are shipped). | Tay |
