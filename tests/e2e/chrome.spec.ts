@@ -202,6 +202,25 @@ test("phones: the menu button in the header, the rest in the menu sheet; Escape 
   await ctx.close();
 });
 
+// Tay's condition (S18+S19): with the menu as the phone header's one icon button, the accessibility panel stays
+// reachable on phones. Its button lives in the menu sheet: a full-size target, in view, and it opens the panel.
+for (const vp of [[320, 568], [390, 844]] as const) {
+  test(`${vp[0]}×${vp[1]}: the accessibility settings are one tap into the menu sheet, and open from there`, async ({ browser }) => {
+    const { ctx, page } = await open(browser, vp);
+    await expect(page.locator("header[data-site-nav]").getByRole("button", { name: "Accessibility settings" })).toBeHidden();
+    await page.getByRole("button", { name: "Open menu" }).click();
+    const sheet = page.getByRole("dialog", { name: "Navigation" });
+    const a11y = sheet.getByRole("button", { name: "Accessibility settings" });
+    await expect(a11y).toBeVisible();
+    await expect(a11y).toBeInViewport({ ratio: 1 });
+    expect((await a11y.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    await a11y.click();
+    await expect(sheet).toBeHidden();
+    await expect(page.getByRole("dialog", { name: "Accessibility settings" })).toBeVisible();
+    await ctx.close();
+  });
+}
+
 test("phones: picking a section in the menu closes it, lands there, and leaves the page scrollable", async ({ browser }) => {
   const { ctx, page } = await open(browser, [390, 844]);
   await page.getByRole("button", { name: "Open menu" }).click();
