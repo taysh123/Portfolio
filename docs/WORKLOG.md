@@ -11,6 +11,54 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-19 — Session 13 close-out: Stack approved; its LCP cost kept and logged for P5 (Claude Code)
+
+**Scope (Tay's brief):**
+- Stack is approved. Keep the LCP cost, and log the `content-visibility` fix with the glow's repositioning as a P5
+  (integration) item. Keep the live evidence sentences word for word.
+- Log for the Contact session: the filter's end-of-page hold assumes Stack ends the page; re-check it once Contact sits
+  below.
+- Close out: WORKLOG, START-HERE, CLAUDE.md (with the stale `121d86b` reference) and the memory, on this branch. Push;
+  PR #18 stays a draft. Remove the `d64763d` baseline worktree, clean scratch, and confirm `main` is clean and level
+  with `origin/main`.
+
+### Decisions (Tay)
+- **Stack is approved** as built (`8955039`).
+- **The LCP cost stays** (+14 ms desktop, +46 ms on a phone at 4× CPU). Logged as **`docs/ROADMAP.md` #13**, P5
+  (integration): `content-visibility: auto` on Stack together with anchoring the violet glow.
+- **The seven live evidence sentences stay word for word** (two name Job Assistant and Orders & Delivery).
+- **Logged for the Contact session as `docs/ROADMAP.md` #14:** re-check the filter's hold once Contact sits below Stack.
+
+### Docs and memory
+- `CLAUDE.md`:
+  - the prototype's code is `8955039` (it said `121d86b`), and Production was last verified at `443a1f9` (PRs #8–#20);
+  - Stack is named on `/lab/work`, and the branch's WORKLOG covers sessions 10–13;
+  - the prototype's unit suite is 200/200;
+  - one new gotcha: the build fetches Geist from Google Fonts, so a network blip fails it (seen this session; retry).
+- `claude/START-HERE.md`: Stack approved, the two logged items, and what waits on Tay.
+- `docs/CINEMATIC_SYSTEM.md`: Stack marked approved; the cost line points at #13, and the hold at #14.
+- `docs/ROADMAP.md`: backlog rows #13 and #14.
+- The memory's state note and its measurement lessons: the session 13 state, and two lessons (a section that ends the
+  page pulls the view up when it shrinks; a text line whose height changes with its content must sit inside the held
+  box).
+
+### Clean-up
+- Removed the `d64763d` baseline worktree (`git worktree list` shows only the main checkout).
+- Cleaned the scratchpad: the screenshots, probe scripts, logs and PR-body drafts.
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production (`success`). Local `main` level with it, and clean.
+- This branch: the code is `8955039`; the docs are on top. PR #18 is a draft.
+- Validation after these docs (Git Bash): `npm test` 200/200; a production build's `/` Tailwind sheet at `868e8b98…`
+  (44,530 bytes), and the pinned-stylesheet e2e test passes.
+
+### Waiting on Tay
+- **Decide what Concept A takes on next.**
+- Swap the GRAVITY FLOW capture he has in mind. Move F: still his call.
+- Optional, on `main`: the chat launcher's fold on scroll (0.0076 CLS).
+
+---
+
 ## 2026-11-19 — Session 13, third pass: Stack's filter shows only the chosen project's tools, as pills (prototype, D1 reopened) (Claude Code)
 
 **Scope (Tay's review of the second build):** he likes the colour change, but the filter is not clear enough.
@@ -2054,3 +2102,5 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-19 | Session 11 close | Carousels approved by Tay; the D1/D2 framing corrected (D1 reopened, D2 not); CLAUDE.md brought level with `main`'s plus the prototype; the close-out PR for `main` refreshed from `docs/session-10-closeout`; `docs/session-9-closeout` deleted | `CLAUDE.md`, `claude/START-HERE.md`, `docs/WORKLOG.md`, `docs/CINEMATIC_SYSTEM.md` |
 | 2026-11-19 | Session 12 | About (P3.3) on `/lab/work` from the live About's own words (`121d86b`); the 11 "D2 reopened" comments reworded (`4dccdf8`); the five NEW layer values approved as they are; a fourth Tailwind leak found (PR #19's CLAUDE.md line, live on `main`) and fixed on this branch (`fb3bb41`) | `app/lab/work/{about.ts,AboutBlock.tsx,page.tsx,work.css}`, `tests/{unit,e2e}/lab-work.*`, 11 lab headers, `CLAUDE.md`, `docs/CINEMATIC_SYSTEM.md`, `claude/START-HERE.md`, `docs/WORKLOG.md` |
 | 2026-11-19 | Session 12 close | About approved by Tay; PR #20 opened into `main` (the CLAUDE.md Tailwind gotcha bullet reworded: `/`'s sheet back to 44,530 bytes); `docs/session-10-closeout` deleted (merged as #19); scratch cleaned | `docs/WORKLOG.md`, `claude/START-HERE.md`, `CLAUDE.md`, `docs/CINEMATIC_SYSTEM.md` (PR #20: `CLAUDE.md`) |
+| 2026-11-19 | Session 13 | PR #20 merged and its branch deleted. Stack (P3.4) on `/lab/work`, in three passes on Tay's reviews: a project line per tool (`757c377`); the live Stack's layout with a dimming filter (`d3373b6`); a filter that shows only the chosen project's tools, as pills, with a no-scroll-jump hold (`8955039`). Security group; one small island (+351 bytes gzip) | `app/lab/work/{stack.ts,StackBlock.tsx,StackFilter.tsx,page.tsx,work.css}`, `tests/{unit,e2e}/lab-work.*`, `docs/CINEMATIC_SYSTEM.md`, `claude/START-HERE.md`, `docs/WORKLOG.md` |
+| 2026-11-19 | Session 13 close | Stack approved; its LCP cost kept and logged as a P5 item (ROADMAP #13); the Contact re-check logged (#14); CLAUDE.md's stale code reference, verified commit and counts updated | `CLAUDE.md`, `claude/START-HERE.md`, `docs/{WORKLOG,ROADMAP,CINEMATIC_SYSTEM}.md` |

@@ -283,7 +283,8 @@ Under the four panels, after a hairline: who, in about ten seconds. Tay approved
 
 Under About, after a hairline: the tools behind the work, **as the live Stack shows them** (`components/sections/Stack.tsx`),
 restyled in the layer. A first build gave each tool its own project line; Tay found that too busy. A second dimmed the
-tools a project doesn't use; Tay liked the colour but asked for a clearer filter. This is the third (session 13).
+tools a project doesn't use; Tay liked the colour but asked for a clearer filter. This is the third, and **Tay
+approved it** at the session 13 close.
 
 | Element | Text | Source |
 |---|---|---|
@@ -307,7 +308,7 @@ tools a project doesn't use; Tay liked the colour but asked for a clearer filter
 
 - **Tools no flagship uses** (Java, C++, C, JavaFX, Framer Motion, pytest, Playwright) and Everyday tools (Git, Linux,
   Claude Code) carry no project: they show under All only. Their live notes are not shown.
-- **Two live evidence sentences name the other two projects**, word for word as Tay asked: Languages ("…Python
+- **Two live evidence sentences name the other two projects**, kept word for word (Tay, session 13 close): Languages ("…Python
   DeveloperOS and Job Assistant; Java runs Orders & Delivery.") and Product and interface ("…JavaFX is Orders &
   Delivery's client.").
 - **No AI group:** Aegis's analysis is a deterministic mock and DeveloperOS's default is offline; Ollama is the only
@@ -346,4 +347,7 @@ text, the control edge at ≥ 3:1, the glass fill), wrapping as needed; the evid
   - LCP +14 ms desktop and +46 ms on a phone at 4× CPU (medians; the LCP and FCP medians are equal);
   - the filter's buttons answer in 24 ms on desktop and 48–80 ms on that phone.
   - `content-visibility: auto` would skip Stack's off-screen layout, but the violet glow (at 38% of the page's height)
-    then moves when Stack renders: slice CLS 0.353 at 320px, measured on the first build. Not used; Tay's call.
+    then moves when Stack renders: slice CLS 0.353 at 320px, measured on the first build. **Tay keeps the cost for now**
+    (session 13 close); the fix and the glow's repositioning are a P5 (integration) item, `docs/ROADMAP.md` #13.
+- **Before Contact is built under it:** the scroll hold assumes Stack ends the page. Re-check it then
+  (`docs/ROADMAP.md` #14).

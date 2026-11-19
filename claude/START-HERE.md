@@ -4,7 +4,7 @@ Orientation doc for the Portfolio Project. Read this first in any new chat here 
 Claude Code session, then continue with the current task. Update it before each transition
 (new chat / new session) so the next one starts informed.
 
-> **This copy is on `proto/hero-a-cinematic`** (session 13, 2026-11-19). It has more prototype detail than `main`'s
+> **This copy is on `proto/hero-a-cinematic`** (session 13 close, 2026-11-19). It has more prototype detail than `main`'s
 > copy (`main` has the essentials since PR #19). The branch is never merged.
 
 ## What the product is
@@ -56,8 +56,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 - **Routes** (noindex, not in the sitemap, never linked from `/`):
   - **`/lab/hero-a`**: the locked hero, a 2D-canvas constellation field (no WebGL). First-load JS 183.71 KiB.
   - **`/lab/work`**: the Work slice, four product panels in the cinematic language. Each has a CSS 3D coverflow of the
-    project's real captures. Below them, **About** (session 12, approved), then **Stack** (session 13, for Tay's
-    review). First-load JS 181.77 KiB, HTML 97.66 KB.
+    project's real captures. Below them, **About** (session 12, approved), then **Stack** (session 13, approved).
+    First-load JS 181.77 KiB, HTML 97.66 KB.
 - **The system:** `docs/CINEMATIC_SYSTEM.md` covers the `--cine-*` layer (extracted from the hero, value for value), the
   motion rules, the Work slice, the galleries and the carousel. Read it before touching `/lab`.
 - **Session 11:** every flagship's real captures are now in its carousel. **Tay approved the carousels** at the close.
@@ -72,10 +72,11 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - No photo, no institution, no new claim. A server component; it holds still. No token added.
   - The five NEW layer values are **approved by Tay as they are** (session 12).
   - The "D2 reopened" comments in 11 code and test files now say D1 reopened, D2 not, no WebGL (`4dccdf8`).
-- **Session 13: Stack (P3.4)** under About, in three passes on Tay's reviews: one project line per tool (`757c377`, too
-  busy); the live Stack's layout with a dimming filter (`d3373b6`, not clear enough); now a filter that shows only the
-  chosen project's tools (`8955039`). It works like the live Stack, in the layer:
-  - One row per group: its name, its tools on one wrapping line, and the live evidence sentence, word for word.
+- **Session 13: Stack (P3.4)** under About, **approved by Tay** at the close. Three passes on his reviews: one project
+  line per tool (`757c377`, too busy); the live Stack's layout with a dimming filter (`d3373b6`, not clear enough); the
+  filter that shows only the chosen project's tools (`8955039`, approved). It works like the live Stack, in the layer:
+  - One row per group: its name, its tools on one wrapping line, and the live evidence sentence, word for word (Tay
+    keeps all seven as they are, two of which name Job Assistant and Orders & Delivery).
   - Every tool is a pill: outlined under All; with a project chosen, only its tools remain (the live FILTER's rules,
     by `projectsFor` through `data-p`), filled cyan, with no empty group and no evidence. The live status line sits
     above the groups.
@@ -85,9 +86,11 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - **Security:** JWT (T Poker, Aegis; moved from Services and APIs), Body HMAC (Aegis), CSRF token (DeveloperOS), and
     one sentence built from their source lines.
   - Tools no flagship uses show under All only. Everyday tools kept.
-  - **Measured:** LCP +14 ms desktop, +46 ms phone at 4× CPU (more to lay out before the first paint). Skipping Stack's
-    off-screen layout would win it back, but it moves the violet glow at 320px. Tay's call (`docs/WORKLOG.md`, session
-    13).
+  - **Measured:** LCP +14 ms desktop, +46 ms phone at 4× CPU (more to lay out before the first paint). **Tay keeps the
+    cost.** Skipping Stack's off-screen layout, with the violet glow repositioned, is logged as a P5 (integration) item
+    (`docs/ROADMAP.md` #13).
+  - **Before the Contact session:** the filter's no-scroll-jump hold assumes Stack ends the page. Re-check it once
+    Contact sits below (`docs/ROADMAP.md` #14).
 - **Preview of `/lab/work`** (the branch's own link, which follows each push):
   `https://tay-shofer-portfolio-git-proto-he-65ec6d-tays-projects-d5aefd6e.vercel.app/lab/work`.
 - **Kept identical on this branch** (tests hold it):
@@ -132,8 +135,10 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   AI-features captures are left out. GRAVITY FLOW's existing two stay; Tay will swap one himself.
 
 ## What's next
-- **Concept A:** the carousels, the five layer values and About are approved; Stack (session 13) awaits Tay's review.
-  Tay decides what the prototype takes on next.
+- **Concept A:** the carousels, the five layer values, About and Stack are approved. Tay decides what the prototype
+  takes on next.
+  - Logged: the P5 (integration) item for Stack's LCP (`docs/ROADMAP.md` #13), and the Contact session's re-check of
+    the filter's hold (#14).
 - **Move F** on `main`: still Tay's plan from the session 9 close, not started.
   - It needs one additive floor case in `tokens.test.ts` (plan §11), and that is its only test change.
   - Branch from an up-to-date `main`; Tay merges.
@@ -151,10 +156,7 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Review Stack's filter** (session 13, third pass) on the Preview, and two choices it raised:
-  - the LCP cost: keep it, or anchor the violet glow so the off-screen Stack can skip its layout;
-  - two live evidence sentences name Job Assistant and Orders & Delivery: fine, or trim them for the lab?
-- **Decide what Concept A takes on next.** The carousels, the five layer values and About are approved.
+- **Decide what Concept A takes on next.** The carousels, the five layer values, About and Stack are approved.
 - **Swap the GRAVITY FLOW capture** he has in mind (the carousels themselves are approved).
 - **Move F:** confirm it is still next on `main`.
 - **Optional, on `main`:** the site's chat launcher folds its label as the page scrolls. That is 0.0076 CLS on `/` at
