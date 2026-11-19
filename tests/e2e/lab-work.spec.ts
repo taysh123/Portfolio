@@ -16,7 +16,8 @@ const ABOUT_LINKS = [
   ["https://github.com/taysh123", "GitHub (opens in a new tab)"],
   ["https://www.linkedin.com/in/tay-shofer-1b2b54287", "LinkedIn (opens in a new tab)"],
 ] as const;
-/** Contact's four links (P3.6): the live Contact's own targets, in its order, and each one's accessible name. */
+/** Contact's four links (P3.6): the live Contact's own targets, in its order, and each one's accessible name. Fixed
+ *  values: the Product Plates Contact had exactly these (product-plates-final:components/sections/Contact.tsx). */
 const CONTACT_LINKS = [
   [`mailto:${socials.email}?subject=Hello%20Tay`, "Email me"],
   ["https://www.linkedin.com/in/tay-shofer-1b2b54287", "LinkedIn (opens in a new tab)"],
@@ -817,17 +818,6 @@ test("Contact without JavaScript: the eyebrow, the live title and lead, the four
   await expect(contact(page).locator("form, input, textarea, button, img, picture, canvas, svg:not([aria-hidden='true'])")).toHaveCount(0);
   expect(await contact(page).evaluate((e) => [e, ...e.querySelectorAll("*")].filter((x) => getComputedStyle(x).opacity !== "1" || getComputedStyle(x).visibility === "hidden").length)).toBe(0);
   await ctx.close();
-});
-
-test("Contact's links are the live Contact's: the same targets, attributes and accessible names as on /", async ({ page }) => {
-  await page.goto("/");
-  const live = page.locator("#contact a");
-  const liveAttrs = await attrsOf(live);
-  const liveNames = await live.evaluateAll((as) => as.map((a) => a.textContent!.replace(/\s+/g, " ").trim()));
-  await page.goto(ROUTE);
-  expect(await attrsOf(contact(page).locator("a"))).toEqual(liveAttrs);
-  expect(await contact(page).locator("a").evaluateAll((as) => as.map((a) => a.textContent!.replace(/\s+/g, " ").trim()))).toEqual(liveNames);
-  expect(liveNames).toEqual(CONTACT_LINKS.map(([, n]) => n));
 });
 
 for (const [label, motion] of [["motion on", "no-preference"], ["reduced motion", "reduce"]] as const) {
