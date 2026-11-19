@@ -11,6 +11,219 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-20 — Sessions 18+19: `/` is the Concept A page; `/lab` and the retired code deleted (Claude Code)
+
+**Scope (Tay's brief, S18+S19 exactly as planned):**
+- Compose `/`: the header (R2), the hero, Work, About (R10), Stack, Think · Build · Ship, Contact, Two more (R5), the
+  footer. One `main`, one h1, every live id, dark-only `<html>` (R3). "More on X" opens the case-study dialog (R4).
+- axe on the dark page with the dialog and the accessibility panel open.
+- Delete `/lab` and the retired code. The approved guard edits, each in its own commit naming its approval. The WebGL
+  guards unchanged.
+- No new copy. The release gate: Lighthouse mobile (median of 5) on a local production build of this branch and of
+  `main`, plus the JS and HTML budgets.
+- `/lab/*` answers 404; `/` is `index, follow` with its canonical. Screenshots at 390 and 1440 in scratch.
+- Commit and push the branch (no PR, no merge, no deploy), and give Tay the Preview URL. The session stays open until
+  Tay reviews.
+
+### 1. Preconditions (VL)
+- `git fetch`, `release/concept-a` checked out and pulled: HEAD **`af0af8d`**. `main` = `origin/main` = **`443a1f9`** =
+  Production (`gh api …/deployments`, status success). `npm ci` clean.
+
+### 2. What changed (VL)
+**`482d29e`, the swap** (61 files; the prototype's files moved with `git mv`, their copy unchanged):
+- **The page** (`app/page.tsx`): the header, then `<main>` holding the page in a `.cine` root: `#hero`, then one `.wk`
+  region (its sky and two glows) with `#work`, Two more (`#more-work`), `#about`, `#skills`, `#approach`, `#contact`.
+  Then the case-study host and the live footer. One `main`, one h1 (the hero's). Work's title is an h2, each product an
+  h3. Every live id is kept (R7), `#approach` included.
+- **Where the code lives:** the layer at `app/cinematic.css`, imported by `/` only (`/privacy`, the 404 and the error
+  page never load it). The sections in `components/sections/`: `Hero`, `Constellation`, `featured`, `Work`, `panels`,
+  `Reel`, `Shot`, `MoreWork` (new), `About`, `Stack`, `StackFilter`, `ThinkBuildShip`, `Contact`, with their data in
+  `aboutBlock.ts`, `stackBlock.ts`, `tbsBlock.ts`, `contactBlock.ts`. Hero and Stack keep the paths `hero.test.ts`
+  reads.
+- **The header (R2):** `Navbar.tsx`'s behaviour, re-toned in the layer.
+  - The hero's wordmark (`Logo.tsx`) and its availability pill (`AvailabilityPill.tsx`, shared with the hero). The four
+    anchors with a cyan current-section underline, the accessibility button, "Get in touch" as the layer's outlined
+    control. The phone menu sheet, with the layer's cyan "Get in touch".
+  - No theme toggle. **At the top of the page it shows no surface**; once scrolled it is the field at 88%, frosted,
+    with a hairline.
+  - The scrolled flag is set in the scroll event itself, so the surface is never a frame late. The phone swipe test
+    counts one header colour on every frame.
+  - **The pill:** in the bar from 1280px. Below that the bar has no room for it (measured: at 1024 the right cluster
+    would overlap the links), so it opens the hero under the header, where the locked hero wrapped it under the
+    wordmark. CSS displays exactly one of the two.
+- **Dark only (R3):** `<html data-theme="dark">` whatever the cookie. `ThemeProvider` and `ThemeToggle` are deleted,
+  and nothing reads or writes the `theme` cookie. `THEME_COOKIE` stays in `lib/theme.ts` only because `/privacy` still
+  names it; that paragraph is S21+S22's (R13).
+- **The layer's scope chrome:** it set `--accent` to cyan on the whole body, written for the lab's light `<html>`. Now
+  only the skip link and the chat launcher take it. The overlays keep the site's dark accent (R3).
+- **Depth (R4):** each panel's "More on X" link is a "Case study" button with `data-case-study`, on the existing lazy
+  dialog. The early-click script and the no-JS rule came along.
+- **Two more (R5):** `MoreWork.tsx`, the live words only (`dict.more.title`, each project's name, `context` and
+  `summary`). Two ruled rows on About's grid: the name and context on one side, the summary, the source link (or the
+  site's label) and "Case study" on the other. Six case-study triggers in all.
+- **R9:** the hero's arrows are the site's SVG icons: `ArrowUpRightIcon` for the ↗, and `ArrowDownIcon` for the ↓, so
+  the pair matches (About's résumé on the slice already drew ↓ that way).
+- **R10:** About ends on the facts (no availability line, no links). Work drops its lede and its own reveal: the hero's
+  is the page's one. Both apply R10 in full; the brief named it beside About.
+- **Captures:** none is a load priority any more (the hero fills the first screen), so every capture is lazy.
+- **Composition fixes, found in the screenshots:**
+  - The hero's sky ended navy with its violet glow, and Work's sky starts at the base: a hard edge. The hero's sky now
+    fades into the field over its last `--cine-section-y`, under the vignette; the copy and the field sit above it.
+  - Work's cyan glow box started 12vh above its region (the lab page's top hid that cut), so `.wk` drew a line across
+    it. Its top is now 0.
+- **Deleted:**
+  - `app/lab/` (the layout, both routes).
+  - The Product Plates hero, the four chapters and `work/Work.tsx`, `MoreWork`, the About visual, Stack and its lens,
+    Think · Build · Ship, Contact, and their stylesheets. `Pic.tsx` (orphaned).
+  - From `globals.css`: the section seams (they targeted the ids this page reuses and drew bands over it) and the
+    toggle's glyph rules. The plate tokens stay, because `tokens.test.ts` reads them.
+  - The explainers can be restored from `product-plates-final` (`docs/ROADMAP.md`, P4 restore record).
+- **Comments** in the moved files now point at their new paths, or at `product-plates-final:` for the retired ones.
+
+**`270ab27`, a landmark fix found by the axe check (§5):** the header has its own `.cine` root, and the case-study host
+sits inside `<main>`, after the page's root, as on the Product Plates page. Outside `<main>`, the dialog's own
+`<header>` was a second banner.
+
+**`ea7cdcc`, the build:** the production build type-checks every test file, and the two lab unit tests import the
+deleted `/lab` modules. So the build, and the Preview with it, failed. Each file gets a temporary `@ts-nocheck` with a
+one-rule ESLint disable and a note; no assertion changed. S20 removes both lines when it ports them.
+
+### 3. The test changes (each its own commit, naming its approval)
+**R12, approved in session 16:**
+- `d6dab35` `page.spec.ts:43`: exactly one canvas, the hero's, `aria-hidden`.
+- `3a52f22` `:75`: 0.5 and 1 unchanged; the top runs with reduced motion.
+- `23666d5` `chrome.spec.ts:12`: the toggle line dropped.
+- `acc3077` `:26`: "dark is the only theme, cookie or not" (no cookie, `light`, `dark`; body `rgb(4, 6, 13)`).
+- `e56a121` `:36`: the toggle-layout test deleted.
+- `b811b1c`: `:70`, `:132`, `:147` and `page.spec.ts:93`, dark only.
+- `932e631` `site.test.ts:145`: writes the `a11y` cookie.
+
+**R12's S17 group:**
+- `e72edbf` `page.spec.ts:10,13`: the new h1 and h2 strings.
+- `89694aa` `chrome.spec.ts:255`: the Tab order's labels; Contact's résumé matched by its whole name.
+- `aa640ca` `:268`: the focus ring, cyan on the hero and on a panel.
+- `2e4cf7f` `work.test.ts:99` and `:163–176`: GRAVITY FLOW's check reads its panel; the About visual's case goes.
+
+**Approved by Tay in this session** (outside R12's list; found by running the suite):
+- `3784a48` `english.spec.ts:45`: the new h1.
+- `a7d9a94` `chrome.spec.ts:188`: the phone test's toggle line dropped.
+- `62bb951` `:132`: one icon button in the phone header, the menu. A second can't fit: the wordmark and two 44px
+  buttons overflow 320px.
+- `5a9bd52`: **Tay's condition on that approval.** The accessibility button lives in the phone menu sheet, and a new
+  test checks at 320×568 and 390×844 that it is hidden in the bar, visible, wholly in view and ≥ 44px in the sheet,
+  and opens the panel.
+- `ca45dcb` `:272`: at least 8 new-tab links. R10 left exactly 8; each is still checked.
+- `595f00d` `aegis.spec.ts:20`: the Aegis panel's captures include the Incidents board crop (`hero-aegis`), its
+  approved second capture.
+
+**Not made yet, and why:**
+- `privacy.spec.ts:43` (`["a11y"]`) and `site.test.ts:160` (the `THEME_COOKIE` match): both hold `/privacy`'s cookie
+  paragraph, which changes in S21+S22 with N7 (R13). Both pass as they are.
+- `content.test.ts:20,22`: R8 (the headline into `siteMeta`, and the social card) is S21+S22's. They pass as they are.
+- The new guards (`/` indexable with its canonical; `/lab` answers 404): S20 adds them. Checked by hand here (§6).
+
+### 4. Validation (VL, Git Bash, the final tree)
+| Command | Result |
+|---|---|
+| `npm run typecheck` | exit 0 |
+| `npm run lint` | exit 0 |
+| `npm run build` (Turbopack cache cleared) | exit 0; the same 8 routes as `main`, no `/lab` |
+| `npm test` | **121/121 tests**; 14 of 16 files pass. The two lab unit files fail at load (below) |
+| `GROQ_API_KEY= npx playwright test` on every must-pass spec (aegis, budget, chat, chrome, english, page, privacy, private-repo, smoke) | **70/70** |
+| The same for `chapters.spec.ts`'s "Case study" block and `lower.spec.ts:142` and `:164` | **6/6** |
+
+Every guard passes: `dead-code`, `tokens`, the institution and private-repo guards, the budget, the WebGL counts, and
+English only.
+
+**What fails, all of it S20's** (run fully parallel with a 15 s timeout, to list it):
+
+| File | Not passing | Why | S20 |
+|---|---|---|---|
+| `tests/unit/lab-hero-a.test.ts`, `lab-work.test.ts` | the whole file, at load | They import the deleted `/lab` modules and read `app/lab/*` | **Ported**, minus the two prototype-only tests |
+| `tests/e2e/lab-hero-a.spec.ts` | 15 of 18 | `/lab/hero-a` answers 404. The 3 passes are vacuous (axe on the 404 page) | **Ported** |
+| `tests/e2e/lab-work.spec.ts` | 62 of 63 | `/lab/work` answers 404. The 1 pass is the résumé PDF fetch | **Ported**; "/'s CSS pinned to main's digest" and "Contact as on the live /" are deleted |
+| `tests/e2e/hero.spec.ts` | 12 of 12 | The Product Plates hero is gone (its plates, mosaic and index tiles) | **Retired** |
+| `tests/e2e/chapters.spec.ts` | 24 of 32 | The chapters are gone: the stepper, the Aegis trace, cite-or-decline, the marked frame, the plates. The Case study block (4) passes, and so do 4 others that happen to hold on the panels | **Retired**, except the Case study block |
+| `tests/e2e/lower.spec.ts` | 10 of 17 | The old About measure, the Stack lens and groups, TBS's words, Contact's old markup | **Retired**, except `:142` and `:164` (both pass) |
+
+### 5. axe on the dark page, each overlay open (VL; a scratch script with the suite's tags; 1440 and 390)
+- **The accessibility panel: 0 violations** at both widths. On phones it opens from the menu sheet.
+- **The case-study dialog, each of the six:**
+  - First run: `landmark-no-duplicate-banner` and `landmark-unique` on `.site-nav`, new with the swap. Fixed in
+    `270ab27` (§2).
+  - Left: `aria-allowed-role` (the panel is an `<aside role="dialog">`) on all six, and `image-redundant-alt` on four
+    (gallery images whose alt repeats their caption). **The same on production's code:** the same script on `main`'s
+    build gives exactly these two. Both are axe best-practice rules, not WCAG A/AA. Not changed here; for Tay.
+- `page.spec.ts`'s axe test (the page, then the chat open, dark, 1440 and 390): **0 violations**.
+
+### 6. The release gate (VL; local production builds, served by `next start`)
+**Bytes** (`budget.spec.ts`'s algorithm):
+
+| | `main` `443a1f9` | This branch |
+|---|---|---|
+| First-load JS gzip (budget 205.7 KiB) | 181.79 KiB, 9 scripts | **185.00 KiB**, 9 scripts (+3.21) |
+| HTML (budget 568 KB) | 160,194 B | **127,970 B** |
+| Stylesheets | 44,530 + 31,805 B | 43,672 + 28,727 B |
+
+**`/`:** `index, follow`, canonical `https://tayshofer.dev`, no noindex anywhere in it. **`/lab`, `/lab/hero-a`,
+`/lab/work`: 404.** `/privacy` 200, `/nope` 404.
+
+**Lighthouse** `npx --yes lighthouse@13.6.0`: mobile defaults (simulated throttling, 412×823), HeadlessChrome 158, the
+two builds interleaved run by run, 5 each, on the final tree:
+
+| Median of 5 | `main` `443a1f9` | This branch `270ab27` |
+|---|---|---|
+| Performance | 93 | **100** |
+| LCP | 3,191 ms | **1,061 ms** |
+| FCP | 1,063 ms | 1,061 ms |
+| TBT | 17 ms | 23 ms |
+| CLS | 0 | 0 |
+| Speed Index | 1,063 ms | 1,063 ms |
+| A11y / BP / SEO | 100 / 100 / 100 | 100 / 100 / 100 |
+| Bytes loaded | 356,089 | 389,747 |
+
+Every run of each build gave the same Performance score (93 and 100); the benchmark index was 3,912–4,086, with no run
+warnings.
+
+- **No flag:** LCP is far inside 2.5 s, and Performance is not below `main`'s.
+- The LCP element moved: on `main` it is a hero tile's image (as on production); here it is the h1, which paints with
+  the first paint.
+- Locally, `main` measures LCP 3.19 s and Performance 93, against production's 2.29 s and 98 (S17): a local
+  `next start` is not Vercel's CDN. That is why the gate compares local with local, by the same method.
+- **The first round** (before `270ab27`, which changes only where the host and the header sit) gave the same medians
+  for this branch: Performance 100, LCP 1,062 ms.
+
+### 7. Screenshots (scratch, not committed)
+`final-shots/` in the session scratch: the first screen and the full page at 390×844 and 1440×900, plus 320, 1024 and
+1280. At every size: no horizontal overflow, no console errors, and the header row fits (the pill in the bar from
+1280px).
+
+### 8. Pushed, and the Preview
+- `release/concept-a` pushed: `af0af8d..270ab27` (20 commits), then this docs commit. No PR, no merge, nothing deployed
+  to Production, which is still `443a1f9`.
+- Vercel built the Preview from `270ab27`: READY (`dpl_9Dt57A7vnKSZRPBGAaeTeahKTHpT`; GitHub deployment `7928707611`,
+  success).
+- **The branch's link, which follows each push:**
+  `https://tay-shofer-portfolio-git-release-840354-tays-projects-d5aefd6e.vercel.app/`.
+- This build's own link: `https://tay-shofer-portfolio-hwz2i7m75-tays-projects-d5aefd6e.vercel.app/`.
+- Both are behind Vercel's login (302 to its SSO), like every Preview.
+- Claude did not open the Preview's pages: the connector's authenticated fetch would create a share link, which opens
+  the deployment to anyone holding the link for 23 hours. The checks in §4–§6 ran on the same code, built locally.
+
+### Waiting on Tay
+- **Review the whole page on his phone** through the Preview, then close the session.
+- To look at:
+  - The pill below 1280px opening the hero.
+  - "Get in touch" as the outlined control.
+  - The ↓ drawn as an SVG too.
+  - Work without its lede (R10, done now).
+  - The hero's sky fading into Work's.
+  - The case study's two pre-existing best-practice findings (§5).
+- Next: S20 (the tests), then S21+S22 (`/privacy` with N7's wording, R8's headline and card, the manifest and
+  `themeColor`, #13–#16).
+
+---
+
 ## 2026-11-19 — Session 17: the release branch, the unchanged copy, and production's baseline (Claude Code)
 
 **Scope (Tay's brief, S17 only):**
@@ -2935,3 +3148,4 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-19 | Session 15 close | Contact approved, with its two columns from 1100px (`1369b00`); P3 complete (all six sections approved); Contact's LCP cost kept and added to ROADMAP #13; the hold kept (#14); baseline worktree removed, scratch cleaned | `app/lab/work/work.css`, `tests/{unit,e2e}/lab-work.*`, `CLAUDE.md`, `claude/START-HERE.md`, `docs/{WORKLOG,ROADMAP,CINEMATIC_SYSTEM}.md` |
 | 2026-11-19 | Session 16 | The P5/P6 plan (gap audit, the tests the release touches, the backlog, the mechanism), approved by Tay as R1–R15; the S17–S24 plan, S18+S19 and S21+S22 paired; the P4 restore record for the four explainers; the backlog's new #16. Docs only | `docs/{RESEARCH_AND_DECISIONS,ROADMAP,WORKLOG}.md`, `claude/START-HERE.md` |
 | 2026-11-19 | Session 17 | `product-plates-final` (`8f0a96a`) on `443a1f9`, pushed. `release/concept-a` cut from `origin/main`: the prototype's 77 untouched paths copied unchanged (`8b77de1`), the 5 state docs merged three ways (`b4fd805`); unit 216/216, Playwright 213/213, `/`'s stylesheets and markup equal `main`'s build (its scripts the same 177 modules in 10 files instead of 9). R12's "still to name" group approved (`2efac00`). CLAUDE.md for the release track (`0a889bf`). Production baseline: Lighthouse mobile median 98, LCP 2,288 ms; first-load JS 182.04 KiB, HTML 160,584 B. #16 measured | `CLAUDE.md`, `claude/START-HERE.md`, `docs/*.md`, the copied paths |
+| 2026-11-20 | Sessions 18+19 | `/` composed from the Concept A sections, in the layer: header (R2), hero, Work with "Case study" buttons (R4) and Two more (R5), About ending on the facts (R10), Stack, Think · Build · Ship, Contact, footer; dark only (R3); every live id (R7). `/lab` and the retired Product Plates code deleted (`482d29e`); the dialog back inside `<main>` (`270ab27`). R12's test edits and S17's group, plus 6 test commits Tay approved in-session, each its own commit. Must-pass e2e 70/70 + 6/6, unit 121/121 (the two lab unit files fail at load until S20). Gate: Lighthouse mobile median 100, LCP 1,061 ms (local `main` 93, 3,191 ms); first-load JS 185.00 KiB, HTML 127,970 B. Pushed; Preview READY | `app/`, `components/`, `lib/`, `data/`, `tests/`, `docs/WORKLOG.md`, `claude/START-HERE.md` |

@@ -24,6 +24,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
    job hunting. The demos (P4) come after.
    - It ships from `release/concept-a`, cut from `main` in S17 and pushed (no PR yet), through a PR that Tay merges.
      The prototype branch stays frozen as the record.
+   - **S18+S19 (2026-11-20): on that branch, `/` is now the Concept A page** and `/lab` is gone. Pushed at `270ab27`
+     (Preview READY); waiting on Tay's review on his phone.
    - The plan, S17 to S24: `docs/ROADMAP.md`, "Concept A: P4–P6". Tay's decisions, R1 to R15:
      `docs/RESEARCH_AND_DECISIONS.md`, "Resolved in session 16".
 
@@ -60,7 +62,46 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 - **Check your branch first.** Live work branches from an up-to-date `main`, and changes go through a PR that Tay
   merges. `reference/premium-redesign-package` is a stale September design branch: never build or deploy from it.
 
-## The release branch: `release/concept-a` (S17)
+## The release branch: `release/concept-a` (S17, S18+S19)
+- **S18+S19 (2026-11-20): the swap.** `/` is the Concept A page; detail in `docs/WORKLOG.md`, "Sessions 18+19".
+  - **The page** (`app/page.tsx`): the header in its own `.cine` root; then `main`, holding the page's root (the hero,
+    then one `.wk` region with Work, Two more, About, Stack, Think · Build · Ship and Contact) and the case-study host;
+    then the live footer.
+  - One `main`, one h1 (the hero's): Work's title is an h2, each product an h3. Every live id is kept (R7): `#hero`,
+    `#work`, `#work-<id>`, `#more-work`, `#about`, `#skills`, `#approach`, `#contact`.
+  - **The code:** the layer is `app/cinematic.css`, imported by `/` only. The sections are in `components/sections/`
+    (moved with `git mv`, copy unchanged); their data is in `aboutBlock.ts`, `stackBlock.ts`, `tbsBlock.ts`,
+    `contactBlock.ts` and `panels.ts`. Two more is new: `MoreWork.tsx`.
+  - **The header (R2):** the hero's wordmark (`Logo.tsx`) and pill (`AvailabilityPill.tsx`). No theme toggle, and no
+    surface at the top of the page. The pill sits in the bar from 1280px and opens the hero below that.
+  - **On phones** the bar holds the wordmark and the menu. The accessibility button lives in the menu sheet, and a test
+    checks it there at 320 and 390 (Tay's condition).
+  - **Dark only (R3):** `<html data-theme="dark">`. `ThemeProvider` and `ThemeToggle` are deleted.
+    `THEME_COOKIE` stays only while `/privacy` names it (S21+S22).
+  - **Depth and the rest:** "Case study" buttons on the existing dialog (R4). Two more in the live words (R5), so six
+    triggers. The hero's arrows are SVG icons (R9). About ends on the facts; Work has no lede and no reveal of its own
+    (R10, in full).
+  - **Deleted:** `/lab`, the Product Plates hero, chapters, About visual, Stack lens, TBS, Contact and Two more, and
+    `Pic.tsx`. Also `globals.css`'s seams (they targeted the reused ids) and the toggle's glyph rules. The plate tokens
+    stay, because `tokens.test.ts` reads them.
+  - **Tests:** R12's edits and the S17 group, plus six Tay approved in-session (`english.spec.ts:45`, the phone toggle
+    line, one phone header icon, the new phone accessibility test, at least 8 new-tab links, the Aegis captures). Each
+    is its own commit.
+  - Not yet, by plan: `privacy.spec.ts:43`, `site.test.ts:160` and `content.test.ts:20,22` (S21+S22), and the new
+    guards (S20).
+  - **Results:** typecheck, lint and build exit 0. Unit 121/121; the two lab unit files fail at load. Must-pass e2e
+    70/70 + 6/6.
+  - **What still fails is S20's:** the lab specs (the routes are gone), `hero.spec.ts`, and `chapters.spec.ts` and
+    `lower.spec.ts` outside their kept tests. The two lab unit tests carry a temporary `@ts-nocheck`, because the build
+    type-checks tests; S20 removes it.
+  - **The gate** (local production builds, Lighthouse 13.6.0 mobile, median of 5, interleaved): Performance 100, LCP
+    1,061 ms (the h1). Local `main` gives 93 and 3,191 ms.
+  - **Budgets:** first-load JS 185.00 KiB (budget 205.7), HTML 127,970 B (budget 568 KB).
+  - **Status codes:** `/` serves `index, follow` with its canonical; `/lab/*` answers 404.
+  - **axe with the overlays open:** the accessibility panel has 0 violations. The case study has two best-practice
+    findings that production's code shares (`aria-allowed-role` on its `aside`, `image-redundant-alt`), unchanged.
+  - **Preview:** `https://tay-shofer-portfolio-git-release-840354-tays-projects-d5aefd6e.vercel.app/` (the branch's
+    link, behind Vercel's login).
 - **Cut from `origin/main` `443a1f9`** (`--no-track`), pushed in S17 with its upstream set: branch only, no PR, no
   merge.
 - **The copy (R1):**
@@ -189,7 +230,7 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
     (`8f0a96a`).
 - **Preview of `/lab/work`** (the prototype branch's own link, which follows each push to it):
   `https://tay-shofer-portfolio-git-proto-he-65ec6d-tays-projects-d5aefd6e.vercel.app/lab/work`.
-- **Kept identical on the prototype branch, and on `release/concept-a` until the swap** (tests hold it):
+- **Kept identical on the prototype branch** (tests hold it; on `release/concept-a` this ended with the swap, S18+S19):
   - `/`'s stylesheets, pinned to `origin/main`'s digests;
   - every guard file;
   - `/`, `/lab/hero-a` and `/privacy`'s first-load assets (checked against the build before each round).
@@ -234,8 +275,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 
 ## What's next
 - **S17 is done** (2026-11-19): the tag, the branch and the copy, the clean run, the baseline, #16, CLAUDE.md.
-- **S18+S19: compose `/`, with the case studies and Two more** (`docs/ROADMAP.md`, "Concept A: P4–P6"), on
-  `release/concept-a`:
+- **S18+S19 is built and pushed (2026-11-20), waiting on Tay's review on his phone** before the session closes. The
+  plan it carried out:
   - One page: the header (R2), the hero, Work, About, Stack, Think · Build · Ship, Contact and the live Footer, with
     one `main` and one h1, the live anchor ids (R7), and dark `<html>` (R3).
   - `/lab` and the retired live components are deleted.
@@ -247,7 +288,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   S24 (check the tag, Tay's merge, the production checks).
 
 ## Open PRs / branches (S17, 2026-11-19)
-- **`release/concept-a`**: the release branch, pushed in S17, with no PR yet. S23 opens it on Tay's go; Tay merges.
+- **`release/concept-a`**: the release branch, pushed in S17 and again in S18+S19 (`270ab27`, then the docs), with no
+  PR yet. S23 opens it on Tay's go; Tay merges.
 - **Tag `product-plates-final`** (`8f0a96a`) on `443a1f9`, pushed in S17: the P4 restore point (R6, R15).
 - **PR #18** (`proto/hero-a-cinematic`, draft): the Concept A prototype. Never merge, never delete; Preview only.
 - Merged and deleted (each checked with `git merge-base --is-ancestor` first):
@@ -260,8 +302,9 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Start S18+S19** in a new session, on `release/concept-a`. (The "still to name" test changes are already approved:
-  S17, R12.)
+- **Review S18+S19 on his phone** through the branch's Preview link (above), then close the session. Points to look at
+  are in `docs/WORKLOG.md`, "Sessions 18+19", "Waiting on Tay".
+- **Then S20** in a new session: the tests (port the lab specs to `/`, retire the old page's, add the new guards).
 - **In S21+S22:** approve N7's exact final `/privacy` wording before it is committed (R13).
 - **In S23:** the GRAVITY FLOW image for the capture swap; the review on his own phone through the Preview.
 - **In S24:** merge. The `product-plates-final` tag is already pushed (S17).
