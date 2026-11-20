@@ -239,7 +239,7 @@ test("844×390 landscape: the menu sheet scrolls, so its last control is reachab
   await ctx.close();
 });
 
-type Stop = { name: string; ring: boolean; obscured: boolean };
+type Stop = { name: string; ring: boolean; obscured: boolean; underLauncher: boolean };
 async function tabThrough(page: Page, max = 90): Promise<Stop[]> {
   const stops: Stop[] = [];
   for (let i = 0; i < max; i++) {
@@ -250,9 +250,12 @@ async function tabThrough(page: Page, max = 90): Promise<Stop[]> {
       const ringed = cs.outlineStyle !== "none" && parseFloat(cs.outlineWidth) >= 2;
       // Radios and checkboxes are visually hidden; their visible part (the next sibling) carries the ring.
       const sib = e.matches("input") ? getComputedStyle(e.nextElementSibling!) : null;
+      // #16 (WCAG 2.4.11): no focused control sits even partly under the chat launcher, in whatever state it is in.
+      const chat = document.querySelector<HTMLElement>("[data-chat-launcher]"), c = chat?.getBoundingClientRect();
+      const underLauncher = !!c && !chat!.contains(e) && r.right > c.left + 1 && r.left < c.right - 1 && r.bottom > c.top + 1 && r.top < c.bottom - 1;
       return { name: (e.getAttribute("aria-label") || e.textContent || (e as HTMLInputElement).value || "").trim().replace(/\s+/g, " ").slice(0, 40),
         ring: ringed || (!!sib && sib.outlineStyle !== "none" && parseFloat(sib.outlineWidth) >= 2),
-        obscured: !nav.contains(e) && e.getAttribute("href") !== "#main" && r.top < nav.getBoundingClientRect().bottom - 1 };
+        obscured: !nav.contains(e) && e.getAttribute("href") !== "#main" && r.top < nav.getBoundingClientRect().bottom - 1, underLauncher };
     });
     if (!s) break;
     if (stops.length && stops[0].name === s.name && i > 5) break;
@@ -271,7 +274,11 @@ for (const vp of [[1440, 900], [390, 844]] as const) {
     const order = [at(/^Explore my work/), at(/^T Poker/), at(/^Case study/), at(/^Email me/), at(/^Download résumé \(PDF\)$/), at(/^Back to top/)];
     for (const i of order) expect(i, JSON.stringify(stops.map((s) => s.name))).toBeGreaterThan(0);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
-    for (const s of stops) { expect(s.ring, `focus ring on ${s.name}`).toBe(true); expect(s.obscured, `${s.name} under the header`).toBe(false); }
+    for (const s of stops) {
+      expect(s.ring, `focus ring on ${s.name}`).toBe(true);
+      expect(s.obscured, `${s.name} under the header`).toBe(false);
+      expect(s.underLauncher, `${s.name} under the chat launcher`).toBe(false);
+    }
     await ctx.close();
   });
 }
