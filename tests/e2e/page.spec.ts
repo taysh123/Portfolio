@@ -49,6 +49,20 @@ for (const vp of VIEWPORTS) {
   });
 }
 
+// R12 (Tay, session 16), a new guard: / is the page search engines index. It says index, follow, names the site's
+// origin as its one canonical, and carries no noindex in its markup or its headers.
+test("/ is indexable: index, follow, the canonical https://tayshofer.dev, and no noindex anywhere", async ({ request }) => {
+  const r = await request.get("/", { headers: { Accept: "text/html" } });
+  expect(r.status()).toBe(200);
+  expect(r.headers()["x-robots-tag"] ?? "").not.toMatch(/noindex|nofollow|\bnone\b/i);
+  const html = await r.text();
+  expect(html).toContain('<meta name="robots" content="index, follow"/>');
+  expect(html).toMatch(/<meta name="googlebot" content="index, follow[,"]/);
+  expect(html).toContain('<link rel="canonical" href="https://tayshofer.dev"/>');
+  expect(html.match(/rel="canonical"/g)).toHaveLength(1);
+  expect(html).not.toMatch(/noindex|nofollow/i);
+});
+
 test("every interactive element is ≥ 44px tall below lg (390 and 320)", async ({ browser }) => {
   for (const vp of [[390, 844], [320, 568]] as const) {
     const { ctx, page } = await open(browser, vp);
