@@ -4,8 +4,9 @@
 // docs/CINEMATIC_SYSTEM.md points here). The page-wide guards stay in budget.spec.ts and page.spec.ts, unchanged.
 import { test, expect, type Browser, type BrowserContextOptions, type Page } from "playwright/test";
 import zlib from "node:zlib";
-import { COUNT_WEBGL } from "../support/page";
+import { COUNT_WEBGL, PHONES } from "../support/page";
 import { privateRepoLeaks } from "../support/private-repo";
+import { namesAny } from "../support/institution";
 import { socials } from "../../data/socials";
 
 const ROUTE = "/";
@@ -446,6 +447,16 @@ test("About without JavaScript: every word, no link, no photo, nothing hidden", 
   await ctx.close();
 });
 
+// Ported in S20 from lower.spec.ts (the Product Plates About, retired).
+test("About: the four live facts; no institution anywhere in the served page; the rejected render gone in every form", async ({ page }) => {
+  await page.goto(ROUTE);
+  await expect(page.locator("#about .wk__about-facts li")).toHaveText(["B.Sc. in Computer Science", "Full-stack: web, mobile, and backend", "Based in Israel", "Working in English and Hebrew"]);
+  // No institution anywhere in the served page: copy, alt text, metadata, Open Graph or JSON-LD.
+  expect(namesAny(await page.content())).toBe(false);
+  expect(await page.content()).not.toMatch(/Where the work happens|A 3D render, built in code|about-studio/);
+  await expect(page.locator("#about figcaption, #about canvas, #about video")).toHaveCount(0);
+});
+
 test("the résumé links on / (the hero's and Contact's) serve the same PDF", async ({ page, request }) => {
   await page.goto(ROUTE);
   const hrefs = await page.locator("#hero a[download], [data-contact] [data-resume]").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
@@ -539,6 +550,17 @@ test("Stack without JavaScript: every group, tool and evidence sentence, the ful
   await expect(stack(page).locator("a, img, picture, svg, canvas")).toHaveCount(0);
   expect(await stack(page).evaluate((e) => [e, ...e.querySelectorAll("*")].filter((x) => getComputedStyle(x).opacity !== "1").length)).toBe(0);
   await ctx.close();
+});
+
+// Ported in S20 from lower.spec.ts (the Product Plates Stack, retired).
+test("Stack: each tool is typeset text naming its own flagships, in its accessible text and on hover; Everyday tools name none; never monospace", async ({ page }) => {
+  await page.goto(ROUTE);
+  const csharp = page.locator("#skills [data-tool]", { hasText: /^C#/ });
+  await expect(csharp).toHaveAttribute("title", "T Poker, Aegis");
+  expect(await csharp.textContent()).toBe("C# (T Poker, Aegis)");
+  await expect(page.locator('#skills [data-group="workflow"] [data-tool][title]')).toHaveCount(0);
+  const fonts = await page.locator("#skills [data-tool]").evaluateAll((ls) => [...new Set(ls.map((l) => getComputedStyle(l).fontFamily))]);
+  for (const f of fonts) expect(f).not.toMatch(/mono/i);
 });
 
 test("Stack's filter: a project shows only its tools, filled, and no empty group or evidence; All brings everything back", async ({ browser }) => {
@@ -741,6 +763,14 @@ test("Think · Build · Ship without JavaScript: the live title and rows, every 
   await ctx.close();
 });
 
+// Ported in S20 from lower.spec.ts (the Product Plates Think · Build · Ship, retired).
+test("Think · Build · Ship is unpinned: three principles in the flow of the page", async ({ page }) => {
+  await page.goto(ROUTE);
+  const s = page.locator("#approach");
+  expect(await s.evaluate((e) => [...e.querySelectorAll("*")].some((x) => /sticky|fixed/.test(getComputedStyle(x).position)))).toBe(false);
+  expect(await s.evaluate((e) => e.getBoundingClientRect().height)).toBeLessThan(900 * 1.2);
+});
+
 for (const [label, motion] of [["motion on", "no-preference"], ["reduced motion", "reduce"]] as const) {
   test(`Think · Build · Ship holds still (${label}): no animation and no transition on any of it`, async ({ browser }) => {
     const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: motion });
@@ -817,6 +847,25 @@ test("Contact without JavaScript: the eyebrow, the live title and lead, the four
   await expect(contact(page).locator("form, input, textarea, button, img, picture, canvas, svg:not([aria-hidden='true'])")).toHaveCount(0);
   expect(await contact(page).evaluate((e) => [e, ...e.querySelectorAll("*")].filter((x) => getComputedStyle(x).opacity !== "1" || getComputedStyle(x).visibility === "hidden").length)).toBe(0);
   await ctx.close();
+});
+
+// Ported in S20 from lower.spec.ts (the Product Plates Contact, retired).
+for (const vp of PHONES) {
+  test(`${vp[0]}px: Contact keeps LinkedIn and GitHub on one line, and the résumé's size never breaks`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp, { reducedMotion: "reduce" });
+    const tops = await contact(page).locator("[data-profile]").evaluateAll((as) => as.map((a) => Math.round(a.getBoundingClientRect().top)));
+    expect(tops).toHaveLength(2); expect(tops[0]).toBe(tops[1]);
+    expect(await contact(page).locator(".wk__contact-resume").textContent()).toContain("79 KB");
+    expect(await contact(page).locator(".wk__contact-resume span").evaluate((e) => e.getClientRects().length)).toBe(1);   // the note, one run
+    await ctx.close();
+  });
+}
+
+test("Contact: the résumé is a quiet download there and in the footer, and never in the header", async ({ page }) => {
+  await page.goto(ROUTE);
+  await expect(contact(page).getByRole("link", { name: "Download résumé (PDF)" })).toHaveAttribute("href", "/resume/Tay-Shofer-Software-Engineer-Resume.pdf");
+  await expect(page.locator("footer").getByRole("link", { name: "Résumé (PDF)" })).toHaveAttribute("href", "/resume/Tay-Shofer-Software-Engineer-Resume.pdf");
+  await expect(page.locator("header[data-site-nav]").getByRole("link", { name: /résumé|resume|cv/i })).toHaveCount(0);
 });
 
 for (const [label, motion] of [["motion on", "no-preference"], ["reduced motion", "reduce"]] as const) {
