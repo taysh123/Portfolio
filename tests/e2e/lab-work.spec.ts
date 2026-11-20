@@ -1,21 +1,16 @@
-// tests/e2e/lab-work.spec.ts — the Work slice in the cinematic language (PROTOTYPE, rounds 5–6; D1 reopened by Tay,
-// 2026-11-18; D2 not reopened, so no WebGL). Branch proto/hero-a-cinematic only, never merged. main's guards still run
-// against /, unchanged.
+// tests/e2e/lab-work.spec.ts — everything under the hero on /, in the cinematic language: Work's four panels and their
+// carousels, Two more, About, Stack, Think · Build · Ship and Contact (the release, R1–R15; D1 reopened by Tay,
+// 2026-11-18; D2 not reopened, so no WebGL). Ported in S20 from the prototype's /lab/work spec (the file keeps its name:
+// docs/CINEMATIC_SYSTEM.md points here). The page-wide guards stay in budget.spec.ts and page.spec.ts, unchanged.
 import { test, expect, type Browser, type BrowserContextOptions, type Page } from "playwright/test";
 import zlib from "node:zlib";
 import { COUNT_WEBGL } from "../support/page";
 import { privateRepoLeaks } from "../support/private-repo";
 import { socials } from "../../data/socials";
 
-const ROUTE = "/lab/work";
+const ROUTE = "/";
 const AXE = require.resolve("axe-core/axe.min.js");
 const NAMES = ["T Poker", "Aegis", "DeveloperOS", "GRAVITY FLOW"];
-/** About's three links (P3.3): the live site's own targets, and each one's accessible name. */
-const ABOUT_LINKS = [
-  ["/resume/Tay-Shofer-Software-Engineer-Resume.pdf", "Download résumé (PDF · two pages, 79 KB)"],
-  ["https://github.com/taysh123", "GitHub (opens in a new tab)"],
-  ["https://www.linkedin.com/in/tay-shofer-1b2b54287", "LinkedIn (opens in a new tab)"],
-] as const;
 /** Contact's four links (P3.6): the live Contact's own targets, in its order, and each one's accessible name. Fixed
  *  values: the Product Plates Contact had exactly these (product-plates-final:components/sections/Contact.tsx). */
 const CONTACT_LINKS = [
@@ -24,9 +19,9 @@ const CONTACT_LINKS = [
   ["https://github.com/taysh123", "GitHub (opens in a new tab)"],
   ["/resume/Tay-Shofer-Software-Engineer-Resume.pdf", "Download résumé (PDF)"],
 ] as const;
-/** Stack's groups (P3.4): the live Stack's, with Security after Services and APIs (Tay, session 13). */
 /** Stack's filter (Tay, session 13): All and the four flagships, in Work order. */
 const STACK_FILTER = ["All", ...NAMES];
+/** Stack's groups (P3.4): the live Stack's, with Security after Services and APIs (Tay, session 13). */
 const STACK_GROUPS = ["Languages", "Product and interface", "Services and APIs", "Security", "Data, search and models",
   "Delivery and testing", "Everyday tools"];
 
@@ -52,13 +47,13 @@ const slides = (page: Page, id: string) => panel(page, id).locator(".wk__slide")
 const selected = (page: Page, id: string) => panel(page, id).locator('[role="tab"]').evaluateAll((ts) => ts.findIndex((t) => t.getAttribute("aria-selected") === "true"));
 const scrollAll = async (page: Page) => { for (const img of await page.locator(".wk__stage").all()) { await img.scrollIntoViewIfNeeded(); await page.waitForTimeout(120); } };
 
-test("budget: first-load JS ≤ 205.7 KB gzip and HTML ≤ 568 KB; the carousel is the only client code; no canvas, no WebGL", async ({ request, baseURL, page }) => {
+test("budget: first-load JS ≤ 205.7 KB gzip and HTML ≤ 568 KB; the carousel is one chunk, the project data stays on the server; one 2D canvas, no WebGL", async ({ request, baseURL, page }) => {
   const html = await (await request.get(ROUTE)).text();
   const srcs = [...new Set([...html.matchAll(/<script[^>]+src="([^"]+)"/g)].map((m) => m[1]))];
   const bodies = await Promise.all(srcs.map(async (s) => (await request.get(new URL(s, baseURL).toString())).body()));
   const gz = bodies.reduce((a, b) => a + zlib.gzipSync(b).length, 0);
   const own = bodies.filter((b) => b.toString().includes("wk__reel"));
-  console.log(`/lab/work JS ${(gz / 1024).toFixed(2)} KiB over ${srcs.length} scripts (the carousel's own: ${(own.reduce((a, b) => a + zlib.gzipSync(b).length, 0) / 1024).toFixed(2)} KiB), HTML ${(Buffer.byteLength(html) / 1024).toFixed(2)} KB`);
+  console.log(`/ JS ${(gz / 1024).toFixed(2)} KiB over ${srcs.length} scripts (the carousel's own: ${(own.reduce((a, b) => a + zlib.gzipSync(b).length, 0) / 1024).toFixed(2)} KiB), HTML ${(Buffer.byteLength(html) / 1024).toFixed(2)} KB`);
   expect(gz / 1024).toBeLessThanOrEqual(205.7);
   expect(Buffer.byteLength(html) / 1024).toBeLessThanOrEqual(568);
   expect(own).toHaveLength(1);
@@ -66,16 +61,17 @@ test("budget: first-load JS ≤ 205.7 KB gzip and HTML ≤ 568 KB; the carousel 
   for (const b of bodies) { expect(b.toString()).not.toContain("A poker study platform"); expect(b.toString()).not.toContain("wk__panel"); }
   await page.addInitScript(COUNT_WEBGL);
   await page.goto(ROUTE);
-  await expect(page.locator("canvas")).toHaveCount(0);
+  // R12 (Tay, session 16): the page's one canvas is the hero's 2D field; nothing under the hero draws one.
+  await expect(page.locator("canvas")).toHaveCount(1);
+  await expect(page.locator(".wk canvas")).toHaveCount(0);
   expect(await page.evaluate(() => (window as unknown as { __gl: number }).__gl)).toBe(0);
 });
 
-test("never indexed, and no private repository leaks into what the browser gets", async ({ request }) => {
+// The prototype's "never indexed" half is page.spec.ts's guard now (R12: / is index, follow with its canonical).
+test("no private repository leaks into what the browser gets", async ({ request }) => {
   const html = await (await request.get(ROUTE, { headers: { Accept: "text/html" } })).text();
-  expect(html).toMatch(/<meta name="robots" content="noindex, nofollow, nocache"\/>/);
-  expect(html).not.toMatch(/rel="canonical"/);
   expect(privateRepoLeaks(html)).toEqual([]);
-  expect(await (await request.get("/")).text()).not.toMatch(/href="\/lab/);
+  expect(html).not.toMatch(/href="\/lab/);
 });
 
 test("without JavaScript: every word and link, and each project's first real capture alone, with no dead controls", async ({ browser }) => {
@@ -87,8 +83,12 @@ test("without JavaScript: every word and link, and each project's first real cap
     expect(await el.locator(".wk__chips li").count(), NAMES[i]).toBeGreaterThanOrEqual(2);
     await expect(el.locator("img")).toHaveCount(1);                                   // the first capture only
     await expect(el.locator("img")).toHaveAttribute("alt", /.{20,}/);
-    await expect(el.locator("[data-more]")).toHaveAttribute("href", /^\/#work-/);
+    // R4: its case study is a script-driven dialog, so without JavaScript the button is not offered.
+    await expect(el.locator(".case-study-trigger")).toHaveText("Case study");
+    await expect(el.locator(".case-study-trigger")).toBeHidden();
   }
+  await expect(page.locator(".case-study-trigger:visible")).toHaveCount(0);           // Two more's two as well
+  await expect(page.locator(".case-study-trigger")).toHaveCount(6);
   expect(await page.locator(".wk__panel img").evaluateAll((is) => is.map((i) => (i as HTMLImageElement).src.split("/").pop()!.replace(/-\d+\.\w+$/, ""))))
     .toEqual(["poker-home", "aegis-alerts", "dos-search", "gf-gameplay"]);
   // The carousels' controls would do nothing without script, so they are not shown.
@@ -96,28 +96,27 @@ test("without JavaScript: every word and link, and each project's first real cap
   expect(await page.locator(".wk__lens").evaluate((e) => getComputedStyle(e).visibility)).toBe("hidden");   // Stack's filter
   expect(await page.locator("[data-primary]").evaluateAll((as) => as.map((a) => a.getAttribute("href")))).toEqual([
     "https://app.tpoker.app/", "https://github.com/taysh123/aegis", "https://github.com/taysh123/DeveloperOS"]);
-  await expect(page.locator("[data-private-repo]")).toHaveCount(2);
+  await expect(page.locator(".wk__panel [data-private-repo]")).toHaveCount(2);
   // Every first capture arrives without script once near the viewport (native lazy loading; scrolled from outside).
   await scrollAll(page);
   await expect.poll(() => page.locator(".wk img").evaluateAll((is) => is.every((i) => (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0)), { timeout: 15000 }).toBe(true);
-  for (const sel of [".wk__eyebrow", ".wk__title", ".wk__lede"]) expect(await page.locator(sel).evaluate((e) => getComputedStyle(e).opacity), sel).toBe("1");
+  for (const sel of [".wk__eyebrow", ".wk__title"]) expect(await page.locator(sel).evaluate((e) => getComputedStyle(e).opacity), sel).toBe("1");
   await ctx.close();
 });
 
-test("captures: the page's first is eager and high priority; every other capture is lazy and waits until it is near", async ({ browser }) => {
+test("captures: every one is lazy on / (the hero fills the first screen), and none is fetched until it is near", async ({ browser }) => {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await ctx.newPage();
   const fetched: string[] = [];
   page.on("request", (r) => { if (/\/work\/[\w-]+-\d+\.(avif|webp)$/.test(r.url())) fetched.push(r.url().split("/").pop()!); });
-  // Headless Chromium starts a lazy image well before it nears the viewport (its margin covers this whole page), so the
-  // deferral is shown on the same markup pushed 6000px down: the lazy captures must wait for the scroll.
+  // Headless Chromium starts a lazy image well before it nears the viewport (its margin covers much of this page), so
+  // the deferral is shown on the same markup pushed 6000px down: the lazy captures must wait for the scroll.
   await page.route(ROUTE, async (r) => { const res = await r.fetch(); await r.fulfill({ response: res, body: (await res.text()).replace("</head>", "<style>.wk__head{padding-top:6000px}</style></head>") }); });
   await page.goto(ROUTE, { waitUntil: "networkidle" });
   const attrs = await page.locator(".wk img").evaluateAll((is) => is.map((i) => [i.getAttribute("loading"), i.getAttribute("fetchpriority")]));
-  expect(attrs[0]).toEqual(["eager", "high"]);
-  for (const a of attrs.slice(1)) expect(a).toEqual(["lazy", null]);
-  expect(fetched.some((f) => f.startsWith("poker-home")), fetched.join(", ")).toBe(true);                     // eager: fetched anyway
-  expect(fetched.filter((f) => /^(poker-live|poker-settle|poker-podium|poker-stats|aegis-alerts|hero-aegis|dos-search|dos-learning|dos-career|dos-dashboard|gf-gameplay|gf-boss|gf-gravity-run|gf-cosmetics|gf-win)-/.test(f)), "lazy, far away").toEqual([]);
+  expect(attrs.length).toBeGreaterThanOrEqual(4);
+  for (const a of attrs) expect(a).toEqual(["lazy", null]);
+  expect(fetched, "lazy, far away").toEqual([]);
   await panel(page, "gravity-flow").scrollIntoViewIfNeeded();
   await expect.poll(() => fetched.some((f) => f.startsWith("gf-gameplay"))).toBe(true);
   await ctx.close();
@@ -152,9 +151,8 @@ test("mixed shapes never shift the page: every track holds its tallest capture's
     const still = await heights(off.page);
     await off.ctx.close();
     const ctx = await browser.newContext({ viewport: { width: vp[0], height: vp[1] }, isMobile: vp[0] < 900, hasTouch: vp[0] < 900, reducedMotion: "no-preference" });
-    // Shifts are split by where they happen. The site's own chat launcher (components/chat, shared with /) folds its
-    // label as the page scrolls and unfolds it at the top: about 0.0076 here, the same on the build before this change
-    // (session 11, measured). The slice's own boxes must not move at all.
+    // Shifts are split by where they happen. The site's own chat launcher (components/chat) folds its label as the page
+    // scrolls and unfolds it at the top: about 0.0076 (session 11, measured). The region's own boxes must not move at all.
     // Locally the carousels hydrate before the first paint, which would hide a hydration shift (measured: with the box
     // reservation removed, the Aegis track grows 89 → 281px at 89 ms, first paint at 100 ms, CLS 0). So the scripts are
     // held back 1.2 s, as on a slow phone, and the page opens at Aegis, the mixed-shape gallery, in view. Red/green: with
@@ -177,11 +175,11 @@ test("mixed shapes never shift the page: every track holds its tallest capture's
     await page.evaluate(() => scrollTo(0, 0));
     await page.waitForTimeout(500);
     const cls = await page.evaluate(() => { const w = window as unknown as { __wk: number; __other: number }; return { wk: w.__wk, other: w.__other }; });
-    console.log(`CLS ${vp[0]}: the slice ${cls.wk}, the site's chat launcher ${cls.other.toFixed(4)}`);
-    expect(cls.wk, `${vp[0]}: CLS inside the slice through load, hydration and every capture arriving`).toBe(0);
+    console.log(`CLS ${vp[0]}: under the hero ${cls.wk}, elsewhere (the site's chat launcher) ${cls.other.toFixed(4)}`);
+    expect(cls.wk, `${vp[0]}: CLS under the hero through load, hydration and every capture arriving`).toBe(0);
     // Within a pixel: an empty slide reserves its box from the largest encode's exact ratio (900 × 506), while a loaded
     // smaller one keeps its own whole-pixel size (600 × 337), 0.27px shorter at 1440 (measured). Sub-pixel, and the same for
-    // every capture since round 6; the slice's CLS above stays 0.
+    // every capture since round 6; the region's CLS above stays 0.
     const near = (a: number[], b: number[]) => a.every((x, j) => Math.abs(x - b[j]) < 1);
     expect(near(await heights(page), still), `${vp[0]}: hydrated ${await heights(page)} = without JS ${still}`).toBe(true);
     for (const [i, id] of ["poker", "aegis", "developeros", "gravity-flow"].entries()) {
@@ -200,6 +198,7 @@ test("mixed shapes never shift the page: every track holds its tallest capture's
 
 test("the coverflow: the front capture flat and whole, its neighbours turned in 3D, smaller and dimmed", async ({ browser }) => {
   const { ctx, page, errors } = await at(browser, [1440, 900], { reducedMotion: "no-preference" });
+  await panel(page, "poker").scrollIntoViewIfNeeded();
   await expect.poll(async () => (await slides(page, "poker")).filter((s) => s.shown && s.img).length).toBe(3);
   const s = await slides(page, "poker");
   const [front, right, left] = [s[0], s[1], s[4]];
@@ -300,27 +299,34 @@ for (const [label, opts, cookie] of [["the OS setting", { reducedMotion: "reduce
   });
 }
 
-test("keyboard: every control in reading order, each with a solid 2px cyan ring; focus lifts its panel", async ({ browser }) => {
+test("keyboard: every control under the hero in reading order, each with a solid 2px cyan ring; focus lifts its panel", async ({ browser }) => {
   const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: "no-preference" });
+  // Start from the hero's last control, Featured work's GRAVITY FLOW, and walk to the end of Contact.
+  await page.locator('.hxa__flink[data-featured="gravity-flow"]').focus();
+  const order = [
+    "https://app.tpoker.app/", "Case study", "Previous capture", "Capture 1 of 5", "Next capture",
+    "https://github.com/taysh123/aegis", "Case study", "Previous capture", "Capture 1 of 2", "Next capture",
+    "https://github.com/taysh123/DeveloperOS", "Case study", "Previous capture", "Capture 1 of 4", "Next capture",
+    "Case study", "Previous capture", "Capture 1 of 5", "Next capture",
+    "https://github.com/taysh123/job-assistant", "Case study", "Case study",   // Two more (R5); About has no link (R10)
+    ...STACK_FILTER,
+    ...CONTACT_LINKS.map(([href]) => href)];
   const seen: { at: string; ring: string }[] = [];
-  for (let i = 0; i < 33; i++) {
+  for (let i = 0; i < order.length; i++) {
     await page.keyboard.press("Tab");
-    seen.push(await page.evaluate(() => {
-      const e = document.activeElement as HTMLElement, cs = getComputedStyle(e);
+    seen.push(await page.evaluate(async () => {
+      const e = document.activeElement as HTMLElement;
+      await Promise.all(e.getAnimations().map((a) => a.finished));   // a ring that eases in is read once it has settled
+      const cs = getComputedStyle(e);
       return { at: e.getAttribute("href") ?? e.getAttribute("aria-label") ?? e.textContent ?? "", ring: `${cs.outlineStyle} ${cs.outlineWidth} ${cs.outlineColor}` };
     }));
   }
-  expect(seen.map((s) => s.at)).toEqual(["#main",
-    "https://app.tpoker.app/", "/#work-poker", "Previous capture", "Capture 1 of 5", "Next capture",
-    "https://github.com/taysh123/aegis", "/#work-aegis", "Previous capture", "Capture 1 of 2", "Next capture",
-    "https://github.com/taysh123/DeveloperOS", "/#work-developeros", "Previous capture", "Capture 1 of 4", "Next capture",
-    "/#work-gravity-flow", "Previous capture", "Capture 1 of 5", "Next capture",
-    ...ABOUT_LINKS.map(([href]) => href),
-    ...STACK_FILTER,
-    ...CONTACT_LINKS.map(([href]) => href),
-    "Chat with the assistant"]);
+  expect(seen.map((s) => s.at)).toEqual(order);
+  // Contact's last link hands focus on to the footer, outside the layer (it keeps the site's own ring).
+  await page.keyboard.press("Tab");
+  expect(await page.evaluate(() => !!document.activeElement?.closest("footer"))).toBe(true);
   for (const s of seen) expect(s.ring, s.at).toBe("solid 2px rgb(46, 230, 214)");
-  await panel(page, "aegis").locator("[data-more]").focus();
+  await panel(page, "aegis").locator(".case-study-trigger").focus();
   await page.waitForTimeout(300);
   expect((await lift(page, "aegis")).translate).toBe("0px -4px");
   expect((await lift(page, "aegis")).halo).not.toBe("none");
@@ -402,11 +408,14 @@ for (const vp of [[1440, 900], [1024, 768], [390, 844], [320, 568]] as const) {
   });
 }
 
-test("structure: one h1, four product h2s, a landmark, four carousels, and four empty hidden P4 demo slots", async ({ page }) => {
+test("structure: the hero's one h1, four product h3s under Work's h2, the sections' h2s, four carousels, and four empty hidden P4 demo slots", async ({ page }) => {
   await page.goto(ROUTE);
   await expect(page.locator("h1")).toHaveCount(1);
-  await expect(page.locator("article h2")).toHaveText(NAMES);
-  await expect(page.locator("h2")).toHaveCount(NAMES.length + 4);   // About, Stack, Think · Build · Ship, and Contact
+  await expect(page.locator(".wk__panel h3")).toHaveText(NAMES);
+  await expect(page.locator("#work > header h2")).toHaveText("Four projects, built end to end.");
+  // Work, Two more (R5), About, Stack, Think · Build · Ship and Contact.
+  await expect(page.locator(".wk h2")).toHaveCount(6);
+  await expect(page.getByRole("region", { name: "Two more" }).locator("h3")).toHaveText(["Job Assistant", "Orders & Delivery"]);
   await expect(page.getByRole("region", { name: "Engineer by training. Builder by nature." }).locator("h2")).toHaveCount(1);
   await expect(page.getByRole("region", { name: "Tools behind the work." }).locator("h2")).toHaveCount(1);
   await expect(page.getByRole("region", { name: "Tools behind the work." }).locator("h3")).toHaveCount(STACK_GROUPS.length);
@@ -414,57 +423,47 @@ test("structure: one h1, four product h2s, a landmark, four carousels, and four 
   await expect(page.getByRole("region", { name: "Think. Build. Ship." }).locator("h3")).toHaveCount(3);
   await expect(page.getByRole("region", { name: "Let's build something people use." }).locator("h2")).toHaveCount(1);
   await expect(page.getByRole("main")).toHaveCount(1);
+  await expect(page.getByRole("main").locator(".wk")).toHaveCount(1);
   for (const n of NAMES) await expect(page.getByRole("article", { name: n })).toHaveCount(1);
   for (const n of NAMES) await expect(page.getByRole("region", { name: `${n}: captures` })).toHaveCount(1);
   const slots = await page.locator("[data-demo-slot]").evaluateAll((s) => s.map((e) => ({ id: e.getAttribute("data-demo-slot"), hidden: (e as HTMLElement).hidden, empty: e.childNodes.length === 0, shown: (e as HTMLElement).offsetParent !== null })));
   expect(slots).toEqual(["poker", "aegis", "developeros", "gravity-flow"].map((id) => ({ id, hidden: true, empty: true, shown: false })));
 });
 
-// About (P3.3, session 12): who, in about ten seconds, under the panels. Every word server-rendered, the live site's
-// own links, no photo, and it holds still.
-test("About without JavaScript: every word and the three live links, no photo, nothing hidden", async ({ browser }) => {
+// About (P3.3, session 12): who, in about ten seconds, under Work. Every word server-rendered, no photo, and it holds
+// still. Since R10 (S18+S19) it ends on the facts: no availability line and no links.
+test("About without JavaScript: every word, no link, no photo, nothing hidden", async ({ browser }) => {
   const { ctx, page } = await at(browser, [1440, 900], { javaScriptEnabled: false });
   const ab = page.locator("[data-about]");
   await expect(ab.locator("h2")).toHaveText("Engineer by training. Builder by nature.");
   await expect(ab.locator(".wk__about-eyebrow")).toHaveText("About");
   await expect(ab.locator(".wk__about-lede")).toHaveText("I'm a Computer Science graduate who enjoys turning complex ideas into useful, dependable software. Today, I work with C#/.NET, TypeScript, and Python, taking projects from an initial idea to working software.");
   await expect(ab.locator(".wk__about-facts li")).toHaveText(["B.Sc. in Computer Science", "Full-stack: web, mobile, and backend", "Based in Israel", "Working in English and Hebrew"]);
-  await expect(ab.locator(".wk__about-open")).toHaveText("Available for software engineering roles: on-site, hybrid, or remote.");
-  await expect(ab.locator("img, picture, canvas, svg:not([aria-hidden='true'])")).toHaveCount(0);
-  const links = ab.locator("a");
-  await expect(links).toHaveCount(3);
-  for (const [i, [href, name]] of ABOUT_LINKS.entries()) {
-    await expect(links.nth(i)).toHaveAttribute("href", href);
-    await expect(links.nth(i)).toHaveAccessibleName(name);
-  }
-  await expect(links.nth(0)).toHaveAttribute("download", "Tay-Shofer-Software-Engineer-Resume.pdf");
-  await expect(links.nth(0)).toHaveAttribute("type", "application/pdf");
-  for (const k of [1, 2]) { await expect(links.nth(k)).toHaveAttribute("target", "_blank"); await expect(links.nth(k)).toHaveAttribute("rel", "noopener noreferrer"); }
+  await expect(ab.locator(".wk__about-open")).toHaveCount(0);
+  await expect(ab.locator("img, picture, canvas, video, figcaption, svg:not([aria-hidden='true'])")).toHaveCount(0);
+  await expect(ab.locator("a, button")).toHaveCount(0);
   for (const el of await ab.locator("*").all()) expect(await el.evaluate((e) => getComputedStyle(e).opacity)).toBe("1");
   await ctx.close();
 });
 
-test("About: the résumé link serves the same PDF as the live page's", async ({ request }) => {
-  const res = await request.get(ABOUT_LINKS[0][0]);
+test("the résumé links on / (the hero's and Contact's) serve the same PDF", async ({ page, request }) => {
+  await page.goto(ROUTE);
+  const hrefs = await page.locator("#hero a[download], [data-contact] [data-resume]").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
+  expect(hrefs).toEqual(["/resume/Tay-Shofer-Software-Engineer-Resume.pdf", "/resume/Tay-Shofer-Software-Engineer-Resume.pdf"]);
+  const res = await request.get(hrefs[0]!);
   expect(res.status()).toBe(200);
   expect(res.headers()["content-type"]).toContain("application/pdf");
   expect((await res.body()).length).toBe(80593);   // tests/e2e/lower.spec.ts pins the same bytes
 });
 
 for (const [label, motion] of [["motion on", "no-preference"], ["reduced motion", "reduce"]] as const) {
-  test(`About holds still (${label}): no animation on any of it, and a link answers a hover only in colour`, async ({ browser }) => {
+  test(`About holds still (${label}): no animation and no transition on any of it`, async ({ browser }) => {
     const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: motion });
     const ab = page.locator("[data-about]");
     await ab.scrollIntoViewIfNeeded();
     await page.waitForTimeout(300);
     expect(await ab.evaluate((e) => [e, ...e.querySelectorAll("*")].reduce((n, x) => n + x.getAnimations().length, 0))).toBe(0);
-    const cv = ab.locator("[data-resume]");
-    const before = await cv.evaluate((e) => ({ y: e.getBoundingClientRect().top, bg: getComputedStyle(e).backgroundColor }));
-    await cv.hover();
-    await page.waitForTimeout(300);
-    const after = await cv.evaluate((e) => ({ y: e.getBoundingClientRect().top, bg: getComputedStyle(e).backgroundColor }));
-    expect(after.y).toBe(before.y);
-    expect(after.bg).not.toBe(before.bg);
+    expect(await ab.evaluate((e) => [e, ...e.querySelectorAll("*")].filter((x) => parseFloat(getComputedStyle(x).transitionDuration) >= 0.01).length)).toBe(0);
     await ctx.close();
   });
 }
@@ -496,7 +495,7 @@ for (const [label, vp, opts] of [
     const { ctx, page } = await at(browser, vp, opts);
     await scrollAll(page);
     for (const id of ["poker", "aegis", "developeros", "gravity-flow"]) await panel(page, id).getByRole("button", { name: "Next capture" }).click();
-    await page.locator("[data-stack]").getByRole("button", { name: "Aegis", exact: true }).click();   // Stack's dimmed tools, checked too
+    await page.locator("[data-stack]").getByRole("button", { name: "Aegis", exact: true }).click();   // Stack's filtered tools, checked too
     await page.evaluate(() => scrollTo(0, 0));
     await page.waitForTimeout(1400);
     await page.addScriptTag({ path: AXE });
@@ -613,8 +612,7 @@ test("Stack's filter answers the keyboard: Tab reaches each button, Enter and Sp
 
 // The hold (StackFilter.tsx): a shorter list must never pull the page up under the reader. Pressing a project must not
 // move the view: not with the buttons near the top of it, and not at the very end of the page (pressed from the
-// keyboard). Since session 14 Think · Build · Ship sits below Stack, so at these sizes the hold engages only in the
-// second case (ROADMAP #14).
+// keyboard). Below Stack sit Think · Build · Ship, Contact and the footer (ROADMAP #14).
 for (const vp of [[1440, 900], [390, 844]] as const) {
   test(`Stack at ${vp[0]}: pressing a project never scrolls the page, wherever the reader is`, async ({ browser }) => {
     const { ctx, page } = await at(browser, vp, { reducedMotion: "reduce" });
@@ -780,7 +778,7 @@ for (const vp of [[1440, 900], [1024, 768], [390, 844], [320, 568]] as const) {
     });
     expect(out).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(vp[0]);
-    // Its last line clears the chat launcher at the end of the page (Contact, below it, now ends the page).
+    // Its last line clears the chat launcher at the end of the page (Contact and the footer follow it).
     await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
     await page.waitForTimeout(150);
     const last = (await tbs(page).locator(".wk__tbs-example").last().boundingBox())!;
@@ -790,8 +788,9 @@ for (const vp of [[1440, 900], [1024, 768], [390, 844], [320, 568]] as const) {
   });
 }
 
-// Contact (P3.6, session 15): the live Contact section under Think · Build · Ship, ending the page. The live title, lead
-// and four links at the live targets (Tay approved the copy). Server-rendered, no form, and it holds still.
+// Contact (P3.6, session 15): the live Contact section under Think · Build · Ship, the last section of the page (the
+// footer follows). The live title, lead and four links at the live targets (Tay approved the copy). Server-rendered, no
+// form, and it holds still.
 const contact = (page: Page) => page.locator("[data-contact]");
 /** Each link's target and attributes, in order: what a reader's browser does with it. */
 const attrsOf = (links: ReturnType<Page["locator"]>) => links.evaluateAll((as) => as.map((a) =>
