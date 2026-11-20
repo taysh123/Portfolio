@@ -7,7 +7,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { Providers } from "@/components/providers/Providers";
 import { EARLY_CHAT } from "@/lib/earlyChat";
 import { A11Y_COOKIE, parseA11y } from "@/lib/theme";
-import { brand } from "@/lib/tokens";
+import { cine } from "@/lib/tokens";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -80,13 +80,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  // The browser chrome colour cannot read a CSS variable, so it comes from the
-  // token mirror rather than a literal that would drift from globals.css.
-  themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: brand.bg },
-    { media: "(prefers-color-scheme: light)", color: brand.bgLight },
-  ],
-  colorScheme: "light dark",
+  // The browser chrome colour cannot read a CSS variable, so it comes from the token mirror (lib/tokens.ts) rather than
+  // a literal that would drift. Dark only (R3): one colour, the field's, whatever the visitor's setting.
+  themeColor: cine.abyss,
+  colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
 };
