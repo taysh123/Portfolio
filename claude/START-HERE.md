@@ -25,11 +25,13 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
    - It ships from `release/concept-a`, cut from `main` in S17 and pushed (no PR yet), through a PR that Tay merges.
      The prototype branch stays frozen as the record.
    - **S18+S19 (2026-11-20): on that branch, `/` is now the Concept A page** and `/lab` is gone. **Approved by Tay**
-     after his review on the Preview. S20 (the tests) is next.
+     after his review on the Preview.
+   - **S20 (2026-11-20): the tests.** The lab tests are ported to `/`, the old page's retired, R12's new guards added:
+     unit 218/218, Playwright 183/183. S21+S22 is next.
    - The plan, S17 to S24: `docs/ROADMAP.md`, "Concept A: P4–P6". Tay's decisions, R1 to R15:
      `docs/RESEARCH_AND_DECISIONS.md`, "Resolved in session 16".
 
-## What's live now (verified 2026-11-20 at the S18+S19 close: Production is still `443a1f9`, status success)
+## What's live now (verified 2026-11-20 at the S20 close: Production is still `443a1f9`, status success)
 - The current site is the calm, light **"Product Plates"** editorial design (M10), with the whole **M1 core, moves
   A–E**:
   - **A**, the iris accent: `#4a3fe0` light, `#a5a8ff` dark, `#b1b4ff` on the dark plates.
@@ -88,13 +90,9 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - **Tests:** R12's edits and the S17 group, plus six Tay approved in-session (`english.spec.ts:45`, the phone toggle
     line, one phone header icon, the new phone accessibility test, at least 8 new-tab links, the Aegis captures). Each
     is its own commit.
-  - Not yet, by plan: `privacy.spec.ts:43`, `site.test.ts:160` and `content.test.ts:20,22` (S21+S22), and the new
-    guards (S20).
-  - **Results:** typecheck, lint and build exit 0. Unit 121/121; the two lab unit files fail at load. Must-pass e2e
-    70/70 + 6/6.
-  - **What still fails is S20's:** the lab specs (the routes are gone), `hero.spec.ts`, and `chapters.spec.ts` and
-    `lower.spec.ts` outside their kept tests. The two lab unit tests carry a temporary `@ts-nocheck`, because the build
-    type-checks tests; S20 removes it.
+  - Not yet, by plan: `privacy.spec.ts:43`, `site.test.ts:160` and `content.test.ts:20,22` (S21+S22).
+  - **Results (at the S18+S19 close):** typecheck, lint and build exit 0. Unit 121/121, the two lab unit files failing
+    at load. Must-pass e2e 70/70 + 6/6. S20 fixed the rest (below).
   - **The gate** (local production builds, Lighthouse 13.6.0 mobile, median of 5, interleaved): Performance 100, LCP
     1,061 ms (the h1). Local `main` gives 93 and 3,191 ms.
   - **Budgets:** first-load JS 185.00 KiB (budget 205.7), HTML 127,970 B (budget 568 KB).
@@ -104,6 +102,23 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
     **Tay: fix both in S21+S22** (ROADMAP #17).
   - **Preview:** `https://tay-shofer-portfolio-git-release-840354-tays-projects-d5aefd6e.vercel.app/` (the branch's
     link, behind Vercel's login).
+- **S20 (2026-11-20): the tests, green.** Detail and every retired test's reason: `docs/WORKLOG.md`, "Session 20".
+  - **Ported to `/`:** `tests/unit/lab-hero-a.test.ts` (26) and `lab-work.test.ts` (71, three new for Two more), and
+    their two `@ts-nocheck` lines removed; `tests/e2e/lab-hero-a.spec.ts` and `lab-work.spec.ts`. They keep their
+    names, because the code's comments and `docs/CINEMATIC_SYSTEM.md` point at them. Where the prototype compared
+    itself with the Product Plates files the release deleted, the checks are fixed values from `product-plates-final`.
+  - **Deleted as planned:** `/`'s CSS pin against `origin/main`'s digests, and "Contact matches the live Contact on
+    /" (its fixed values were already in "Contact without JavaScript").
+  - **Retired (R12):** `hero.spec.ts` (deleted); `chapters.spec.ts` down to Navigation, the Case study block and four
+    ported checks; `lower.spec.ts` down to the résumé's bytes, the phones' overflow check and the footer. What still
+    applied to `/` was ported first (18 tests).
+  - **R12's new guards, in `page.spec.ts`:** `/` indexable (`index, follow`, one canonical, no noindex); `/lab`,
+    `/lab/hero-a`, `/lab/work` answer 404; exactly one canvas, 2D and `aria-hidden`. The WebGL guards are unchanged.
+  - **Results:** unit 218/218 (16 files), typecheck, lint and build exit 0, Playwright 183/183 (13 files) on the
+    standard config. `/`'s stylesheets and JS chunks are byte-identical to before.
+  - **One catch, for Tay:** right after `.next` is deleted, the first full run fails `aegis.spec.ts:15` and the Case
+    study block's image test. The Aegis case-study capture's first on-demand AVIF encode outlasts their polls.
+    Reproduced twice; with the cache warm, all pass. Nothing changed for it (WORKLOG, "Session 20" §4).
 - **Cut from `origin/main` `443a1f9`** (`--no-track`), pushed in S17 with its upstream set: branch only, no PR, no
   merge.
 - **The copy (R1):**
@@ -284,16 +299,16 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - The "Case study" buttons (R4) and Two more (R5).
   - R12's approved test edits, the S17 group included, each in its own commit naming the approval.
   - Measure the JS and HTML budgets.
-- **S20 is next** (the tests): port the lab specs and unit tests to `/`, delete the two prototype-only ones, remove the
-  two temporary `@ts-nocheck` lines, retire the old page's specs, and add the new guards.
-- Then S21+S22 (privacy and SEO surfaces, then the backlog: #13 against S17's baseline, #14, #16, and #17, the case
-  study's two axe findings; #15 was done in S18+S19),
+- **S20 is done** (2026-11-20): the lab tests ported to `/`, the old page's retired, the new guards added; the suite
+  is green and pushed.
+- **S21+S22 is next** (privacy and SEO surfaces, then the backlog: #13 against S17's baseline, #14, #16, and #17, the
+  case study's two axe findings; #15 was done in S18+S19),
   S23 (the release candidate: WebKit and Firefox runs, Tay's review on his own phone, the GRAVITY FLOW capture swap),
   S24 (check the tag, Tay's merge, the production checks).
 
 ## Open PRs / branches (S17, 2026-11-19)
-- **`release/concept-a`**: the release branch, pushed in S17 and in S18+S19 (the code at `270ab27`, then the docs and
-  the close-out), with no PR yet. S23 opens it on Tay's go; Tay merges.
+- **`release/concept-a`**: the release branch, pushed in S17, in S18+S19 (the code at `270ab27`) and in S20 (tests
+  only, then the close-out), with no PR yet. S23 opens it on Tay's go; Tay merges.
 - **Tag `product-plates-final`** (`8f0a96a`) on `443a1f9`, pushed in S17: the P4 restore point (R6, R15).
 - **PR #18** (`proto/hero-a-cinematic`, draft): the Concept A prototype. Never merge, never delete; Preview only.
 - Merged and deleted (each checked with `git merge-base --is-ancestor` first):
@@ -306,8 +321,10 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Start S20** in a new session, on `release/concept-a`: the tests.
+- **Start S21+S22** in a new session, on `release/concept-a`: privacy and SEO surfaces, then the backlog.
 - **In S21+S22:** fix the case study's two axe best-practice findings (#17).
+- **From S20:** the cold-cache timeouts on the Aegis case-study capture: pre-encode the case studies' captures (a page
+  change), lengthen the two polls (a test change), or leave it.
 - **In S21+S22:** approve N7's exact final `/privacy` wording before it is committed (R13).
 - **In S23:** the GRAVITY FLOW image for the capture swap; the review on his own phone through the Preview.
 - **In S24:** merge. The `product-plates-final` tag is already pushed (S17).

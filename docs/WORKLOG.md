@@ -11,6 +11,153 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-20 — Session 20: the tests (the lab tests ported to `/`, the old page's retired, R12's new guards) (Claude Code)
+
+**Scope (Tay's brief, S20, tests only; no page or copy change):**
+- Port the lab specs and unit tests to `/` (`lab-hero-a.*`, `lab-work.*`) and remove both temporary `@ts-nocheck`
+  lines. Delete the two lab-only tests as planned: the CSS pin against `origin/main`'s digests, and "Contact matches
+  the live Contact on /", which becomes fixed values.
+- Retire the old page's tests (`hero.spec.ts`, `chapters.spec.ts` and `lower.spec.ts` outside their kept tests). Before
+  deleting any test, port each assertion that still covers something on the new `/`. List every retired test with
+  its reason.
+- Add R12's new guards: `/` index, follow with the canonical; `/lab`, `/lab/hero-a`, `/lab/work` answer 404; exactly
+  one canvas, 2D and `aria-hidden`. The WebGL guards unchanged; no guard weakened.
+- The full suite green, small commits, push the branch (no PR, no merge), close out.
+
+### 1. Preconditions (VL)
+- `git fetch`, `release/concept-a` checked out and pulled: HEAD **`24240ad`**. `main` = `origin/main` = **`443a1f9`**
+  = Production (`gh api …/deployments`, created 2026-11-19 03:20Z). `npm ci`, `.next` deleted, `npm run build` exit 0.
+
+### 2. Before (VL, on `24240ad`, Git Bash)
+| Suite | Result |
+|---|---|
+| `npm test` | **121/121 tests**; 14 of 16 files. The two lab unit files fail at load (their 26 + 68 tests never ran) |
+| `npx playwright test --list` | **212 tests in 14 files** |
+| `GROQ_API_KEY= npx playwright test --fully-parallel --timeout=15000` (the fast listing run; the standard config waits 60 s per dead route) | **88 passed, 124 failed**: `hero` 0/12, `chapters` 8/32, `lower` 7/17, `lab-hero-a` 3/18 (the 3 are axe on the 404 page), `lab-work` 1/63, and `chat.spec.ts:174` 10/11 under the parallel load (it passes on the standard config, §5) |
+
+### 3. What changed (each its own commit)
+**The unit tests, ported in place** (the files keep their names: a dozen code comments and
+`docs/CINEMATIC_SYSTEM.md` point at them):
+- `8b495f0` `tests/unit/lab-hero-a.test.ts` (26, as before): reads `components/sections/` (Hero, Constellation,
+  `hero.css`, `featured.ts`), `app/cinematic.css`, the header's `AvailabilityPill`, `Navbar` and `Logo`. R9's SVG
+  arrows; R2's header row as the reveal's first step (indices 0, 0, 1–5), the one rule in `hero.css` that is not the
+  hero's. "Never indexed" turns round: the root layout's `index, follow` and canonical, no `app/lab`, nothing links
+  `/lab`. The layer is imported by `app/page.tsx` alone.
+- `c290ee7` `tests/unit/lab-work.test.ts` (71: 68 ported, 3 new for Two more): R4's "Case study" buttons, R5's Two
+  more, R10 (no lede or reveal in Work; About ends on the facts, its dropped links checked where they live now),
+  every capture lazy, the page order from `app/page.tsx`. **Fixed values from `product-plates-final`** where the
+  prototype read files the release deleted: the chapters' phone crops and DeveloperOS chips, the Product Plates
+  Stack's FILTER rules, the Product Plates Contact. The image-table check now covers every client component.
+
+**The two prototype-only e2e tests, deleted as planned:**
+- `eb765e7` `/`'s stylesheets pinned to `origin/main`'s digests (`/` differs from `main` by design now).
+- `b8451cc` "Contact's links are the live Contact's": checked by hand against
+  `product-plates-final:components/sections/Contact.tsx`, `CONTACT_LINKS` and the attribute table in "Contact without
+  JavaScript" are exactly its targets, order, attributes and names, as fixed values.
+
+**The e2e specs, ported to `/`:**
+- `6f09caf` `lab-hero-a.spec.ts` (18): the field's code ships with `/` and not `/privacy`; "never linked" (the sitemap
+  lists only `/`); no-JS (the header's row in the reveal, one pill shown, in-page links); LCP is the h1; both
+  reduced-motion paths; the loop's pauses; the signals; four viewports; keyboard from the skip link through the
+  header (R2) and the hero into Work, every ring the layer's cyan; structure; axe ×3.
+- `67de511` `lab-work.spec.ts` (61): every carousel, CLS, lift, viewport, axe, Stack, Think · Build · Ship and
+  Contact test, on `/`. R4: the six "Case study" buttons hidden without JS; R10: no lede, About with no link; R12:
+  one canvas, none under the hero; every capture lazy; the hero's h1 over six h2s; the keyboard walk from the hero's
+  last control through Work, Two more, the filter and Contact, then out to the footer.
+
+**The old page's tests, retired (R12), with what still applies ported first:**
+- `848d55c` **`hero.spec.ts` deleted (12).** Ported to `lab-hero-a.spec.ts` (6 tests): Featured work links the four
+  panels with their verified states, never "open source" (`:5`); following a link lands its panel under the header,
+  1440 and 390 (`:112`); on the four phones the actions come before Featured work, in the first screen, 16px or more
+  apart (`:97`). Retired: `:22`, `:37`, `:51` the plates' layouts; `:64` their windows; `:83` their end line (the plates
+  are gone); `:97`'s two-line Product Plates headline; `:125` the hero's eager images (no image in the hero now).
+- `9ceb6d6` **`chapters.spec.ts`, 32 → 11.** The Case study block is byte for byte (4). Navigation (`:284`, 1440,
+  1280×720, 390) stays: its selectors fit `/`, and it adds the 390 jump and the "under its own centre" check. Ported
+  (4): T Poker's web app and private label on the panel, both store listings and no retired figures in its case study
+  (`:49`); Aegis's renamed score decision and schema note, and no "open source" (`:170`, `:96`); DeveloperOS's Source
+  link (`:237`); GRAVITY FLOW a release candidate with no test count, physics claim or store link (`:245`). `:40`'s
+  hidden trigger without JS is in `lab-work.spec.ts`. Retired (R6, the explainers are gone): the T Poker stepper and
+  its no-JS path (`:7` ×4, `:20`, `:40`) and its two-column Tab order (`:70` ×2); the Aegis trace, fork, port-scan
+  highlight, order and phone trace (`:96`, `:107`, `:118` ×2, `:145`, `:155`); the DeveloperOS flow, refusal, citation
+  boxes and reading order (`:181`, `:187`, `:200` ×2, `:213`) and its release-page link (only the chapter had one);
+  GRAVITY FLOW's marked frame, lede and "not yet published" line (`:245`), its layout (`:257`), the teal plate in two
+  themes (`:273`).
+- `ab2e8a5` **`lower.spec.ts`, 17 → 6.** `:142` (the résumé's bytes) and `:164` (the footer) verbatim; `:153` (the
+  four phones' overflow, by the live ids) stays, since it passes on `/`. Ported to `lab-work.spec.ts` (8): the four
+  facts, **no institution anywhere in the served page**, the rejected render gone (`:8`); each tool's accessible text
+  and title, Everyday tools naming none, never monospace (`:78`); Think · Build · Ship unpinned (`:106`); on the four
+  phones LinkedIn and GitHub on one line and "79 KB" unbroken (`:118` ×4); the résumé in Contact and the footer, never
+  the header (`:128`). Retired: `:8`'s measure and the About visual (deleted); `:50` the radio lens and `:69` its no-JS
+  path (toggle buttons now, Tay, session 13; without JS the full list shows); `:78`'s 16px tools and "Related projects"
+  and `:95`'s rows (Tay chose 14px pills, each tool naming its projects; page.spec keeps the 12px floor).
+  - That commit's message first said 9 ports. It is 8: the ninth in its check run was the résumé test ported earlier.
+    Corrected before the push (the four commits rebuilt with `git commit-tree`, same trees, authors and dates).
+
+**R12's new guards, in `page.spec.ts`** (each its own commit naming the approval; no other guard changed):
+- `113c6e5` `/` is indexable: `index, follow` (robots and googlebot metas), exactly one canonical
+  `https://tayshofer.dev`, no noindex or nofollow in the HTML or `X-Robots-Tag`.
+- `b886176` `/lab`, `/lab/hero-a`, `/lab/work` answer 404, with no redirect.
+- `4aff12c` exactly one canvas, inside `#hero`, `aria-hidden`; every context any canvas requests is recorded, and only
+  `"2d"` appears (1440 and 390, motion on and reduced, after scrolling the page). Red-checked: a WebGL request on a
+  detached canvas is recorded. The WebGL count, `budget.spec.ts` and `dead-code.test.ts` are unchanged.
+
+### 4. Found while porting (nothing on the page changed)
+- **The header's four links ease their focus ring in.** Their colour transition also eases `outline-color`, so the
+  ring's first frame is the link's own mist and it reaches the layer's cyan 150 ms later (measured: `getAnimations()`
+  shows one `outline-color` transition). Every other control rings cyan at once. The ported keyboard tests read each
+  ring once its transitions finish. Not a defect; for Tay to judge.
+- **Contact's "79 KB" keeps its no-break space** (`contactBlock.ts`) inside a no-wrap note, as the Product Plates
+  Contact did. A first draft of the unit test had lost the character; corrected before the commit.
+- **A cold image cache times out two existing tests on the first full run** (§5). Nothing here changed them, and
+  nothing was changed to make them pass.
+  - The case studies' captures go through Next's on-demand optimiser, AVIF first, except T Poker's (`direct: true` in
+    `data/projects.ts`). The Aegis capture (`/projects/aegis/incident-board-open.webp`) is the first the suite asks
+    for: `aegis.spec.ts` is the first file, and `chapters.spec.ts`'s Case study block opens Aegis second.
+  - With `.next/cache/images` empty and 8 workers starting at once, its first encodes outlast `aegis.spec.ts:28`'s
+    5 s poll and the Case study block's 15 s one. The cache files written in run 1 carry that image's ETag
+    (0x7592 = its 30,098 bytes) at three widths, the first two written 8.7 s apart.
+  - Alone, from a cold cache, both pass; with the cache warm, the full run passes.
+  - Before S20 the same cold run passed both (§2). Likely why (NC): the ported specs now draw the canvas and the
+    carousels at the suite's start, where the lab specs used to fail on a 404 at once.
+  - For Tay: either serve the case studies' captures pre-encoded (`direct: true`, a page change: S21+S22), or give the
+    two polls a longer wait (a test change; the Case study block is one R12 kept). Until then, run the suite twice
+    after deleting `.next` (CLAUDE.md gotcha).
+- `docs/CINEMATIC_SYSTEM.md` still describes the CSS pin and the lab routes (lines 21–22, 64). Its close-out is S24's
+  (ROADMAP), so it is left as it is.
+
+### 5. Validation (VL, Git Bash, the final tree)
+| Command | Result |
+|---|---|
+| `grep` for `.only`, `.skip`, `.fixme`, `test.fail` under `tests/` | none |
+| `npm test` | **218/218 tests, 16/16 files** (was 121, 14/16) |
+| `npm run typecheck` | exit 0 |
+| `npm run lint` | exit 0 |
+| `npm run build` (`.next` deleted first) | exit 0; the same 8 routes |
+| `/`'s stylesheets and `.next/static/chunks` against the session's first build | **byte-identical** (43,672 B and 28,727 B; every JS chunk's SHA-256): the new tests add no Tailwind rule |
+| `npx playwright test --list` | **183 tests in 13 files** (was 212 in 14) |
+| `GROQ_API_KEY= npx playwright test` (the standard config), run 1, right after the clean build (the image optimiser's cache empty) | 181/183: `aegis.spec.ts:15` and `chapters.spec.ts:68` (the kept "every case study's images finish loading") time out on the Aegis case study's capture (§4) |
+| The same two alone, cache emptied again | 2/2 |
+| The full run again, cache emptied again | 181/183, the same two: reproduced |
+| **The full run with the cache warm** | **183/183**, 2.1 min |
+
+Per file, before → after: `lab-hero-a` 18 → 24, `lab-work` 63 → 69, `hero` 12 → 0, `chapters` 32 → 11, `lower` 17 → 6,
+`page` 18 → 21; `aegis` 3, `budget` 5, `chat` 11, `chrome` 19, `english` 5, `privacy` 4, `private-repo` 4, `smoke` 1,
+unchanged.
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production, tagged `product-plates-final`. Untouched.
+- `release/concept-a`: S20's 12 test commits and this close-out, pushed. No PR.
+- `proto/hero-a-cinematic`: frozen; PR #18 a draft.
+
+### Waiting on Tay
+- **S21+S22** in a new session: `/privacy` with N7's sentence (its exact wording to Tay before the commit, R13), the
+  `theme` cookie out, R8's headline and dark card, the manifest and `themeColor`, the sitemap's date, the 404; then
+  #13, #14, #16 and #17.
+- **The cold-cache timeouts (§4):** pick a fix (pre-encoded case-study captures, or longer polls), or leave it.
+- Optional: the header links' ring easing in (§4).
+
+---
+
 ## 2026-11-20 — Sessions 18+19 close-out: approved by Tay; #17 logged for S21+S22 (Claude Code)
 
 **Scope (Tay's brief):** S18+S19 reviewed and approved. Log one item for S21+S22. Close out: CLAUDE.md, START-HERE

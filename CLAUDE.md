@@ -42,8 +42,11 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
       restored from `product-plates-final` (`docs/ROADMAP.md`, P4 restore record).
     - Preview, behind Vercel's login, following each push:
       `https://tay-shofer-portfolio-git-release-840354-tays-projects-d5aefd6e.vercel.app/`.
-  - Until S20 ports them, the lab specs and both lab unit tests fail (their routes and modules are gone), and so do
-    the old page's specs that S20 retires. The two lab unit tests carry a temporary `@ts-nocheck` (below).
+  - **S20 (2026-11-20): the tests are ported and the suite is green.** The `lab-hero-a.*` and `lab-work.*` files test
+    `/` now (they keep their names: code comments and `docs/CINEMATIC_SYSTEM.md` point at them); the `@ts-nocheck`
+    lines are gone. `hero.spec.ts` is deleted; `chapters.spec.ts` keeps Navigation, its Case study block and four
+    ported checks; `lower.spec.ts` keeps the résumé's bytes, the phones' overflow check and the footer. R12's three new
+    guards are in `page.spec.ts`. Every retired test and its reason: `docs/WORKLOG.md`, "Session 20".
   - One PR, opened in S23 on Tay's go; Tay merges.
   - Rollback: Vercel's Instant Rollback to `443a1f9`'s deployment, then a `git revert -m 1` PR. `443a1f9` is tagged
     `product-plates-final` (R15, pushed in S17).
@@ -116,7 +119,9 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
   The private-repo guard pins both private repos (T Poker and GRAVITY FLOW) by digest in `tests/support/private-repo.ts`.
 - **The release's approved test changes are R12's list** (`docs/RESEARCH_AND_DECISIONS.md`), including the "still to
   name" group Tay approved in S17, plus six Tay approved in S18+S19 (`docs/WORKLOG.md`, "Sessions 18+19" §3).
-  - The one canvas exception: `page.spec.ts:43` allows exactly one canvas, the hero's 2D, `aria-hidden` field.
+  - The one canvas exception: `page.spec.ts:43` allows exactly one canvas, the hero's 2D, `aria-hidden` field. R12's
+    new guards (S20, `page.spec.ts`): exactly one canvas, 2D (every context requested is recorded) and `aria-hidden`;
+    `/` serves `index, follow` with its one canonical and no noindex; `/lab`, `/lab/hero-a`, `/lab/work` answer 404.
   - Tay's condition on the phone header's one icon: the accessibility button stays reachable on phones, in the menu
     sheet, and `chrome.spec.ts` tests it there at 320 and 390. Keep it.
   - Each change goes in its own commit naming the approval. Any other guard edit still needs Tay's explicit approval
@@ -145,8 +150,8 @@ Verified gotchas (2026-11-18):
   old build. Serve manual checks on another port. On Windows, stopping a backgrounded `npx next start` can leave
   its `node` child holding the port: check `Get-NetTCPConnection -LocalPort <port> -State Listen` and stop that PID.
 - The Windows-only `tests/unit/site.test.ts:78` failure (N6) is fixed (`b4d5c73`, PR #7): the unit suite is
-  122/122 on Windows (`main` `1c57789`; PR #20 changed docs only). On `release/concept-a` since S18+S19: 121/121
-  tests, with the two lab unit files failing at load until S20 ports them. Run
+  122/122 on Windows (`main` `1c57789`; PR #20 changed docs only). On `release/concept-a` since S20: 218/218 tests in
+  16 files, and Playwright 183/183 in 13 files. Run
   `npm test` from Git Bash: a test shells out `git grep … || true`, and cmd.exe (PowerShell's child shell) has no
   `true`, so it fails there spuriously.
 - Lighthouse is not a dependency. S17 ran `npx --yes lighthouse@13.6.0` (Tay's go) with the installed Chrome; the
@@ -155,11 +160,16 @@ Verified gotchas (2026-11-18):
   still passes without them (S17's baseline worktree).
 - After leaving an old branch, run `npx next typegen` before `npm run typecheck` (stale `.next/types`).
 - **`npm run build` type-checks every test file** (`tsconfig.json` includes them). A test importing a deleted module
-  fails the build, and the Preview with it. That is why the two lab unit tests carry a temporary `@ts-nocheck` until
-  S20.
-- **A test whose route is gone waits out its whole timeout** (60 s), and one file's tests run one after another. On
-  the release branch, the full suite takes over an hour until S20. Run the must-pass specs on the standard config,
-  and the S20 set with `--fully-parallel --timeout=15000` to list it.
+  fails the build, and the Preview with it (S18+S19 bridged two with a temporary `@ts-nocheck`; S20 removed it).
+- **A test whose route is gone waits out its whole timeout** (60 s), and one file's tests run one after another. To
+  list a broken set quickly, run it with `--fully-parallel --timeout=15000`.
+- **After deleting `.next`, the first full Playwright run can fail two tests** (`aegis.spec.ts:15`,
+  `chapters.spec.ts`'s "every case study's images finish loading"). The Aegis case study's capture goes through the
+  on-demand image optimiser, and its first AVIF encode, at the suite's start, outlasts their polls. A second run, with
+  `.next/cache/images` warm, passes (S20; `docs/WORKLOG.md`, "Session 20" §4). The fix is Tay's call.
+- **A focus ring can ease in.** The header's four links carry the site's colour transition, which also eases
+  `outline-color` over 150 ms. A test that reads a ring right after Tab sees its first frame: wait for the focused
+  element's `getAnimations()` to finish first (as `lab-hero-a.spec.ts` does).
 - **The Vercel connector's authenticated fetch** (`web_fetch_vercel_url`) creates a 23-hour share link on a protected
   deployment, which opens it to anyone holding the link. Don't use it without Tay's go.
 - `git rm` of a folder's last tracked files also removes the folder, so a `git mv` into it then fails: recreate it.
