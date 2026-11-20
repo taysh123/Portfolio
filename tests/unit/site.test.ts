@@ -158,7 +158,7 @@ describe("privacy (the owner's decisions, 2026-10-13)", () => {
   it("the chat discloses Groq in the owner's words, and the Privacy page matches the code it describes", () => {
     expect(dict.chat.disclosure).toBe("AI answers are generated via Groq. Please don't share personal or sensitive information.");
     const page = read("app/privacy/page.tsx"), route = read("app/api/chat/route.ts");
-    expect(page).toMatch(/\{THEME_COOKIE\}/); expect(page).toMatch(/\{A11Y_COOKIE\}/);       // the names come from lib/theme.ts
+    expect(page).toMatch(/\{A11Y_COOKIE\}/);       // the name comes from lib/theme.ts (dark only, R3: no theme cookie)
     expect(route).toMatch(/RATE_MAX = 5;/); expect(page).toMatch(/five questions a minute/);
     // "a one-way fingerprint of your latest question … cleared as new questions arrive": the route keeps a hash, never
     // the text, and sweeps expired entries on every request (no size threshold before the sweep).
