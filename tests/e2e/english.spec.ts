@@ -42,7 +42,7 @@ test("/he, anything under it and its old social cards redirect to the one page (
   expect(res!.status()).toBe(200);
   expect(new URL(page.url()).pathname).toBe("/");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
-  await expect(page.locator("h1")).toHaveText("I build software end to end.");
+  await expect(page.locator("h1")).toHaveText("Building software. Turning ideas into products.");
 });
 
 test("the sitemap and robots name only the one English page", async ({ request }) => {

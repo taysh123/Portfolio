@@ -4,9 +4,8 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { overlayRequested, type Overlay } from "@/lib/overlays";
 import { ChatLauncher } from "@/components/chat/ChatLauncher";
-import { ThemeProvider } from "./ThemeProvider";
 import { AccessibilityProvider } from "./AccessibilityProvider";
-import type { Theme, A11yPrefs } from "@/lib/theme";
+import type { A11yPrefs } from "@/lib/theme";
 
 /**
  * The accessibility panel and the assistant's panel are invisible until the visitor asks for them, so neither is in
@@ -43,17 +42,15 @@ function useRequested(name: Overlay): boolean {
   return on;
 }
 
-export function Providers({ children, initialTheme, initialA11y }: { children: React.ReactNode; initialTheme: Theme; initialA11y: A11yPrefs }) {
+export function Providers({ children, initialA11y }: { children: React.ReactNode; initialA11y: A11yPrefs }) {
   const a11y = useRequested("a11y");
   const chat = useRequested("chat");
   return (
-    <ThemeProvider initialTheme={initialTheme}>
-      <AccessibilityProvider initialPrefs={initialA11y}>
-        {children}
-        {a11y && <AccessibilityPanel />}
-        <ChatLauncher />
-        {chat && <ChatPanel />}
-      </AccessibilityProvider>
-    </ThemeProvider>
+    <AccessibilityProvider initialPrefs={initialA11y}>
+      {children}
+      {a11y && <AccessibilityPanel />}
+      <ChatLauncher />
+      {chat && <ChatPanel />}
+    </AccessibilityProvider>
   );
 }

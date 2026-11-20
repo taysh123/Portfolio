@@ -18,7 +18,7 @@ export function Footer({ c }: { c: Content }) {
       <div className="shell flex flex-col gap-4 py-8 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
         <p className="text-[0.9375rem] text-fg"><span className="font-semibold">{siteMeta.name}</span><span className="text-fg-subtle"> · {c.siteMeta.role}</span></p>
         <nav aria-label={t.footer.label}><ul className="-mx-3 flex flex-wrap gap-x-1">{links.map((l) => (
-          <li key={l.href}><a href={l.href} className="inline-flex min-h-11 items-center px-3 text-sm text-fg-muted transition-colors duration-150 hover:text-fg"
+          <li key={l.href}><a href={l.href} className="inline-flex min-h-11 items-center px-3 text-sm text-fg-muted transition-[color] duration-150 hover:text-fg"
             {...(l.ext ? { target: "_blank", rel: "noopener noreferrer" } : {})} {...(l.download ? { download: l.download, type: "application/pdf" } : {})}>
             {l.label}{l.ext && <span className="sr-only">{t.common.newTab}</span>}</a></li>))}</ul></nav>
         <p className="text-sm text-fg-subtle">© {year} {siteMeta.name} · <span lang="he" dir="rtl">{legalName}</span></p>

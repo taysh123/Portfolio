@@ -1,10 +1,8 @@
 /**
- * Single source of truth for theme + accessibility preferences, persisted in
- * cookies so the server can render the correct `data-*` attributes on `<html>`
- * and match the client's first render exactly (no hydration mismatch, no flash).
+ * Single source of truth for the accessibility preferences, persisted in a cookie so the server can render the correct
+ * `data-*` attributes on `<html>` and match the client's first render exactly (no hydration mismatch, no flash). The
+ * site is dark only (Concept A, R3), so this is its one preference cookie; /privacy names it.
  */
-
-export type Theme = "dark" | "light";
 
 export type A11yPrefs = {
   reducedMotion: boolean;
@@ -12,7 +10,6 @@ export type A11yPrefs = {
   largeText: boolean;
 };
 
-export const THEME_COOKIE = "theme";
 export const A11Y_COOKIE = "a11y";
 
 const DEFAULT_A11Y: A11yPrefs = {
@@ -27,11 +24,6 @@ export const A11Y_ATTR: Record<keyof A11yPrefs, string> = {
   highContrast: "data-high-contrast",
   largeText: "data-large-text",
 };
-
-/** M10: light is the default (the editorial studio direction); dark is the visitor's choice. */
-export function parseTheme(value: string | undefined): Theme {
-  return value === "dark" ? "dark" : "light";
-}
 
 export function parseA11y(value: string | undefined): A11yPrefs {
   if (!value) return DEFAULT_A11Y;
@@ -51,8 +43,8 @@ export function parseA11y(value: string | undefined): A11yPrefs {
 }
 
 /** Client-only cookie writer (1-year, lax, and Secure whenever the page is served over HTTPS — every deployment; a
- *  local http server is the only exception). Server sets cookies via render-time props instead. These two cookies hold
- *  the visitor's own display preferences and nothing else (app/privacy/page.tsx says so). */
+ *  local http server is the only exception). Server sets cookies via render-time props instead. The one cookie holds
+ *  the visitor's own accessibility preferences and nothing else (app/privacy/page.tsx says so). */
 export function writeCookie(name: string, value: string): void {
   if (typeof document === "undefined") return;
   const secure = typeof location !== "undefined" && location.protocol === "https:" ? "; secure" : "";

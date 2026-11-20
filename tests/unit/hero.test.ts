@@ -37,10 +37,10 @@ describe("hero proof and index (M1)", () => {
   });
   it("the hero lead only names what the data supports", () => {
     const lead = siteMeta.heroLead;
-    // M10: the range in four kinds of product, one per plate.
+    // The range in four kinds of product, one per flagship.
     for (const kind of ["mobile apps", "security systems", "developer tools", "games"]) expect(lead.toLowerCase()).toContain(kind);
-    // The range, then the span of the work, as one line under the headline — not the headline again.
-    expect(lead).toMatch(/—from interface to infrastructure\.$/);
+    // The range, then the span of the work, as one line under the headline — not the headline again (R8's lede).
+    expect(lead).toMatch(/, from the interface down to the infrastructure\.$/);
     expect(lead).not.toMatch(/software engineer|designs|builds/i);
     // "Interface to infrastructure": each flagship's own data names both a client and the backend or infrastructure behind it.
     for (const id of ["poker", "aegis"]) expect(JSON.stringify(projects.find((p) => p.id === id)), id).toMatch(/Docker|Railway/);

@@ -11,6 +11,2200 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-20 — Session 23 close-out: the phone review approved; every engine failure traced ×3; F1, F2 to the backlog (Claude Code)
+
+**Scope (Tay's brief):** the phone review is done ("everything works on my phone"), approved on one condition: list
+all 18 WebKit failures one by one, like Firefox's, each with its test, error and class. Rerun every suspected flake
+alone three times. Stop before fixing if any is a real site bug introduced by the release. Then log F1 and F2 (not in
+PR #21) and the engine-specific tests in the ROADMAP, and close S23: the PR body, START-HERE, this log and the ROADMAP
+in one docs commit; `npm test`; push; delete the scratch Playwright config; confirm `main` and Production.
+
+### Decisions (Tay)
+- **The phone review: approved, 2026-11-20** (the Preview).
+- **F1 and F2 are not in PR #21.**
+  - F2 is backlog **#20**: a small PR right after S24, before #19, that fixes it in the shared focus trap.
+  - F1 is backlog **#21**, after #20.
+- **The engine-specific tests** are backlog **#22**, a later item for proper per-browser handling. No test changes now.
+
+### 1. Every failure, alone ×3 (VL; one worker, `--repeat-each=3`; WebKit through the S23 proxy)
+**No failure is a site bug introduced by the release**, so the close went ahead.
+
+The classes:
+- **engine-only:** an API or behaviour the engine lacks or does differently.
+- **starvation:** passes alone; failed under 8 parallel workers.
+- **timing:** a measurement or race window, not the page.
+- **sub-pixel:** an exact float compare.
+- **F1 / F2:** the known issues.
+
+**WebKit 26.5 (18):**
+
+| Test | Error (full run) | Class | Alone ×3 |
+|---|---|---|---|
+| `chat.spec.ts:76` | focus inside the chat panel: expected true, received false | F2 | 0/3 |
+| `chat.spec.ts:130` | `mouse.wheel: Mouse wheel is not supported in mobile WebKit` | engine-only (API) | 0/3 |
+| `chat.spec.ts:174` | the reply's count: expected 1, received 0 (1440 twice, 390 once) | timing: the trap's deferred focus after an instant `fill` | 0/3 |
+| `chrome.spec.ts:89` | the underline at "about": expected `""`, received `"#work"` | starvation | 3/3 |
+| `chrome.spec.ts:140` | `CDP session is only available in Chromium` | engine-only (API) | 0/3 |
+| `chrome.spec.ts:185` | focus inside the menu sheet: expected true, received false | F2 | 0/3 |
+| `chrome.spec.ts:268` 1440×900 | the first stop: expected "Skip to content", received "Accessibility settings" | engine-only: Safari's Tab skips links | 0/3 |
+| `chrome.spec.ts:268` 390×844 | the same, received "Open menu" | engine-only: Safari's Tab | 0/3 |
+| `focus-ring.spec.ts:8` 1440×900 | the walk: expected > 40 stops, received 25 | engine-only: Safari's Tab | 0/3 |
+| `focus-ring.spec.ts:8` 390×844 | the same, 25 | engine-only: Safari's Tab | 0/3 |
+| `lab-hero-a.spec.ts:93` | LCP = FCP: expected 127, received 237 (×3: 78/183, 75/181) | timing: WebKit files the h1's LCP late (below) | 0/3 |
+| `lab-hero-a.spec.ts:129` | rAF count: expected > 10, received 0 (×3: 3, 4, 3) | timing: software canvas at Desktop Safari's DPR 2 | 0/3 |
+| `lab-hero-a.spec.ts:192` | 14 lines differ: every link is missing from the order | engine-only: Safari's Tab | 0/3 |
+| `lab-work.spec.ts:260` | the same CDP error | engine-only (API) | 0/3 |
+| `lab-work.spec.ts:303` | 8 lines differ: the panels' and Two more's links are missing | engine-only: Safari's Tab | 0/3 |
+| `lab-work.spec.ts:338` | the phone tap (`:348`): expected `"0px -4px"`, received `"none"` | engine-only: a tap sets no `:hover` in mobile WebKit | 0/3 |
+| `lab-work.spec.ts:566` | `toBeFocused()`: received inactive | engine-only: Safari doesn't focus a button on click | 0/3 |
+| `page.spec.ts:138` | "offline right now": element not found | timing: the same race as `chat.spec.ts:174` | 0/3 |
+
+**Firefox 153 (9):**
+
+| Test | Error (full run) | Class | Alone ×3 |
+|---|---|---|---|
+| `chrome.spec.ts:140` | `CDP session is only available in Chromium` | engine-only (API) | 0/3 |
+| `lab-work.spec.ts:260` | the same | engine-only (API) | 0/3 |
+| `lab-hero-a.spec.ts:129` | rAF count: expected > 10, received 4 | timing: headless canvas at the threshold (the miss alone received 10) | 2/3 |
+| `lab-work.spec.ts:228` | a side-capture click: expected 4, received 0 | starvation | 3/3 |
+| `lab-work.spec.ts:338` | the hovered edge unchanged | timing: reduced motion's frame | 1/3 |
+| `lab-work.spec.ts:566` | C#'s fill: received `rgba(238, 242, 251, 0.03)` | timing: reduced motion's frame | 1/3 |
+| `lab-work.spec.ts:690` (motion on) | `5001.63313293457` against `5001.633117675781` | sub-pixel | 0/3 |
+| `lab-work.spec.ts:690` (reduced motion) | the same | sub-pixel | 0/3 |
+| `chrome.spec.ts:268` 390×844 | GRAVITY FLOW under the chat launcher | F1 | 0/3 (1440: 3/3 pass) |
+
+### 2. Two probes added at the close (VL)
+- **WebKit's LCP (`lab-hero-a.spec.ts:93`): not the reveal.** The hero is new in the release, so this one was checked against the stop rule.
+  - Three loads at DPR 2: the h1 is `opacity 1`, `visible` from its first sampled frame, which lands at FCP (120/121, 75/77, 113/114 ms). Geist has loaded before FCP (49–109 ms).
+  - WebKit files the h1's LCP entry later (239, 183, 205 ms). Chromium files it at FCP (116, 116, 112).
+  - So the h1 shows with the first paint in both. The gap is WebKit's LCP timing.
+- **Firefox's frame rate:** headless Firefox 153 draws a blank page at 73 frames per 600 ms, and `/` with the field at 12–16. The loop runs correctly, and real Firefox draws on the GPU. A real Firefox window was not measured (NC); Tay can open the Preview in desktop Firefox.
+
+### 3. Docs and the PR
+- **`docs/ROADMAP.md`:**
+  - Backlog **#20** (F2, right after S24, before #19), **#21** (F1, after #20) and **#22** (the engine-specific tests, later; no test changes now).
+  - The "After the release" lines.
+  - P5/P6: S23 done and approved, S24 next. The S23 row marked done.
+- **This log:** the close-out, plus two refinements in "Session 23" (§3 Firefox's `:129` and `:228`; §4 the race's viewports).
+- **`claude/START-HERE.md`:** S23 approved and closed; what's next (S24); what waits on Tay.
+- **PR #21's body:**
+  - "Phone review: approved by Tay, 2026-11-20".
+  - Both engines' failures as per-test tables (test, error, class, alone ×3).
+  - "Known issues (pre-existing, not in this release)": F1, F2 and #22.
+  - The backlog order.
+  - Still a draft: not marked ready, not merged.
+
+### Clean-up (VL)
+- The scratch Playwright configs (`xbrowser.config.ts`, `webkit-uir.config.ts`) are deleted, with their results folders. Ports 3400–3411 are free.
+- `.next` is this tree's build.
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production, tagged `product-plates-final`. Untouched.
+- `release/concept-a`: S23's docs commits, pushed. **Draft PR #21**, approved on the phone.
+- `proto/hero-a-cinematic`: frozen; PR #18 a draft.
+
+### Waiting on Tay (S24)
+- **Before the merge:** check that `product-plates-final` still points at `443a1f9`.
+- **Mark PR #21 ready, and merge it** (a merge commit, so `git revert -m 1` works for the rollback).
+- **Then the production checks** in the PR body, read-only, in a session.
+- **His manual steps:** LinkedIn's Post Inspector for the card; a reindex request if he uses Search Console.
+
+---
+
+## 2026-11-20 — Session 23: the release candidate; draft PR #21 opened (Claude Code)
+
+**Scope (Tay's brief, S23):**
+1. Full validation on a clean build, then the suite on WebKit and Firefox. Installing Playwright's two browsers is approved; no project dependency. Report per browser. A real bug gets its own commit. Show Tay any test that can't apply to a browser; skip none silently.
+2. A final review of `git diff main...release/concept-a`: noindex, `/lab`, headers and CSP, `GROQ_API_KEY` and secrets, the private-repo and institution guards, leftover markers, the résumé.
+3. Lighthouse mobile (median of 5) on a local production build, with first-load JS and HTML; screenshots of `/` at 390 and 1440 in scratch.
+4. Push, then a **draft** PR "Release: Concept A" into `main`. Do not merge it or mark it ready. Then the PR link, the Preview, START-HERE and this log. The session stays open until Tay reviews on his phone.
+
+**Added by Tay mid-session:**
+- The Next 16.3.8 advisories are not in this release: backlog #19 (a separate PR on `main` after S24).
+- Two facts for the report, read-only: the installed sharp version, and what the share card renders.
+
+### 1. Preconditions (VL)
+- `git fetch`, `release/concept-a` checked out and pulled: HEAD **`94d8330`**. `main` = `origin/main` = **`443a1f9`** = Production (`gh api …/deployments`, created 2026-11-19 03:20Z).
+- `npm ci` exit 0 (the known allow-scripts warning for sharp and unrs-resolver). `.next` deleted; `npm run build` exit 0, 8 routes, no `/lab`.
+
+### 2. Validation (VL, Git Bash)
+| Command | Result |
+|---|---|
+| `npm run build` (`.next` deleted first) | exit 0 |
+| `npx next typegen`, `npm run typecheck` | exit 0 |
+| `npm run lint` | exit 0 |
+| `npm test` | **225/225, 18 files** |
+| `GROQ_API_KEY= npx playwright test` (the repo's config, Chromium), cold, right after the clean build | **187/187**, 15 files, 2.0 min |
+| `npx playwright install webkit firefox` (approved) | Firefox 153.0 (v1538), WebKit 26.5; no project file changed |
+| Firefox: the same tests, server and timeout, through a scratch config that swaps only the browser (`Desktop Firefox`, 1440×900) | **178/187** (§3) |
+| WebKit: the same scratch config with `Desktop Safari` | 64/187: the harness, not the site (§4) |
+| WebKit through a scratch proxy that drops only `upgrade-insecure-requests` from the CSP | **169/187** (§4) |
+
+The scratch configs import the repo's own Playwright and run `tests/e2e` unchanged; nothing in the repo changed for them.
+
+### 3. Firefox: the 9 failures, each traced (VL)
+- **2 can't apply:** `chrome.spec.ts:140` and `lab-work.spec.ts:260` open a CDP session, which is Chromium only ("CDP session is only available in Chromium").
+- **2 pass alone (load):** `lab-hero-a.spec.ts:129` (4 frames in 600 ms under 8 Firefox workers) and `lab-work.spec.ts:228` (the side-capture click). Both pass alone with one worker.
+  - **Refined at the close-out (×3 alone):** `:228` passes 3/3, so it is starvation. `:129` passes 2/3 (the miss received 10 against "> 10"), so it is timing: headless Firefox draws the field at 12–16 frames per 600 ms.
+- **2 read reduced motion's 1µs transitions in the same tick:**
+  - The source: `app/globals.css:382` and `:392`, `transition-duration: 0.001ms !important` (unchanged from `main`).
+  - Firefox creates real transitions for them and finishes them on the next frame; Chromium reports the end value at once.
+  - Probed:
+    - Stack: right after a press, `getAnimations()` lists background, border and colour transitions and the pill is still the glass ink; at 50 ms it is cyan.
+    - The stage's hover edge: old at the read in 2 of 8 tries, with five 0.001 ms transitions "running"; at 50 ms, 8 of 8 changed.
+  - The tests: `lab-work.spec.ts:566` (deterministic) and `:338` (intermittent, 2 of 3). To a visitor it is one frame.
+- **2 sub-pixel:** `lab-work.spec.ts:690` ×2. The title's top reads `5001.633117675781` against `5001.63313293457` (0.0000153px; Firefox lays out in 1/60 px units) under exact equality.
+- **1 real finding, F1** (`chrome.spec.ts:268` at 390×844; below).
+
+### 4. WebKit (VL)
+**The first run (64/187) is the harness.** A probe of `/` over `http://localhost:3401` in WebKit 26.5:
+- Every `/_next/static` request went to `https://localhost:3401` and failed: 15 requests, "SSL connect error".
+- No stylesheet applied (the body transparent), no JS, no hydration, and the case study did not open.
+- The cause is the CSP's `upgrade-insecure-requests`, which WebKit applies to localhost. Chromium and Firefox treat localhost as trustworthy, and both loaded everything (0 failed requests, the dialog opens).
+- Production is HTTPS, where the directive changes nothing; `main` has the same `proxy.ts`.
+- `openssl` is blocked here, and a Windows certificate would go into Tay's store, so no local TLS.
+
+**The second run goes through a scratch proxy instead** (`uir-proxy.mjs`, Node's `http` only):
+- It forwards every request and response unchanged, except that it removes that one directive from the `Content-Security-Policy` header. Every other directive stays enforced.
+- The one test that reads the CSP only checks that it is present (`english.spec.ts:24`).
+- Probed through it: 0 failed requests, 0 console errors, both stylesheets applied, and the case study opens.
+
+**169/187. The 18 failures, each traced:**
+- **Safari's keyboard model (7).**
+  - By default Safari's Tab skips links (they need Option+Tab or a system setting). The walks start at a button ("Accessibility settings" at 1440, "Open menu" at 390) instead of "Skip to content", and reach 25 stops, not 40+. Every missing stop in the diffs is a link.
+  - The tests: `chrome.spec.ts:268` ×2, `focus-ring.spec.ts:8` ×2, `lab-hero-a.spec.ts:192`, `lab-work.spec.ts:303`.
+  - Safari also doesn't focus a button on click: `lab-work.spec.ts:566` ("Expected: focused, Received: inactive").
+- **APIs not in WebKit (3):** CDP (`chrome.spec.ts:140`, `lab-work.spec.ts:260`); "Mouse wheel is not supported in mobile WebKit" (`chat.spec.ts:130`).
+- **A focus race, not visitor-facing (2):** `chat.spec.ts:174` and `page.spec.ts:138`. The full run failed `:174` at 390; alone ×3 it failed at 1440 twice and at 390 once, so the viewport doesn't matter.
+  - Instrumented: with the text typed the instant the panel appears, Enter's `keydown` lands on a **button**. `useFocusTrap`'s passive effect (unchanged) moves focus to Close after Playwright's `fill`, so Enter presses Close.
+  - With 500 ms before typing, `keydown` lands on the field and the form submits (one request). Chromium runs the effect before the `fill` at both waits.
+  - A plain HTML form submits on a page-level Enter in the same WebKit, desktop and mobile. `textbox.press("Enter")` and tapping Send both work at 390.
+- **Software canvas (1):** `lab-hero-a.spec.ts:129`, 0 frames counted.
+  - `Desktop Safari`'s scale factor is 2 (`Desktop Chrome`'s and `Desktop Firefox`'s are 1). The test's own counter in WebKit gives 16–17 frames in 600 ms at DPR 1, 3–4 at DPR 2, and 0 under the suite's load. The field is "running" throughout, with the page visible.
+  - Headless WebKit on Windows draws canvas in software, which is pessimistic like headless Chromium's SwiftShader. The field already caps its DPR (`Constellation.tsx:132`: 2, or 1.5 in its light mode).
+- **LCP timing (1):** `lab-hero-a.spec.ts:93`. WebKit's LCP element is the h1 (`hxa__title`) at 160 ms, FCP 118 ms (Chromium 112 / 112). The reveal doesn't hide it; the test's equality is Chromium's report.
+- **Touch hover (1):** `lab-work.spec.ts:338`. After a tap in mobile WebKit the panel matches neither `:hover` nor `:active`, so the stage doesn't lift (Chromium: `:hover`, lifted). Cosmetic; a real iPhone shows the truth (NC).
+- **Load (1):** `chrome.spec.ts:89` passes alone.
+- **A real finding, F2 (2):** `chat.spec.ts:76`, `chrome.spec.ts:185` (below).
+
+### 5. Found in this session, for Tay (neither caused by the release; no fix made)
+- **F1, Firefox: a focused control partly under the chat launcher at two phone widths.**
+  - #16 relies on `html { scroll-padding-bottom }`. Firefox's focus scroll ignores it when the target is already inside the viewport.
+  - Probed at 390×844: the hero's GRAVITY FLOW link at 702–806, the launcher at 782–832; Firefox leaves the page at `scrollY` 0, where Chromium's scroll leaves the link ending at 772.
+  - A Tab walk at 8 sizes (320×568 to 1440×900, plus 1024×500): Firefox has 2 stops partly under it, "Case study" at 375×667 (2%) and that link at 390×844 (12%). Chromium has 0 at all 8. None is wholly hidden, so WCAG 2.4.11 (AA) holds; #16's "never under it" does not.
+  - Production has no bottom scroll padding (only the header's `scroll-padding-top`); S17 measured the same tile under the label on load at 320–375.
+  - Tried in a probe only: a `scroll-margin-bottom` on `:focus-visible` cleared the 375 stop but not the 390 one. A reliable fix is a focus handler in the launcher's client code. Tay's call.
+- **F2, Safari: focus can leave a modal sheet for one Tab** (pre-existing).
+  - `lib/useFocusTrap.ts` (unchanged from `main`) steps in only at the first and last items of its list, which includes links. The last item is a link in both sheets: the menu sheet's "Get in touch" and the chat's Privacy.
+  - Safari's default Tab skips links, so the trap never sees the last item:
+    - From the menu sheet's "Accessibility settings", focus goes to a "Case study" button on the page behind.
+    - From the chat's field, it goes to `body`.
+    - The next Tab comes back to Close.
+  - `main`'s sheet also ends on its "Get in touch" link, so this is pre-existing.
+  - A fix (the trap moving focus itself on every Tab) changes a hook every overlay shares. Tay's call.
+
+### 6. The review of `git diff main...release/concept-a` (VL; 149 files: 86 added, 22 deleted, 41 modified)
+- **`/` indexable, `/lab` gone** (the build on `:3401`):
+  - `index, follow` (robots and googlebot), exactly one canonical `https://tayshofer.dev`, no `noindex` in the HTML or `X-Robots-Tag`, and none in `app`, `components`, `lib`, `data`, `proxy.ts` or `next.config.ts`.
+  - `/lab`, `/lab/hero-a`, `/lab/work` answer 404. `/privacy` 200, `/nope` 404, `/he` 308 → `/`.
+  - Robots, the sitemap, the card (126,193 B PNG) and the manifest answer 200. The résumé is 80,593 B. `POST /api/chat` with an empty body answers 400.
+- **Headers and CSP identical:**
+  - `proxy.ts` and `next.config.ts` have 0 diff lines.
+  - The six security headers on `/` and `/privacy` of the release build equal live production's, byte for byte (a read-only `curl` with a browser `Accept`: `Server: cloudflare`, a `CF-RAY`, an `x-vercel-id`). `X-Powered-By` is absent on both.
+  - The one inline script in the diff is `main`'s early-click handler, moved unchanged from `components/work/Work.tsx` to `app/page.tsx`. Both canvas contexts in the added code are `"2d"`.
+- **`GROQ_API_KEY`:**
+  - Read only in `app/api/chat/route.ts` (0 diff lines). The diff mentions it only in doc lines.
+  - No `GROQ_API_KEY`, `gsk_` or `api.groq.com` anywhere in `.next/static`. No `NEXT_PUBLIC_` in the tracked code. No `.env` file tracked.
+- **Secrets:** a pattern scan of every added line (key prefixes, private keys, tokens, assignments of long secrets) finds none. The only new external URL in the code is Cloudflare's privacy policy.
+- **The guards:**
+  - The unit suite's private-repo and institution guards pass over the tree.
+  - `tests/support/`'s own functions, run in Node over every commit message on the branch and over the PR body, find nothing.
+  - The guard files (`dead-code.test.ts`, `budget.spec.ts`, `tokens.test.ts`, `tests/support/*`, both private-repo tests, `smoke`, `chat`, `chat-route`) have 0 changed lines; `english.spec.ts` has 2 (R12, `3784a48`).
+- **Leftovers:** none of `TODO`, `FIXME`, `@ts-nocheck`, `@ts-ignore`, `eslint-disable`, `.only(`, `.skip(`, `.fixme(` or `test.fail(` on an added line, or anywhere in the code and test tree.
+- **The résumé:** the same blob on both sides (`70e4b7e`, 80,593 B), with 0 diff lines.
+- **Copy:** project statuses and limitations are unchanged; `data/projects.ts` changes only media fields (`direct`, `encoded`, `PROJECT_GALLERIES`). The headline has one source (`siteMeta`), read by the hero and the card.
+- **Dependencies:**
+  - `package.json` and the lockfile have 0 diff lines.
+  - `npm audit --omit=dev`: advisories against `next` 16.0.0–16.4.4 (two critical, one high, seven moderate), fixed in 16.4.6, already in production. Tay: backlog #19 (`505d1e1`).
+  - The two facts Tay asked for:
+    - `npm ls sharp`: `sharp@0.34.5` (the project's own, dev) and `next@16.3.8 └── sharp@0.35.5`.
+    - `app/opengraph-image.tsx` is `next/og`'s `ImageResponse`, prerendered static. It draws inline JSX and SVG elements from `siteMeta`, `heroIndex` and `cine`: no fetch, params, `<img>`, or remote or user-supplied SVG.
+- **Nits, dev-only, left as they are:**
+  - `scripts/lab-hero-a.mjs` defaults to `/lab/hero-a` (now 404).
+  - `scripts/m10-images.mjs:71`'s comment mentions the deleted About visual.
+
+### 7. Lighthouse, bytes, screenshots (VL)
+**Bytes** (`budget.spec.ts`'s algorithm, the build on `:3401`): first-load JS **185.10 KiB** gzip over 9 scripts (606,933 B raw; budget 205.7), HTML **127,732 B** (budget 568 KB). Both are the same as the S21+S22 close. The stylesheets are the same two files (44,069 B and 28,727 B).
+
+**Lighthouse 13.6.0** (`npx --yes`, as since S17; mobile defaults, simulated throttling, 412×823; HeadlessChrome 158; 5 runs in a row on an idle machine, benchmark index 4,054–4,115, no run warnings):
+
+| Run | Perf | A11y | BP | SEO | FCP | LCP | TBT | CLS | SI | Bytes |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 100 | 100 | 100 | 100 | 1,059 ms | 1,059 ms | 65 ms | 0 | 1,378 ms | 389,820 |
+| 2 | 100 | 100 | 100 | 100 | 1,059 ms | 1,059 ms | 20 ms | 0 | 1,059 ms | 389,820 |
+| 3 | 100 | 100 | 100 | 100 | 1,058 ms | 1,058 ms | 35 ms | 0 | 1,353 ms | 389,820 |
+| 4 | 100 | 100 | 100 | 100 | 1,058 ms | 1,058 ms | 19 ms | 0 | 1,362 ms | 389,820 |
+| 5 | 100 | 100 | 100 | 100 | 1,058 ms | 1,058 ms | 16 ms | 0 | 1,341 ms | 389,820 |
+| **Median** | **100** | **100** | **100** | **100** | **1,058 ms** | **1,058 ms** | **20 ms** | **0** | **1,353 ms** | **389,820** |
+
+- The LCP element is the h1 (`section#hero > div.hxa__main > div.hxa__hero > h1#hxa-title`).
+- Against the S21+S22 close (100, 1,063 ms) and a local `main` (S18+S19: 93, 3,191 ms). Production's S17 baseline (98, 2,288 ms) is S24's yardstick, production against production.
+
+**Screenshots** (scratch, not committed; the first screen and the full page at 390×844 DPR 3 and 1440×900): no horizontal overflow, 0 console errors, one canvas, inside `#hero` and `aria-hidden`, at both sizes. At 390 the launcher sits over the GRAVITY FLOW tile's last line on load: S17's at-rest overlap, pre-existing.
+
+### 8. Pushed, and the draft PR
+- `505d1e1`: ROADMAP backlog #19 (Next 16.4.6 after S24) and the "After the release" line.
+- `release/concept-a` pushed: `94d8330..505d1e1`, then this docs commit.
+- **Draft PR #21**, "Release: Concept A", `release/concept-a` → `main`: https://github.com/taysh123/Portfolio/pull/21. Not merged and not marked ready.
+  - Its body: what changes for visitors, R1–R15, every test and guard change with its commit and approval, the S23 results above, F1 and F2, the rollback plan, and the S24 checklist.
+- Production is still `443a1f9`.
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production, tagged `product-plates-final`. Untouched.
+- `release/concept-a`: S23's two docs commits, pushed. **Draft PR #21** open.
+- `proto/hero-a-cinematic`: frozen; PR #18 a draft.
+
+### Waiting on Tay
+- **The review on his phone**, through the Preview (behind Vercel's login). Then the session closes.
+- **F1 and F2** (§5): fix now in the PR, log for after the release, or leave.
+- **S24:** his merge of PR #21 (mark it ready first), then the production checks in the PR body.
+
+---
+
+## 2026-11-20 — Sessions 21+22 close-out: approved by Tay; the GRAVITY FLOW swap moves after the release (Claude Code)
+
+**Scope (Tay's brief):** S21+S22 reviewed and approved; keep the footer rings' fix (`fa5c23d`). Close out: CLAUDE.md
+(drop the two stale notes), the ROADMAP rows, N7 in RESEARCH_AND_DECISIONS (the shipped wording), START-HERE, this log
+and the memory; remove the scratch worktree and clean scratch; `npm test`; push `release/concept-a` (no PR, no merge);
+confirm `main` is clean and level with `origin/main`. **New:** the GRAVITY FLOW capture swap is no longer part of S23;
+it becomes a post-release item (a small PR whenever Tay provides the image).
+
+### Decisions (Tay)
+- **S21+S22 approved** as built and pushed (`b97f92e`…`e58508b`, docs `00ea86d`).
+- **The footer rings' fix (`fa5c23d`) is kept.**
+- **The GRAVITY FLOW capture swap moves out of S23**, to after the release: `docs/ROADMAP.md` #18.
+
+### Docs
+- **`CLAUDE.md`:** the S21+S22 summary under the release branch; the suite counts (unit 225/225 in 18 files,
+  Playwright 187/187 in 15, cold and warm). **Dropped:** the gotcha about the first full run after deleting `.next`
+  failing two tests (fixed by the pre-encoded case-study captures), and the one about the header links' ring easing in
+  (fixed in `5d937ca`, `fa5c23d`). **Added:** no case-study image goes through the optimiser (`direct` or
+  `media.encoded`; a new capture needs a script job); the page's bottom scroll padding (#16) makes Playwright's
+  `click()` scroll a target out of the launcher's strip first.
+- **`docs/ROADMAP.md`:** last updated; P5/P6 status (S21+S22 done and approved, S23 next); the S21+S22 row's commits
+  and results; the S23 row without the capture swap; "After the release" under the production checks; backlog #11
+  (N7) done, #13 measured and not kept, #14 re-checked, #16 and #17 done; **new #18**, the swap after the release.
+- **`docs/RESEARCH_AND_DECISIONS.md`:** N7 resolved, with the shipped wording and why it drops the draft's "on the
+  site's behalf"; R13 done; the session note on S23 records the swap's move; two decision-history rows.
+- **`claude/START-HERE.md`:** S21+S22 approved and closed out; what's next (S23, then S24; the swap after the
+  release); what waits on Tay.
+- **The memory:** the state note, and the measurement lessons (content-visibility on the composed page; Satori's
+  radial gradients; the scroll padding and Playwright's clicks).
+
+### Clean-up (VL)
+- **The scratch worktree of `4b6a8e2`:** `git worktree remove --force` deleted it, `node_modules` included, and
+  `git worktree prune` ran; `git worktree list` shows only the repo.
+- **Scratch:** every file deleted (the probes, the Lighthouse reports, the renders and screenshots, the diffs).
+- Ports 3400–3402 are free.
+
+### Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` after the docs edits | **225/225 tests, 18/18 files**; the private-repo and institution guards pass over the new docs |
+| `npm run build` (Turbopack cache cleared), with the close-out docs and without them (`git stash`) | `/`'s two stylesheets identical in name, size and SHA-256 (`1v6nld9ia-p76.css` 44,069 B, `3_ro9fti2b1c6.css` 28,727 B): CLAUDE.md and START-HERE add or remove no utility |
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production, tagged `product-plates-final`. Untouched.
+- `release/concept-a`: S21+S22 and this close-out, pushed. No PR.
+- `proto/hero-a-cinematic`: frozen; PR #18 a draft.
+
+### Waiting on Tay
+- **S23** in a new session, on `release/concept-a`: the release candidate (WebKit and Firefox runs, axe, Lighthouse,
+  headers, privacy and secret scans, screenshots; Tay's review on his own phone; on his go, the PR).
+- **After the release:** the GRAVITY FLOW image for the capture swap (#18).
+
+---
+
+## 2026-11-20 — Sessions 21+22: privacy and SEO surfaces, then the backlog (#13, #14, #16, #17, the cold cache, the rings) (Claude Code)
+
+**Scope (Tay's brief, S21+S22):**
+- **A. Surfaces:** `/privacy` (the `theme` cookie out, N7's Cloudflare sentence); R8 (the hero's h1 and lede into
+  `siteMeta`, a dark OG/Twitter card); the manifest and `themeColor` in the field's colour; the sitemap's date; the
+  dark 404 and error pages. The approved test edits, each in its own commit.
+- **B. Backlog:** #16 (`scroll-padding-bottom`, and the Tab test's unobscured check extended to the launcher; the
+  launcher not moved or hidden); #17 (the case-study dialog's two axe findings); the case studies' captures
+  pre-encoded with the image script's settings, so the cold-cache failures go without touching the tests; the header
+  links' ring at once; #13 measured (kept only if phone LCP improves, scroll CLS stays 0 and jumps land exactly); #14
+  re-checked.
+- Step 1 shown first (the `/privacy` diff, the card's text and render, any 404/error wording change); Step 2 after
+  Tay's OK. The full suite cold and warm; Lighthouse mobile (median of 5); first-load JS and HTML. Push the branch (no
+  PR, no merge), the Preview URL, START-HERE and this log. The session stays open until Tay reviews.
+
+### 1. Preconditions (VL)
+- `git fetch`, `release/concept-a` checked out and pulled: HEAD **`4b6a8e2`**. `main` = `origin/main` = **`443a1f9`**
+  = Production (`gh api …/deployments`, created 2026-11-19 03:20Z). `npm ci` exit 0; `.next` deleted; `npm run build`
+  exit 0 (8 routes).
+- **N7 re-checked live** (read-only `curl` with a browser `Accept` header, 2026-11-20): `/` and `/privacy` answer
+  `Server: cloudflare` with a `CF-RAY` and an `x-vercel-id`; no beacon, no `email-protection` link, no decode script,
+  no external `<script src>`, no `Set-Cookie`. Cloudflare still proxies; "loads no third-party scripts" holds.
+- **Cloudflare's privacy policy** (`https://www.cloudflare.com/privacypolicy/`, 200, "effective as of November 4th,
+  2025") was read for the sentence. It lists End Users' "IP addresses, traffic routing data, system configuration
+  information, and other information about traffic", and says "Cloudflare is a data controller for the personal
+  information collected from all categories of data subjects listed above", a processor only of Customer Logs, some
+  settings, and content that transits its network. **So N7's draft phrase "on the site's behalf" went beyond the
+  policy and was dropped.**
+
+### 2. Step 1, and Tay's answers
+- Shown: the exact `/privacy` diff, the card's text with a render in scratch, and the 404/error pages (no wording
+  change: both are already dark through the root layout's `data-theme="dark"`, on the site's dark `#0b0c0f`, as R3
+  says; every word still true for the one page).
+- **Approved by Tay**, with one change: the card shows the four names only, no states ("cached cards outlive
+  statuses": GRAVITY FLOW's "Release candidate" will change). Also approved: the `/privacy` wording with the corrected
+  N7 sentence; `colorScheme` "dark"; the manifest and `themeColor` `#04060d`; the sitemap date 2026-11-20 (S24 moves it
+  to the merge date).
+- **Test edits approved by Tay**, each in its own commit: `hero.test.ts:43` (the regex as proposed) and
+  `privacy.spec.ts:49` (count 3, plus "through Cloudflare"), both new in this session; and R12's `privacy.spec.ts:43`,
+  `site.test.ts:161` (R12 said `:160`; an S18+S19 comment moved it) and `content.test.ts:20,22`.
+
+### 3. What changed (VL; 21 commits, `b97f92e`…`e58508b`)
+**A. Surfaces**
+- `b97f92e` **R8:** `siteMeta.headlineLines` (the h1's two lines), `siteMeta.headline` (joined) and `siteMeta.heroLead`
+  (the hero's lede, word for word); `Hero.tsx` reads them. `/`'s h1 and lede markup is byte-identical (§6).
+- `11a2ef5` test: `content.test.ts:20,22` take the new strings. `143733f` test: `hero.test.ts:43` ends
+  `/, from the interface down to the infrastructure\.$/`.
+- `1bfebb5` **The dark card** (`app/opengraph-image.tsx`): the hero's sky, its two glows placed and sized as
+  `.hxa__glow`, a seeded still of the constellation (no node or link midpoint on the copy), the wordmark with its
+  glyph, `tayshofer.dev`, "Software Engineer" as the eyebrow, the h1 with its second line in the duotone, and under a
+  hairline the four names only. `og:image:alt` is "Tay Shofer — Building software. Turning ideas into products."
+  `lib/tokens.ts` gains `cine`, the TypeScript mirror of the layer's field and inks.
+- `e6733c4` **R3:** `themeColor` `#04060d` (one colour), `colorScheme` "dark"; the manifest's `background_color` and
+  `theme_color` `#04060d`. The Product Plates `brand` mirror had no user left and is removed.
+- `d16c814` test (new file): `surfaces.test.ts` holds `cine` to the layer's base values, the manifest and viewport to
+  `cine.abyss`, and the card to the h1 and names with no state, figure or availability.
+- `2424e23` **`/privacy` (R3, R13):** N7's sentence after Vercel's: "Requests reach Vercel through Cloudflare, which
+  sits in front of the site as its network proxy and processes information about that traffic, such as your IP
+  address: Cloudflare's privacy policy." (a third new-tab link). The cookie paragraph names one cookie, `a11y` ("It
+  holds nothing else, can last up to a year …": "can last" keeps `site.test.ts`'s "last up to a year" pin). The meta
+  and OG descriptions say "one optional preference cookie". Last updated 20 November 2026. `lib/theme.ts` drops
+  `THEME_COOKIE`.
+- `5753bdc` test: `privacy.spec.ts:43` `["a11y"]`. `0b543a4` test: `site.test.ts:161` drops the `THEME_COOKIE` match.
+  `a632a66` test: `privacy.spec.ts:49` counts 3 and checks "through Cloudflare".
+- `6fa14a8` the sitemap's `CONTENT_LAST_MODIFIED` is `2026-11-20`.
+- The 404 and error pages: unchanged (§2).
+
+**B. Backlog**
+- `f3bd556` **#16:** `html { scroll-padding-bottom }` of the launcher's edge, height and a 12px gap (5rem; 4.5rem on
+  phones and short screens) plus the bottom safe area, in `components/chat/chat.css`. The launcher is unchanged.
+  `50d3bec` test: `chrome.spec.ts`'s Tab walk also fails a stop that overlaps the launcher's box at all (red before
+  the fix: the hero's GRAVITY FLOW link at 390×844).
+  - A scratch Tab walk of `/` at 320×568, 360×780, 375×667, 390×844, 414×896, 430×932, 768×1024, 1024×768 and
+    1440×900, motion reduced and on: **no stop overlaps the launcher** (47–52 stops each). Anchor jumps still land:
+    `chapters.spec.ts` Navigation ×3 and `lab-hero-a.spec.ts`'s Featured work jump, 4/4.
+- `addbd2f` **#17:** the dialog is a `div` (an `aside` may not take `role="dialog"`), and each gallery image is
+  silent (`alt=""`): its unchanged figcaption, which repeated the alt word for word, names the figure. No description
+  invented; `data/projects.ts`' alt text unchanged. axe (WCAG 2.2 A/AA + best-practice), each case study open, 1440
+  and 390: **18 findings before, 0 after.** `e46b693` test (new file): `case-study-axe.spec.ts` (it waits for the
+  dialog's fade: mid-fade, axe flags half-drawn text's contrast).
+- **The cold cache (S20 §4), fixed without touching a test:**
+  - `ada732d` the image script gains `dos-ai-features` and `dos-desktop` (the case study's two DeveloperOS captures
+    the carousel does not show; AVIF q60 / WebP q80, effort 6, at 800/1200/1600), run for those two jobs only; listed
+    in `data/lab-images.ts`. 314 KiB.
+  - `cfb5b5f` Aegis's case study serves its one capture as it is (`direct: true`): it is the script's own output at the
+    crop's size (1108×623, 29 KiB), so `aegis.spec.ts:29`'s `incident-board-open.webp` pin holds. DeveloperOS and
+    GRAVITY FLOW list each capture's pre-encoded files (`media.encoded`, the tables' names and widths, repeated because
+    client code never imports the tables: `lab-work.test.ts:157–176`), and the panel's new `Capture` serves them in a
+    `<picture>`, AVIF then WebP. T Poker unchanged (`direct`).
+  - Checked: all 16 case-study images load at 1440 and 390 (DPR 3) with **0 requests to `/_next/image`**; the dialogs
+    look as before (screenshots in scratch). `e1e1654` test (new file): `case-study-images.test.ts`.
+- **The focus rings:**
+  - `5d937ca` the header's four links ease only their text colour (their colour utility also eased `outline-color`),
+    so the ring is cyan on its first frame. **Found while probing:** the footer's six links (Email, GitHub, LinkedIn,
+    Résumé, Privacy, Back to top) did the same, at both widths; S20's note named only the header.
+  - `fa5c23d` the same one-word fix in the footer, **in its own commit so Tay can drop it**. A Tab walk with motion on:
+    rings that ease in, 10 → 0 at 1440 and 6 → 0 at 390.
+  - `e58508b` test (new file): `focus-ring.spec.ts`.
+
+### 4. ROADMAP #13: `content-visibility` on the composed page: measured, **not kept** (VL)
+- **Variant B** (a scratch worktree of the final tree, never committed): `content-visibility: auto` on Stack, Think ·
+  Build · Ship and Contact, `contain-intrinsic-block-size: auto` at their measured heights (412 wide: 1,883 / 761 /
+  462 px; 1440 wide, from 1024: 1,342 / 576 / 263 px). The violet glow still sits at `top: 38%` of the whole `.wk`
+  region (composing did not anchor it to a section, as R11 had expected).
+- **Phone LCP:** Lighthouse 13.6.0 mobile, interleaved, 5 each: A 1,063 ms, B 1,063 ms (Performance 100 both).
+  Directly at 4× CPU (CDP throttling, 412×823, a fresh context per load, two rounds of 15 interleaved): medians A 424 /
+  B 416 ms, then A 372 / B 352 ms, ranges overlapping (280–660 ms). The h1 is the LCP element in every run. At most a
+  20 ms gain, inside the noise.
+- **Scroll CLS** (the whole page in 120px steps, no input; 7 sizes from 320×568 to 1440×1800, motion reduced and on):
+  A's only shifts are the chat launcher folding its label (0.0032–0.0244, the known pre-existing source). B adds the
+  violet glow moving as the sections render: 0.0105–0.1021 (0.0777 of it the glow at 320×568).
+- **Jumps** (`#about`, `#skills`, `#approach`, `#contact` from a fresh load, 1.6 s and 3.1 s after): A lands every
+  target within ±0.5px, except where the page's end clamps the scroll (`#contact` at 768 and wider, `#approach` at
+  1440×1800; the same in both). B misses `#approach` by −17 to −311px and `#contact` by −11 to −71px at several sizes.
+- **R11: the release ships without it.** Two of the three conditions fail, and the LCP gain is within noise. Nothing
+  changed on the branch.
+
+### 5. ROADMAP #14: Stack's filter hold, re-checked on the composed page (VL; report only)
+- A press from All on each project, with the buttons at the top, middle and bottom of the view (clicks dispatched in
+  the page: Playwright's `click()` first scrolls a target out of #16's bottom strip, which a mouse never does), at
+  1440×900, 390×844, 1920×1200, 2560×1440 and 1440×1800:
+  - **The view never moves** (0px in every case).
+  - The hold is 0 everywhere except with the buttons near the top at 1440×1800: **239px** (session 15: 346px), with
+    **no visible gap** (the filtered list still fills it).
+  - **The keyboard-only end case** (a button focused, the page scrolled to its end, Enter): the hold is the full list's
+    height, **1,096px** at 1440 and wider and **1,619px** at 390, as in session 15; the space shows under the filtered
+    list (815px and 1,215px) until All is pressed; the scroll does not move.
+- Tay kept the hold in sessions 14–16; nothing changed.
+
+### 6. Validation (VL, Git Bash, the final tree `e58508b`)
+| Command | Result |
+|---|---|
+| `npm run typecheck` (after `npx next typegen`) | exit 0 |
+| `npm run lint` | exit 0 |
+| `npm test` | **225/225 tests, 18/18 files** (was 218/16: +3 `surfaces`, +4 `case-study-images`) |
+| **Cold:** `.next` deleted, `npm run build`, `GROQ_API_KEY= npx playwright test` | **187/187**, 2.0 min (was 183: +2 `case-study-axe`, +2 `focus-ring`). The two S20 cold-cache failures pass with no test changed |
+| **Warm:** the same run again | **187/187**, 2.0 min |
+| `.next/cache/images` after both runs | does not exist: nothing in the suite went through the on-demand optimiser |
+
+**Against the session's start** (`4b6a8e2`, built in a scratch worktree, both served by `next start`):
+
+| | Start `4b6a8e2` | Final `e58508b` |
+|---|---|---|
+| First-load JS gzip (budget 205.7 KiB) | 185.00 KiB, 9 scripts | **185.10 KiB**, 9 scripts (+0.10: `siteMeta`'s new strings in the client chunks that already carried it) |
+| HTML (budget 568 KB) | 127,970 B | **127,732 B** |
+| Stylesheets | 43,672 + 28,727 B | 44,069 + 28,727 B: exactly three new rules (the links' colour-only transition, the two `scroll-padding-bottom` rules), no stray utility |
+| Markup | | Differs only in the theme-color and color-scheme metas, the card's URL hash and alt, the ten links' class, and the same in the RSC payload |
+
+**Lighthouse 13.6.0 mobile** (defaults: simulated throttling, 412×823; HeadlessChrome 158; interleaved, 5 each; this
+machine's benchmark index 2,067–3,280 today, against 3,912–4,086 in S18+S19):
+
+| Median of 5 | S18+S19 (`270ab27`) | Start `4b6a8e2` | **Final `e58508b`** |
+|---|---|---|---|
+| Performance | 100 | 100 | **100** |
+| LCP (the h1) | 1,061 ms | 1,065 ms | **1,063 ms** |
+| FCP | 1,061 ms | 1,065 ms | **1,063 ms** |
+| TBT | 23 ms | 22 ms | **20 ms** |
+| CLS | 0 | 0 | **0** |
+| Speed Index | 1,063 ms | 1,329 ms | **1,362 ms** |
+| A11y / BP / SEO | 100 / 100 / 100 | 100 / 100 / 100 | **100 / 100 / 100** |
+| Bytes loaded | 389,747 | 389,749 | **389,818** |
+
+No run warnings. Start and final match within noise; Speed Index is higher for both today with the slower benchmark.
+Production's baseline (S17) stays the yardstick for S24.
+
+### 7. Pushed, and the Preview
+- `release/concept-a` pushed: `4b6a8e2..e58508b` (21 commits), then this docs commit. No PR, no merge; Production is
+  still `443a1f9`.
+- The branch's Preview link (behind Vercel's login):
+  `https://tay-shofer-portfolio-git-release-840354-tays-projects-d5aefd6e.vercel.app/`.
+- Scratch, for Tay: the card, `step1/card-names-only.png`; today's card and 404, `step1/today-*.png`; the case
+  studies, `step1/cs-*.png`.
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production, tagged `product-plates-final`. Untouched.
+- `release/concept-a`: S21+S22's 21 commits and this docs commit, pushed. No PR.
+- `proto/hero-a-cinematic`: frozen; PR #18 a draft.
+- A scratch worktree of `4b6a8e2` (for the comparison builds) is still registered; the close-out removes it.
+
+### Waiting on Tay
+- **Review** on the Preview: the share card (shown by a share preview, or at `/opengraph-image`), `/privacy`, the
+  case studies' images and axe fixes, the rings, the launcher's clearance on a phone.
+- **The footer rings (`fa5c23d`)**: outside the brief's "header links", in its own commit; keep or drop.
+- **Then the close-out** (on Tay's word): CLAUDE.md's two gotchas that this session made stale (the cold-cache failure
+  and the ring that eased in), ROADMAP (the S21+S22 row; #13, #14, #16, #17), RESEARCH_AND_DECISIONS (N7 resolved),
+  the memory, the scratch worktree.
+- **S23** next: the release candidate (WebKit and Firefox, Tay's phone, the GRAVITY FLOW capture swap).
+
+---
+
+## 2026-11-20 — Session 20: the tests (the lab tests ported to `/`, the old page's retired, R12's new guards) (Claude Code)
+
+**Scope (Tay's brief, S20, tests only; no page or copy change):**
+- Port the lab specs and unit tests to `/` (`lab-hero-a.*`, `lab-work.*`) and remove both temporary `@ts-nocheck`
+  lines. Delete the two lab-only tests as planned: the CSS pin against `origin/main`'s digests, and "Contact matches
+  the live Contact on /", which becomes fixed values.
+- Retire the old page's tests (`hero.spec.ts`, `chapters.spec.ts` and `lower.spec.ts` outside their kept tests). Before
+  deleting any test, port each assertion that still covers something on the new `/`. List every retired test with
+  its reason.
+- Add R12's new guards: `/` index, follow with the canonical; `/lab`, `/lab/hero-a`, `/lab/work` answer 404; exactly
+  one canvas, 2D and `aria-hidden`. The WebGL guards unchanged; no guard weakened.
+- The full suite green, small commits, push the branch (no PR, no merge), close out.
+
+### 1. Preconditions (VL)
+- `git fetch`, `release/concept-a` checked out and pulled: HEAD **`24240ad`**. `main` = `origin/main` = **`443a1f9`**
+  = Production (`gh api …/deployments`, created 2026-11-19 03:20Z). `npm ci`, `.next` deleted, `npm run build` exit 0.
+
+### 2. Before (VL, on `24240ad`, Git Bash)
+| Suite | Result |
+|---|---|
+| `npm test` | **121/121 tests**; 14 of 16 files. The two lab unit files fail at load (their 26 + 68 tests never ran) |
+| `npx playwright test --list` | **212 tests in 14 files** |
+| `GROQ_API_KEY= npx playwright test --fully-parallel --timeout=15000` (the fast listing run; the standard config waits 60 s per dead route) | **88 passed, 124 failed**: `hero` 0/12, `chapters` 8/32, `lower` 7/17, `lab-hero-a` 3/18 (the 3 are axe on the 404 page), `lab-work` 1/63, and `chat.spec.ts:174` 10/11 under the parallel load (it passes on the standard config, §5) |
+
+### 3. What changed (each its own commit)
+**The unit tests, ported in place** (the files keep their names: a dozen code comments and
+`docs/CINEMATIC_SYSTEM.md` point at them):
+- `8b495f0` `tests/unit/lab-hero-a.test.ts` (26, as before): reads `components/sections/` (Hero, Constellation,
+  `hero.css`, `featured.ts`), `app/cinematic.css`, the header's `AvailabilityPill`, `Navbar` and `Logo`. R9's SVG
+  arrows; R2's header row as the reveal's first step (indices 0, 0, 1–5), the one rule in `hero.css` that is not the
+  hero's. "Never indexed" turns round: the root layout's `index, follow` and canonical, no `app/lab`, nothing links
+  `/lab`. The layer is imported by `app/page.tsx` alone.
+- `c290ee7` `tests/unit/lab-work.test.ts` (71: 68 ported, 3 new for Two more): R4's "Case study" buttons, R5's Two
+  more, R10 (no lede or reveal in Work; About ends on the facts, its dropped links checked where they live now),
+  every capture lazy, the page order from `app/page.tsx`. **Fixed values from `product-plates-final`** where the
+  prototype read files the release deleted: the chapters' phone crops and DeveloperOS chips, the Product Plates
+  Stack's FILTER rules, the Product Plates Contact. The image-table check now covers every client component.
+
+**The two prototype-only e2e tests, deleted as planned:**
+- `eb765e7` `/`'s stylesheets pinned to `origin/main`'s digests (`/` differs from `main` by design now).
+- `b8451cc` "Contact's links are the live Contact's": checked by hand against
+  `product-plates-final:components/sections/Contact.tsx`, `CONTACT_LINKS` and the attribute table in "Contact without
+  JavaScript" are exactly its targets, order, attributes and names, as fixed values.
+
+**The e2e specs, ported to `/`:**
+- `6f09caf` `lab-hero-a.spec.ts` (18): the field's code ships with `/` and not `/privacy`; "never linked" (the sitemap
+  lists only `/`); no-JS (the header's row in the reveal, one pill shown, in-page links); LCP is the h1; both
+  reduced-motion paths; the loop's pauses; the signals; four viewports; keyboard from the skip link through the
+  header (R2) and the hero into Work, every ring the layer's cyan; structure; axe ×3.
+- `67de511` `lab-work.spec.ts` (61): every carousel, CLS, lift, viewport, axe, Stack, Think · Build · Ship and
+  Contact test, on `/`. R4: the six "Case study" buttons hidden without JS; R10: no lede, About with no link; R12:
+  one canvas, none under the hero; every capture lazy; the hero's h1 over six h2s; the keyboard walk from the hero's
+  last control through Work, Two more, the filter and Contact, then out to the footer.
+
+**The old page's tests, retired (R12), with what still applies ported first:**
+- `848d55c` **`hero.spec.ts` deleted (12).** Ported to `lab-hero-a.spec.ts` (6 tests): Featured work links the four
+  panels with their verified states, never "open source" (`:5`); following a link lands its panel under the header,
+  1440 and 390 (`:112`); on the four phones the actions come before Featured work, in the first screen, 16px or more
+  apart (`:97`). Retired: `:22`, `:37`, `:51` the plates' layouts; `:64` their windows; `:83` their end line (the plates
+  are gone); `:97`'s two-line Product Plates headline; `:125` the hero's eager images (no image in the hero now).
+- `9ceb6d6` **`chapters.spec.ts`, 32 → 11.** The Case study block is byte for byte (4). Navigation (`:284`, 1440,
+  1280×720, 390) stays: its selectors fit `/`, and it adds the 390 jump and the "under its own centre" check. Ported
+  (4): T Poker's web app and private label on the panel, both store listings and no retired figures in its case study
+  (`:49`); Aegis's renamed score decision and schema note, and no "open source" (`:170`, `:96`); DeveloperOS's Source
+  link (`:237`); GRAVITY FLOW a release candidate with no test count, physics claim or store link (`:245`). `:40`'s
+  hidden trigger without JS is in `lab-work.spec.ts`. Retired (R6, the explainers are gone): the T Poker stepper and
+  its no-JS path (`:7` ×4, `:20`, `:40`) and its two-column Tab order (`:70` ×2); the Aegis trace, fork, port-scan
+  highlight, order and phone trace (`:96`, `:107`, `:118` ×2, `:145`, `:155`); the DeveloperOS flow, refusal, citation
+  boxes and reading order (`:181`, `:187`, `:200` ×2, `:213`) and its release-page link (only the chapter had one);
+  GRAVITY FLOW's marked frame, lede and "not yet published" line (`:245`), its layout (`:257`), the teal plate in two
+  themes (`:273`).
+- `ab2e8a5` **`lower.spec.ts`, 17 → 6.** `:142` (the résumé's bytes) and `:164` (the footer) verbatim; `:153` (the
+  four phones' overflow, by the live ids) stays, since it passes on `/`. Ported to `lab-work.spec.ts` (8): the four
+  facts, **no institution anywhere in the served page**, the rejected render gone (`:8`); each tool's accessible text
+  and title, Everyday tools naming none, never monospace (`:78`); Think · Build · Ship unpinned (`:106`); on the four
+  phones LinkedIn and GitHub on one line and "79 KB" unbroken (`:118` ×4); the résumé in Contact and the footer, never
+  the header (`:128`). Retired: `:8`'s measure and the About visual (deleted); `:50` the radio lens and `:69` its no-JS
+  path (toggle buttons now, Tay, session 13; without JS the full list shows); `:78`'s 16px tools and "Related projects"
+  and `:95`'s rows (Tay chose 14px pills, each tool naming its projects; page.spec keeps the 12px floor).
+  - That commit's message first said 9 ports. It is 8: the ninth in its check run was the résumé test ported earlier.
+    Corrected before the push (the four commits rebuilt with `git commit-tree`, same trees, authors and dates).
+
+**R12's new guards, in `page.spec.ts`** (each its own commit naming the approval; no other guard changed):
+- `113c6e5` `/` is indexable: `index, follow` (robots and googlebot metas), exactly one canonical
+  `https://tayshofer.dev`, no noindex or nofollow in the HTML or `X-Robots-Tag`.
+- `b886176` `/lab`, `/lab/hero-a`, `/lab/work` answer 404, with no redirect.
+- `4aff12c` exactly one canvas, inside `#hero`, `aria-hidden`; every context any canvas requests is recorded, and only
+  `"2d"` appears (1440 and 390, motion on and reduced, after scrolling the page). Red-checked: a WebGL request on a
+  detached canvas is recorded. The WebGL count, `budget.spec.ts` and `dead-code.test.ts` are unchanged.
+
+### 4. Found while porting (nothing on the page changed)
+- **The header's four links ease their focus ring in.** Their colour transition also eases `outline-color`, so the
+  ring's first frame is the link's own mist and it reaches the layer's cyan 150 ms later (measured: `getAnimations()`
+  shows one `outline-color` transition). Every other control rings cyan at once. The ported keyboard tests read each
+  ring once its transitions finish. Not a defect; for Tay to judge.
+- **Contact's "79 KB" keeps its no-break space** (`contactBlock.ts`) inside a no-wrap note, as the Product Plates
+  Contact did. A first draft of the unit test had lost the character; corrected before the commit.
+- **A cold image cache times out two existing tests on the first full run** (§5). Nothing here changed them, and
+  nothing was changed to make them pass.
+  - The case studies' captures go through Next's on-demand optimiser, AVIF first, except T Poker's (`direct: true` in
+    `data/projects.ts`). The Aegis capture (`/projects/aegis/incident-board-open.webp`) is the first the suite asks
+    for: `aegis.spec.ts` is the first file, and `chapters.spec.ts`'s Case study block opens Aegis second.
+  - With `.next/cache/images` empty and 8 workers starting at once, its first encodes outlast `aegis.spec.ts:28`'s
+    5 s poll and the Case study block's 15 s one. The cache files written in run 1 carry that image's ETag
+    (0x7592 = its 30,098 bytes) at three widths, the first two written 8.7 s apart.
+  - Alone, from a cold cache, both pass; with the cache warm, the full run passes.
+  - Before S20 the same cold run passed both (§2). Likely why (NC): the ported specs now draw the canvas and the
+    carousels at the suite's start, where the lab specs used to fail on a 404 at once.
+  - For Tay: either serve the case studies' captures pre-encoded (`direct: true`, a page change: S21+S22), or give the
+    two polls a longer wait (a test change; the Case study block is one R12 kept). Until then, run the suite twice
+    after deleting `.next` (CLAUDE.md gotcha).
+- `docs/CINEMATIC_SYSTEM.md` still describes the CSS pin and the lab routes (lines 21–22, 64). Its close-out is S24's
+  (ROADMAP), so it is left as it is.
+
+### 5. Validation (VL, Git Bash, the final tree)
+| Command | Result |
+|---|---|
+| `grep` for `.only`, `.skip`, `.fixme`, `test.fail` under `tests/` | none |
+| `npm test` | **218/218 tests, 16/16 files** (was 121, 14/16) |
+| `npm run typecheck` | exit 0 |
+| `npm run lint` | exit 0 |
+| `npm run build` (`.next` deleted first) | exit 0; the same 8 routes |
+| `/`'s stylesheets and `.next/static/chunks` against the session's first build | **byte-identical** (43,672 B and 28,727 B; every JS chunk's SHA-256): the new tests add no Tailwind rule |
+| `npx playwright test --list` | **183 tests in 13 files** (was 212 in 14) |
+| `GROQ_API_KEY= npx playwright test` (the standard config), run 1, right after the clean build (the image optimiser's cache empty) | 181/183: `aegis.spec.ts:15` and `chapters.spec.ts:68` (the kept "every case study's images finish loading") time out on the Aegis case study's capture (§4) |
+| The same two alone, cache emptied again | 2/2 |
+| The full run again, cache emptied again | 181/183, the same two: reproduced |
+| **The full run with the cache warm** | **183/183**, 2.1 min |
+
+Per file, before → after: `lab-hero-a` 18 → 24, `lab-work` 63 → 69, `hero` 12 → 0, `chapters` 32 → 11, `lower` 17 → 6,
+`page` 18 → 21; `aegis` 3, `budget` 5, `chat` 11, `chrome` 19, `english` 5, `privacy` 4, `private-repo` 4, `smoke` 1,
+unchanged.
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production, tagged `product-plates-final`. Untouched.
+- `release/concept-a`: S20's 12 test commits and this close-out, pushed. No PR.
+- `proto/hero-a-cinematic`: frozen; PR #18 a draft.
+
+### Waiting on Tay
+- **S21+S22** in a new session: `/privacy` with N7's sentence (its exact wording to Tay before the commit, R13), the
+  `theme` cookie out, R8's headline and dark card, the manifest and `themeColor`, the sitemap's date, the 404; then
+  #13, #14, #16 and #17.
+- **The cold-cache timeouts (§4):** pick a fix (pre-encoded case-study captures, or longer polls), or leave it.
+- Optional: the header links' ring easing in (§4).
+
+---
+
+## 2026-11-20 — Sessions 18+19 close-out: approved by Tay; #17 logged for S21+S22 (Claude Code)
+
+**Scope (Tay's brief):** S18+S19 reviewed and approved. Log one item for S21+S22. Close out: CLAUDE.md, START-HERE
+and this log on `release/concept-a`; remove the scratch build of `main` and clean up scratch; push (no PR, no merge);
+confirm `main` is clean and level with `origin/main`.
+
+### Decisions (Tay)
+- **S18+S19 approved** as built and pushed (`482d29e`…`7a85e92`; the Preview at `7a85e92`).
+- **New: ROADMAP #17, for S21+S22.** Fix the case-study dialog's two axe best-practice findings, even though production
+  has them too:
+  - `aria-allowed-role`: the panel is an `<aside role="dialog">` (`components/ui/CaseStudyPanel.tsx`). All six case
+    studies.
+  - `image-redundant-alt`: a gallery image whose alt repeats its caption. Three: T Poker, DeveloperOS, GRAVITY FLOW.
+- Added to the S21+S22 row in `docs/ROADMAP.md`. #15 and the Work lede are marked done there (S18+S19).
+
+### Docs
+- **A correction:** the S18+S19 entry below said `image-redundant-alt` was on four case studies. The results show
+  three. Fixed there and in #17.
+- **`docs/ROADMAP.md`:** P5/P6 status (S18+S19 done and approved, S20 next); the S18+S19 row's commits; the S21+S22 row
+  (#17 added, #15 and the Work lede moved out); #15 done; #17 new.
+- **`CLAUDE.md`:**
+  - The release branch after the swap, and its Preview link.
+  - The prototype record's layer, now at `app/cinematic.css` on this branch.
+  - The approved test changes: R12, plus the six from this session and Tay's phone condition.
+  - The unit count, and new gotchas: the build type-checks tests; a removed route's e2e tests each wait out the timeout;
+    the Vercel connector's authenticated fetch creates a share link; `git rm` of a folder's last files removes the
+    folder.
+- **`claude/START-HERE.md`:** S18+S19 approved; what's next (S20); what waits on Tay; #17.
+- **The memory's state note.**
+
+### Clean-up (VL)
+- **The scratch worktree of `443a1f9`** (`main`'s comparison build):
+  - `git worktree remove` deregistered it, but could not delete its folder. Some `node_modules` paths exceed Windows'
+    260-character limit ("Filename too long").
+  - The folder was deleted through the long-path prefix, and `git worktree prune` run. `git worktree list` shows only
+    the repo.
+- **Scratch:** every file and folder deleted. That covers the probes, the screenshots, the Lighthouse reports, the
+  Playwright logs, the commit-split scripts and drafts, and the per-test S20 list. The per-file S20 table is in the
+  S18+S19 entry §4.
+- Ports 3400–3402 are free.
+
+### Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` after the docs edits | **121/121 tests**; the two lab unit files fail at load until S20, as in S18+S19. The private-repo and institution guards pass over the new docs |
+| `npm run build` (Turbopack cache cleared), then `/`'s two stylesheets | Unchanged: the same two files, 43,672 B and 28,727 B. CLAUDE.md and START-HERE add no utility |
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production (`gh api …/deployments`), tagged `product-plates-final`. Untouched.
+- `release/concept-a`: S18+S19 and this close-out, pushed. No PR.
+- `proto/hero-a-cinematic`: frozen; PR #18 a draft.
+
+### Waiting on Tay
+- **S20** in a new session, on `release/concept-a`: the tests. Port the lab specs and unit tests to `/`, delete the two
+  prototype-only ones, remove the temporary `@ts-nocheck` lines, retire the old page's specs, and add the new guards.
+- In S21+S22: N7's final `/privacy` wording (R13), and #17.
+
+---
+
+## 2026-11-20 — Sessions 18+19: `/` is the Concept A page; `/lab` and the retired code deleted (Claude Code)
+
+**Scope (Tay's brief, S18+S19 exactly as planned):**
+- Compose `/`: the header (R2), the hero, Work, About (R10), Stack, Think · Build · Ship, Contact, Two more (R5), the
+  footer. One `main`, one h1, every live id, dark-only `<html>` (R3). "More on X" opens the case-study dialog (R4).
+- axe on the dark page with the dialog and the accessibility panel open.
+- Delete `/lab` and the retired code. The approved guard edits, each in its own commit naming its approval. The WebGL
+  guards unchanged.
+- No new copy. The release gate: Lighthouse mobile (median of 5) on a local production build of this branch and of
+  `main`, plus the JS and HTML budgets.
+- `/lab/*` answers 404; `/` is `index, follow` with its canonical. Screenshots at 390 and 1440 in scratch.
+- Commit and push the branch (no PR, no merge, no deploy), and give Tay the Preview URL. The session stays open until
+  Tay reviews.
+
+### 1. Preconditions (VL)
+- `git fetch`, `release/concept-a` checked out and pulled: HEAD **`af0af8d`**. `main` = `origin/main` = **`443a1f9`** =
+  Production (`gh api …/deployments`, status success). `npm ci` clean.
+
+### 2. What changed (VL)
+**`482d29e`, the swap** (61 files; the prototype's files moved with `git mv`, their copy unchanged):
+- **The page** (`app/page.tsx`): the header, then `<main>` holding the page in a `.cine` root: `#hero`, then one `.wk`
+  region (its sky and two glows) with `#work`, Two more (`#more-work`), `#about`, `#skills`, `#approach`, `#contact`.
+  Then the case-study host and the live footer. One `main`, one h1 (the hero's). Work's title is an h2, each product an
+  h3. Every live id is kept (R7), `#approach` included.
+- **Where the code lives:** the layer at `app/cinematic.css`, imported by `/` only (`/privacy`, the 404 and the error
+  page never load it). The sections in `components/sections/`: `Hero`, `Constellation`, `featured`, `Work`, `panels`,
+  `Reel`, `Shot`, `MoreWork` (new), `About`, `Stack`, `StackFilter`, `ThinkBuildShip`, `Contact`, with their data in
+  `aboutBlock.ts`, `stackBlock.ts`, `tbsBlock.ts`, `contactBlock.ts`. Hero and Stack keep the paths `hero.test.ts`
+  reads.
+- **The header (R2):** `Navbar.tsx`'s behaviour, re-toned in the layer.
+  - The hero's wordmark (`Logo.tsx`) and its availability pill (`AvailabilityPill.tsx`, shared with the hero). The four
+    anchors with a cyan current-section underline, the accessibility button, "Get in touch" as the layer's outlined
+    control. The phone menu sheet, with the layer's cyan "Get in touch".
+  - No theme toggle. **At the top of the page it shows no surface**; once scrolled it is the field at 88%, frosted,
+    with a hairline.
+  - The scrolled flag is set in the scroll event itself, so the surface is never a frame late. The phone swipe test
+    counts one header colour on every frame.
+  - **The pill:** in the bar from 1280px. Below that the bar has no room for it (measured: at 1024 the right cluster
+    would overlap the links), so it opens the hero under the header, where the locked hero wrapped it under the
+    wordmark. CSS displays exactly one of the two.
+- **Dark only (R3):** `<html data-theme="dark">` whatever the cookie. `ThemeProvider` and `ThemeToggle` are deleted,
+  and nothing reads or writes the `theme` cookie. `THEME_COOKIE` stays in `lib/theme.ts` only because `/privacy` still
+  names it; that paragraph is S21+S22's (R13).
+- **The layer's scope chrome:** it set `--accent` to cyan on the whole body, written for the lab's light `<html>`. Now
+  only the skip link and the chat launcher take it. The overlays keep the site's dark accent (R3).
+- **Depth (R4):** each panel's "More on X" link is a "Case study" button with `data-case-study`, on the existing lazy
+  dialog. The early-click script and the no-JS rule came along.
+- **Two more (R5):** `MoreWork.tsx`, the live words only (`dict.more.title`, each project's name, `context` and
+  `summary`). Two ruled rows on About's grid: the name and context on one side, the summary, the source link (or the
+  site's label) and "Case study" on the other. Six case-study triggers in all.
+- **R9:** the hero's arrows are the site's SVG icons: `ArrowUpRightIcon` for the ↗, and `ArrowDownIcon` for the ↓, so
+  the pair matches (About's résumé on the slice already drew ↓ that way).
+- **R10:** About ends on the facts (no availability line, no links). Work drops its lede and its own reveal: the hero's
+  is the page's one. Both apply R10 in full; the brief named it beside About.
+- **Captures:** none is a load priority any more (the hero fills the first screen), so every capture is lazy.
+- **Composition fixes, found in the screenshots:**
+  - The hero's sky ended navy with its violet glow, and Work's sky starts at the base: a hard edge. The hero's sky now
+    fades into the field over its last `--cine-section-y`, under the vignette; the copy and the field sit above it.
+  - Work's cyan glow box started 12vh above its region (the lab page's top hid that cut), so `.wk` drew a line across
+    it. Its top is now 0.
+- **Deleted:**
+  - `app/lab/` (the layout, both routes).
+  - The Product Plates hero, the four chapters and `work/Work.tsx`, `MoreWork`, the About visual, Stack and its lens,
+    Think · Build · Ship, Contact, and their stylesheets. `Pic.tsx` (orphaned).
+  - From `globals.css`: the section seams (they targeted the ids this page reuses and drew bands over it) and the
+    toggle's glyph rules. The plate tokens stay, because `tokens.test.ts` reads them.
+  - The explainers can be restored from `product-plates-final` (`docs/ROADMAP.md`, P4 restore record).
+- **Comments** in the moved files now point at their new paths, or at `product-plates-final:` for the retired ones.
+
+**`270ab27`, a landmark fix found by the axe check (§5):** the header has its own `.cine` root, and the case-study host
+sits inside `<main>`, after the page's root, as on the Product Plates page. Outside `<main>`, the dialog's own
+`<header>` was a second banner.
+
+**`ea7cdcc`, the build:** the production build type-checks every test file, and the two lab unit tests import the
+deleted `/lab` modules. So the build, and the Preview with it, failed. Each file gets a temporary `@ts-nocheck` with a
+one-rule ESLint disable and a note; no assertion changed. S20 removes both lines when it ports them.
+
+### 3. The test changes (each its own commit, naming its approval)
+**R12, approved in session 16:**
+- `d6dab35` `page.spec.ts:43`: exactly one canvas, the hero's, `aria-hidden`.
+- `3a52f22` `:75`: 0.5 and 1 unchanged; the top runs with reduced motion.
+- `23666d5` `chrome.spec.ts:12`: the toggle line dropped.
+- `acc3077` `:26`: "dark is the only theme, cookie or not" (no cookie, `light`, `dark`; body `rgb(4, 6, 13)`).
+- `e56a121` `:36`: the toggle-layout test deleted.
+- `b811b1c`: `:70`, `:132`, `:147` and `page.spec.ts:93`, dark only.
+- `932e631` `site.test.ts:145`: writes the `a11y` cookie.
+
+**R12's S17 group:**
+- `e72edbf` `page.spec.ts:10,13`: the new h1 and h2 strings.
+- `89694aa` `chrome.spec.ts:255`: the Tab order's labels; Contact's résumé matched by its whole name.
+- `aa640ca` `:268`: the focus ring, cyan on the hero and on a panel.
+- `2e4cf7f` `work.test.ts:99` and `:163–176`: GRAVITY FLOW's check reads its panel; the About visual's case goes.
+
+**Approved by Tay in this session** (outside R12's list; found by running the suite):
+- `3784a48` `english.spec.ts:45`: the new h1.
+- `a7d9a94` `chrome.spec.ts:188`: the phone test's toggle line dropped.
+- `62bb951` `:132`: one icon button in the phone header, the menu. A second can't fit: the wordmark and two 44px
+  buttons overflow 320px.
+- `5a9bd52`: **Tay's condition on that approval.** The accessibility button lives in the phone menu sheet, and a new
+  test checks at 320×568 and 390×844 that it is hidden in the bar, visible, wholly in view and ≥ 44px in the sheet,
+  and opens the panel.
+- `ca45dcb` `:272`: at least 8 new-tab links. R10 left exactly 8; each is still checked.
+- `595f00d` `aegis.spec.ts:20`: the Aegis panel's captures include the Incidents board crop (`hero-aegis`), its
+  approved second capture.
+
+**Not made yet, and why:**
+- `privacy.spec.ts:43` (`["a11y"]`) and `site.test.ts:160` (the `THEME_COOKIE` match): both hold `/privacy`'s cookie
+  paragraph, which changes in S21+S22 with N7 (R13). Both pass as they are.
+- `content.test.ts:20,22`: R8 (the headline into `siteMeta`, and the social card) is S21+S22's. They pass as they are.
+- The new guards (`/` indexable with its canonical; `/lab` answers 404): S20 adds them. Checked by hand here (§6).
+
+### 4. Validation (VL, Git Bash, the final tree)
+| Command | Result |
+|---|---|
+| `npm run typecheck` | exit 0 |
+| `npm run lint` | exit 0 |
+| `npm run build` (Turbopack cache cleared) | exit 0; the same 8 routes as `main`, no `/lab` |
+| `npm test` | **121/121 tests**; 14 of 16 files pass. The two lab unit files fail at load (below) |
+| `GROQ_API_KEY= npx playwright test` on every must-pass spec (aegis, budget, chat, chrome, english, page, privacy, private-repo, smoke) | **70/70** |
+| The same for `chapters.spec.ts`'s "Case study" block and `lower.spec.ts:142` and `:164` | **6/6** |
+
+Every guard passes: `dead-code`, `tokens`, the institution and private-repo guards, the budget, the WebGL counts, and
+English only.
+
+**What fails, all of it S20's** (run fully parallel with a 15 s timeout, to list it):
+
+| File | Not passing | Why | S20 |
+|---|---|---|---|
+| `tests/unit/lab-hero-a.test.ts`, `lab-work.test.ts` | the whole file, at load | They import the deleted `/lab` modules and read `app/lab/*` | **Ported**, minus the two prototype-only tests |
+| `tests/e2e/lab-hero-a.spec.ts` | 15 of 18 | `/lab/hero-a` answers 404. The 3 passes are vacuous (axe on the 404 page) | **Ported** |
+| `tests/e2e/lab-work.spec.ts` | 62 of 63 | `/lab/work` answers 404. The 1 pass is the résumé PDF fetch | **Ported**; "/'s CSS pinned to main's digest" and "Contact as on the live /" are deleted |
+| `tests/e2e/hero.spec.ts` | 12 of 12 | The Product Plates hero is gone (its plates, mosaic and index tiles) | **Retired** |
+| `tests/e2e/chapters.spec.ts` | 24 of 32 | The chapters are gone: the stepper, the Aegis trace, cite-or-decline, the marked frame, the plates. The Case study block (4) passes, and so do 4 others that happen to hold on the panels | **Retired**, except the Case study block |
+| `tests/e2e/lower.spec.ts` | 10 of 17 | The old About measure, the Stack lens and groups, TBS's words, Contact's old markup | **Retired**, except `:142` and `:164` (both pass) |
+
+### 5. axe on the dark page, each overlay open (VL; a scratch script with the suite's tags; 1440 and 390)
+- **The accessibility panel: 0 violations** at both widths. On phones it opens from the menu sheet.
+- **The case-study dialog, each of the six:**
+  - First run: `landmark-no-duplicate-banner` and `landmark-unique` on `.site-nav`, new with the swap. Fixed in
+    `270ab27` (§2).
+  - Left: `aria-allowed-role` (the panel is an `<aside role="dialog">`) on all six, and `image-redundant-alt` on three
+    (T Poker, DeveloperOS, GRAVITY FLOW: gallery images whose alt repeats their caption). **The same on production's code:** the same script on `main`'s
+    build gives exactly these two. Both are axe best-practice rules, not WCAG A/AA. Not changed here; for Tay.
+- `page.spec.ts`'s axe test (the page, then the chat open, dark, 1440 and 390): **0 violations**.
+
+### 6. The release gate (VL; local production builds, served by `next start`)
+**Bytes** (`budget.spec.ts`'s algorithm):
+
+| | `main` `443a1f9` | This branch |
+|---|---|---|
+| First-load JS gzip (budget 205.7 KiB) | 181.79 KiB, 9 scripts | **185.00 KiB**, 9 scripts (+3.21) |
+| HTML (budget 568 KB) | 160,194 B | **127,970 B** |
+| Stylesheets | 44,530 + 31,805 B | 43,672 + 28,727 B |
+
+**`/`:** `index, follow`, canonical `https://tayshofer.dev`, no noindex anywhere in it. **`/lab`, `/lab/hero-a`,
+`/lab/work`: 404.** `/privacy` 200, `/nope` 404.
+
+**Lighthouse** `npx --yes lighthouse@13.6.0`: mobile defaults (simulated throttling, 412×823), HeadlessChrome 158, the
+two builds interleaved run by run, 5 each, on the final tree:
+
+| Median of 5 | `main` `443a1f9` | This branch `270ab27` |
+|---|---|---|
+| Performance | 93 | **100** |
+| LCP | 3,191 ms | **1,061 ms** |
+| FCP | 1,063 ms | 1,061 ms |
+| TBT | 17 ms | 23 ms |
+| CLS | 0 | 0 |
+| Speed Index | 1,063 ms | 1,063 ms |
+| A11y / BP / SEO | 100 / 100 / 100 | 100 / 100 / 100 |
+| Bytes loaded | 356,089 | 389,747 |
+
+Every run of each build gave the same Performance score (93 and 100); the benchmark index was 3,912–4,086, with no run
+warnings.
+
+- **No flag:** LCP is far inside 2.5 s, and Performance is not below `main`'s.
+- The LCP element moved: on `main` it is a hero tile's image (as on production); here it is the h1, which paints with
+  the first paint.
+- Locally, `main` measures LCP 3.19 s and Performance 93, against production's 2.29 s and 98 (S17): a local
+  `next start` is not Vercel's CDN. That is why the gate compares local with local, by the same method.
+- **The first round** (before `270ab27`, which changes only where the host and the header sit) gave the same medians
+  for this branch: Performance 100, LCP 1,062 ms.
+
+### 7. Screenshots (scratch, not committed)
+`final-shots/` in the session scratch: the first screen and the full page at 390×844 and 1440×900, plus 320, 1024 and
+1280. At every size: no horizontal overflow, no console errors, and the header row fits (the pill in the bar from
+1280px).
+
+### 8. Pushed, and the Preview
+- `release/concept-a` pushed: `af0af8d..270ab27` (20 commits), then this docs commit. No PR, no merge, nothing deployed
+  to Production, which is still `443a1f9`.
+- Vercel built the Preview from `270ab27`: READY (`dpl_9Dt57A7vnKSZRPBGAaeTeahKTHpT`; GitHub deployment `7928707611`,
+  success).
+- **The branch's link, which follows each push:**
+  `https://tay-shofer-portfolio-git-release-840354-tays-projects-d5aefd6e.vercel.app/`.
+- This build's own link: `https://tay-shofer-portfolio-hwz2i7m75-tays-projects-d5aefd6e.vercel.app/`.
+- Both are behind Vercel's login (302 to its SSO), like every Preview.
+- Claude did not open the Preview's pages: the connector's authenticated fetch would create a share link, which opens
+  the deployment to anyone holding the link for 23 hours. The checks in §4–§6 ran on the same code, built locally.
+
+### Waiting on Tay
+- **Review the whole page on his phone** through the Preview, then close the session.
+- To look at:
+  - The pill below 1280px opening the hero.
+  - "Get in touch" as the outlined control.
+  - The ↓ drawn as an SVG too.
+  - Work without its lede (R10, done now).
+  - The hero's sky fading into Work's.
+  - The case study's two pre-existing best-practice findings (§5).
+- Next: S20 (the tests), then S21+S22 (`/privacy` with N7's wording, R8's headline and card, the manifest and
+  `themeColor`, #13–#16).
+
+---
+
+## 2026-11-19 — Session 17: the release branch, the unchanged copy, and production's baseline (Claude Code)
+
+**Scope (Tay's brief, S17 only):**
+- Tag `443a1f9` as `product-plates-final` and push the tag.
+- Cut `release/concept-a` from an up-to-date `origin/main`, and copy the prototype over unchanged in one commit.
+- Prove the copy is clean, with `/` byte-identical to `main`'s build.
+- Production's baseline: Lighthouse mobile (median of 5), first-load JS and HTML bytes.
+- #16: measure the chat launcher over links on phones. Report only; fix nothing.
+- CLAUDE.md for the release track.
+- Push the branch (no PR, no merge, no deploy), and close out.
+
+### 1. Preconditions (VL)
+- `git fetch`, then `main` checked out and pulled: `main` = `origin/main` = **`443a1f9`**, clean.
+- Production (`gh api …/deployments?environment=Production`): `443a1f9`, status success (2026-11-19 03:20Z).
+- `proto/hero-a-cinematic` at **`92b08fd`**; PR #18 is still a draft.
+
+### 2. Tay's answers (S17)
+- **R12's "still to name" test changes are approved as a group** (the h1/h2 strings, the focus ring's colour, the Tab
+  order's labels, the headline pins, the two `work.test.ts` cases that read deleted files). Each change still goes in its
+  own commit. Recorded in `docs/RESEARCH_AND_DECISIONS.md`, R12 (`2efac00`). None is made in S17.
+- **Lighthouse:** it was installed nowhere (not in the repo, the npx cache or globally). Tay approved
+  `npx --yes lighthouse@13.6.0` (stable, published 2026-10-27). It runs from the npx cache: `package.json` and the
+  lockfile are unchanged.
+- **The five docs that changed on both sides** come over by a three-way merge, in their own commit (§4).
+
+### 3. The tag (R15) (VL)
+- `product-plates-final`: an annotated tag, object **`8f0a96a`**, pointing at **`443a1f9`**. Pushed:
+  `git ls-remote` shows it, with `^{}` = `443a1f9`.
+- R15 put this in S24; Tay's brief brought it forward. S24 now only checks it.
+
+### 4. The release branch and the copy (VL)
+- `release/concept-a` from `origin/main` `443a1f9` (`--no-track`).
+- The branch point is **`a7a89fd`**. Since then, `main` has had 7 commits (PRs #17, #19, #20), all docs, touching 5 files.
+- `git diff --name-only main...proto/hero-a-cinematic` lists **82 paths** (75 added, 7 modified). **5 of them changed
+  on `main` too:** `CLAUDE.md`, `claude/START-HERE.md`, `docs/RESEARCH_AND_DECISIONS.md`, `docs/ROADMAP.md`,
+  `docs/WORKLOG.md`. No code path did.
+- **`8b77de1`:** the other **77 paths**, byte for byte (`git checkout 92b08fd -- <paths>`). The staged blobs equal
+  `92b08fd`'s for every path (`git diff --cached --quiet 92b08fd -- <paths>`, exit 0).
+- **`b4fd805`:** the 5 docs, merged three ways (`git merge-file`; base `a7a89fd`, `main`, the prototype), with every
+  conflict resolved by hand and nothing dropped from either side:
+  - **CLAUDE.md and START-HERE:** the prototype's copies. Every line only `main` had was an older snapshot of the same
+    facts.
+  - **RESEARCH_AND_DECISIONS:** D1 keeps `main`'s bullets and gains the session 16 note. D2 keeps both sides. N7 keeps
+    `main`'s deferral and adds R13. The history has both sides' rows.
+  - **ROADMAP:** D2's R12 exception, plus `main`'s "Concept A is not M2". Backlog #11 has `main`'s deferral and R13's
+    schedule, #12 `main`'s merged state, and #13–#16 the prototype's rows.
+  - **WORKLOG:** the prototype's sessions 10–16 in full, plus `main`'s summary of sessions 10–11 and its session 9
+    close-out, each in date order. The change log has both sides' rows.
+
+### 5. The copy is clean (VL, at `8b77de1`, Git Bash)
+| Command | Result |
+|---|---|
+| `npx next typegen`, then `npm test` | **216/216** (16 files) |
+| `npm run typecheck` | exit 0 |
+| `npm run lint` | exit 0 |
+| `npm run build` | exit 0 (12 routes; `/lab/hero-a` and `/lab/work` among them) |
+| `GROQ_API_KEY= npx playwright test` | **213/213** (1.9 min), the stylesheet pin and the budget test among them |
+
+**`/` against `main`'s build.** `main` (`443a1f9`) was built in a scratch worktree with its own `npm ci`. Both builds
+were served with `next start` (`:3402` and `:3401`) and compared over HTTP, `/privacy` too:
+- **Stylesheets: byte-identical.** The same two files, `0qut0t360w_q7.css` (44,530 B) and `04srp7qcwoz8q.css`
+  (31,805 B), with equal SHA-256.
+- **Markup: identical with the build ID masked**, except for one extra `<script>` tag and the chunk file names.
+- **Scripts: not byte-identical.**
+  - `/` loads **10 files instead of 9**: 600,362 → 600,542 B raw (+180), and 186,150 → 186,569 B gzip
+    (181.79 → 182.20 KiB, budget 205.7).
+  - **It is the same code.** Parsed with `acorn`, both sides carry the same **177 modules**. 100 are byte-identical. The
+    other 77 match token for token once identifiers and chunk file names are masked: minifier renaming, and the names
+    of the lazily loaded chunks.
+  - The Turbopack runtime differs only in its chunk list and names.
+  - The cause is the split sessions 10–11 recorded: Turbopack cuts the same JavaScript differently once a second route
+    exists. It goes away with `/lab` in the swap (S18+S19).
+  - So the brief's "`/` byte-identical" holds for the stylesheets and the markup, not for the script bytes.
+- `/privacy` behaves the same way: 8 → 9 scripts, 173 modules of the same shape, and the same stylesheet.
+
+### 6. CLAUDE.md for the release track (`0a889bf`)
+- Move F retired (R14). The release track: R1–R15, S17–S24, `release/concept-a` (the copy, what `/` ships until the
+  swap, the rollback, the tag). The prototype branch is the frozen record.
+- Also: D1's release approval; D2 unchanged on all three branches; R12's list and the one canvas exception; the unit
+  count on this branch; Lighthouse via npx; `npm ci`'s allow-scripts warning.
+- **Rebuilt clean.** The first rebuild compiled in 0.5 s from Turbopack's cache (`.next/cache/turbopack`), so the cache
+  was cleared and the build run again (2.9 s, uncached).
+- `/`'s two stylesheets are still byte-identical to `main`'s build, and the markup and the 177 modules are as in §5.
+  `GROQ_API_KEY= npx playwright test tests/e2e/lab-work.spec.ts -g "byte-identical"`: **1/1**.
+
+### 7. The release baseline: production `/` (VL, 2026-11-19 18:38–18:41Z, `443a1f9`)
+**Lighthouse 13.6.0, mobile.** Default settings: simulated throttling (150 ms RTT, 1.6 Mbps, 4× CPU) and a 412×823
+screen. The host's HeadlessChrome is 158.0.0.0, benchmark index 3,971–4,036. Five runs in a row, with nothing else
+running:
+
+| Run | Perf | A11y | BP | SEO | FCP | LCP | TBT | CLS | SI | Bytes |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 98 | 100 | 100 | 100 | 1,341 ms | 2,391 ms | 16 ms | 0 | 2,648 ms | 345,031 |
+| 2 | 98 | 100 | 100 | 100 | 1,175 ms | 2,263 ms | 33 ms | 0 | 1,439 ms | 345,109 |
+| 3 | 98 | 100 | 100 | 100 | 1,140 ms | 2,275 ms | 35 ms | 0 | 1,520 ms | 339,930 |
+| 4 | 98 | 100 | 100 | 100 | 1,139 ms | 2,288 ms | 49 ms | 0 | 1,376 ms | 339,889 |
+| 5 | 98 | 100 | 100 | 100 | 1,130 ms | 2,330 ms | 37 ms | 0 | 1,351 ms | 345,204 |
+| **Median** | **98** | **100** | **100** | **100** | **1,140 ms** | **2,288 ms** | **35 ms** | **0** | **1,439 ms** | **345,031** |
+
+- The median-score run is run 4.
+- The LCP element is a hero index tile's image (`span.tile__stage > span.tile__win > picture > img`).
+- No run warnings.
+- LCP 2.29 s is inside the 2.5 s target, with 0.21 s to spare. **This is R11's yardstick:** ROADMAP #13 ships only if
+  phone LCP would otherwise be worse than this.
+
+**Bytes** (`tests/e2e/budget.spec.ts`'s algorithm, fetched with a browser's headers through Cloudflare;
+`Server: cloudflare`, with an `x-vercel-id`):
+
+| | Production `/` | A local build of `443a1f9` |
+|---|---|---|
+| First-load JS (gzip, budget 205.7 KiB) | **182.04 KiB** (9 scripts, 600,941 B raw) | 181.79 KiB (9, 600,362 B) |
+| HTML (budget 568 KB) | **160,584 B** (156.82 KB) | 160,194 B |
+| Stylesheets | 44,530 B + 31,805 B | 44,530 B + 31,805 B |
+
+Vercel's build differs a little from a local one: its chunks live under `/_next/static/immutable/`, and the Tailwind
+sheet's digest differs as known, though not its size. **Compare later production numbers with production, and local
+before/after numbers with a local build of `main`.**
+
+### 8. #16: the chat launcher over links on phones (VL; report only, nothing changed)
+**Method:**
+- The probe is a scratch script, not committed.
+- Pages: the live `https://www.tayshofer.dev/` and `/lab/work`. `/lab/work` came from this branch's production build
+  on `:3401`, which is the prototype's code `1369b00`.
+- Sizes: 320×568, 360×780, 375×667, 390×844, 414×896 and 430×932. Headless Chromium, mobile and touch, DPR 2.
+- The launcher was measured in both states, full and tucked, set through its `data-compact` attribute, with its own
+  transitions off.
+- Targets: every visible link, button and tab outside the launcher, `aria-hidden` and closed dialogs.
+- Each page was swept every 16px from top to bottom. Each target's largest covered share was recorded, plus the rest
+  positions (the top, every in-page anchor jump, the page's end) and a Tab walk from the top. The Tab walk leaves the
+  launcher in whatever state the page's own script sets.
+
+**The launcher on phones:**
+- Full ("Ask AI"): 97.5×50px. Tucked: 50×50px.
+- 12px from the right and bottom edges, so it spans x = W−109.5…W−12 when full and W−62…W−12 when tucked.
+
+**Results:**
+
+| | Live `/` | `/lab/work` |
+|---|---|---|
+| Targets ever under it mid-scroll | 3–8 full, 0–5 tucked (of 50) | 12–18 full, 6–11 tucked (of 44) |
+| **LinkedIn** | Only the footer's, at 320: 14% full, 0 tucked. Contact's LinkedIn never | **About's**, at every width: 23–54% full, 11–26% tucked. Contact's LinkedIn never (its GitHub, on the pair's right, does: 20–70%) |
+| Wholly covered at some point (full label) | The footer's "Privacy" at 430 (tucked: 65%) | T Poker's "Capture 5 of 5" dot at 320. "Next capture" (T Poker, GRAVITY FLOW) at 414 and 430 (tucked: 20–39%) |
+| Covered at rest | **At the top on load:** the hero index's "GRAVITY FLOW" tile, 19/2/13% full at 320/360/375 (9/1/6% tucked). After the `#contact` jump at 375: the footer's "Résumé (PDF)", 65% full, 23% tucked. After `#work-developeros` at 375: its "Source on GitHub", 24% full | Nothing at the top or the end. The page has no in-page anchors |
+| At the page's end | Nothing (the footer's clear strip) | Nothing (as session 15 measured) |
+| Tab focus partly under it | The "GRAVITY FLOW" tile, at 320/360/375: 19/2/13% (full) | At 390–430, over two walks: "More on Aegis" 28–82%; Stack's "DeveloperOS" filter 53%; "Next capture" 5–37%; DeveloperOS "Source on GitHub" 6–8%. Which stops hit varies with the label's state, which follows scroll timing |
+| Tab focus wholly under it | None | None |
+
+**Reading it:**
+- Mid-scroll passes are inherent to a fixed control. #16's planned fix (S21+S22, `docs/ROADMAP.md`) is about focus and
+  rest: `scroll-padding-bottom`, and the Tab test's "unobscured" check extended to the launcher.
+- No focused target was ever entirely hidden (WCAG 2.4.11, AA). Several were partly hidden, which 2.4.12 (AAA) counts.
+- **Tay's case, LinkedIn mid-scroll, is About's LinkedIn on `/lab/work`.** R10 removes About's links in S21+S22.
+- On the live `/`, the hero index's last tile sits partly under the full label at 320–375 on load. It is pre-existing,
+  on production.
+- Tucking cuts every overlap. At 414 on the live page, nothing passes under the tucked launcher.
+
+**Limitations (NC):**
+- Emulation, not a real phone. Safe-area insets are 0 here; on an iPhone the launcher sits higher by the bottom inset.
+- The Tab walk follows one scroll path per size.
+- `/lab/work` was measured on a local production build, not the Preview. The composed page (S18+S19) will differ:
+  the header, Two more, the footer, and About without links.
+
+### 9. Close-out (VL, Git Bash)
+- **START-HERE, ROADMAP (#16 measured; P5/P6 in progress) and this log updated** (this commit).
+- `npm test` after each docs commit: **216/216**.
+- **The final tree, rebuilt clean** after the START-HERE edit (Turbopack cache cleared; 2.8 s uncached):
+  - against `main`'s build, `/`'s and `/privacy`'s stylesheets are byte-identical;
+  - the markup differs only by the one extra script tag;
+  - all 177 modules match, as in §5.
+  - `GROQ_API_KEY= npx playwright test tests/e2e/lab-work.spec.ts -g "byte-identical"`: **1/1**.
+- `release/concept-a` pushed with its upstream set: branch only, no PR, no merge.
+- Clean-up:
+  - the scratch worktree of `443a1f9` removed (`git worktree remove`), and the scratch files deleted;
+  - ports 3400–3402 are free;
+  - `main` is clean and level with `origin/main`.
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production, tagged `product-plates-final`. Untouched this session.
+- `release/concept-a`: the copy, the merged docs, R12/R15, CLAUDE.md and this close-out. Pushed.
+- `proto/hero-a-cinematic` = `92b08fd`, frozen; PR #18 a draft.
+
+### Waiting on Tay
+- **S18+S19** in a new session, on `release/concept-a`: compose `/`, with the case studies and Two more.
+- In S21+S22, approve N7's final `/privacy` wording. In S23, the GRAVITY FLOW image and the review on his phone.
+
+---
+
+## 2026-11-19 — Session 16: the P5 (integration) and P6 (release) plan, approved (Claude Code)
+
+**Scope (Tay's brief):**
+- Sync both branches.
+- A plan only, for P5 and P6. No code changed.
+- The goal: the new site (the locked hero and the approved sections) replaces the live `/` as soon as possible,
+  because Tay is job hunting. The demos (P4) come after the release.
+- Then: record the decisions, update START-HERE and this log on this branch, run `npm test`, push, and close out.
+  S17 does not start this session.
+
+### 1. Preconditions (VL)
+- `git fetch`: `origin/main` = **`443a1f9`**; local `main` level with it, clean.
+- `proto/hero-a-cinematic` at **`d8f3ef4`**, level with its remote, clean.
+
+### 2. What the plan found (VL, by reading the code on both branches)
+- **The prototype only adds files.** Outside docs and tests, `git diff --stat main...HEAD` touches 70 files, +2,295
+  lines, 0 deletions. It can be copied onto a branch from `main` exactly as it is.
+- **The root layout already serves `/lab`:**
+  - the skip link (to `#main`), the providers with the chat launcher and its panel, the accessibility panel's
+    provider, JSON-LD, and the early-chat script;
+  - plus the root metadata, which the lab layout overrides with noindex and no canonical.
+
+  What `/lab` lacks is in `app/page.tsx`: `Navbar` and `Footer`.
+
+**The gap audit (live `/` against the prototype):**
+
+| Area | Live `/` | Prototype | Plan |
+|---|---|---|---|
+| Header | Fixed `Navbar`: `#work #about #skills #contact` with a current-section underline, accessibility button, theme toggle, "Get in touch", phone menu sheet | The hero's own top bar (wordmark, availability pill), not fixed; section ids are `wk-*` | R2, R7 |
+| Hero links | In-page | `/#work`, `/#work-<id>` (links to the live page) | In-page `#work`, `#work-<id>` (R7) |
+| Outline | One `main`, one h1 | Two routes, each with its own `main#main` and h1 | One `main`; the hero's h1; Work's title an h2, the products h3s |
+| Footer | Identity, the channels, the résumé, Privacy, Back to top (`#hero`), © and the legal name | None | The live Footer as it is |
+| Chat | Launcher and panel | The same, from the root layout. The layer recolours only the launcher; by the code, the panel opens in `<html>`'s theme, which defaults to light (NC: to confirm on the Preview) | R3 |
+| Theme | Light by default, dark on request, `theme` cookie | Dark only | R3 |
+| Accessibility panel | Header button | No button, so the panel can't be opened on `/lab`; the layer honours reduced motion and high contrast | Keep the button (R2); check large text on the layer |
+| Depth | Six "Case study" buttons and the lazy dialog; the chapters' explainers | "More on X" to `/#work-<id>`, which the swap removes | R4, R6 |
+| Two more | Job Assistant, Orders & Delivery, each with a case study | Missing (Stack's evidence names both) | R5 |
+| Metadata and the card | Root metadata; light card with `siteMeta.headline` | Lab titles, noindex | Root route inherits index and canonical; R8; manifest and `themeColor` to the dark field |
+| noindex | Index | All of `/lab` | `/lab` never shipped; a guard (R12) |
+| 404, error page | Light-themed | — | Dark theme (R3); the 404's copy kept |
+| Résumé | Same PDF | Linked four times once composed | R10 |
+| Headers and CSP | `proxy.ts` on every route | No new origin; the 2D canvas and the two inline scripts are already allowed | No change; verify on the Preview and production |
+| Retired code | Plates hero, chapters, About visual, Stack lens | — | Deleted in the release PR (`dead-code.test.ts` fails on orphaned components) |
+
+**The tests the release touches** (detail: `docs/RESEARCH_AND_DECISIONS.md`, R12).
+- **Unchanged if R2, R4, R5 and R7 are taken.** Read, not yet run:
+  - `budget.spec.ts` (its three case-study tests open `button[data-case-study='aegis']`);
+  - `dead-code.test.ts`, `tokens.test.ts`, the institution and private-repo guards;
+  - `english.spec.ts`, `privacy.spec.ts:15`, `site.test.ts:24`;
+  - `chat.spec.ts` (`:99` needs the footer and a case-study button);
+  - `chapters.spec.ts:304–352` (six triggers);
+  - `private-repo.spec.ts` (`:49` needs the `more-work__row` class, or a one-selector change);
+  - `aegis.spec.ts` (needs `#work-aegis`);
+  - `hero.test.ts` (`heroIndex` hrefs are `#work-<id>`);
+  - `chrome.spec.ts:276`, and `:284`, which checks that every in-page link's target exists.
+- **Likely to pass; verify by running:** `page.spec.ts:18`, `:50`, `:111`, `:120` (the layer's smallest text is
+  exactly 12px).
+
+**The rest of the plan:**
+- The backlog (#13–#16): ROADMAP.
+- The mechanism and the production checks: ROADMAP, "Concept A: P4–P6".
+- Ruled out:
+  - merging the prototype branch: never merged, and it carries `/lab`;
+  - a route flag keeping the old page alongside: two homes, twice the tests, and Vercel's rollback already covers it.
+
+### 3. Tay's decisions
+All recorded as **R1–R15** in `docs/RESEARCH_AND_DECISIONS.md`, "Resolved in session 16":
+- **Approved as recommended:** decisions 1–5, 7–12 and 14.
+- **6, the explainers:** they retire for the release, provided ROADMAP P4 records their files and last commit.
+  Done: "P4 restore record". All four are intact at `443a1f9`, last changed in `fddc36e` (markup and data) and
+  `b5941cf` (styles).
+- **13, N7:** it goes into S21's `/privacy` edit, but its exact final wording is shown to Tay before the commit.
+- **15:** tag `443a1f9` as `product-plates-final` before the merge, and push the tag (an S24 step, not done now).
+- **Tests:**
+  - §2 A (the canvas and rAF changes, plus the dark-only theme tests) and E (the new guards) are approved as written.
+    Each change goes in its own commit naming the approval. The WebGL guards stay unchanged.
+  - The other §2 A rows follow from R7–R9, but Tay hasn't named them yet: the h1 and h2 strings, the focus-ring
+    colour, the Tab order's labels, the headline pins, and the two `work.test.ts` cases that read deleted files.
+    They are logged as "still to name" and get confirmed in S18+S19.
+- **Sessions:**
+  - S18 and S19 are paired, and so are S21 and S22.
+  - S23 adds WebKit and Firefox runs, Tay's review on his own phone through the Preview, and the GRAVITY FLOW capture
+    swap (ask Tay for the image then).
+  - The plan S17–S24: `docs/ROADMAP.md`.
+
+### 4. What changed (docs only)
+- **`docs/RESEARCH_AND_DECISIONS.md`:**
+  - D1: the reopening for Concept A, which this log had never recorded, and the session 16 approval.
+  - D2: the one approved `<canvas>` exception, with the WebGL guards unchanged.
+  - New: "Resolved in session 16" (R1–R15).
+  - N7: decided for S21+S22.
+  - The history row.
+- **`docs/ROADMAP.md`:**
+  - New: "Concept A: P4–P6". It holds the S17–S24 table as merged, the rollback, the production checks, and P4 with
+    the restore record.
+  - Global constraints: D1 and D2 amended. M1: Move F retired (R14). A note mapping M3–M7 to P3–P6.
+  - Backlog: #13–#15 decided and scheduled, plus a new **#16**, the chat launcher over LinkedIn mid-scroll on phones.
+- **`claude/START-HERE.md`** and this entry.
+- **The memory's state note.**
+
+### 5. Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` | **216/216** (the private-repo guard scans these docs) |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test tests/e2e/lab-work.spec.ts -g "byte-identical"` | **1/1**: `/`'s stylesheets still equal `origin/main`'s bytes after the START-HERE edit (Tailwind scans `claude/`) |
+
+- Production checked read-only (`gh api …/deployments`): `443a1f9`, status success.
+- The full e2e suite was not run: no code changed.
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production. Local `main` level with it, and clean.
+- This branch: the code is still `1369b00`; the docs are on top. PR #18 is a draft.
+
+### Waiting on Tay
+- **S17 is next:** the release branch, the unchanged copy of the prototype, and production's baseline.
+- In S18+S19, confirm the "still to name" test changes.
+- In S21+S22, approve N7's final `/privacy` wording.
+- In S23, the GRAVITY FLOW image.
+
+---
+
+## 2026-11-19 — Session 15 close-out: Contact approved with the 1100px fix; P3 complete (Claude Code)
+
+**Scope (Tay's brief):**
+- Contact is approved, with one fix: from 1024 to 1100px Contact stacks (the title above the content), so the title keeps
+  its two lines; its two columns start at 1100px. Contact only; the other sections unchanged. A layout test at 1024 and
+  1100, and everything above Contact still pixel-identical.
+- Decisions: Contact's phone LCP cost joins ROADMAP #13's P5 fix; #14, keep the hold as it is.
+- Close out: WORKLOG, START-HERE, CLAUDE.md and the memory, on this branch, with the final state (P3 complete: all six
+  sections approved). Full tests, push; PR #18 stays a draft. Remove the `a625c75` baseline worktree, clean scratch, and
+  confirm `main` is clean and level with `origin/main`.
+
+### Decisions (Tay)
+- **Contact is approved** (`56e3dea`), with the 1100px fix (`1369b00`).
+- **P3 is complete: all six sections are approved:** the hero (`/lab/hero-a`), the Work panels and their carousels,
+  About, Stack, Think · Build · Ship and Contact.
+- **Contact's phone LCP cost stays;** Contact joins `docs/ROADMAP.md` #13's P5 fix (`content-visibility` with the glow
+  anchored), beside Stack and Think · Build · Ship.
+- **#14: the hold stays as it is.**
+- **#15 (P5), logged at Step 1:** Contact repeats About's availability wording and its three links; re-check whether
+  About keeps its links once the full page is assembled.
+
+### What changed
+- **`1369b00`:** `.wk__contact`'s two columns start at 1100px (the sections above keep 1024). From 1024 to 1100 Contact
+  stacks, and the title keeps its two lines. The e2e layout test now also runs at 1100 (two columns) and checks 1024
+  (stacked, with About still in two columns, and each half of the title on one line); the unit test pins the 1100px rule
+  and that Contact's rules have no 1024px one.
+- **Pixels (VL; reduced motion, sky and launcher hidden):** `/lab/work` from the top to Think · Build · Ship's end, 0
+  differing pixels against `a625c75` at 1440, 1100, 1024, 390 and 320.
+- **Bytes (VL):** every JS file byte-identical to `a625c75`; only the lab's Work stylesheet differs (16,758 bytes, the
+  same size as before the fix). `/`, `/lab/hero-a` and `/privacy` identical with build IDs masked.
+- **Docs:** CLAUDE.md (the prototype's code is `1369b00`; Contact on `/lab/work`; P3 complete; sessions 10–15; unit
+  216/216), START-HERE, CINEMATIC_SYSTEM (Contact approved, the 1100px rule, the cost and the hold kept), ROADMAP (#13
+  with Contact; #14 kept), this entry. The memory's state note and two measurement lessons.
+
+### Validation (Git Bash, the final tree)
+| Command | Result |
+|---|---|
+| `npm test` | **216/216** |
+| `npm run typecheck`, `npm run lint` | exit 0 |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test` | **213/213** (212, plus the layout test at 1100) |
+
+- `/`'s Tailwind sheet keeps `868e8b98…` (44,530 bytes) after these docs (CLAUDE.md and START-HERE are scanned).
+- axe (the e2e suite): 0 violations at 1440 and 390, motion on and reduced.
+
+### Clean-up
+- Removed the `a625c75` baseline worktree; cleaned the scratchpad (probes, logs, screenshots, PR-body drafts).
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production (deployment of 2026-11-19 03:20Z). Local `main` level with it, and clean.
+- This branch: the code is `1369b00`; the docs are on top. PR #18 is a draft.
+
+### Waiting on Tay
+- **Decide what Concept A takes on next** (P3 complete). P5 items: ROADMAP #13, #14 and #15.
+- Swap the GRAVITY FLOW capture he has in mind. Move F: still his call.
+- Optional, on `main`: the chat launcher's fold on scroll (0.0076 CLS).
+
+---
+
+## 2026-11-19 — Session 15: Contact (P3.6) ends `/lab/work` (prototype, D1 reopened) (Claude Code)
+
+**Scope (Tay's brief):**
+- Sync: `main` at `443a1f9`, this branch at `a625c75`.
+- One task: the Contact section (P3.6), the last section on `/lab/work`, below Think · Build · Ship. Lab-only; `/`
+  untouched.
+  - The live Contact's title, copy and links, word for word, from their source files. The brief's draft title "Let's
+    build something meaningful." comes from AI reference images: shown only as an alternative, used only if Tay picks it.
+  - Email (a plain mailto from the live source), LinkedIn, GitHub and the résumé, with the live targets and attributes.
+    The résumé PDF unchanged. No form, no backend; no institution, no years, no availability claim beyond the live
+    wording.
+  - The `.cine` tokens; no client JS without showing why first; it holds still, like About.
+  - The chat launcher must cover no Contact link at the page's end, at 320, 390 and 1440.
+  - Re-measure Stack's filter hold (ROADMAP #14) and report it; no change without Tay's OK.
+- Step 1 a plan only; Step 2 build, and fix `StackFilter.tsx`'s out-of-date header comment in its own comment-only
+  commit. Measure as last session; `/`, its stylesheet bytes, `/lab/hero-a` and the guards unchanged; screenshots at
+  390 and 1440 in scratch. Commit, push, update draft PR #18 (no merge, no deploy), the Preview URL. Don't close the
+  session until Tay approves.
+
+### 1. Preconditions (VL)
+- `git fetch`: `origin/main` = **`443a1f9`**; local `main` level with it, clean.
+- `proto/hero-a-cinematic` at **`a625c75`**, level with its remote, clean.
+
+### 2. The plan and Tay's answers
+- The copy, every string with its source: `docs/CINEMATIC_SYSTEM.md`, "Contact (P3.6, session 15)".
+- **Tay's answers:**
+  1. The live title, "Let's build something / people use." (not the reference images' draft).
+  2. The live Contact's mailto, with its subject (`?subject=Hello%20Tay`), not the footer's bare one.
+  3. Keep the "Contact" eyebrow (`dict.nav.contact`), as About and Stack take theirs.
+  4. Show the lead only while `availability.open` (the live section shows it always).
+- **Logged for P5 (Tay):** Contact repeats About's availability wording ("on-site, hybrid, or remote") and its three
+  links. Re-check whether About keeps its links once the full page is assembled (`docs/ROADMAP.md` #15).
+
+### 3. What changed
+- **`56e3dea`, the section:**
+  - `app/lab/work/contact.ts` reads every string and target from `lib/dict.ts` and `data/socials.ts`; nothing is typed.
+  - `ContactBlock.tsx`, a server component, renders it after Think · Build · Ship, inside `<main>`: the eyebrow and h2
+    on one side; the lead, "Email me" (the one filled control), LinkedIn and GitHub (the panels' outlined control, as a
+    pair), and the résumé line under its own hairline on the other.
+  - `work.css`: its rules, layer tokens only. Its eyebrow, title (each half on its own line) and lead share About's
+    rules. From 1024px the title takes 5fr and the words 7fr, lined up under About's words; stacked below.
+  - **No token added** (the layer still defines 76). No client code, no form, no reveal.
+  - Tests: 8 unit (every string and target held to its source, the approved copy pinned, no form or client code, no
+    figure but the résumé's size, no availability wording beyond the live lead) and 8 e2e (no JS; the same targets,
+    attributes and accessible names as the live Contact on `/`; holds still ×2; layout at 1440, 1024, 390 and 320 with
+    every link clear of the chat launcher at the page's end). The page order pins, the structure test's h2 count and the
+    keyboard order now include the section; Think · Build · Ship's rule slice ends where Contact's begins.
+- **Found while building, fixed in the same commit:**
+  - At 320 the profile pair needed 282px and had 280, so GitHub dropped to its own line (the live rule is that the pair
+    never splits). On phones the pair is now 12px apart, the links' own row gap: 270px.
+  - At 320 the résumé note split after "two", and its second line fell below the link's 44px line. The note now stays
+    whole and drops under the link as one piece ("· two pages, 79 KB"). The live page has the same split at 320.
+- **Known, not changed:** from 1024 to about 1100px the title's first half wraps in its 368px column ("Let's build /
+  something / people use."). It fits from 1100px. The e2e test pins this case.
+- **`bbd9d55`, comment only:** `StackFilter.tsx`'s header no longer says Stack ends the page; the comment inside
+  `press()` names the sections below. The built chunk is byte-identical.
+
+### 4. Measured (VL; local production builds, `a625c75` in a scratch worktree vs this branch)
+| | before | after |
+|---|---|---|
+| First-load JS `/lab/work` (the budget algorithm) | 181.77 KiB | **181.77 KiB** (every JS file byte-identical); budget 205.7 |
+| HTML `/lab/work` | 102.79 KB (18.9 KB gzip) | **107.10 KB** (19.4 KB gzip); budget 568 |
+| LCP desktop, medians of 10 interleaved, three rounds | 94 · 104 · 100 ms | 102 · 104 · 104 ms |
+| LCP phone, 4× CPU and slow 4G, same | 1060 · 1034 · 1052 ms | 1072 · 1052 · 1056 ms |
+| CLS (load) | 0 | 0 |
+| INP desktop / phone (`scripts/lab-hero-a.mjs`, worst of 5 runs, two passes) | 32, 24 / 32, 32 ms | 24, 24 / 32, 32 ms |
+| FPS desktop / phone | 60.5 / 60.5 | 60.4–60.5 / 60.4–60.5 |
+
+- **LCP:** +8, 0 and +4 ms desktop; +12, +18 and +4 ms phone. The LCP and FCP medians are equal, and the LCP element is
+  the first capture. Rounds 1 and 2 ran on the build before the last CSS change (the résumé note kept whole: one
+  paragraph's layout); round 3 on the final build.
+- **INP on Contact's words** (3 runs; clicks or taps on the title, the lead and the résumé's note): desktop < 16 ms;
+  phone at 4× CPU 16 ms.
+- **Scroll-through CLS** (down and back up twice): the slice 0 before and after; the chat launcher's fold 0.0153 in both
+  (pre-existing).
+- **axe-core 4.11.4, WCAG 2.2 A/AA:** 0 violations at 1440 and 390, motion on and reduced, with Aegis pressed (the e2e
+  suite). Scoped to Contact at the page's end at 1440, 390 and 320, motion on and reduced: 0 violations, nothing to
+  review. The page's "needs review" lines move with the violet glow (at 38% of the page's height): at 390 the lede and
+  T Poker's line (the baseline also listed About's lede); at 320 the lede and About's lede (the baseline only the lede).
+- **The chat launcher:** at the page's end every Contact link and the résumé's note sit above it at 1440, 1024, 390 and
+  320 (e2e).
+- **Built files:** 24 of 25 JS and CSS files byte-identical (all JS). The lab's Work stylesheet: 15,401 → 16,758 bytes.
+
+### 5. ROADMAP #14: Stack's hold, with Contact below (VL)
+Measured on both builds (reduced motion; each project pressed from the keyboard; "space" = the hold less the results'
+own height, the empty band under the filtered list):
+
+| Screen | Buttons near the view's top: before → after | Near its bottom | At the page's end (buttons out of view above) |
+|---|---|---|---|
+| 1440×900 | 0 → 0 | 0 | 1,096px both; 595–831px of space |
+| 390×844 | 0 → 0 | 0 | 1,619px both; 919–1,231px of space |
+| 1920×1200 | 128px → **0** | 0 | as at 1440×900 |
+| 2560×1440 | 368px (0–103px of space) → **0** | 0 | as at 1440×900 |
+| 1440×1800 | 729px (228–464px of space) → **346px (0–81px)** | 0 | as at 1440×900 |
+
+- The view moved 0px in every case, in both builds.
+- **Contact's height removes the tall-screen case** at 1920×1200 and 2560×1440 and shrinks it at 1440×1800.
+- **The page's-end case is unchanged:** there the hold always equals the full list's height (the page must not get
+  shorter while its end is in view), so no section below can change it. Its space sits between the filtered list and
+  Think · Build · Ship, out of view, until All is pressed.
+- This probe reads 16px more space than session 14's on the same baseline build (579–815 there); the difference is the
+  method, and both builds read the same.
+- **Not changed** (Tay's call). Recommendation: keep it as it is; #14's P5 re-check now has only 1440×1800-class screens
+  and the keyboard-only end case left.
+
+### 6. Unchanged (VL)
+- **`/`, `/lab/hero-a`, `/privacy`:** every script and stylesheet byte-identical; the markup identical with build IDs
+  masked. `/`'s stylesheets keep the pinned digests (`868e8b98…` 44,530 bytes; `4b84cc35…` 31,805).
+- **Pixels:** `/lab/work` from the top to Think · Build · Ship's end, reduced motion, sky and launcher hidden: 0
+  differing pixels at 1440 and 390.
+- **Guard files** identical to `origin/main` (`443a1f9`), and the résumé PDF. `components/`, `lib/`, `app/globals.css`,
+  `app/page.tsx`, `app/layout.tsx` and `data/socials.ts` too.
+
+### 7. Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` | **216/216** (208 before, plus 8) |
+| `npm run typecheck`, `npm run lint` | exit 0 |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test` | **212/212** (204 before, plus 8) |
+
+### 8. Screenshots (scratch, not committed)
+- At 1440 and 390: the section (motion on and reduced), the seam from Think · Build · Ship, the page's end with the
+  launcher, and the full page. At 320 and 1024: the section and the page's end.
+
+### Waiting on Tay
+- Review Contact on the Preview.
+- The title's three lines from 1024 to about 1100px: keep (as built), or a different arrangement there.
+- The phone LCP cost (+4 to +18 ms): keep it, or add Contact to #13's P5 fix.
+- #14: keep the hold as it is (recommended).
+
+---
+
+## 2026-11-19 — Session 14 close-out: Think · Build · Ship approved; the hold kept; the glow fix kept (Claude Code)
+
+**Scope (Tay's brief):**
+- Think · Build · Ship is approved.
+- #14: keep the hold as it is; reword its test's out-of-date comment (comment only); log in ROADMAP #14 a P5 re-check
+  of the visible gap case.
+- Keep the glow scroll-anchoring fix (`d1c53a3`).
+- Phone LCP: keep the cost, and add this section to ROADMAP #13's P5 fix.
+- Close out: WORKLOG, START-HERE, CLAUDE.md and the memory, on this branch. `npm test`, push; PR #18 stays a draft.
+  Remove the baseline worktree, clean scratch, and confirm `main` is clean and level with `origin/main`.
+
+### Decisions (Tay)
+- **Think · Build · Ship is approved** as built (`8382889`).
+- **The hold stays as it is.** Its test's comment no longer says Stack ends the page (`a8062e6`, comment only: no
+  assertion, value or logic changed). `StackFilter.tsx`'s own header comment still says it; not in the brief, left.
+- **The glow fix stays** (`d1c53a3`).
+- **The phone LCP cost stays;** this section joins `docs/ROADMAP.md` #13's P5 fix (`content-visibility` with the glow
+  anchored).
+- **Logged for P5 as `docs/ROADMAP.md` #14:** re-check the visible gap case, the hold's space between the filtered list
+  and the next section on tall screens or after a press with the buttons out of view.
+
+### Docs and memory
+- `CLAUDE.md`: the prototype's code is `a8062e6`; Think · Build · Ship named on `/lab/work`; the branch's WORKLOG covers
+  sessions 10–14; the prototype's unit suite is 208/208.
+- `claude/START-HERE.md`: the section approved, the three decisions, what waits on Tay.
+- `docs/CINEMATIC_SYSTEM.md`: the section approved; the cost, the glow fix and the hold marked as Tay's decisions.
+- `docs/ROADMAP.md`: #13 now names both sections; #14 records the session 14 check and the P5 re-check.
+- The memory's state note, and three measurement lessons (a decorative layer at a share of the page's height can become
+  the browser's scroll anchor; a full-page gradient stretches with the page, so pixel checks hide it; cutting a
+  section's markup through one interception separates its layout cost from its bytes).
+
+### Clean-up
+- Removed the `47998ee` baseline worktree (`git worktree list` shows only the main checkout).
+- Cleaned the scratchpad: the probes, logs, screenshots and PR-body drafts.
+
+### Validation (Git Bash)
+- After the comment change: `npm run build`, then `npm test` 208/208 and `GROQ_API_KEY= npx playwright test` 204/204.
+  `/`'s Tailwind sheet keeps `868e8b98…` (44,530 bytes).
+- After these docs: `npm test` 208/208; a production build's `/` Tailwind sheet at `868e8b98…` (44,530 bytes), and the
+  pinned-stylesheet e2e test passes.
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production. Local `main` level with it, and clean.
+- This branch: the code is `a8062e6`; the docs are on top. PR #18 is a draft.
+
+### Waiting on Tay
+- **Decide what Concept A takes on next.**
+- Swap the GRAVITY FLOW capture he has in mind. Move F: still his call.
+- Optional, on `main`: the chat launcher's fold on scroll (0.0076 CLS).
+
+---
+
+## 2026-11-19 — Session 14: Think · Build · Ship (P3.5) on `/lab/work`; a glow scroll-anchor fix (prototype, D1 reopened) (Claude Code)
+
+**Scope (Tay's brief):**
+- Sync: `main` at `443a1f9`, this branch at `47998ee`.
+- One task: the Think · Build · Ship section (P3.5) on `/lab/work`, below Stack. Lab-only; `/` untouched.
+  - The live section's title, rows and lines word for word; every word from facts already in the repo. No metrics, test
+    counts, years or institution. Each stage points to real evidence from the four flagships, from what
+    `data/projects.ts` states; Aegis's AI is a deterministic mock and Aegis a modular monolith.
+  - Short and scannable. The `.cine` tokens; no client JS without showing why first; it holds still, like About.
+  - ROADMAP #14: check whether Stack's end-of-page hold is still needed now that this section sits below, or leaves an
+    empty gap. Measure and recommend; don't change the hold or its test without Tay's OK.
+- Step 1 a plan only (the exact copy, each line's source, the layout); Step 2 build and measure as last session; `/`,
+  its stylesheet bytes, `/lab/hero-a` and the guards unchanged; screenshots at 390 and 1440 in scratch. Commit, push,
+  update draft PR #18 (no merge, no deploy), the Preview URL. Don't close the session until Tay approves.
+
+### 1. Preconditions (VL)
+- `git fetch`: `origin/main` = **`443a1f9`**; local `main` level with it, clean.
+- `proto/hero-a-cinematic` at **`47998ee`**, level with its remote, clean.
+
+### 2. The plan and Tay's answers
+- The plan kept the live title and rows word for word (`dict.tbs.title`, `pillars` in `data/approach.ts`), each live
+  example being from one flagship (T Poker, GRAVITY FLOW, Aegis), and added one DeveloperOS line under Build so all four
+  appear. The copy, every line with its source: `docs/CINEMATIC_SYSTEM.md`, "Think · Build · Ship (P3.5, session 14)".
+- **Tay approved it with one change:** the plainer DeveloperOS line, "DeveloperOS: it declines when the index doesn't
+  support an answer—before the provider is ever reached." The layout and the #14 approach as proposed.
+
+### 3. What changed
+- **`8382889`, the section:**
+  - `app/lab/work/tbs.ts` reads every live string from `lib/dict.ts` and `data/approach.ts`; only the DeveloperOS line
+    is typed (`DOS_EVIDENCE`). Each piece of evidence is split so its project's name can be set apart.
+  - `TbsBlock.tsx`, a server component, renders it after Stack, inside `<main>`: the h2, then an ordered list of three
+    rows (the word as an h3 with the live screen-reader colon, the line, the summary, the evidence).
+  - `work.css`: its rules, layer tokens only. Its title shares About's and Stack's rule (top margin reset: no eyebrow).
+    From 1024px the word and line take 5fr and the summary and evidence 7fr, lined up under About's words; stacked
+    below. The word is a small label in the accent, the line in ink at the lead size, the evidence in mist with the
+    project's name in ink.
+  - **No token added** (the layer still defines 76). No client code, no link, no control, no reveal.
+  - Tests: 8 unit (every string held to its source, the approved copy pinned, the DeveloperOS line's words found in
+    its own text, no figure, all four flagships once) and 7 e2e (no JS; holds still ×2; layout at 1440, 1024, 390 and
+    320, with the page's last line clearing the chat launcher). Two placement assertions and the structure test's h2
+    count now include the section.
+- **`d1c53a3`, no glow is a scroll anchor** (found by the #14 check, section 5): `overflow-anchor: none` on the two
+  glows, and a new e2e test (red without the fix). The hold and its test are unchanged.
+
+### 4. Measured (VL; local production builds, `47998ee` in a scratch worktree vs `d1c53a3`)
+| | before | after |
+|---|---|---|
+| First-load JS `/lab/work` (the budget algorithm) | 181.77 KiB | **181.77 KiB** (every JS file byte-identical); budget 205.7 |
+| HTML `/lab/work` | 97.66 KB (17.7 KB gzip) | **102.79 KB** (18.9 KB gzip); budget 568 |
+| LCP desktop, median (range), 10 interleaved | 108 ms (96–116) | 110 ms (80–120) |
+| LCP phone, 4× CPU and slow 4G, median (range), 10 interleaved | 968 ms (916–1060) | 1010 ms (952–1076) |
+| CLS (load) | 0 | 0 |
+| INP desktop / phone (`scripts/lab-hero-a.mjs`, worst per run, median) | 24 / 32 ms | 24 / 32 ms |
+| FPS desktop / phone | 60.5 / 60.6 | 60.5 / 60.5 |
+
+- **LCP:** a first round of 10 on `8382889` (before the glow fix, which adds 21 bytes of CSS and no layout) gave
+  desktop 102 → 110 ms and phone 966 → 1038 ms; this round +2 and +42 ms. The LCP and FCP medians are equal, and the LCP
+  element is the first capture.
+- **The phone cost, diagnosed** (10 interleaved runs per variant, every variant through the same interception): the
+  baseline 824 ms; this build 932; this build with the section's markup cut from the HTML 858; with
+  `content-visibility: auto` on the section 852. So most of it is laying out the section's 32 elements before the first
+  paint, the same kind of cost as Stack's, and the same fix (ROADMAP #13, with the glow) would win it back. Not used.
+- **INP on the section's words** (3 runs; clicks or taps on its line, summary and evidence): desktop ≤ 16 ms; phone at
+  4× CPU 24–32 ms. On About's words: < 16 / 16–24 ms before, 16 / 24 ms after.
+- **Scroll-through CLS** (down and back up twice): the slice 0 before and after; the chat launcher's fold 0.0153 in both
+  (pre-existing).
+- **axe-core 4.11.4, WCAG 2.2 A/AA:** 0 violations at 1440 and 390, motion on and reduced, with Aegis pressed (the e2e
+  suite and a probe). Needs review: at 390 the same two as before (the lede, T Poker's line); at 1440 none. The same in
+  both builds.
+- At the page's end the last line clears the chat launcher by 150px at 1440 and 102px at 390 and 320.
+- **Built files:** 24 of 25 JS and CSS files byte-identical (all 20 JS). The lab's Work stylesheet: 14,121 → 15,401
+  bytes.
+
+### 5. ROADMAP #14: Stack's hold, with this section below it (VL)
+`StackFilter.tsx` holds `max(0, view height − results top − everything below the results)`, so this section's height
+now counts in "everything below". Measured on the final build (reduced motion; each project pressed from the keyboard):
+
+| Screen | Buttons near the view's top | Buttons near its bottom | At the page's end (buttons out of view above) |
+|---|---|---|---|
+| 1440×900 | hold 0 | 0 | 1,096px; 579–815px of space under the filtered list |
+| 390×844 | 0 | 0 | 1,619px; 903–1,215px of space |
+| 1920×1200 | 128px, no space left | 0 | as at 1440×900 |
+| 2560×1440 | 368px; 0–87px of space | 0 | as at 1440×900 |
+| 1440×1800 | 729px; 212–448px of space | 0 | as at 1440×900 |
+
+- Without the hold, the view would jump by exactly the space it leaves. With it, the view moves 0px in every case.
+- **The space now sits between the filtered Stack and this section,** not at the page's end. It shows only on tall screens
+  with the buttons near the top, or after a project is pressed with the buttons out of view (keyboard only), and only
+  until All is pressed.
+- **Recommendation: keep the hold as it is.** It is 0 at the common sizes whenever the buttons are in view, and it
+  engages only by as much as a jump would be. The test's case 2 still exercises it; its comment ("Stack ends the
+  page") is now out of date. Not changed (Tay's call).
+
+**Found on the way: the glow anchored the scroll.**
+- With the buttons low in the view, pressing a project moved the view up: 220–310px at 1440×900, 343–462px at 390×844.
+  The hold was 0 there.
+- **Cause:** the browser's scroll anchoring took the violet glow (at 38% of the page's height) as its anchor. When the
+  list got shorter the glow moved up, and the view went with it: each jump is 0.38 × the page's shrink.
+- **Pre-existing:** the baseline jumped the same way on tall screens (1920×1200, 2560×1440, 1440×1800). This section
+  made the page tall enough to bring the glow into view at the common sizes too.
+- **Fix (`d1c53a3`):** the glows opt out of anchoring. Leaving out the whole sky also fixed it, but at 390 the page's end
+  then anchored to the text in view and moved the view by the hold's 1px rounding, which the hold's test caught. With
+  only the glows left out, everything else anchors as before.
+
+### 6. Unchanged (VL)
+- **`/`, `/lab/hero-a`, `/privacy`:** every script and stylesheet byte-identical; the markup identical with build IDs
+  masked. `/`'s stylesheets keep the pinned digests (`868e8b98…` 44,530 bytes; `4b84cc35…` 31,805).
+- **Pixels (reduced motion, full page):** `/` 0 differing at 1440 and 390; the hero 0 with its canvas hidden;
+  `/lab/work` from the top to Stack's end 0, with the sky and glows hidden.
+  - With only the glows hidden it differs on most of its area by 1–3 levels of 255: the sky is one gradient over the
+    whole page, so the taller page stretches it. Nothing else.
+- **Guard files** identical to `origin/main` (`443a1f9`).
+
+### 7. Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` | **208/208** (200 before, plus 8) |
+| `npm run typecheck`, `npm run lint` | exit 0 |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test` | **204/204** (195 before, plus 7 for the section and 2 for the glow fix) |
+
+### 8. Screenshots (scratch, not committed)
+- At 1440 and 390: the section (motion on and reduced), the view a reader scrolls to, the seam from Stack, the page's
+  end, and the full page.
+
+### Waiting on Tay
+- Review the section on the Preview.
+- #14: keep the hold as it is (recommended)? And a go to reword the hold test's out-of-date comment.
+- The glow fix (`d1c53a3`): keep it, or drop it.
+- The phone LCP cost (+42 ms this round, +72 the first): keep it, or fold the section into #13's fix.
+
+---
+
+## 2026-11-19 — Session 13 close-out: Stack approved; its LCP cost kept and logged for P5 (Claude Code)
+
+**Scope (Tay's brief):**
+- Stack is approved. Keep the LCP cost, and log the `content-visibility` fix with the glow's repositioning as a P5
+  (integration) item. Keep the live evidence sentences word for word.
+- Log for the Contact session: the filter's end-of-page hold assumes Stack ends the page; re-check it once Contact sits
+  below.
+- Close out: WORKLOG, START-HERE, CLAUDE.md (with the stale `121d86b` reference) and the memory, on this branch. Push;
+  PR #18 stays a draft. Remove the `d64763d` baseline worktree, clean scratch, and confirm `main` is clean and level
+  with `origin/main`.
+
+### Decisions (Tay)
+- **Stack is approved** as built (`8955039`).
+- **The LCP cost stays** (+14 ms desktop, +46 ms on a phone at 4× CPU). Logged as **`docs/ROADMAP.md` #13**, P5
+  (integration): `content-visibility: auto` on Stack together with anchoring the violet glow.
+- **The seven live evidence sentences stay word for word** (two name Job Assistant and Orders & Delivery).
+- **Logged for the Contact session as `docs/ROADMAP.md` #14:** re-check the filter's hold once Contact sits below Stack.
+
+### Docs and memory
+- `CLAUDE.md`:
+  - the prototype's code is `8955039` (it said `121d86b`), and Production was last verified at `443a1f9` (PRs #8–#20);
+  - Stack is named on `/lab/work`, and the branch's WORKLOG covers sessions 10–13;
+  - the prototype's unit suite is 200/200;
+  - one new gotcha: the build fetches Geist from Google Fonts, so a network blip fails it (seen this session; retry).
+- `claude/START-HERE.md`: Stack approved, the two logged items, and what waits on Tay.
+- `docs/CINEMATIC_SYSTEM.md`: Stack marked approved; the cost line points at #13, and the hold at #14.
+- `docs/ROADMAP.md`: backlog rows #13 and #14.
+- The memory's state note and its measurement lessons: the session 13 state, and two lessons (a section that ends the
+  page pulls the view up when it shrinks; a text line whose height changes with its content must sit inside the held
+  box).
+
+### Clean-up
+- Removed the `d64763d` baseline worktree (`git worktree list` shows only the main checkout).
+- Cleaned the scratchpad: the screenshots, probe scripts, logs and PR-body drafts.
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production (`success`). Local `main` level with it, and clean.
+- This branch: the code is `8955039`; the docs are on top. PR #18 is a draft.
+- Validation after these docs (Git Bash): `npm test` 200/200; a production build's `/` Tailwind sheet at `868e8b98…`
+  (44,530 bytes), and the pinned-stylesheet e2e test passes.
+
+### Waiting on Tay
+- **Decide what Concept A takes on next.**
+- Swap the GRAVITY FLOW capture he has in mind. Move F: still his call.
+- Optional, on `main`: the chat launcher's fold on scroll (0.0076 CLS).
+
+---
+
+## 2026-11-19 — Session 13, third pass: Stack's filter shows only the chosen project's tools, as pills (prototype, D1 reopened) (Claude Code)
+
+**Scope (Tay's review of the second build):** he likes the colour change, but the filter is not clear enough.
+- Every tool a pill: outlined under All, filled cyan for the chosen project's tools. Existing `.cine` tokens only.
+- A project shows ONLY its tools: hide the rest, and any group left empty. All shows everything, as before.
+- The live status line visible and prominent above the groups ("Showing the 19 tools Aegis uses."), `aria-live="polite"`.
+- Evidence sentences under All only (the pills are the evidence for a project).
+- Focus stays on the pressed button; no scroll jump when the section gets shorter; no transitions with reduced motion;
+  the full list without JS; axe 0; 44px targets; keyboard operable.
+- Re-measure first-load JS (the added KiB), LCP/CLS/INP on phone and desktop, INP on the filter's buttons; `/`, its
+  stylesheet bytes, pixels and the guard files unchanged; the full tests. Screenshots at 390 and 1440 (All, Aegis,
+  GRAVITY FLOW) in scratch. Commit, push, update PR #18. Don't close the session.
+
+### 1. What changed (`8955039`)
+- **The filter's rules** (`stack.ts`) are now the live FILTER's own: for the chosen project, every tool whose `data-p`
+  doesn't name it, and every group left with none, take `display: none`. Still written from the four options.
+- **Pills** (`work.css`): every tool is a pill (small text, the control edge `--cine-edge` at ≥ 3:1, the glass fill).
+  With a project chosen, the tools that remain are filled cyan with on-accent ink, and the evidence sentences hide.
+- **The status line** is at the lead size, in ink, between the buttons and the groups; empty under All, as live.
+- **No scroll jump** (`StackFilter.tsx`): Stack ends the page, so a shorter list pulled the page up under the reader.
+  On each press the results (the status line and the groups) take a `min-height` that keeps the page's end at or below
+  the view's bottom edge; All lets go. Red/green at the page's end, GRAVITY FLOW pressed: the view moves 0px with it,
+  815px (1440) and 1,214px (390) without it.
+  - **Found by the e2e test:** a first version held only the groups. The status line is two lines at 390 for GRAVITY
+    FLOW and one for T Poker, so going from one to the other moved the view 26px. The hold now includes the line.
+- The buttons stay mounted, so focus stays on the one pressed (the e2e tests check it after a click, Enter and Space).
+- Tests: the Stack unit tests follow the new rules (the live FILTER's own strings checked in
+  `components/sections/Stack.tsx`; the hold; the pills; the evidence; one transition, dropped when reduced). E2E: 11
+  Stack tests (no JS; the filter by the live mapping, with the groups each project leaves and focus; the keyboard; no
+  scroll jump at 1440 and 390, with the buttons near the top of the view and at the page's end; holds still ×2; layout at
+  1440, 1024, 390 and 320).
+
+### 2. Measured (VL; local production builds, `d64763d` in a scratch worktree vs `8955039`)
+| | before | after |
+|---|---|---|
+| First-load JS `/lab/work` (the budget algorithm) | 181.43 KiB | **181.77 KiB** (+351 bytes gzip); budget 205.7 |
+| HTML `/lab/work` | 73.02 KB (14.0 KB gzip) | **97.66 KB** (17.8 KB gzip); budget 568 |
+| LCP desktop, median (range), 10 interleaved | 90 ms (68–108) | 104 ms (96–112) |
+| LCP phone, 4× CPU and slow 4G, median (range), 10 interleaved | 908 ms (884–944) | 954 ms (928–1028) |
+| CLS (load) | 0 | 0 |
+| INP desktop / phone (`scripts/lab-hero-a.mjs`, worst per run, median) | 24 / 32 ms | 24 / 32 ms |
+| FPS desktop / phone | 60.4 / 60.5 | 60.4 / 60.5 |
+
+- **LCP:** the same +14 ms desktop / +46 ms phone as the second build: more to lay out before the first paint (the LCP
+  and FCP medians are equal). `content-visibility` stays unused (the glow; the first entry's section 5).
+- **The added JS:** one chunk changed, the carousel's (it holds the island): 4,870 → 5,221 bytes gzip. Every other JS
+  chunk is byte-identical to the baseline's.
+- **INP on the filter's buttons** (3 runs): desktop 24 ms; phone at 4× CPU 48–80 ms. On About's words, the same in both
+  builds (< 16 / 32 ms).
+- **Scroll-through CLS:** the slice 0 before and after; 0.0076 outside it (the chat launcher's fold, pre-existing).
+- **axe-core 4.11.4, WCAG 2.2 A/AA:** 0 violations at 1440 and 390, motion on and reduced, with All, Aegis and GRAVITY
+  FLOW pressed. Needs review: at 390 the same two as before; at 1440 none.
+- At page end the chat launcher clears the last line by 150px at 1440 and 102px at 390 and 320.
+
+### 3. Unchanged (VL)
+- **`/`, `/lab/hero-a`, `/privacy`:** every script and stylesheet byte-identical; the markup identical with build IDs
+  masked. `/`'s stylesheets keep the pinned digests (`868e8b98…` 44,530 bytes; `4b84cc35…` 31,805).
+- **Pixels (reduced motion, full page):** `/` 0 differing at 1440 and 390; the hero 0 with its canvas hidden;
+  `/lab/work` from the top to About's end (glows hidden) 0.
+- **Guard files** identical to `origin/main` (`443a1f9`).
+
+### 4. Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` | **200/200** |
+| `npm run typecheck`, `npm run lint` | exit 0 |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test` | **195/195** (184 before Stack, plus 11) |
+
+### 5. Screenshots (scratch, not committed)
+- At 1440 and 390: Stack with All, Aegis and GRAVITY FLOW pressed, and the full page.
+
+### Waiting on Tay
+- Review the filter on the Preview.
+- The LCP cost: keep it, or anchor the violet glow so the off-screen Stack can skip its layout.
+- Two live evidence sentences (under All) name Job Assistant and Orders & Delivery: fine, or trim them for the lab?
+
+---
+
+## 2026-11-19 — Session 13, continued: Stack rebuilt like the live Stack, with a filter (prototype, D1 reopened) (Claude Code)
+
+**Scope (Tay's review of the first build):** one project line per tool is too busy. Rebuild Stack to work like the live
+Stack on `/` (`data/skills.ts`, `data/stackLens.ts`, its filter), restyled in `.cine`:
+- one row per group: its name, its tools inline (wrapping), the live evidence sentence under them, word for word;
+- "Filter by project": All and the four flagships only; a project lights its tools and dims the rest, by the live
+  `projectsFor()`; reuse the live filter's logic, don't fork the data;
+- keep Security (Body HMAC, CSRF token) plus ONE "JWT" row mapped to T Poker · Aegis (replacing "JWT (RS256)"); write
+  Security one sentence from the cited source lines only;
+- tools with no featured project show under All and dim under every project;
+- real buttons with `aria-pressed`, keyboard operable, 44px, visible focus; the full list without JS; no transitions
+  with reduced motion; axe 0;
+- one small island; report the exact added KiB; `/` unchanged. Re-measure against `d64763d`; screenshots (All and one
+  project) at 390 and 1440 in scratch. Commit, push, update PR #18. Don't close the session.
+
+### 1. What changed (`d3373b6`)
+- `app/lab/work/stack.ts`: the live groups, tools and evidence sentences; each tool's flagships from `projectsFor`
+  (kept to the four); Security; the filter's options (count and the live status line, `dict.stack.showing`); and the
+  highlight rules, written from the options as the live Stack writes its FILTER.
+- `StackBlock.tsx` (server): one row per group (an h3, the tools as a list named by it, the evidence). Each tool carries
+  `data-p` and says its flagships in its accessible text and hover title, as the live Stack does ("C# (T Poker, Aegis)").
+- `StackFilter.tsx` (client, the one new island): five toggle buttons in a group labelled "Filter by project", one
+  pressed at a time; pressing one sets `data-lens` on the groups (server-rendered children) and fills the polite status
+  line. It imports only React. Without JS, and until hydration, the buttons are not shown and their space is kept.
+- `work.css`: the chips (the panels' pill at 44px, the pressed one filled in cyan), the rows, and the highlight's
+  transitions, dropped with reduced motion. No token added.
+- **The highlight:** the pressed project's tools turn cyan; every other tool, and the name of a group it lights nothing
+  in, turns the faintest ink (≥ 5.4:1). Colour only: an e2e test compares every box before and after.
+- Tests: 14 unit (every string held to its source, the mapping pinned, the Security sources, the island's imports and
+  markup, reduced motion) and 9 e2e (no JS, the filter by the live mapping, the keyboard, holds still ×2, layout at 1440,
+  1024, 390 and 320). The keyboard walk now has 29 stops (the five buttons after About's links); the axe runs press
+  Aegis first, so the dimmed tools are checked; the no-JS test checks the filter is not shown.
+
+**Security:**
+
+| Row | Projects | Source |
+|---|---|---|
+| JWT | T Poker · Aegis | the live tool, moved from Services and APIs; `projectsFor("JWT")` |
+| Body HMAC | Aegis | Aegis decision title: "Agent ingestion authenticated by body HMAC" |
+| CSRF token | DeveloperOS | DeveloperOS decision: "A per-instance CSRF token compared with hmac.compare_digest" |
+
+Security's sentence: "Aegis authenticates agent ingestion by body HMAC and uses JWT (RS256); DeveloperOS compares a
+per-instance CSRF token with hmac.compare_digest." Built from Aegis's decision title, Aegis's stack entry "JWT (RS256)"
+and DeveloperOS's decision; a unit test checks each phrase against its project's text.
+
+**Worth knowing:** two live evidence sentences, kept word for word as asked, name the other two projects (Languages: Job
+Assistant and Orders & Delivery; Product and interface: Orders & Delivery).
+
+### 2. Found on the way (VL)
+- A first "holds still" check compared viewport boxes, and a click scrolled the page by 1px. It now compares page
+  coordinates; nothing moves.
+
+### 3. Measured (VL; local production builds, `d64763d` rebuilt in a scratch worktree vs `d3373b6`)
+| | before | after |
+|---|---|---|
+| First-load JS `/lab/work` (the budget algorithm) | 181.43 KiB | **181.66 KiB** (+239 bytes gzip); budget 205.7 |
+| HTML `/lab/work` | 73.02 KB (14.0 KB gzip) | **98.60 KB** (17.9 KB gzip); budget 568 |
+| LCP desktop, median (range), 10 interleaved | 92 ms (68–104) | 108 ms (96–112) |
+| LCP phone, 4× CPU and slow 4G, median (range), 10 interleaved | 934 ms (892–960) | 988 ms (952–1108) |
+| CLS (load) | 0 | 0 |
+| INP desktop / phone (`scripts/lab-hero-a.mjs`, worst per run, median) | 24 / 32 ms | 24 / 32 ms |
+| FPS desktop / phone | 60.5 / 60.5 | 60.5 / 60.5 |
+
+- **The added JS:** one chunk changed, the carousel's (Turbopack put the island in it): 4,870 → 5,109 bytes gzip. Every
+  other JS chunk is byte-identical to the baseline's.
+- **The HTML:** Stack's own markup is 10.1 KB (1.8 KB gzip); most of the rest is Next's flight copy of the same tree.
+- **LCP** is the first capture, and the LCP and FCP medians are equal. The shift is the same kind as the first build's (more to lay
+  out before the first paint; diagnosed then). `content-visibility` stays unused (the glow, section 5 of the first entry).
+- **INP on the filter's buttons** (3 runs): desktop < 16 ms; phone at 4× CPU 64–72 ms. On About's words, the same in
+  both builds (< 16 / 32 ms).
+- **Scroll-through CLS:** the slice 0 before and after; 0.0076 outside it (the chat launcher's fold, pre-existing).
+- **axe-core 4.11.4, WCAG 2.2 A/AA:** 0 violations at 1440 and 390, motion on and reduced, with All, Aegis and GRAVITY
+  FLOW pressed. Needs review: at 390 the same two as before; at 1440 none (it was one, Aegis's line).
+- At page end the chat launcher clears the last line by 150px at 1440 and 102px at 390 and 320.
+
+### 4. Unchanged (VL)
+- **`/`, `/lab/hero-a`, `/privacy`:** every script and stylesheet byte-identical; the markup identical with build IDs
+  masked. `/`'s stylesheets keep the pinned digests (`868e8b98…` 44,530 bytes; `4b84cc35…` 31,805).
+- **Pixels (reduced motion, full page):** `/` 0 differing at 1440 and 390; the hero 0 with its canvas hidden;
+  `/lab/work` from the top to About's end (glows hidden) 0.
+- **Guard files** identical to `origin/main` (`443a1f9`).
+
+### 5. Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` | **200/200** (186 before Stack, plus 14) |
+| `npm run typecheck`, `npm run lint` | exit 0 |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test` | **193/193** (184 before Stack, plus 9) |
+
+### 6. Screenshots (scratch, not committed)
+- At 1440 and 390: Stack with All, Stack with Aegis pressed, and the full page.
+
+### Waiting on Tay
+- Review the rebuilt Stack on the Preview, and Security's sentence.
+- The LCP cost (+16 ms desktop, +54 ms phone): keep it, or anchor the violet glow so the off-screen Stack can skip its
+  layout.
+- Two live evidence sentences name Job Assistant and Orders & Delivery: fine, or trim them for the lab?
+
+---
+
+## 2026-11-19 — Session 13: Stack (P3.4) on `/lab/work` (prototype, D1 reopened) (Claude Code)
+
+**Scope (Tay's brief):**
+- Sync: confirm PR #20 merged and delete its branch (after `git merge-base --is-ancestor`); this branch at `d64763d`.
+- One task: the Stack section (P3.4) on `/lab/work`, below About. Lab-only; `/` untouched.
+  - Group the skills by discipline, as the real data supports. Tie each skill to the featured projects that really use
+    it (`data/projects.ts`, PROJECT_CONTEXT); never attach one that doesn't.
+  - No logo wall, levels, percentages, years or institution. Every word from facts already in the repo. Aegis's AI is a
+    deterministic mock: no LLM or ML claim. The `.cine` tokens; no client JS without showing why; it holds still.
+  - Step 1 a plan only (groups, every skill with its evidence and source, the copy, the layout), then Tay's OK. Step 2
+    build, measure as last session, confirm `/`, `/lab/hero-a`, the guards and `/`'s stylesheet bytes unchanged.
+    Screenshots at 390 and 1440 in scratch, not committed.
+- Commit, push, update draft PR #18 (no merge, no deploy); the Preview URL; START-HERE and WORKLOG.
+
+### 1. Preconditions (VL)
+- `git fetch`: **PR #20 merged** (2026-11-19 03:20Z, merge commit `443a1f9`). `origin/main` = **`443a1f9`**; Production
+  `443a1f9` (`success`, 03:20Z). The live `/` Tailwind sheet is back to **44,530 bytes** (read-only `curl`; 44,829 with
+  the leak). Its digest is not the local build's, so only the size is compared.
+- **Deleted:** `docs/claude-md-tailwind-leak`, local and remote (tip `2e73766`; both tips ancestors of `origin/main`).
+- `proto/hero-a-cinematic` at **`d64763d`**, level with its remote, clean.
+
+### 2. The plan and Tay's answers
+- The plan reused the live Stack's six groups (`data/skills.ts`), with no AI group (the only model tool is DeveloperOS's
+  optional Ollama) and, at first, no Security group. Each skill's projects from the live site's own mapping
+  (`projectsFor`, `data/stackLens.ts`), kept to the four flagships, each match checked by hand.
+- **Tay approved it with four changes:**
+  1. The tools no flagship uses (Java, JavaFX, C, C++, pytest, Framer Motion, Playwright) stay in their live groups,
+     with no project line. No other project named, no new words.
+  2. A **Security** group from techniques `data/projects.ts` already states, in its own words, each with the project
+     that really uses it; JWT moves out of Services and APIs, so nothing appears twice.
+  3. Two tool columns at 390px if they fit; one only at 320px.
+  4. Everyday tools kept, with no projects.
+
+### 3. What changed (`757c377`)
+- `app/lab/work/stack.ts` derives every string: the live groups and tools in order, `projectsFor` kept to the
+  flagships, the Security rows, and "(optional)" only where a project's own stack entry says so (DeveloperOS's Ollama).
+- `StackBlock.tsx`, a server component, renders it after About, inside `<main>`: an eyebrow, the h2, and one row per
+  group (an h3 and a list named by it). No link, no control, no reveal, no client code.
+- `work.css`: its rules, layer tokens only. Its eyebrow and title share About's rules (grouped selectors). From 1024px
+  each group's name takes 5fr and its tools 7fr, so they line up under About's words; stacked below; two tool columns
+  from 360px, one at 320. A project's name never splits across two lines.
+- **No token added:** the layer still defines 76.
+- Tests: 10 unit (every string held to its source, the approved rows pinned, the Security source lines word for word,
+  no AI or level claim) and 8 e2e (no JS, holds still ×2, layout at 1440, 1024, 390, 360 and 320). Two lab assertions
+  now include Stack: About's placement (`<AboutBlock />` then `<StackBlock />`) and the structure test's h2 count.
+- The copy, every row with its source: `docs/CINEMATIC_SYSTEM.md`, "Stack (P3.4, session 13)".
+
+**The Security rows (labels in `data/projects.ts`'s own words):**
+
+| Label | Project | Source line |
+|---|---|---|
+| JWT (RS256) | Aegis | Aegis `stack`: "JWT (RS256)" |
+| Body HMAC | Aegis | Aegis decision title: "Agent ingestion authenticated by body HMAC" (first letter capitalised) |
+| CSRF token | DeveloperOS | DeveloperOS decision "Loopback API hardened like a public one": "A per-instance CSRF token compared with hmac.compare_digest" |
+
+- A unit test checks each label against its project's text, and that no other flagship's text says it.
+- **A consequence:** T Poker's stack says "JWT" (HS256, per the `data/skills.ts` comment), not RS256, so with JWT moved
+  into the RS256 row the lab Stack shows no JWT for T Poker.
+
+### 4. Found on the way, fixed before the push
+- At 390 a project name split across lines ("GRAVITY / FLOW"). Each name is now one unbreakable span with its separator
+  after it, so lines break only between names; the e2e layout test holds it at all five widths.
+- My first "holds still" e2e check failed under reduced motion: the site's reset sets every duration to 0.001ms
+  (`app/globals.css`). The check now uses the 10 ms floor of the carousel's own reduced-motion test.
+
+### 5. Measured (VL; local production builds, `d64763d` in a scratch worktree vs this branch)
+| | before | after |
+|---|---|---|
+| First-load JS `/lab/work` (the budget algorithm) | 181.43 KiB | **181.43 KiB** (every script identical); budget 205.7 |
+| HTML `/lab/work` | 73.02 KB (14.0 KB gzip) | **100.05 KB** (16.5 KB gzip); budget 568 |
+| LCP desktop, median (range), 10 interleaved | 90 ms (72–116) | 114 ms (80–128) |
+| LCP phone, 4× CPU and slow 4G, median (range), 10 interleaved | 956 ms (876–1052) | 998 ms (948–1100) |
+| CLS (load) | 0 | 0 |
+| INP desktop / phone (`scripts/lab-hero-a.mjs`, worst per run, median) | 32 / 32 ms | 32 / 32 ms |
+| FPS desktop / phone | 60.6 / 60.5 | 60.5 / 60.5 |
+
+- The LCP element is the first capture, and LCP = FCP in every run.
+- **The LCP shift, diagnosed** (10 interleaved runs per variant, every variant through the same interception):
+  - desktop flat: 108 / 106 ms;
+  - phone 794 → 870 ms. With Stack's layout skipped until it nears the viewport (`content-visibility: auto`,
+    injected), 816 ms. So most of the phone cost is laying out Stack's 201 elements before the first paint; the rest is
+    its bytes.
+  - **Not adopted:** with it, the page grows when Stack first renders, and the violet glow (at 38% of the page's height)
+    moves: slice CLS **0.353** at 320px (0 at 1440, 1024 and 390), against 0 as served. Using it would mean the glow no
+    longer depends on the page's height, which changes the existing slice. Left for Tay.
+- **Scroll-through CLS** (a scratch probe, down and back up twice): the slice 0 before and after; the chat launcher's
+  fold 0.0153 in both (0.0076 per pass, pre-existing).
+- **INP on Stack's own words** (same probe in both builds, 3 runs): desktop < 16 ms; phone at 4× CPU 24–32 ms, the same
+  as About's words before and after.
+- **axe-core 4.11.4, WCAG 2.2 A/AA:** 0 violations at 1440 and 390, motion on and reduced (the e2e suite and a probe).
+  - Needs review: at 390 the same two as before (the lede, T Poker's line).
+  - At 1440, none; it was one (Aegis's line), because the taller page moves the violet glow down again.
+- At page end the chat launcher clears the last tool by 150px at 1440 and 102px at 390 and 320.
+
+### 6. Unchanged (VL)
+- **`/`, `/lab/hero-a`, `/privacy`:** every script and stylesheet byte-identical; the markup identical with build IDs
+  masked.
+- **`/`'s stylesheets:** `868e8b98…` (44,530 bytes, the Tailwind sheet) and `4b84cc35…` (31,805), the pinned digests.
+- **Built files:** 24 of 25 JS and CSS files byte-identical, all 20 JS chunks among them. The one that changed is the
+  lab's Work stylesheet (11,158 → 12,427 bytes).
+- **Pixels (reduced motion, full page):** `/` 0 differing at 1440 and 390; the hero 0 with its canvas hidden.
+  `/lab/work` from the top to About's end, glows hidden: 0 differing at 1440 and 390.
+- **Guard files** identical to `origin/main` (`443a1f9`): dead-code, budget, page, tokens, institution, private-repo
+  (test, support, spec), the page support.
+- `components/`, `lib/`, `public/`, `data/`, `app/globals.css`, `app/page.tsx`, the hero and the layer: unchanged since
+  `d64763d`.
+
+### 7. Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` | **196/196** (16 files; 186 before, plus 10 Stack tests) |
+| `npm run typecheck`, `npm run lint` | exit 0 |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test` | **192/192** (184 before, plus 8) |
+
+### 8. Screenshots (scratch, not committed)
+- At 1440 and 390: the Stack section (motion on and reduced), the view a reader scrolls to, and the full page.
+
+### 9. Limitations (NC unless stated)
+- **No real phone.** Headless raster is SwiftShader.
+- The phone LCP shift above (VL) stays until Tay decides on the glow.
+- The branch's `CLAUDE.md` still names `121d86b` as the prototype's code commit; not updated (not in the brief).
+
+### Waiting on Tay
+- Review Stack on the Preview.
+- Decide on the phone LCP cost: keep it, or anchor the violet glow so `content-visibility` can skip Stack's layout.
+- T Poker's JWT (HS256) is no longer shown: fine as is, or a separate "JWT" row for T Poker in Security?
+- Swap the GRAVITY FLOW capture he has in mind. Move F: still his call.
+
+---
+
+## 2026-11-19 — Session 12 close-out: About approved; PR #20 fixes `main`'s CSS leak (Claude Code)
+
+**Scope (Tay's brief):**
+- A one-line docs PR for `main` that fixes the CLAUDE.md Tailwind leak: from an up-to-date `origin/main`, only that
+  line, the same rewording as `fb3bb41`. Confirm `/`'s sheet is back to 44,530 bytes in a production build, run
+  `npm test`, push it and open the PR. No merge.
+- Close out here: WORKLOG, START-HERE, CLAUDE.md and the memory with the final state. Push; PR #18 stays a draft.
+- Delete `docs/session-10-closeout` locally and remotely after `git merge-base --is-ancestor`. Never delete this branch.
+- Clean scratch, and confirm `main` is clean.
+
+### Decisions (Tay)
+- **About is approved** as built (`121d86b`).
+- A go for the `main` fix (below).
+
+### PR #20: the leak fix for `main` (VL)
+- Branch **`docs/claude-md-tailwind-leak`** from `origin/main` `1c57789` (`--no-track`). One commit, `CLAUDE.md` only,
+  +2/−2: the gotcha bullet now describes the three utilities in words, as `fb3bb41` does here.
+  - Only that bullet. The branch's other two edits in `fb3bb41` (the "covers this file" clause and the "fourth time"
+    note) are not in it.
+- `npm run build` on it: `/`'s Tailwind sheet is **44,530 bytes**, SHA-256 `868e8b98…`, the sheet before PR #19. The
+  other sheet is unchanged (31,805 bytes).
+- `npm test` (Git Bash): **122/122**. No utility name is left in `CLAUDE.md`.
+- Pushed, and **PR #20** opened into `main`: https://github.com/taysh123/Portfolio/pull/20. Not merged.
+- Until it merges, Production serves the 44,829-byte sheet (299 bytes of unused rules; nothing renders differently).
+
+### Branches (each checked with `git merge-base --is-ancestor`)
+- **Deleted:** `docs/session-10-closeout`, local and remote (`2101ef6`, merged as PR #19; both tips are ancestors of
+  `origin/main`).
+- **Kept:**
+  - `proto/hero-a-cinematic` (active; never delete);
+  - `docs/claude-md-tailwind-leak` (PR #20, open);
+  - `reference/premium-redesign-package` and the six D8 branches, none merged.
+
+### Scratch
+- Cleaned: the session's scratchpad (screenshots, measurement scripts, build logs) and the `5d4610b` baseline worktree
+  (removed during the session; `git worktree list` shows only the main checkout).
+
+### State (VL)
+- `origin/main` = **`1c57789`**, Production `1c57789`. Local `main` level with it, and clean.
+- This branch: the code is `121d86b`; the docs are on top. PR #18 is a draft.
+- Validation after this close-out's docs (Git Bash): `npm test` 186/186; a production build's `/` Tailwind sheet at
+  `868e8b98…` (44,530 bytes), and the pinned-stylesheet e2e test passes.
+
+### Waiting on Tay
+- **Merge PR #20** (docs only), so the live `/` sheet loses the 299 unused bytes.
+- **Decide what Concept A takes on next.** The carousels, the five layer values and About are approved.
+- **Swap the GRAVITY FLOW capture** he has in mind.
+- **Move F:** not started; still his call.
+- Optional, on `main`: the chat launcher's fold on scroll (0.0076 CLS).
+
+---
+
+## 2026-11-19 — Session 12: About (P3.3) on `/lab/work`; the D2 comments reworded (prototype, D1 reopened) (Claude Code)
+
+**Scope (Tay's brief):**
+- List the five NEW layer values awaiting review, without changing them.
+- One task: the About section (P3.3) on `/lab/work`, below the panels. Lab-only: noindex, unlinked, `/` untouched.
+  - No photo, no institution. Readable by a recruiter in about 10 seconds.
+  - Copy only from facts already in the repo. Links: GitHub, LinkedIn and the résumé, at the live site's targets; the
+    résumé PDF unchanged. The `.cine` tokens and motion; no new token without showing why first.
+  - Step 1 a plan only (the exact copy, the layout, every fact's source), then Tay's OK. Step 2 build and measure.
+- Separately: reword the 11 "D2 reopened" comments and test titles. Wording only.
+- Commit, push, update draft PR #18 (no merge, no deploy). Screenshots at 390 and 1440, kept in scratch.
+
+### 1. Preconditions (VL)
+- `git fetch`: PR #19 merged (2026-11-19 01:49Z). `origin/main` = **`1c57789`**; Production `1c57789`.
+- `proto/hero-a-cinematic` at **`5d4610b`**, level with its remote, clean.
+
+### 2. The five NEW layer values (listed for Tay; unchanged)
+| Token | Value | Used at | Replaced |
+|---|---|---|---|
+| `--cine-lift` | −4px | `work.css`: the stage's `translate` on hover, focus-within, `:active`; none with reduced motion | nothing (round 5, `a5f2845`) |
+| `--cine-glow-lift` | `0 0 56px -12px` cyan at 30% | the same rule's halo; stays with reduced motion | nothing (round 5) |
+| `--cine-flow-turn` | 38deg | the side slides' `rotateY` | nothing (round 6, `4a9612a`) |
+| `--cine-flow-scale` | 0.78 | the side slides' `scale()` | nothing (round 6) |
+| `--cine-flow-dim` | 0.55 | the dark layer over each side capture | nothing (round 6) |
+
+**Tay: approved, keep them as they are.**
+
+### 3. The plan and Tay's answers
+- The copy, every word with its source: `docs/CINEMATIC_SYSTEM.md`, "About (P3.3, session 12)".
+- **Tay approved the plan** and chose:
+  - the joined availability line, "Available for software engineering roles: on-site, hybrid, or remote.";
+  - screenshots kept in scratch, not committed.
+
+### 4. What changed
+- **`4dccdf8`, wording only:** the 11 header comments now say "D1 reopened by Tay, 2026-11-18; D2 not reopened, so no
+  WebGL", rewrapped to 120 columns. No test title carried the phrase. No logic, selector, value or assertion changed.
+- **`121d86b`, About:**
+  - `app/lab/work/about.ts` derives every string from `data/about.ts`, `data/socials.ts` and `lib/dict.ts`;
+  - `AboutBlock.tsx`, a server component, renders it after the Work section, inside `<main>`;
+  - `work.css` gains its rules, layer tokens only. The layout: title beside the words from 1024px (5fr / 7fr), stacked
+    below; the facts two by two on hairlines (one column on phones); the résumé the one filled control.
+  - It holds still: no reveal of its own (the page keeps its 3 reveal blocks), no client code.
+  - **No token added:** the layer still defines 76.
+- **`fb3bb41`, CLAUDE.md (a fourth Tailwind leak, below).**
+
+### 5. Found on the way: PR #19 leaked into `/`'s stylesheet, live (VL)
+- The pinned-digest e2e test failed on the first full run: `/`'s Tailwind sheet was 44,829 bytes, not 44,530.
+- **The baseline (`5d4610b`, built in a scratch worktree) had the same 44,829-byte sheet**, so it predates this work.
+- The extra rules are exactly the three earlier leaks: zero opacity (21 bytes), the small elevation (about 248) and
+  the small corner radius (30); 299 bytes in all.
+- **Source:** the session 11 close-out's CLAUDE.md gotcha line, which spelled those three utility names. Tailwind scans
+  the repo root (only `docs/`, `design/`, `.claude/` and `.impeccable/` are skipped).
+- **Live:** `main` has the same line since PR #19. Production (`1c57789`) serves a 44,829-byte Tailwind sheet
+  (read-only `curl`). No element on `/` uses those classes (source and live HTML checked), so nothing renders
+  differently.
+- **Fixed here** (`fb3bb41`): the line describes them in words. `/`'s sheet is back to `868e8b98…`, the pinned digest.
+- **Not fixed on `main`:** that needs a docs PR, on Tay's go.
+
+### 6. Measured (VL; local production builds, interleaved against `5d4610b`, 10 runs each)
+| | before | after |
+|---|---|---|
+| First-load JS `/lab/work` (the budget algorithm) | 181.43 KiB | **181.43 KiB** (every script identical); budget 205.7 |
+| HTML `/lab/work` | 67.46 KB | **73.02 KB** (14.0 KB gzip); budget 568 |
+| LCP desktop (median; range) | 76 ms (72–88) | 80 ms (76–120) |
+| LCP phone, 4× CPU and slow 4G | 950 ms (888–1032) | 932 ms (876–976) |
+| CLS (load) | 0 | 0 |
+| INP desktop / phone (`scripts/lab-hero-a.mjs`, worst per run, median) | 36 / 40 ms | 32 / 32 ms |
+| FPS desktop / phone | 60.5 / 60.6 | 60.5 / 60.5 |
+
+- The LCP element is the first capture, and LCP = FCP in every run.
+- **Scroll-through CLS** (a scratch probe, whole page): 0.0076 before and after, all of it from the chat launcher's fold
+  (pre-existing); 0 from the slice or About.
+- **INP inside About:** desktop 16 ms (clicks on the lede, Tab through its links); phone at 4× CPU 32 ms (taps).
+- **axe-core 4.11.4, WCAG 2.2 A/AA:** 0 violations at 1440 and 390, motion on and reduced (the e2e suite and a probe).
+  - Needs-review items, before → after: at 390 the same two (the lede, T Poker's line).
+  - At 1440, one new: Aegis's line. The violet glow sits at 38% of the section's height, so the taller page moves it
+    down behind that line. Covered by the layer's floor (mist ≥ 7:1 at the glow peak).
+- At page end the three links clear the chat launcher at 320, 390 and 1440 (86–206px).
+
+### 7. Unchanged (VL)
+- **`/`, `/lab/hero-a`, `/privacy`:** every script byte-identical; the markup identical with build IDs masked. The only
+  difference is the Tailwind sheet: here it is the pinned `main` digest, and the baseline carries the leak (section 5).
+- **Every built JS chunk:** 20 of 20 byte-identical to the baseline.
+- **Pixels (reduced motion, full page):** `/` 0 differing at 1440 and 390. The hero 0 with its canvas hidden. Its
+  still frame is random per load: the baseline against itself differs by 92,709 pixels at 1440, the baseline against
+  this build by 90,622.
+- **Guard files** identical to `origin/main`: dead-code, budget, page, tokens, institution, private-repo (test, support,
+  spec), the page support.
+- `components/`, `lib/`, `public/` (the PDF included), `data/`, `app/globals.css` and `app/page.tsx`: unchanged since
+  `5d4610b`.
+
+### 8. Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` | **186/186** (16 files; 179 before, plus 7 About tests) |
+| `npm run typecheck`, `npm run lint` | exit 0 |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test` | **184/184** (176 before, plus 8: no-JS, the PDF, holds still ×2, layout ×4) |
+
+### 9. Pushed: the Preview (Tay's brief)
+- `4dccdf8`, `121d86b` and `fb3bb41` pushed (`5d4610b..fb3bb41`). Vercel built a **Preview** (`production_environment=false`,
+  `success`, 02:31Z). Production stays on `1c57789`.
+- Preview of `/lab/work` (About is at the bottom):
+  - this build: `https://tay-shofer-portfolio-pfdxoepzk-tays-projects-d5aefd6e.vercel.app/lab/work`;
+  - the branch's own link, which follows each push:
+    `https://tay-shofer-portfolio-git-proto-he-65ec6d-tays-projects-d5aefd6e.vercel.app/lab/work`.
+  - Both sit behind Vercel's login (a logged-out request gets a 302 to `vercel.com/sso-api`). The deployed page was not
+    fetched: the connector's fetch would create a 23-hour share link, which the brief did not ask for.
+- This docs commit follows on top, and PR #18's description is updated. It is still a draft.
+
+### 10. Screenshots (scratch, not committed)
+- At 1440 and 390: the About block (motion on and reduced), the view a reader scrolls to, and the full page.
+
+### 11. Limitations (NC unless stated)
+- **No real phone.** Headless raster is SwiftShader.
+- At 320px a title half may wrap to two lines (the layout test allows it there only).
+- The `docs/session-10-closeout` branch (merged as PR #19) is still there, local and remote: not deleted this session.
+
+### Waiting on Tay
+- Review About on the Preview.
+- A go for the one-line CLAUDE.md docs PR on `main` (section 5).
+- Swap the GRAVITY FLOW capture he has in mind.
+- Move F: not started; still his call.
+
+---
+
+## 2026-11-19 — Session 11 close-out: carousels approved; `main`'s close-out PR refreshed (Claude Code)
+
+**Scope (Tay's brief):**
+- Here: update WORKLOG, START-HERE and CLAUDE.md, and the memory. Push, and keep PR #18 a draft.
+- `docs/session-10-closeout`:
+  - refresh it to the current state;
+  - make `main`'s START-HERE and CLAUDE.md name the Concept A prototype as the active direction (D1 reopened by Tay on
+    2026-11-18; D2 still not reopened, so no WebGL);
+  - rebase it onto `origin/main`, run `npm test`, push it, and open a docs-only PR into `main`. No merge.
+- Clean scratch. Delete merged work branches only after `git merge-base --is-ancestor`; never delete this branch.
+- Confirm `main` is clean.
+
+### Decisions (Tay, session 11 close)
+- **The carousels are approved:** T Poker 5, Aegis 2, DeveloperOS 4, GRAVITY FLOW 5.
+- **The framing is corrected: D1 was reopened for Concept A (2026-11-18). D2 is still not reopened: no WebGL.**
+  - Session 10's docs said "D2 reopened", and so do comments and test titles in 11 code and test files (`app/lab/**`,
+    `tests/**/lab-*`, `scripts/lab-hero-a.mjs`).
+  - The docs touched at this close now say D1: START-HERE, CLAUDE.md, CINEMATIC_SYSTEM, and this log's session 11
+    title and change-log rows. Session 10's entry below is left as history.
+  - The code files are unchanged at this docs-only close. Reword them with the next prototype commit.
+
+### State (VL)
+- `origin/main` = **`fb0f575`**, Production `success`. Local `main` fast-forwarded to it, and clean.
+- **This branch:** the code is `9569bd8`, and this docs commit sits on top. PR #18 is a draft; the first line of its
+  description now says D1.
+- **CLAUDE.md here** is now `main`'s (`fb0f575`) plus the prototype section and the corrected direction. It is the same
+  file the close-out PR puts on `main`.
+
+### The close-out PR for `main` (from `docs/session-10-closeout`)
+- Rebased onto `origin/main`: `c9696d6` (PR #17) dropped out, being upstream already.
+- **Refreshed to this branch's tip:**
+  - the sessions 10–11 summary in WORKLOG;
+  - START-HERE and CLAUDE.md naming Concept A as the active direction;
+  - RESEARCH_AND_DECISIONS, with the reopening recorded under D1 (it had been under D2) and D2 marked still closed.
+- `npm test` there, then pushed, and a docs-only PR opened into `main`. Not merged.
+
+### Branches (each checked with `git merge-base --is-ancestor`)
+- **Deleted:** `docs/session-9-closeout`, local and remote (`c9696d6`, merged as PR #17).
+- **Kept:**
+  - `proto/hero-a-cinematic` (active; never delete);
+  - `docs/session-10-closeout` (the close-out PR);
+  - `reference/premium-redesign-package` and the six D8 branches, none merged.
+
+### Scratch
+- Cleaned: the session's scratchpad (screenshots, contact sheets, measurement scripts) and both scratch worktrees (the
+  `0f38825` baseline and the close-out worktree).
+
+### Waiting on Tay
+- **Merge the close-out PR** (docs only).
+- **Swap the GRAVITY FLOW capture** he has in mind.
+- **Decide what Concept A takes on next.** The five NEW layer values still wait for review.
+- **Move F:** not started; still his call.
+- **Optional, on `main`:** the chat launcher's fold on scroll (0.0076 CLS).
+
+---
+
 ## 2026-11-18/19 — Sessions 10–11: Concept A, a measured cinematic prototype (D1 reopened; D2 not) (Claude Code)
 
 **Scope (Tay's briefs):**
@@ -103,6 +2297,548 @@ These are now in CLAUDE.md's gotchas:
   branch).
 - Move F: not started; still his call.
 - Optional: the chat launcher's fold on scroll (0.0076 CLS on `/`).
+
+---
+
+## 2026-11-19 — Session 11: every flagship's real captures in its Work carousel (prototype, D1 reopened) (Claude Code)
+
+**Scope (Tay's brief):**
+- Enrich the four per-project carousels on `/lab/work` with the real captures already in `public/projects/`.
+- Use the existing encoding pipeline and the reviewed alt text.
+- Only the first slide is eager.
+- Keyboard, touch, reduced motion and no-JS must work at the new counts, with the phone proportions kept.
+- `/` and the locked hero stay unchanged, the guard files stay identical to `main`, and no WebGL.
+- Commit, push and update draft PR #18: no merge, no deploy.
+
+Skills: `systematic-debugging` (the CLS check), `verification-before-completion`.
+
+### 1. Preconditions (VL)
+- `git fetch`: `origin/main` = **`fb0f575`** (PR #17, the session 9 close-out, merged). Production `fb0f575`, GitHub
+  status `success`.
+- `proto/hero-a-cinematic` was at **`0f38825`**, level with its remote.
+- This branch's `claude/START-HERE.md` still described the calm direction at session 9, from before PR #17. It was
+  flagged, and updated at the end of this session (section 9).
+
+### 2. The brief against the files: three questions, Tay's answers (VL)
+- **T Poker's "final count" is already in.**
+  - `poker-settle` is `final-count.webp` re-encoded (mean pixel difference 0.83 of 255).
+  - There are 5 distinct T Poker captures, so 6 would need a duplicate. **Tay: 5, no duplicate.**
+- **DeveloperOS refusal** (`refusal.webp`, 1400 × 188):
+  - it has no alt text on `main`; the only text ever written for it is in an unmerged October commit (`62a6e20`);
+  - the learning capture already shows the same refusal. **Tay: skip it.**
+- **DeveloperOS AI features** shows the same "ollama provider" results as the search capture (the search is a crop of
+  that screen). **Tay: skip it.**
+- **Result:** T Poker 5, Aegis 2, DeveloperOS 4, GRAVITY FLOW 5. GRAVITY FLOW's two existing captures are unchanged
+  (Tay will swap one himself).
+
+### 3. What changed (`9569bd8`)
+- **Encoding: 8 jobs in `scripts/m10-images.mjs`**, at the widths of the captures beside them.
+  - Poker and GRAVITY FLOW at 320/480/640; DeveloperOS at 800/1200/1600.
+  - The script's own settings: AVIF q60 and WebP q80, effort 6.
+  - The script now runs named jobs alone, so nothing else was re-encoded: 48 new files, and no existing file changed.
+  - WebP output reproduces the committed files byte for byte. AVIF does not: it comes out 5–10% larger here, with the
+    same sharp 0.34.5 and settings but a different platform build of aom.
+- **`data/lab-images.ts` (new):** the lab's captures in `data/images.ts`'s shape, with lookups over both lists.
+  - Not in `data/images.ts`, the documented step until now: `components/sections/AboutVisual.tsx` is a client component
+    that imports `IMAGES` whole, so an entry there ships in `/`'s first-load JS.
+  - A unit test holds that nothing outside `app/lab/` names the new file, except a type import in `data/projects.ts`.
+- **Galleries and alt text:**
+  - `PROJECT_GALLERIES` holds the counts above.
+  - `mediaAlt(project, file)` takes the project's own media entry for the source file, word for word.
+  - A unit test compares each re-encode's pixels against that file (all under 2 of 255).
+- **Mixed shapes:** every slide keeps its capture's box, mounted or not. The server passes `boxes` (each capture's
+  ratio), and an `:empty::before` spacer holds it.
+- **Window carousels:** the front window is 80% of the stage (86% below 640px), and `sizes` matches.
+- **Narrow phones:** seven 44px targets need 324px, and the stage is 254px at 320 and 294px at 360, so the arrows were
+  clipped. Below 390px the dots take their own row and the arrows sit below them.
+- No token was added. The layer, the hero, `/` and every live source are unchanged.
+
+### 4. Found on the way (VL)
+- **The CLS check read 0.0076.** Every shift's source was `button.chat-launcher`.
+  - The site's chat launcher folds its label as the page scrolls, and unfolds it at the top.
+  - The same on `0f38825` (0.00764), and on `/` at 1440 and 390 (0.0076).
+  - Pre-existing live code, not changed. The test now counts shifts inside the slice (0) and logs the launcher's share.
+- **A hydration shift hides locally.**
+  - With the box reservation removed, the Aegis track still grows 89 → 281px, but at 89 ms, before the first paint
+    (100 ms), so CLS reads 0.
+  - The test now holds the scripts back 1.2 s and opens at `#wk-aegis`.
+  - Red/green: 0.064 without the reservation (0.068 opening at DeveloperOS), 0 with it.
+- **Sub-pixel:** a loaded smaller encode keeps its own whole-pixel size (600 × 337), 0.27px under the reserved box.
+  Heights are compared within 1px.
+- **The Tailwind leak, a third time.**
+  - A test comment's word added a border-radius utility rule (30 bytes) to `/`'s stylesheet.
+  - The pinned-digest e2e test caught it. The comment is reworded, and both sheets are byte-identical again.
+
+### 5. Measured (VL; local production builds, lab data, interleaved against `0f38825`)
+| | before | after |
+|---|---|---|
+| First-load JS `/lab/work` (the budget algorithm) | 181.39 KiB (carousel 4.72) | **181.43 KiB** (4.76); budget 205.7 |
+| HTML `/lab/work` | 52.98 KB (13.1 KB gzip) | **67.46 KB** (14.4 KB gzip); budget 568 |
+| LCP desktop (median of 5; range) | 72 ms (68–76) | 92 ms (72–120) |
+| LCP phone, 4× CPU and slow 4G | 928 ms (884–956) | 880 ms (844–952) |
+| CLS | 0 | 0 |
+| INP desktop / phone (`scripts/lab-hero-a.mjs`: empty-space interactions) | 40 / 40 ms | 40 / 48 ms |
+| FPS desktop / phone | 60.5 / 60.6 | 60.5 / 60.4 |
+
+- **The LCP element is the first capture, and LCP = FCP in every run:** it paints in the first frame.
+  - Desktop first paint, broken down over 10 more interleaved loads: TTFB +3.4 ms and DOM interactive +7.8 ms.
+  - Both come from the larger HTML, which carries each lazy capture's server-rendered markup for the island.
+  - The FCP ranges overlap: 64–108 ms before, 60–124 ms after.
+  - No lazy capture becomes the LCP, and none is fetched before it.
+- **INP on the carousel controls** (Next, 3 taps per carousel × 3 rounds; phone at 4× CPU):
+  - T Poker: median 48 → 56 ms, worst 80 → 80;
+  - GRAVITY FLOW: median 72 → 64 ms, worst 112 → 104;
+  - new: Aegis median 56 ms (worst 168), DeveloperOS 64 (worst 136);
+  - desktop medians 24–40 ms, worst 64.
+- **Image bytes:** 838,474 on disk (AVIF 386,944, WebP 451,530). A visit gets one format at one width:
+
+  | | before | after, scrolling through | after, every capture viewed |
+  |---|---|---|---|
+  | desktop | 61.6 KiB | 94.2 KiB | 138.8 KiB |
+  | phone @3x | 107.8 KiB | 178.3 KiB | 271.2 KiB |
+
+  Captures two steps from the front are never fetched until the reader moves toward them (an e2e test).
+- **axe-core 4.11.4, WCAG 2.2 A/AA, after every carousel has moved:** 0 violations at 1440 and 390, with motion on and
+  reduced.
+  - At 390, two need-review contrast items: mist text over the glows, covered by the layer's floor.
+
+### 6. Unchanged (VL)
+- **`/`, `/lab/hero-a`, `/privacy`** (the final build against `0f38825`): the same 12, 13 and 10 first-load assets, byte
+  for byte. The HTML is identical except the per-build ID.
+- **Pixels, full page:**
+  - `/`: 0 differing at 1440 and 390, with motion on and off.
+  - The hero: 0 with reduced motion.
+  - The hero with motion on: differences of at most 1 of 255, 419–6,359 pixels varying by run, from its glows' drift.
+    The same build against itself gives 0.
+- **Guard files** identical to `origin/main` (`fb0f575`): dead-code, budget, page, tokens, institution, and the
+  private-repo test and support.
+
+### 7. Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` | **179/179** (16 files; 177 before, plus 2) |
+| `npm run typecheck`, `npm run lint` | exit 0 |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test` | **176/176** (173 before, plus 3: lazy at any count, mixed shapes, axe at 390 reduced) |
+
+### 8. Pushed: the Preview (Tay's brief)
+- `9569bd8` pushed. Vercel built a **Preview** (`production_environment=false`). Production stays on `fb0f575`.
+- Preview of `/lab/work`:
+  - this build: `https://tay-shofer-portfolio-hqpcueiom-tays-projects-d5aefd6e.vercel.app/lab/work`;
+  - the branch's own link, which follows each push:
+    `https://tay-shofer-portfolio-git-proto-he-65ec6d-tays-projects-d5aefd6e.vercel.app/lab/work`.
+  - Both sit behind Vercel's login (a logged-out request gets a 302 to `vercel.com/sso-api`).
+- PR #18's description is updated with the session's table and numbers. It is still a draft.
+
+### 9. Limitations (NC unless stated)
+- **No real phone.** Headless raster is SwiftShader, so the controls' worst phone taps are a pessimistic bound.
+- **Aegis's board** (`hero-aegis`) is encoded up to 900px wide. A 2× desktop asks for about 1000px, so it is slightly
+  soft. Its full source capture is not on this machine (`M10_CAPTURES`).
+- **The new DeveloperOS captures have no phone crop.** At 390 they are desktop windows about 279px wide, and their text
+  is small.
+- **Copy:** `refusal.webp` and `ai-features.webp` stay in `public/projects/`, unused by the lab.
+
+### Waiting on Tay
+- Review the four carousels on the Preview, and swap the GRAVITY FLOW capture he has in mind.
+- Decide whether Concept A goes further. Its NEW values still wait for review: `--cine-lift`, `--cine-glow-lift`,
+  `--cine-flow-turn`, `--cine-flow-scale`, `--cine-flow-dim`.
+- **Move F:** the session 9 close set it for "next session" (on `main`). It has not been started: sessions 10–11 went to
+  Concept A.
+- Optional, on `main`: the chat launcher's fold on scroll (0.0076 CLS on `/`). His call; untouched here.
+
+---
+
+## 2026-11-18 — Session 10: Concept A, the cinematic hero, as a measured prototype (prototype, D2 reopened) (Claude Code)
+
+**Scope (Tay's brief):**
+- Build Concept A, the hero only, as a **measured prototype**. This consciously reopens D2 (Tay approved, 2026-11-18).
+- Branch `proto/hero-a-cinematic` only: never merged, never deployed. The live homepage is not touched.
+- Behind a noindex route, not linked from the live site.
+- Measure it against the 205.7 KiB budget and the CWV thresholds, plus a11y, reduced motion and no-JS.
+
+Skills: `frontend-design` (design plan and self-critique from screenshots), `verification-before-completion`.
+
+### 1. Preconditions (VL)
+- `git fetch`: `origin/main` = `a7a89fd` (PR #16). PR #17 (`docs/session-9-closeout`) is still open.
+- Branch `proto/hero-a-cinematic` from `origin/main` (`--no-track`), then `npm ci`.
+
+### 2. What was built (all new files; no tracked file changed)
+- `app/lab/layout.tsx`: every `/lab` page is `noindex, nofollow, nocache`, with the root's canonical dropped.
+  - It is not a robots.txt Disallow: a blocked crawler never sees the noindex.
+  - `/lab` is not in the sitemap, and nothing on `/` links to it.
+- `app/lab/hero-a/page.tsx`: everything a reader needs is server-rendered HTML:
+  - the wordmark and the availability pill (gated on `availability.open`);
+  - the role (`siteMeta.role`), the H1 and the lede (the brief's copy);
+  - both actions ("Explore my work" to `/#work`; "Download CV" is the real résumé file);
+  - the four flagships, each with its state from `heroIndex` (`data/proof.ts`).
+- `app/lab/hero-a/featured.ts`: one tag per flagship. A unit test checks every word against that project's own
+  tagline and summary. "Physics" is not in the data, so GRAVITY FLOW is a "gravity puzzler".
+- `app/lab/hero-a/Constellation.tsx`: the one live element.
+  - A 2D canvas (no WebGL), `aria-hidden`, `pointer-events: none`.
+  - Drifting duotone nodes and proximity links; a mouse or pen gathers nearby nodes; touch is ignored.
+  - The loop runs only while the field is on screen and the tab is visible.
+  - The node count comes from the area: 40–120, or 22–48 on the light path (touch, < 640px, or ≤ 4 cores).
+  - Pixel ratio capped at 2, or 1.5 on the light path. Links batched by colour × alpha; halos from sprites.
+  - The count steps down when the draw cost stays over budget.
+  - ≤ 60 draws a second, ≤ 30 on the light path.
+  - Reduced motion (the OS or the site's own switch) draws one still frame.
+- `app/lab/hero-a/hero-a.css`: scoped under `.hxa`, with its own dark tokens.
+  - It reuses Geist, `--text-lead`, `--tracking-display`, `.shell` and the motion tokens.
+  - Every rule outside the scope is conditioned on `:has(.hxa)`, so it is inert off the route.
+  - One CSS load sequence: it runs, and ends visible, without JS, and is off with reduced motion.
+  - The chat launcher is re-toned for the dark field, and the last strip is kept clear for it.
+- `tests/unit/lab-hero-a.test.ts` (18 tests) and `tests/e2e/lab-hero-a.spec.ts` (16 tests).
+- `scripts/lab-hero-a.mjs`: a reproducible CWV and FPS measurement, `/` against `/lab/hero-a`.
+
+### 3. Guard changes: none were needed (VL)
+- Scoping the guards for the prototype was approved, but nothing needed it.
+- `git diff origin/main` on `tests/unit/dead-code.test.ts`, `tests/e2e/page.spec.ts` and `tests/e2e/budget.spec.ts` is
+  empty.
+- They still pass unchanged, because:
+  - `dead-code.test.ts` bans WebGL, `three` and `lenis` (the field is a 2D context);
+  - `page.spec.ts` and `budget.spec.ts` load only `/`, which still has no `<canvas>` and no WebGL.
+- The prototype route has its own tests, held to the same 205.7 KiB budget.
+
+### 4. Measured (VL; lab numbers from a local production server, never field data)
+First-load JS, gzip, the `budget.spec.ts` algorithm:
+
+| | JS | Scripts | HTML |
+|---|---|---|---|
+| `/lab/hero-a` (this branch) | **182.45 KiB** (budget 205.7) | 10 | 31.45 KB |
+| `/` on `origin/main` | 181.79 KiB | 9 | 156.44 KB |
+| `/` on this branch | 182.20 KiB (+0.41) | 10 | 156.51 KB |
+
+- The +0.41 KiB on `/` (this branch's build only) contains no prototype code.
+  - Turbopack split Next's own error-boundary styles into a new shared chunk (`errorStyles`, `WarningIcon`) once a
+    second route shared them.
+  - The marker test confirms no first-load script of `/` carries the field.
+
+`scripts/lab-hero-a.mjs`, median of 5 cold runs:
+- `/` was measured on a separate `origin/main` build.
+- Mobile is 390×844 @3x with 4× CPU and slow-4G figures, applied through DevTools.
+- INP is the worst of 6 interactions; FPS is frames delivered to an independent rAF counter over 3 s.
+
+| | LCP (element) | CLS | INP | FPS | Main thread busy |
+|---|---|---|---|---|---|
+| desktop `/` | 140 ms (h1) | 0 | 24 ms | 60.4 | 5% |
+| desktop `/lab/hero-a` | 84 ms (h1) | 0 | 56 ms | 60.2 | 13.6% |
+| mobile `/` | 1592 ms (h1) | 0 | 40 ms | 60.5 (min 51.4) | 9.8% |
+| mobile `/lab/hero-a` | 992 ms (h1) | 0 | 40 ms | 60.3 (min 60.1) | 23.7% |
+
+All inside "good" (LCP ≤ 2.5 s, INP ≤ 200 ms, CLS ≤ 0.1).
+
+### 5. Findings fixed on the way (VL)
+- **The reveal hid the page from LCP.** As first built, every block faded in from `opacity: 0`. Chromium then
+  reported **no LCP entry at all**, and FCP at about 1.75 s (desktop) and 2.2 s (mobile, 4×).
+  - Cause: the text is first painted inside a compositor-run opacity-0 animation, and paint timing never re-reports it.
+  - Variants were tested on 3 runs each: no reveal; fade from 0.01; the H1 rising without fading.
+  - Fix: the H1 rises without fading. LCP is then the H1, at first paint (~80 ms desktop).
+  - Rejected: fading from 0.01. It "passes" only by counting text no reader can see yet.
+  - A new e2e test pins LCP = the H1 = FCP.
+- **Mobile main thread 41% → 23.7%.** CDP breakdown on the 4× profile:
+  - the field's script is only ~5%;
+  - hiding the canvas's paint drops busy time to 11%, so raster is most of the cost; the mask is not.
+  - The light path now draws ≤ 30 a second, and INP fell from 88 to 40 ms.
+- **Contrast.** The unit test reads the floors from the CSS, on the base and under the brightest glow behind text:
+  - the muted and faint inks were lifted (`#acb6c9` ≥ 7:1, `#95a0b6` ≥ 5.4:1, the site's own floors);
+  - the brief's violet `#9b6bff` is 5.7:1 on the base and 4.2:1 over the violet glow. It is only in the 36–80px H1
+    (large text, floor 3:1).
+- **A11y bugs found by the tests:**
+  - the wordmark's accessible name ran together ("Tay ShoferPortfolio");
+  - the site chrome's paper-iris focus ring was under 3:1 on the dark field;
+  - at 390px the wordmark target was 43.99px;
+  - at 320×568 the CTAs ended below the first screen.
+  - All four are fixed.
+
+### 6. Accessibility (VL)
+- axe-core 4.11.4 (already installed through `eslint-config-next`), WCAG 2.2 A/AA: **0 violations** at 1440 with
+  motion, 390 with motion, and 1440 with reduced motion. 24 rules pass in each.
+- axe could not judge two nodes, both expected:
+  - the gradient clause (`background-clip: text`), covered by the unit contrast test;
+  - the `aria-hidden` arrow glyph.
+- Keyboard order: skip link, wordmark, both actions, the four projects, the chat launcher. Each has a solid 2px cyan
+  ring.
+- One h1; banner, main, and a labelled nav. Targets ≥ 44px at 1440, 1024, 390 and 320. No horizontal overflow.
+- Reduced motion (the OS, and the site's switch through the `a11y` cookie): a still frame, 0 rAF callbacks, no reveal.
+- No JS: everything visible, all links work, and the canvas is an empty, transparent layer.
+
+### 7. Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` | **140/140** (15 files: 122 from `main` plus 18) |
+| `npm run typecheck` | exit 0 |
+| `npm run lint` | exit 0 |
+| `npm run build`, then `GROQ_API_KEY= npx playwright test` | **148/148** (132 from `main` plus 16) |
+
+### 8. Limitations (NC unless stated)
+- Headless Chromium's GPU is SwiftShader (VL: the WebGL renderer string), so canvas raster ran on the CPU. The mobile
+  numbers are a pessimistic bound. Not measured on a real phone.
+- INP comes from 6 scripted interactions; it is not field INP. No Lighthouse run (not installed; not added).
+- The loop runs continuously while the hero is visible and the tab is open (with the cap and the pauses above).
+- At 390×844 the hero is about 50px taller than the screen: the second row of Featured work starts below it. The H1
+  and both actions are in the first screen at 1440, 1024, 390 and 320 (tested).
+- Copy that differs from the live site, by the brief's choice:
+  - "Download CV" (the site says "résumé");
+  - an eyebrow, which `page.spec.ts` bans on `/`;
+  - "Available for opportunities", where `/` deliberately shows no availability line.
+
+### 9. Pushed for a Preview (Tay's go)
+- `proto/hero-a-cinematic` pushed at `fd93dd8`. Draft PR #18 opened against `main` (not for merge).
+- Vercel built a **Preview** deployment (GitHub: `production_environment=false`). Production stayed on `a7a89fd`.
+- The preview is behind Vercel Deployment Protection (a logged-out request gets a 302 to `vercel.com/sso-api`).
+  Vercel adds `X-Robots-Tag: noindex`.
+- No share link was made: the connector's fetch tool would create one.
+
+### 10. Round 2: more life in the field (Tay: "too calm") (VL)
+Only the field changed: `Constellation.tsx` and its tests. The copy, palette, CSS and every safeguard are the same.
+- **Desktop:** 130 nodes at 1440×900 (was 108; ≤ 140), and drift of 7–18 px/s (was 5–14). The light path's count and
+  drift are unchanged.
+- **Twinkle:** every node's radius pulses slowly (4–10 s a cycle, each on its own phase). Bright nodes' halos breathe
+  with it.
+- **Pointer:** a soft pull that fades to nothing at the centre, with no repel. Links near it brighten, nodes within
+  150px tether to it, and a faint glow (200px sprite) follows it.
+  - The first tune (pull 60, fade inside 64px) packed nodes into a tight knot. The pull went to 20: against the
+    0.8/s relax that is an inward drift of about 25 px/s, like the field's own.
+- **Signals:** a soft duotone head with a short tail rides real links, 1–3 hops. It lights the link it rides and
+  flashes the node it reaches.
+  - Desktop: up to 3 at once, one every 1.6–3.2 s. Light path: up to 2, one every 3–5.5 s.
+  - None with reduced motion (a still frame; `data-pulses` stays 0).
+- **Trims found by measuring:**
+  - In-page op knock-outs (desktop, pointer moving) put most of the first draft's added cost on image stamps (2.7 pp)
+    and strokes (2.3 pp).
+  - The glow shrank from 280 to 200px and the bright share returned to 12% (from 14%).
+  - Links under 12% of the reach (≤ 4% alpha, about a fifth of all links by area) are no longer drawn, except near
+    the pointer.
+
+**Measured.** Same session; `fd93dd8` from a scratch worktree, interleaved before / after, 5 rounds each, medians.
+The machine's load varied through the session: the identical `fd93dd8` build measured 21.7–31.8% phone busy across
+rounds. So only the interleaved comparison counts, not the absolute numbers against section 4.
+
+| | before | after |
+|---|---|---|
+| desktop FPS / worst frame gap | 60.2 / 17 ms | 60.2 / 17 ms |
+| desktop INP (median, max) | 40, 56 ms | 24, 56 ms |
+| desktop main thread busy | 12.7% | 14.1% (+1.4 pp) |
+| phone FPS / worst frame gap | 60.2 / 17 ms | 60.2 / 17 ms |
+| phone INP (median, max) | 40, 40 ms | 40, 48 ms |
+| phone main thread busy | 21.7% | 22.3% (+0.6 pp; run spread 20.7–22.8) |
+| LCP desktop / phone (h1) | 84 / 976 ms | 96 / 968 ms |
+| CLS | 0 | 0 |
+
+- First-load JS for `/lab/hero-a`: **183.49 KiB** (was 182.45; +1.04 KiB; budget 205.7). `/` is unchanged (182.20).
+- axe WCAG 2.2 A/AA: 0 violations at 1440 with motion, 390 with motion, and 1440 with reduced motion. The same 2
+  need-review items as before.
+- The contrast floors pass (no CSS change).
+- Validation:
+  - `npm test` **141/141**;
+  - typecheck and lint exit 0;
+  - `npm run build`, then `GROQ_API_KEY= npx playwright test`: **150/150**. The 2 new tests check that signals
+    appear and stay capped, at 3 on desktop and 2 on a phone.
+- The guard files are still byte-identical to `origin/main`.
+
+### 11. Round 2 pushed; round 3, the final energy pass (Tay: "better, still a touch calm") (VL)
+- Round 2 was pushed on Tay's go (`b7092b0`). The Preview rebuilt (Vercel success; `production_environment=false`).
+  Production stayed on `a7a89fd`.
+- **Signals get more presence:**
+  - desktop cap 3 → 4 (light path stays 2);
+  - launch spacing 1.6–3.2 → 1.4–2.8 s (light path 3–5.5 → 2.6–4.6 s);
+  - about a third take one more hop (1–4);
+  - a longer, thicker tail, a larger head, a brighter ridden link.
+  - The first draft (1.2–2.4 s) was eased: by Little's law it put about 56% more signals on screen.
+  - Expected average signals at once: desktop ≈ 0.96 → 1.29 (+34%), phone ≈ 0.50 → 0.69 (+38%).
+  - 15-second samples are too noisy to judge this: the same build gave 68% and 91% of time with a signal.
+- **The sky breathes:**
+  - the two glows are now their own elements;
+  - the field's clock drifts them by transform and opacity, 5 times a second (26 s and 34 s cycles, about 3% travel,
+    6% scale, opacity 0.8–1);
+  - they pause with the loop and rest under reduced motion. Without JS they sit where they always were.
+  - Measured and rejected: a CSS animation of the same drift cost **+5.3 pp** of phone main thread (style and layout
+    2.4%: Chrome serviced it every frame). At 5 Hz the cost is about +1 pp.
+  - `will-change` on the glows was also dropped. The first `translate3d()` promotes them after first paint; with it,
+    2 of 5 desktop LCPs ran about 40 ms late.
+- **Desktop drift:** 7–18 → 8–20 px/s.
+- **CTA:** "Download CV" → "Download résumé". The link has no `aria-label`: its accessible name is the text plus the
+  sr-only note, now "Download résumé (PDF · two pages, 79 KB)". Same file and download target.
+
+**Measured.** Interleaved against `b7092b0` (scratch worktree), 5 rounds each, medians:
+
+| | before | after |
+|---|---|---|
+| desktop FPS / worst frame gap | 60.2 / 17 ms | 60.2 / 17 ms |
+| desktop INP (median, max) | 24, 56 ms | 40, 48 ms |
+| desktop main thread busy | 14.1% | 14.0% |
+| desktop LCP (h1) | 92 ms | 72 ms |
+| phone FPS / worst frame gap | 60.3 / 17 ms | 60.2 / 17 ms |
+| phone INP (median, max) | 40, 40 ms | 40, 48 ms |
+| phone main thread busy | 21.6% | 22.8% (+1.2 pp; run spreads 19.9–23.2 vs 19–25.2) |
+| phone LCP (h1) | 928 ms | 968 ms (run spreads 924–1028 vs 880–1048) |
+| CLS | 0 | 0 |
+
+- First-load JS for `/lab/hero-a`: **183.71 KiB** (+0.22; budget 205.7). `/` unchanged at 182.20.
+- axe WCAG 2.2 A/AA: 0 violations at 1440 with motion, 390 with motion, and 1440 with reduced motion.
+  - At 1440 a third need-review item: `.hxa__lede`, "partially overlaps other elements". Its box now overlaps the
+    violet glow element.
+  - It is covered by the unit floor (mist ≥ 7:1 on the violet peak). The glows' peak alphas are unchanged (0.17,
+    0.2), and their opacity only dims.
+- The contrast floors pass (7/7).
+- Validation:
+  - `npm test` **142/142**;
+  - typecheck and lint exit 0;
+  - `npm run build`, then `GROQ_API_KEY= npx playwright test`: **150/150**. The glow and signal tests were updated:
+    the cap is 4 on desktop; the glows move with the loop, stop with it and rest under reduced motion.
+- The guard files are still identical to `origin/main`.
+
+### 12. Round 3 pushed; round 4, the cinematic system extracted (2026-11-19) (VL)
+- Round 3 was pushed on Tay's go (`ca81fc4`). The Preview rebuilt (Vercel success). Production stayed on `a7a89fd`.
+- **The layer:** `app/lab/_cinematic/cinematic.css`, documented in `docs/CINEMATIC_SYSTEM.md`.
+  - Extracted from the locked hero, value for value: colours (two bases, three inks, cyan / violet, the status dot as
+    the brand cyan), glass and glow surfaces, Geist type (sizes, weights, leading, tracking), spacing steps, control
+    heights, radii and motion tokens.
+  - Plus the scope chrome, the focus ring, `.cine-duotone-text` and the one reveal (`[data-reveal]`, with `settle`
+    for the largest paint).
+  - Only `app/lab/layout.tsx` imports it, and every selector needs a `.cine` root (or `:has(.cine)`).
+- **The hero is its first consumer:**
+  - root `cine hxa`;
+  - six `data-reveal` blocks (the H1 `settle`);
+  - `hero-a.css` keeps only its geometry, with no hex and no local tokens;
+  - the canvas's and the SVG mark's colours are pinned to the layer by a test.
+- **Proof the hero is unchanged.**
+  - Before and after builds compared: every element's and pseudo-element's computed style in 5 modes (reduced motion
+    1440 and 390, no JS, motion on, high contrast), and full-page pixels with the random canvas hidden.
+  - **0 of 163,871 computed values differ, and 0 pixels differ.**
+- **Found and fixed: a branch-only leak into `/`'s stylesheet.**
+  - Since round 1, a comment in `tests/unit/lab-hero-a.test.ts` held a literal utility name.
+  - Tailwind scans `tests/`, and so added one rule (21 bytes) to the global stylesheet of this branch's build.
+  - The comment is reworded. Both of `/`'s stylesheets are now byte-identical to `origin/main`'s.
+  - The doc records the rule: never write utility names in lab files; docs go in `docs/`.
+- **`/` against `origin/main`** (scratch worktree build):
+  - every source `/` imports is identical (`git diff`);
+  - both stylesheets are byte-identical;
+  - the markup is identical with script tags and chunk paths masked.
+  - What remains is round 1's bundle split: the same JavaScript in 10 chunks instead of 9 (+180 bytes raw). It comes
+    from a second route existing, and only in this branch's build.
+- **Against the branch before this task:** every script on `/` is byte-identical. The stylesheet changed only by
+  losing that stray rule.
+- Validation:
+  - `npm test` **148/148** (`tokens.test.ts` 15/15);
+  - typecheck and lint exit 0;
+  - `npm run build`, then `GROQ_API_KEY= npx playwright test`: **150/150**. axe: 0 violations with motion on and off.
+  - The guard files, `app/globals.css`, `lib/tokens.ts`, the root layout, `/` and every live source are identical to
+    `origin/main`.
+  - First-load JS for `/lab/hero-a` is unchanged at 183.71 KiB.
+
+### 13. Round 5: the Work slice in the cinematic language (2026-11-19) (VL)
+- **The route:** `/lab/work`, under the `/lab` layout (noindex, not linked).
+  - Files: `app/lab/work/{page.tsx, panels.ts, work.css}`.
+  - A server component with no client code of its own; first-load JS is the shared runtime only.
+- **Four product panels** (T Poker, Aegis, DeveloperOS, GRAVITY FLOW), recruiter-first:
+  - name and one line first;
+  - then the status, three stack chips and the links;
+  - the real capture on a glass stage, alternating sides from 1024px.
+- **Content derived from the data, nothing typed fresh** (`docs/CINEMATIC_SYSTEM.md`, "Work slice"):
+  - taglines verbatim and the site's status strings;
+  - chips from each stack;
+  - links: T Poker's web app, and the Aegis and DeveloperOS repositories; plus each chapter on the live page;
+  - "Private repository" labels for T Poker and GRAVITY FLOW, with no slug or URL anywhere;
+  - existing captures and alt text.
+- **One empty, hidden, labelled P4 demo slot per panel:** no demo, no placeholder.
+- **Behaviour:**
+  - the opening's one reveal (the title settles);
+  - stages lift on hover, keyboard focus and touch, and stay still with reduced motion;
+  - the first capture is eager and high priority, the other three lazy;
+  - static glows only.
+- **Layer additions:**
+  - seven tokens equal to the site's own values (type tiers, section rhythm, radius steps, the dark object shadow);
+  - two NEW values for Tay's review: `--cine-lift` −4px, and `--cine-glow-lift`.
+  - The hero is still unchanged: 0 of 163,871 computed values and 0 pixels differ against the round 4 baseline.
+- **Found and fixed: the Tailwind leak, again.**
+  - An object key in the new e2e spec, named like the shadow utility, put one rule (+248 bytes) into `/`'s stylesheet.
+  - Renamed. A new e2e test now pins `/`'s two stylesheets to `origin/main`'s SHA-256, so any future leak fails the
+    suite.
+  - `/` against `origin/main`: both stylesheets byte-identical; markup identical with script tags and chunk paths
+    masked; the same 9 → 10 chunk split as since round 1.
+
+**Measured** (`scripts/lab-hero-a.mjs`, 5 cold runs):
+
+| | LCP (element) | CLS | INP | FPS | main thread busy |
+|---|---|---|---|---|---|
+| desktop | 80 ms (the first capture) | 0 | 32 ms | 60.5 | 3.2% |
+| phone (4× CPU, slow 4G) | 916 ms (the first capture) | 0 | 32 ms | 60.4 | 6.6% |
+
+- First-load JS for `/lab/work`: **180.19 KiB** (budget 205.7). HTML 45.17 KB.
+- axe WCAG 2.2 A/AA: 0 violations at 1440 with motion, 390 with motion, and 1440 with reduced motion.
+  - At 390, three need-review items: the lede and two project lines, mist text whose boxes overlap the glow
+    elements.
+  - They are covered by the layer's floor: mist ≥ 7:1 on the glow peaks.
+- **Keyboard:** skip link, then per panel the product's link and its chapter link, then the launcher. Each has a solid
+  2px cyan ring, and focus lifts its own panel.
+- **No JS:** every name, line, state, chip, capture (lazy, native) and link is present and works.
+- Validation:
+  - `npm test` **168/168** (`tokens.test.ts` 15/15);
+  - typecheck and lint exit 0;
+  - `npm run build`, then `GROQ_API_KEY= npx playwright test`: **165/165** (132 `main`, 18 hero, 15 Work);
+  - the guard files are identical to `origin/main`.
+- Not verified: iOS Safari's `:active` (it needs a touch listener; a tap lifts through emulated hover instead), and
+  any real device.
+
+### 14. Round 5b: the title, and the push (2026-11-19) (VL)
+- Tay changed the title to "Four projects, built end to end." (not all four are shipped products). A unit test pins it.
+- Rounds 4, 5 and the title were pushed on Tay's go (`377ce22`). The Preview rebuilt. PR #18 is still a draft, and
+  Production stayed on `a7a89fd`.
+
+### 15. Round 6: per-project carousels, and phone proportions (2026-11-19) (VL)
+- **Galleries** in `data/projects.ts` (`PROJECT_GALLERIES`, a separate pure export), exactly as Tay listed:
+  - T Poker: home, live, settle;
+  - GRAVITY FLOW: gameplay, boss;
+  - Aegis: the alert row;
+  - DeveloperOS: the search.
+  - The alt text is the site's own: `gf-boss` is `public/projects/gravity-flow/boss.webp` re-encoded (a unit test
+    measures it), so it takes that entry's "World boss encounter".
+  - The phone crops are the live chapters'.
+- **The carousel** (`Reel.tsx`): a CSS 3D coverflow (perspective and rotateY; no WebGL), the WAI-ARIA tabbed pattern,
+  arrows, swipe, no autoplay; a flat slider with reduced motion; the first capture alone without JS. Single-capture
+  projects stay still. Details: `docs/CINEMATIC_SYSTEM.md`, "Galleries and the carousel".
+- **Phone proportions:**
+  - T Poker's capture went from 280 × 607 to 171 × 370 at 390 × 844;
+  - phone captures are capped at 190px wide and ≤ 45% of the screen tall;
+  - the spacing is tighter.
+- **Found and fixed on the way (all measured):**
+  - **`/`'s first-load chunks changed twice.**
+    - The client carousel imported the image table, and Turbopack re-cut one of `/`'s chunks.
+    - It imported the site's `ArrowLeftIcon`, and app-wide tree-shaking kept that once server-only icon in `/`'s chunk
+      (+120 bytes).
+    - Fix: the server renders each capture and hands them in, and the island draws its own arrow.
+    - After the fix, `/` is byte-identical to `377ce22`: the HTML and all 12 first-load assets.
+    - Every built chunk was hashed before and after: only the lab's three (the Work page script, its CSS, the layer
+      CSS) differ. The case-study chunk is unchanged.
+  - **Phone CLS 0.017 → 0.** A blanket `aspect-ratio: …, auto` override had dropped the box reservation that width and
+    height give. It is now limited to captures with a phone crop.
+    - A new e2e test holds the images pending and asserts every box keeps its height.
+    - Red/green: the old rule collapses two captures to 0px.
+- **Measured:**
+  - first-load JS for `/lab/work` **181.39 KiB** (the carousel's own chunk 4.72 KiB; budget 205.7);
+  - desktop LCP 88 ms, CLS 0, INP 40 ms, FPS 60.5;
+  - phone (4× CPU, slow 4G) LCP 916 ms, CLS 0, INP 48 ms, FPS 60.4 (3 runs).
+  - axe: 0 violations at 1440 with motion, 390 with motion, and 1440 with reduced motion, after the carousel has
+    moved.
+- **The hero is unchanged:** 0 of 163,871 computed values and 0 pixels.
+- **Against `origin/main`:** both of `/`'s stylesheets byte-identical (pinned by the e2e test), and the same 9 → 10
+  chunk split as since round 1.
+  - `data/projects.ts` differs by the 19-line gallery export (Tay's brief).
+  - The guard files, `globals.css`, `lib/tokens.ts`, the root layout, `/`, `components/`, `lib/` and `public/` are
+    identical.
+- Validation:
+  - `npm test` **177/177** (`tokens.test.ts` and `dead-code.test.ts` 21/21);
+  - typecheck and lint exit 0;
+  - `npm run build`, then `GROQ_API_KEY= npx playwright test`: **173/173** (132 `main`, 18 hero, 23 Work).
+- Not verified: a real phone (iOS Safari's `:active` and touch feel), and real-device carousel performance.
+
+### Waiting on Tay
+- Decide whether Concept A goes further. Round 6 is committed locally, not pushed: pushing updates PR #18's Preview.
+- Review the NEW layer values: `--cine-lift` and `--cine-glow-lift` (round 5); `--cine-flow-turn`,
+  `--cine-flow-scale` and `--cine-flow-dim` (round 6).
+- Captures to add (Aegis and DeveloperOS have one each): `docs/CINEMATIC_SYSTEM.md`, "To add a capture".
+- On `main`, the next close-out should record "D2 reopened for a measured prototype" in RESEARCH_AND_DECISIONS. This
+  branch is never merged.
 
 ---
 
@@ -1107,5 +3843,20 @@ Tay answers D1–D5 in `docs/RESEARCH_AND_DECISIONS.md`. Then the docs move to a
 | 2026-11-18 | Session 8 close | PR #14 merged (`d80cb4c`, live); N7 Cloudflare toggles done by Tay, verified live; `docs/backlog-n1-n2-n7` deleted; state docs | `docs/WORKLOG.md`, `claude/START-HERE.md`, `CLAUDE.md`, `docs/RESEARCH_AND_DECISIONS.md`, `docs/ROADMAP.md` |
 | 2026-11-18 | Session 9 | N8: GRAVITY FLOW's private repository name scrubbed from 9 doc lines; the private-repo guard pins both private repos by digest (guard change for Tay's approval); `docs/session-7-closeout` and `docs/session-8-closeout` deleted; state docs | `docs/*.md`, `tests/support/private-repo.ts`, `tests/unit/private-repo.test.ts`, `claude/START-HERE.md`, `CLAUDE.md` |
 | 2026-11-18 | Session 9 close | PR #16 merged (`a7a89fd`, live); `fix/n8-gravity-flow-slug` deleted; `/privacy` wording deferred to the end of the build; Move F to be built on a preview branch next session; state docs | `docs/WORKLOG.md`, `claude/START-HERE.md`, `CLAUDE.md`, `docs/RESEARCH_AND_DECISIONS.md`, `docs/ROADMAP.md` |
+| 2026-11-18/19 | Session 10 | Concept A prototype (D1 reopened, D2 not: Tay's correction at the session 11 close; branch `proto/hero-a-cinematic`, draft PR #18, never merged): the `/lab/hero-a` hero, the cinematic layer, the `/lab/work` slice and its carousels (rounds 1–6) | `app/lab/**`, `data/projects.ts` (galleries), `docs/CINEMATIC_SYSTEM.md`, `scripts/lab-hero-a.mjs`, `tests/**/lab-*` |
+| 2026-11-19 | Session 11 | Every flagship's real captures in its carousel (`9569bd8`): 8 captures encoded, the lab's own image list, box reservation for mixed shapes, window carousels, two-row controls below 390px; START-HERE brought up to date | `app/lab/work/*`, `data/lab-images.ts`, `data/projects.ts`, `scripts/m10-images.mjs`, `public/work/*` (48 new), `tests/**/lab-work*`, `docs/CINEMATIC_SYSTEM.md`, `docs/WORKLOG.md`, `claude/START-HERE.md` |
+| 2026-11-19 | Session 11 close | Carousels approved by Tay; the D1/D2 framing corrected (D1 reopened, D2 not); CLAUDE.md brought level with `main`'s plus the prototype; the close-out PR for `main` refreshed from `docs/session-10-closeout`; `docs/session-9-closeout` deleted | `CLAUDE.md`, `claude/START-HERE.md`, `docs/WORKLOG.md`, `docs/CINEMATIC_SYSTEM.md` |
 | 2026-11-18/19 | Sessions 10–11 | Concept A prototype on `proto/hero-a-cinematic` (draft PR #18, never merged; D1 reopened, D2 not): the hero, the cinematic layer, `/lab/work` and its carousels (approved: T Poker 5, Aegis 2, DeveloperOS 4, GRAVITY FLOW 5) | the branch only; summary here |
 | 2026-11-19 | Session 11 close | This close-out: `main`'s START-HERE and CLAUDE.md name Concept A as the active direction; D1/D2 recorded correctly; `docs/session-9-closeout` deleted | `CLAUDE.md`, `claude/START-HERE.md`, `docs/WORKLOG.md`, `docs/RESEARCH_AND_DECISIONS.md` |
+| 2026-11-19 | Session 12 | About (P3.3) on `/lab/work` from the live About's own words (`121d86b`); the 11 "D2 reopened" comments reworded (`4dccdf8`); the five NEW layer values approved as they are; a fourth Tailwind leak found (PR #19's CLAUDE.md line, live on `main`) and fixed on this branch (`fb3bb41`) | `app/lab/work/{about.ts,AboutBlock.tsx,page.tsx,work.css}`, `tests/{unit,e2e}/lab-work.*`, 11 lab headers, `CLAUDE.md`, `docs/CINEMATIC_SYSTEM.md`, `claude/START-HERE.md`, `docs/WORKLOG.md` |
+| 2026-11-19 | Session 12 close | About approved by Tay; PR #20 opened into `main` (the CLAUDE.md Tailwind gotcha bullet reworded: `/`'s sheet back to 44,530 bytes); `docs/session-10-closeout` deleted (merged as #19); scratch cleaned | `docs/WORKLOG.md`, `claude/START-HERE.md`, `CLAUDE.md`, `docs/CINEMATIC_SYSTEM.md` (PR #20: `CLAUDE.md`) |
+| 2026-11-19 | Session 13 | PR #20 merged and its branch deleted. Stack (P3.4) on `/lab/work`, in three passes on Tay's reviews: a project line per tool (`757c377`); the live Stack's layout with a dimming filter (`d3373b6`); a filter that shows only the chosen project's tools, as pills, with a no-scroll-jump hold (`8955039`). Security group; one small island (+351 bytes gzip) | `app/lab/work/{stack.ts,StackBlock.tsx,StackFilter.tsx,page.tsx,work.css}`, `tests/{unit,e2e}/lab-work.*`, `docs/CINEMATIC_SYSTEM.md`, `claude/START-HERE.md`, `docs/WORKLOG.md` |
+| 2026-11-19 | Session 13 close | Stack approved; its LCP cost kept and logged as a P5 item (ROADMAP #13); the Contact re-check logged (#14); CLAUDE.md's stale code reference, verified commit and counts updated | `CLAUDE.md`, `claude/START-HERE.md`, `docs/{WORKLOG,ROADMAP,CINEMATIC_SYSTEM}.md` |
+| 2026-11-19 | Session 14 | Think · Build · Ship (P3.5) under Stack from the live section's own words, plus one DeveloperOS line in Tay's wording (`8382889`); the #14 hold re-checked (keep, recommended); no glow is a scroll anchor (`d1c53a3`) | `app/lab/work/{tbs.ts,TbsBlock.tsx,page.tsx,work.css}`, `tests/{unit,e2e}/lab-work.*`, `docs/{CINEMATIC_SYSTEM,ROADMAP,WORKLOG}.md`, `claude/START-HERE.md` |
+| 2026-11-19 | Session 14 close | Think · Build · Ship approved; the hold kept and its test's comment reworded (`a8062e6`); the glow fix kept; the section's LCP cost kept and added to ROADMAP #13; #14's visible gap case logged for P5; baseline worktree removed, scratch cleaned | `tests/e2e/lab-work.spec.ts` (comment), `CLAUDE.md`, `claude/START-HERE.md`, `docs/{WORKLOG,ROADMAP,CINEMATIC_SYSTEM}.md` |
+| 2026-11-19 | Session 15 | Contact (P3.6) ends `/lab/work`, from the live Contact's own words and links (`56e3dea`); `StackFilter.tsx`'s header comment fixed (`bbd9d55`, comment only); #14 re-measured (the tall-screen case shrinks, the end case unchanged); About's repetition logged for P5 (ROADMAP #15) | `app/lab/work/{contact.ts,ContactBlock.tsx,page.tsx,work.css,StackFilter.tsx}`, `tests/{unit,e2e}/lab-work.*`, `docs/{CINEMATIC_SYSTEM,ROADMAP,WORKLOG}.md`, `claude/START-HERE.md` |
+| 2026-11-19 | Session 15 close | Contact approved, with its two columns from 1100px (`1369b00`); P3 complete (all six sections approved); Contact's LCP cost kept and added to ROADMAP #13; the hold kept (#14); baseline worktree removed, scratch cleaned | `app/lab/work/work.css`, `tests/{unit,e2e}/lab-work.*`, `CLAUDE.md`, `claude/START-HERE.md`, `docs/{WORKLOG,ROADMAP,CINEMATIC_SYSTEM}.md` |
+| 2026-11-19 | Session 16 | The P5/P6 plan (gap audit, the tests the release touches, the backlog, the mechanism), approved by Tay as R1–R15; the S17–S24 plan, S18+S19 and S21+S22 paired; the P4 restore record for the four explainers; the backlog's new #16. Docs only | `docs/{RESEARCH_AND_DECISIONS,ROADMAP,WORKLOG}.md`, `claude/START-HERE.md` |
+| 2026-11-19 | Session 17 | `product-plates-final` (`8f0a96a`) on `443a1f9`, pushed. `release/concept-a` cut from `origin/main`: the prototype's 77 untouched paths copied unchanged (`8b77de1`), the 5 state docs merged three ways (`b4fd805`); unit 216/216, Playwright 213/213, `/`'s stylesheets and markup equal `main`'s build (its scripts the same 177 modules in 10 files instead of 9). R12's "still to name" group approved (`2efac00`). CLAUDE.md for the release track (`0a889bf`). Production baseline: Lighthouse mobile median 98, LCP 2,288 ms; first-load JS 182.04 KiB, HTML 160,584 B. #16 measured | `CLAUDE.md`, `claude/START-HERE.md`, `docs/*.md`, the copied paths |
+| 2026-11-20 | Sessions 18+19 | `/` composed from the Concept A sections, in the layer: header (R2), hero, Work with "Case study" buttons (R4) and Two more (R5), About ending on the facts (R10), Stack, Think · Build · Ship, Contact, footer; dark only (R3); every live id (R7). `/lab` and the retired Product Plates code deleted (`482d29e`); the dialog back inside `<main>` (`270ab27`). R12's test edits and S17's group, plus 6 test commits Tay approved in-session, each its own commit. Must-pass e2e 70/70 + 6/6, unit 121/121 (the two lab unit files fail at load until S20). Gate: Lighthouse mobile median 100, LCP 1,061 ms (local `main` 93, 3,191 ms); first-load JS 185.00 KiB, HTML 127,970 B. Pushed; Preview READY | `app/`, `components/`, `lib/`, `data/`, `tests/`, `docs/WORKLOG.md`, `claude/START-HERE.md` |
+| 2026-11-20 | Sessions 18+19 close | Approved by Tay. ROADMAP #17 logged for S21+S22 (the case study's two axe best-practice findings); #15 and the Work lede marked done; the S18+S19 entry's finding count corrected (three, not four). CLAUDE.md, START-HERE, the memory. The scratch worktree of `443a1f9` removed (long paths deleted by hand), scratch emptied | `CLAUDE.md`, `claude/START-HERE.md`, `docs/{ROADMAP,WORKLOG}.md` |

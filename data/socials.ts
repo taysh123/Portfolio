@@ -18,6 +18,8 @@ export const resume = {
   fileName: "Tay-Shofer-Software-Engineer-Resume.pdf",
 } as const;
 
+const HEADLINE = ["Building software.", "Turning ideas into products."] as const;
+
 export const siteMeta = {
   name: "Tay Shofer",
   /*
@@ -26,10 +28,14 @@ export const siteMeta = {
     belongs in the proof strip, beside numbers a reader can check, and a title should be one thing.
   */
   role: "Software Engineer",
-  /** The hero's headline (M10 headline study: docs/m10/headline-study.md). The social card repeats it. */
-  headline: "I build software end to end.",
-  /** The hero's one-sentence lead: the range, in the four kinds of product the plates below it show. */
-  heroLead: "Mobile apps, security systems, developer tools, and games—from interface to infrastructure.",
+  /** The hero's h1 (Concept A, R8), in its two lines: the second is drawn in the duotone. The page, the social card and
+   *  the tests read it here. */
+  headlineLines: HEADLINE,
+  /** The same h1 as one line of text: the social card's alt, and what a reader hears. */
+  headline: HEADLINE.join(" "),
+  /** The hero's lede (Concept A, R8): the range, in the four kinds of product the Featured work below it names. */
+  heroLead:
+    "I build end to end — mobile apps, security systems, developer tools and games, from the interface down to the infrastructure.",
   /** The meta description and social-card line (≤ 160 characters). */
   tagline:
     "Software engineer building products across interfaces, systems and interactive experiences—each one designed, built and tested end to end.",

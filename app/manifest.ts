@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { siteMeta } from "@/data/socials";
-import { brand } from "@/lib/tokens";
+import { cine } from "@/lib/tokens";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -9,8 +9,9 @@ export default function manifest(): MetadataRoute.Manifest {
     description: siteMeta.tagline,
     start_url: "/",
     display: "standalone",
-    background_color: brand.bgLight,
-    theme_color: brand.bgLight,
+    // Dark only (R3): the field's colour, as the page's browser chrome (app/layout.tsx).
+    background_color: cine.abyss,
+    theme_color: cine.abyss,
     icons: [{ src: "/favicon.ico", sizes: "any", type: "image/x-icon" }],
   };
 }

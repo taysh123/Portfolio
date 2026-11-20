@@ -218,18 +218,6 @@
 /* The chapter plates themselves carry no edge light: each one's top is a static seam (or, for T Poker, the hero's plates
    meeting it flush), and a 1px key there drew a hard rule across the band. Their light is on their devices and windows. */
 
-/* ── Section seams ── a section on a different surface from the one above it fades up into that section across the
-   last --seam of its bottom padding (every section keeps at least 72px of empty space there), so a change of tone is a
-   short band instead of a hard line. Static: nothing animates, nothing listens to the scroll. Not above T Poker: the
-   hero's plates run to the hero's bottom edge. Not above Stack: About is the same surface. */
-:root { --seam: 56px; }
-:is(#work-aegis, #work-developeros, #work-gravity-flow, #more-work, #about, #approach, #contact) { position: relative; }
-:is(#work-aegis, #work-developeros, #work-gravity-flow, #more-work, #about, #approach, #contact)::before {
-  content: ""; position: absolute; inset-inline: 0; top: calc(-1 * var(--seam)); height: var(--seam); pointer-events: none;
-  background: linear-gradient(to bottom, transparent, var(--seam-to, var(--bg)));
-}
-:is(#about, #contact) { --seam-to: var(--bg-raised); }
-
 /* ── Tailwind bindings ─────────────────────────────────────────────────── */
 @theme inline {
   --color-bg: var(--surface-0);
@@ -428,14 +416,11 @@
 /* Nav: the current section's underline draws in from the centre. */
 .nav-underline { transform: scaleX(0); opacity: 0; transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out); }
 [aria-current="true"] > .nav-underline { transform: scaleX(1); opacity: 1; }
-/* Theme toggle: the two glyphs cross-fade with a small turn. */
-.theme-glyph { opacity: 0; transform: rotate(-28deg) scale(0.8); transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out); }
-.theme-glyph[data-on] { opacity: 1; transform: none; }
 /* Mobile sheet: enters with @starting-style, exits on data-state=closed (unmounted 200ms later). */
 .menu-sheet { opacity: 1; transition: opacity var(--dur-fast) var(--ease-out); }
 .menu-sheet__panel { transform: none; transition: transform 240ms var(--ease-out), opacity 240ms var(--ease-out); }
 @starting-style { .menu-sheet { opacity: 0; } .menu-sheet__panel { transform: translateY(16px); opacity: 0; } }
 .menu-sheet[data-state="closed"] { opacity: 0; pointer-events: none; transition-duration: 140ms; }
 .menu-sheet[data-state="closed"] .menu-sheet__panel { transform: translateY(12px); opacity: 0; transition-duration: 140ms; }
-@media (prefers-reduced-motion: reduce) { .nav-underline, .theme-glyph, .menu-sheet, .menu-sheet__panel { transition: none !important; } .theme-glyph { transform: none; } }
-[data-reduced-motion="true"] :is(.nav-underline, .theme-glyph, .menu-sheet, .menu-sheet__panel) { transition: none !important; }
+@media (prefers-reduced-motion: reduce) { .nav-underline, .menu-sheet, .menu-sheet__panel { transition: none !important; } }
+[data-reduced-motion="true"] :is(.nav-underline, .menu-sheet, .menu-sheet__panel) { transition: none !important; }

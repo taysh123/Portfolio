@@ -3,12 +3,12 @@ import type { ReactNode } from "react";
 import { TextLink } from "@/components/ui/TextLink";
 import { ArrowLeftIcon } from "@/components/ui/icons";
 import { socials, siteMeta } from "@/data/socials";
-import { THEME_COOKIE, A11Y_COOKIE } from "@/lib/theme";
+import { A11Y_COOKIE } from "@/lib/theme";
 
 export const metadata: Metadata = {
   title: "Privacy",
   description:
-    "What this portfolio does with data: the AI chat (answered via Groq), hosting logs, two optional preference cookies, and no analytics or tracking.",
+    "What this portfolio does with data: the AI chat (answered via Groq), hosting logs, one optional preference cookie, and no analytics or tracking.",
   alternates: { canonical: "/privacy" },
   // Its own card (a page's openGraph replaces the layout's whole object, so the image is restated).
   openGraph: {
@@ -17,21 +17,25 @@ export const metadata: Metadata = {
     siteName: `${siteMeta.name} — Portfolio`,
     title: `Privacy · ${siteMeta.name}`,
     description:
-      "What this portfolio does with data: the AI chat (answered via Groq), hosting logs, two optional preference cookies, and no analytics or tracking.",
+      "What this portfolio does with data: the AI chat (answered via Groq), hosting logs, one optional preference cookie, and no analytics or tracking.",
     locale: siteMeta.locale,
     images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: `${siteMeta.name} — ${siteMeta.role}` }],
   },
 };
 
-/** The two provider pages the text relies on (checked 2026-10-13); each statement below stays within what they say. */
+/** The three provider pages the text relies on (Groq's and Vercel's checked 2026-10-13, Cloudflare's 2026-11-20); each
+ *  statement below stays within what they say. Cloudflare's policy names itself a controller of visitors' traffic
+ *  data, so the page never says it acts on the site's behalf. */
 const GROQ_DATA = "https://console.groq.com/docs/your-data";
 const VERCEL_PRIVACY = "https://vercel.com/legal/privacy-notice";
+const CLOUDFLARE_PRIVACY = "https://www.cloudflare.com/privacypolicy/";
 
 /**
- * Privacy (2026-10-13): what actually happens with data on this site, in a few short paragraphs, as audited — the chat
- * (the visitor's message and the previous answer go to Groq through the site's own route; nothing is stored), the
- * host's ordinary request logs, the two preference cookies set only by the visitor's own choice, and no analytics,
- * tracking or third-party scripts. Linked from the footer and from the chat panel's disclosure line.
+ * Privacy (2026-10-13; Cloudflare and the one cookie, 2026-11-20): what actually happens with data on this site, in a
+ * few short paragraphs, as audited — the chat (the visitor's message and the previous answer go to Groq through the
+ * site's own route; nothing is stored), the host's ordinary request logs and the proxy in front of it (N7), the one
+ * preference cookie set only by the visitor's own choice (dark only since Concept A, R3: no theme cookie), and no
+ * analytics, tracking or third-party scripts. Linked from the footer and from the chat panel's disclosure line.
  */
 export default function Privacy() {
   return (
@@ -74,17 +78,19 @@ export default function Privacy() {
             The site is hosted on Vercel. As with any web host, Vercel&apos;s infrastructure processes ordinary request
             information — such as your IP address, the approximate location derived from it, your browser and the page
             requested — to deliver the site and keep it secure, and may keep it in short-lived logs:{" "}
-            <ExtLink href={VERCEL_PRIVACY}>Vercel&apos;s privacy notice</ExtLink>. The site&apos;s own code logs only
-            technical errors, never chat messages.
+            <ExtLink href={VERCEL_PRIVACY}>Vercel&apos;s privacy notice</ExtLink>. Requests reach Vercel through
+            Cloudflare, which sits in front of the site as its network proxy and processes information about that traffic,
+            such as your IP address:{" "}
+            <ExtLink href={CLOUDFLARE_PRIVACY}>Cloudflare&apos;s privacy policy</ExtLink>. The site&apos;s own code logs
+            only technical errors, never chat messages.
           </p>
         </Section>
 
         <Section title="Cookies and storage">
           <p>
-            Visiting sets no cookies. Two first-party cookies exist only if you change a setting yourself:{" "}
-            <code className="font-mono text-[0.9em] text-fg">{THEME_COOKIE}</code> remembers light or dark mode, and{" "}
+            Visiting sets no cookies. One first-party cookie exists only if you change a setting yourself:{" "}
             <code className="font-mono text-[0.9em] text-fg">{A11Y_COOKIE}</code> remembers your accessibility settings.
-            They hold nothing else, last up to a year and are never used for tracking; you can delete them in your
+            It holds nothing else, can last up to a year and is never used for tracking; you can delete it in your
             browser at any time. The site uses no analytics, advertising or tracking, and loads no third-party scripts
             or fonts.
           </p>
@@ -107,7 +113,7 @@ export default function Privacy() {
           </p>
         </Section>
 
-        <p className="mt-12 text-sm text-fg-subtle">Last updated 13 October 2026.</p>
+        <p className="mt-12 text-sm text-fg-subtle">Last updated 20 November 2026.</p>
         <div className="mt-6">
           <BackLink />
         </div>

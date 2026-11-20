@@ -3,6 +3,7 @@
 // design/studio/prep_brand.py). Crops only: nothing is redrawn, recoloured or composited.
 //
 //   M10_CAPTURES=<folder> node scripts/m10-images.mjs     prints each file and its size
+//   node scripts/m10-images.mjs poker-podium gf-win        only the jobs named (none named: every job)
 //
 // Aegis's full captures are not public: they show a seeded placeholder agent ID, mock-AI text and demo incidents whose
 // technique tags do not match their titles, so only crops of them are. M10_CAPTURES names the folder that holds them
@@ -66,14 +67,35 @@ const jobs = [
   // T Poker's lockup, from the owner's artwork.
   { name: "tpoker-icon", src: `${BRAND}/tpoker-icon.png`, widths: [104, 156], alpha: true },
   { name: "tpoker-wordmark", src: `${BRAND}/tpoker-wordmark.png`, widths: [222, 333], alpha: true },
+  // PROTOTYPE (proto/hero-a-cinematic): the rest of each flagship's own captures, for the lab's Work carousels, at the
+  // widths of the captures they sit beside. Registered in data/lab-images.ts, not data/images.ts: the live About visual
+  // is client code that bundles all of that file's list, so one more entry there would ship in the live page's JavaScript.
+  { name: "poker-podium", src: `${P}/poker/podium.webp`, widths: [320, 480, 640] },
+  { name: "poker-stats", src: `${P}/poker/stats.webp`, widths: [320, 480, 640] },
+  { name: "dos-learning", src: `${P}/developeros/learning.webp`, widths: [800, 1200, 1600] },
+  { name: "dos-career", src: `${P}/developeros/career.webp`, widths: [800, 1200, 1600] },
+  { name: "dos-dashboard", src: `${P}/developeros/dashboard.webp`, widths: [800, 1200, 1600] },
+  { name: "gf-gravity-run", src: `${P}/gravity-flow/gravity-run.webp`, widths: [320, 480, 640] },
+  { name: "gf-cosmetics", src: `${P}/gravity-flow/cosmetics.webp`, widths: [320, 480, 640] },
+  { name: "gf-win", src: `${P}/gravity-flow/win.webp`, widths: [320, 480, 640] },
+  // RELEASE (S21+S22): the case study's two DeveloperOS captures the carousel does not show, whole, at the other DeveloperOS
+  // captures' widths, so every case-study image is served pre-encoded and none goes through the on-demand optimiser.
+  { name: "dos-ai-features", src: `${P}/developeros/ai-features.webp`, widths: [800, 1200, 1600] },
+  { name: "dos-desktop", src: `${P}/developeros/hero.webp`, widths: [800, 1200, 1600] },
 ];
 
-if (!fs.existsSync(`${BRAND}/tpoker-icon.png`) || !fs.existsSync(`${BRAND}/tpoker-wordmark.png`))
+// Job names on the command line run only those jobs (the outputs of the others stand); none runs every job.
+const only = process.argv.slice(2);
+const unknown = only.filter((n) => !jobs.some((j) => j.name === n));
+if (unknown.length) throw new Error(`no such job: ${unknown.join(", ")}`);
+const run = only.length ? jobs.filter((j) => only.includes(j.name)) : jobs;
+
+if (run.some((j) => j.src?.startsWith(BRAND)) && (!fs.existsSync(`${BRAND}/tpoker-icon.png`) || !fs.existsSync(`${BRAND}/tpoker-wordmark.png`)))
   execFileSync("python3", ["design/studio/prep_brand.py"], { stdio: "inherit" });
 
 fs.mkdirSync(OUT, { recursive: true });
 let total = 0;
-for (const j of jobs) {
+for (const j of run) {
   if (!j.src || !fs.existsSync(j.src)) { console.log(`${j.name}`.padEnd(26), "skipped: set M10_CAPTURES to the folder of Aegis's full captures"); continue; }
   const meta = await sharp(j.src).metadata();
   for (const w of j.widths) {
@@ -88,9 +110,9 @@ for (const j of jobs) {
     console.log(`${j.name}-${w}`.padEnd(26), `${m.width}×${m.height}`.padEnd(10), `avif ${(avif.length / 1024).toFixed(1)} KiB`.padEnd(16), `webp ${(webp.length / 1024).toFixed(1)} KiB`, j.crop ? "" : `(src ${meta.width}×${meta.height})`);
   }
 }
-// The Aegis case study's capture, at the crop's own size: its panel serves it through next/image (AVIF, then WebP).
+// The Aegis case study's capture, at the crop's own size: its panel serves this file as it is (`direct`, S21+S22).
 const board = capture("aegis/08-incident-kanban.png");
-if (board && fs.existsSync(board)) {
+if (!only.length && board && fs.existsSync(board)) {
   const buf = await sharp(board).extract(AEGIS_BOARD).webp({ quality: 90, effort: 6 }).toBuffer();
   fs.writeFileSync(`${P}/aegis/incident-board-open.webp`, buf); total += buf.length;
   console.log("aegis/incident-board-open".padEnd(26), `${AEGIS_BOARD.width}×${AEGIS_BOARD.height}`.padEnd(10), `webp ${(buf.length / 1024).toFixed(1)} KiB`);

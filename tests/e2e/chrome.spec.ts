@@ -2,13 +2,12 @@
 import { test, expect, type Page } from "playwright/test";
 import { open, CHAPTERS } from "../support/page";
 
-test("desktop header: name, four destinations, accessibility, theme and one Contact action — no language switch, no palette; the chat is not in the header", async ({ page }) => {
+test("desktop header: name, four destinations, accessibility and one Contact action — no language switch, no palette; the chat is not in the header", async ({ page }) => {
   await page.goto("/");
   const header = page.locator("header[data-site-nav]");
   await expect(header.getByRole("link", { name: "Tay Shofer — home" })).toBeVisible();
   for (const name of ["Work", "About", "Stack", "Contact"]) await expect(header.getByRole("link", { name, exact: true })).toBeVisible();
   await expect(header.getByRole("button", { name: "Accessibility settings" })).toBeVisible();
-  await expect(header.getByRole("button", { name: /Switch to (dark|light) mode/ })).toBeVisible();
   await expect(header.getByRole("link", { name: "Get in touch" })).toHaveAttribute("href", "#contact");
   // English only (the owner's decision, 2026-10-13): no language switch, and nothing links to another language.
   await expect(page.getByRole("group", { name: /language/i })).toHaveCount(0);
@@ -23,22 +22,15 @@ test("desktop header: name, four destinations, accessibility, theme and one Cont
   expect(await page.content()).not.toMatch(/GROQ|gsk_/);
 });
 
-test("light is the default; the dark theme is the visitor's choice and is remembered", async ({ browser }) => {
-  const { ctx, page } = await open(browser, [1440, 900]);
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe("rgb(243, 244, 246)");
-  await page.getByRole("button", { name: "Switch to dark mode" }).click();
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await page.reload(); await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await ctx.close();
-});
-
-test("a theme toggle shifts no layout", async ({ page }) => {
-  await page.goto("/");
-  await page.evaluate(() => { (window as unknown as { __cls: number }).__cls = 0; new PerformanceObserver((l) => { for (const e of l.getEntries() as unknown as { value: number; hadRecentInput: boolean }[]) if (!e.hadRecentInput) (window as unknown as { __cls: number }).__cls += e.value; }).observe({ type: "layout-shift" }); });
-  await page.evaluate(() => document.getElementById("about")!.scrollIntoView({ behavior: "instant" as ScrollBehavior }));
-  await page.getByRole("button", { name: /Switch to (dark|light) mode/ }).click(); await page.waitForTimeout(400);
-  expect(await page.evaluate(() => (window as unknown as { __cls: number }).__cls)).toBeLessThan(0.02);
+// R3 and R12 (Tay, session 16): dark is the only theme. A theme cookie left from the old site changes nothing.
+test("dark is the only theme, cookie or not", async ({ browser }) => {
+  for (const theme of [undefined, "light", "dark"] as const) {
+    const { ctx, page } = await open(browser, [1440, 900], theme ? { theme } : {});
+    await expect(page.locator("html"), `cookie ${theme}`).toHaveAttribute("data-theme", "dark");
+    expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), `cookie ${theme}`).toBe("rgb(4, 6, 13)");
+    await expect(page.getByRole("button", { name: /Switch to (dark|light) mode/ })).toHaveCount(0);
+    await ctx.close();
+  }
 });
 
 const headerBg = (page: Page) => page.locator("header[data-site-nav]").evaluate((h) => getComputedStyle(h).backgroundColor);
@@ -67,7 +59,7 @@ const headerRatios = (page: Page, behind: string) => page.locator("header[data-s
 }, behind);
 const SECTIONS = ["work-poker", "work-aegis", "work-developeros", "work-gravity-flow", "more-work", "about", "skills", "approach", "contact"];
 
-for (const theme of ["light", "dark"] as const) {
+for (const theme of ["dark"] as const) {
   test(`${theme}: the header is one neutral surface over every section — it never repaints, and its controls read on all of them`, async ({ browser }) => {
     const { ctx, page } = await open(browser, [1440, 900], { theme, motion: true });
     await page.evaluate(() => scrollTo({ top: 40, behavior: "instant" as ScrollBehavior })); await page.screenshot({ clip: { x: 0, y: 0, width: 100, height: 40 } });
@@ -129,22 +121,22 @@ test("a jump from the nav makes that link current where it lands", async ({ brow
   await ctx.close();
 });
 
-test("phones, both themes: the header's theme and menu buttons read on every section they pass over", async ({ browser }) => {
-  for (const theme of ["light", "dark"] as const) {
+test("phones, dark: the header's buttons read on every section they pass over", async ({ browser }) => {
+  for (const theme of ["dark"] as const) {
     const { ctx, page } = await open(browser, [390, 844], { theme });
     for (const id of ["hero", ...SECTIONS]) {
       if (id === "hero") { await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" as ScrollBehavior })); await page.screenshot({ clip: { x: 0, y: 0, width: 100, height: 40 } }); }
       else await under(page, id, 4);
       const behind = id === "hero" ? await page.evaluate(() => getComputedStyle(document.body).backgroundColor) : await bgOf(page, id);
       const ratios = await headerRatios(page, behind);
-      expect(ratios.filter((r) => r.icon).length, `${theme} ${id}`).toBe(2);                 // theme and menu
+      expect(ratios.filter((r) => r.icon).length, `${theme} ${id}`).toBe(1);                 // the menu (no theme control: R3)
       for (const r of ratios) expect(r.r, `${theme} ${id} ${r.t}`).toBeGreaterThanOrEqual(r.icon ? 3 : 4.5);
     }
     await ctx.close();
   }
 });
 
-for (const theme of ["light", "dark"] as const) {
+for (const theme of ["dark"] as const) {
   test(`phones, ${theme}: during real touch swipes the header keeps one surface on every frame, and the current section only moves forward then back`, async ({ browser }) => {
     test.setTimeout(120_000);
     const { ctx, page } = await open(browser, [390, 844], { theme });
@@ -190,10 +182,9 @@ test("desktop: after a jump to any chapter, its Case study button is whole in th
   }
 });
 
-test("phones: theme in the header, the rest in the menu sheet; Escape and the close button return focus to the menu button", async ({ browser }) => {
+test("phones: the menu button in the header, the rest in the menu sheet; Escape and the close button return focus to the menu button", async ({ browser }) => {
   const { ctx, page } = await open(browser, [390, 844]);
   const menu = page.getByRole("button", { name: "Open menu" });
-  await expect(page.locator("header").getByRole("button", { name: /Switch to (dark|light) mode/ })).toBeVisible();
   await menu.click();
   const sheet = page.getByRole("dialog", { name: "Navigation" });
   await expect(sheet).toBeVisible();
@@ -210,6 +201,25 @@ test("phones: theme in the header, the rest in the menu sheet; Escape and the cl
   await menu.click(); await sheet.getByRole("button", { name: "Close menu" }).click(); await expect(sheet).toBeHidden(); await expect(menu).toBeFocused();
   await ctx.close();
 });
+
+// Tay's condition (S18+S19): with the menu as the phone header's one icon button, the accessibility panel stays
+// reachable on phones. Its button lives in the menu sheet: a full-size target, in view, and it opens the panel.
+for (const vp of [[320, 568], [390, 844]] as const) {
+  test(`${vp[0]}×${vp[1]}: the accessibility settings are one tap into the menu sheet, and open from there`, async ({ browser }) => {
+    const { ctx, page } = await open(browser, vp);
+    await expect(page.locator("header[data-site-nav]").getByRole("button", { name: "Accessibility settings" })).toBeHidden();
+    await page.getByRole("button", { name: "Open menu" }).click();
+    const sheet = page.getByRole("dialog", { name: "Navigation" });
+    const a11y = sheet.getByRole("button", { name: "Accessibility settings" });
+    await expect(a11y).toBeVisible();
+    await expect(a11y).toBeInViewport({ ratio: 1 });
+    expect((await a11y.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    await a11y.click();
+    await expect(sheet).toBeHidden();
+    await expect(page.getByRole("dialog", { name: "Accessibility settings" })).toBeVisible();
+    await ctx.close();
+  });
+}
 
 test("phones: picking a section in the menu closes it, lands there, and leaves the page scrollable", async ({ browser }) => {
   const { ctx, page } = await open(browser, [390, 844]);
@@ -229,7 +239,7 @@ test("844×390 landscape: the menu sheet scrolls, so its last control is reachab
   await ctx.close();
 });
 
-type Stop = { name: string; ring: boolean; obscured: boolean };
+type Stop = { name: string; ring: boolean; obscured: boolean; underLauncher: boolean };
 async function tabThrough(page: Page, max = 90): Promise<Stop[]> {
   const stops: Stop[] = [];
   for (let i = 0; i < max; i++) {
@@ -240,9 +250,12 @@ async function tabThrough(page: Page, max = 90): Promise<Stop[]> {
       const ringed = cs.outlineStyle !== "none" && parseFloat(cs.outlineWidth) >= 2;
       // Radios and checkboxes are visually hidden; their visible part (the next sibling) carries the ring.
       const sib = e.matches("input") ? getComputedStyle(e.nextElementSibling!) : null;
+      // #16 (WCAG 2.4.11): no focused control sits even partly under the chat launcher, in whatever state it is in.
+      const chat = document.querySelector<HTMLElement>("[data-chat-launcher]"), c = chat?.getBoundingClientRect();
+      const underLauncher = !!c && !chat!.contains(e) && r.right > c.left + 1 && r.left < c.right - 1 && r.bottom > c.top + 1 && r.top < c.bottom - 1;
       return { name: (e.getAttribute("aria-label") || e.textContent || (e as HTMLInputElement).value || "").trim().replace(/\s+/g, " ").slice(0, 40),
         ring: ringed || (!!sib && sib.outlineStyle !== "none" && parseFloat(sib.outlineWidth) >= 2),
-        obscured: !nav.contains(e) && e.getAttribute("href") !== "#main" && r.top < nav.getBoundingClientRect().bottom - 1 };
+        obscured: !nav.contains(e) && e.getAttribute("href") !== "#main" && r.top < nav.getBoundingClientRect().bottom - 1, underLauncher };
     });
     if (!s) break;
     if (stops.length && stops[0].name === s.name && i > 5) break;
@@ -252,31 +265,36 @@ async function tabThrough(page: Page, max = 90): Promise<Stop[]> {
 }
 
 for (const vp of [[1440, 900], [390, 844]] as const) {
-  test(`${vp[0]}×${vp[1]}: Tab runs skip link → header → hero → the four chapters → contact → footer, every stop ringed and unobscured`, async ({ browser }) => {
+  test(`${vp[0]}×${vp[1]}: Tab runs skip link → header → hero → the four panels → contact → footer, every stop ringed and unobscured`, async ({ browser }) => {
     const { ctx, page } = await open(browser, vp);
     const stops = await tabThrough(page);
     expect(stops[0].name).toBe("Skip to content");
     const at = (re: RegExp) => stops.findIndex((s) => re.test(s.name));
-    const order = [at(/^See the work/), at(/^T Poker/), at(/^Case study/), at(/^Email me/), at(/^Download résumé/), at(/^Back to top/)];
+    // Contact's résumé by its whole name: the hero's own résumé action comes first, and its name starts the same way.
+    const order = [at(/^Explore my work/), at(/^T Poker/), at(/^Case study/), at(/^Email me/), at(/^Download résumé \(PDF\)$/), at(/^Back to top/)];
     for (const i of order) expect(i, JSON.stringify(stops.map((s) => s.name))).toBeGreaterThan(0);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
-    for (const s of stops) { expect(s.ring, `focus ring on ${s.name}`).toBe(true); expect(s.obscured, `${s.name} under the header`).toBe(false); }
+    for (const s of stops) {
+      expect(s.ring, `focus ring on ${s.name}`).toBe(true);
+      expect(s.obscured, `${s.name} under the header`).toBe(false);
+      expect(s.underLauncher, `${s.name} under the chat launcher`).toBe(false);
+    }
     await ctx.close();
   });
 }
 
-test("the focus ring is the solid accent: iris on paper, light iris on a dark plate", async ({ page }) => {
+test("the focus ring is the layer's solid cyan, in the hero and on a product panel", async ({ page }) => {
   await page.goto("/");
-  const hero = page.getByRole("link", { name: "See the work" }); await hero.focus();
-  expect(await hero.evaluate((e) => getComputedStyle(e).outlineColor)).toBe("rgb(74, 63, 224)");
-  const store = page.locator("#work-poker a[href*='apps.apple.com']"); await store.focus();
-  expect(await store.evaluate((e) => getComputedStyle(e).outlineColor)).toBe("rgb(177, 180, 255)");
+  const hero = page.getByRole("link", { name: "Explore my work" }); await hero.focus();
+  expect(await hero.evaluate((e) => getComputedStyle(e).outlineColor)).toBe("rgb(46, 230, 214)");
+  const live = page.locator("#work-poker a[data-primary]"); await live.focus();
+  expect(await live.evaluate((e) => getComputedStyle(e).outlineColor)).toBe("rgb(46, 230, 214)");
 });
 
 test("every external link opens safely and says so", async ({ page }) => {
   await page.goto("/");
   const links = await page.locator('a[target="_blank"]').evaluateAll((as) => as.map((a) => ({ rel: a.getAttribute("rel") ?? "", text: a.textContent ?? "", href: a.getAttribute("href") })));
-  expect(links.length).toBeGreaterThan(8);
+  expect(links.length).toBeGreaterThanOrEqual(8);
   for (const l of links) { expect(l.rel, l.href!).toMatch(/noopener/); expect(l.rel).toMatch(/noreferrer/); expect(l.text, l.href!).toMatch(/opens in a new tab/); }
   expect(await page.locator("main").textContent()).not.toContain("↗");
 });

@@ -1,4 +1,5 @@
 import type { ProjectStatus } from "@/components/ui/Tag";
+import type { CaptureName } from "@/data/lab-images";
 
 /**
  * Project content.
@@ -56,9 +57,18 @@ export type ProjectMedia = {
   /**
    * Serve these pre-encoded WebPs as they are, not through the image optimiser. T Poker's tall phone captures
    * failed to load through `/_next/image` on the Vercel Preview while plain static files were delivered fine
-   * (other static assets); the files are already small, so the optimiser adds a failure point, not value.
+   * (other static assets); the files are already small, so the optimiser adds a failure point, not value. Aegis's
+   * one capture is the image script's own output at the crop's size (S21+S22).
    */
   direct?: boolean;
+  /**
+   * The case study's pre-encoded files for each capture, by its `src` (S21+S22): scripts/m10-images.mjs writes them
+   * into public/work/ as AVIF and WebP at each width, so the case study serves them straight, never through the
+   * on-demand optimiser (whose first encode on a cold cache outlasted the tests' polls, S20). The names and widths are
+   * data/images.ts's and data/lab-images.ts's, repeated here because client code never imports those tables;
+   * tests/unit/case-study-images.test.ts holds them equal, and the files to their sources.
+   */
+  encoded?: Record<string, { name: CaptureName; widths: readonly number[] }>;
 };
 
 export type Project = {
@@ -226,6 +236,7 @@ export const projects: Project[] = [
       image: "/projects/aegis/incident-board-open.webp",
       alt: "The Aegis Incidents page, which groups related alerts and works them open → investigating → resolved: the Open column's first incident, “Privilege escalation on workstation”, severity 80, high, one alert, MITRE T1548",
       fit: "cover",
+      direct: true,
     },
     caseStudy: {
       problem:
@@ -306,6 +317,13 @@ export const projects: Project[] = [
         { src: "/projects/developeros/career.webp", alt: "Career tools—leads, CV match, interview prep" },
         { src: "/projects/developeros/hero.webp", alt: "DeveloperOS desktop window" },
       ],
+      encoded: {
+        "/projects/developeros/dashboard.webp": { name: "dos-dashboard", widths: [800, 1200, 1600] },
+        "/projects/developeros/ai-features.webp": { name: "dos-ai-features", widths: [800, 1200, 1600] },
+        "/projects/developeros/learning.webp": { name: "dos-learning", widths: [800, 1200, 1600] },
+        "/projects/developeros/career.webp": { name: "dos-career", widths: [800, 1200, 1600] },
+        "/projects/developeros/hero.webp": { name: "dos-desktop", widths: [800, 1200, 1600] },
+      },
     },
     caseStudy: {
       problem:
@@ -388,6 +406,13 @@ export const projects: Project[] = [
         { src: "/projects/gravity-flow/cosmetics.webp", alt: "Cosmetics collection screen" },
         { src: "/projects/gravity-flow/win.webp", alt: "Three-star level completion" },
       ],
+      encoded: {
+        "/projects/gravity-flow/gameplay.webp": { name: "gf-gameplay", widths: [320, 480, 640] },
+        "/projects/gravity-flow/boss.webp": { name: "gf-boss", widths: [320, 480] },
+        "/projects/gravity-flow/gravity-run.webp": { name: "gf-gravity-run", widths: [320, 480, 640] },
+        "/projects/gravity-flow/cosmetics.webp": { name: "gf-cosmetics", widths: [320, 480, 640] },
+        "/projects/gravity-flow/win.webp": { name: "gf-win", widths: [320, 480, 640] },
+      },
     },
     caseStudy: {
       problem:
@@ -566,3 +591,22 @@ export function repoLabel(p: Pick<Project, "repo">): string | undefined {
 export function publicRepoUrl(p: Pick<Project, "repo">): string | undefined {
   return p.repo.visibility === "public" ? p.repo.url : undefined;
 }
+
+/**
+ * Each flagship's gallery: its real captures in public/work/ (names from data/images.ts or data/lab-images.ts), in the
+ * order a gallery shows them.
+ * Only the home page's Work panels read it (components/sections/panels.ts). It is a separate export, not a field of `projects`, so it stays out of every bundle that imports them
+ * (the case study's among them).
+ *
+ * To add a capture: encode it into public/work/ (scripts/m10-images.mjs), list it in data/lab-images.ts (not
+ * data/images.ts: the live page's client code bundles that one whole), then append its name here. Give it its alt text
+ * in the same entry ({ image, alt }), unless components/sections/panels.ts already has one. One entry is a single still
+ * capture; two or more become a carousel.
+ */
+export type GalleryEntry = CaptureName | { image: CaptureName; alt: string };
+export const PROJECT_GALLERIES: Record<"poker" | "aegis" | "developeros" | "gravity-flow", readonly GalleryEntry[]> = {
+  poker: ["poker-home", "poker-live", "poker-settle", "poker-podium", "poker-stats"],
+  aegis: ["aegis-alerts", "hero-aegis"],
+  developeros: ["dos-search", "dos-learning", "dos-career", "dos-dashboard"],
+  "gravity-flow": ["gf-gameplay", "gf-boss", "gf-gravity-run", "gf-cosmetics", "gf-win"],
+};

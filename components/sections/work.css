@@ -1,0 +1,540 @@
+/* components/sections/work.css — the page under the hero: Work, Two more, About, Stack, Think · Build · Ship and
+   Contact (Concept A; D1 reopened by Tay, 2026-11-18; D2 not reopened, so no WebGL). Only its geometry: every colour,
+   size, step, radius and timing is a --cine-* token from app/cinematic.css. Scoped under .wk. */
+
+.wk { position: relative; isolation: isolate; min-height: 100svh; overflow: clip; }
+
+/* ── The sky: the base gradient and two static glows, once, behind the whole section. No field, no drift: here the
+   captures are the star. ── */
+.wk__sky { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: var(--cine-sky); }
+/* A glow is never a scroll anchor: the violet one sits at a share of the page's height, so when Stack's filter shortens
+   the page it moves up, and the browser's scroll anchoring moved the view with it (up to 462px at 390, measured,
+   session 14). Only the glows are left out, so everything else anchors as before. */
+.wk__glow { position: absolute; overflow-anchor: none; }
+/* The cyan glow starts at the region's top edge, where it is fully faded: above it is the hero, so a glow cut there
+   would draw a line (on the lab page the top of the screen hid that cut). */
+.wk__glow--cyan { right: -18%; top: 0; width: 72%; height: 110vh; background: var(--cine-glow-cyan); }
+.wk__glow--violet { left: -30%; top: 38%; width: 80%; height: 120vh; background: var(--cine-glow-violet); }
+
+/* The footer follows, and keeps the page's last strip clear for the chat launcher (components/chat/chat.css). */
+.wk__main { padding-bottom: var(--cine-section-y); }
+
+/* ── Work's opening: the eyebrow and the title. No reveal of its own: the hero's is the page's one (R10). ── */
+.wk__head { max-width: 52rem; padding-block: clamp(56px, 12vh, 128px) clamp(40px, 8vh, 96px); }
+.wk__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cine-space-3);
+  font-size: var(--cine-text-eyebrow);
+  font-weight: var(--cine-weight-eyebrow);
+  color: var(--cine-cyan);
+}
+.wk__eyebrow::before { content: ""; width: var(--cine-space-6); height: 1px; background: var(--cine-duotone); }
+.wk__title {
+  margin-top: var(--cine-space-4);
+  font-size: var(--cine-text-section);
+  line-height: var(--cine-leading-display);
+  letter-spacing: var(--cine-tracking-display);
+  font-weight: var(--cine-weight-display);
+  color: var(--cine-ink);
+}
+
+/* ── The panels: one per product, the capture and the words side by side, alternating; stacked below 1024px with the
+   words first (the name and its one line are what a reader needs in seconds). ── */
+.wk__panels { display: grid; gap: var(--cine-section-y); }
+.wk__panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--cine-space-7); align-items: center; }
+@media (min-width: 1024px) {
+  .wk__panel { --wk-words: 5fr; --wk-capture: 7fr; column-gap: clamp(40px, 5vw, 80px); }
+  .wk__panel[data-kind="phone"] { --wk-words: 6fr; --wk-capture: 5fr; }
+  .wk__panel[data-side="right"] { grid-template-columns: minmax(0, var(--wk-words)) minmax(0, var(--wk-capture)); }
+  .wk__panel[data-side="left"] { grid-template-columns: minmax(0, var(--wk-capture)) minmax(0, var(--wk-words)); }
+  .wk__panel[data-side="left"] .wk__stage { order: -1; }
+}
+
+.wk__name {
+  font-size: var(--cine-text-name);
+  line-height: var(--cine-leading-display);
+  letter-spacing: var(--cine-tracking-display);
+  font-weight: var(--cine-weight-display);
+  color: var(--cine-ink);
+}
+.wk__line {
+  margin-top: var(--cine-space-3);
+  max-width: 34rem;
+  font-size: var(--cine-text-lead);
+  line-height: var(--cine-leading-lead);
+  color: var(--cine-mist);
+}
+.wk__status {
+  margin-top: var(--cine-space-5);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--cine-space-1) var(--cine-space-2);
+  font-size: var(--cine-text-small);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-ink);
+}
+.wk__status-k { font-size: var(--cine-text-label); font-weight: var(--cine-weight-label); color: var(--cine-faint); }
+.wk__chips { margin-top: var(--cine-space-4); display: flex; flex-wrap: wrap; gap: var(--cine-space-2); }
+.wk__chips li {
+  padding: var(--cine-space-1) var(--cine-space-3);
+  border: 1px solid var(--cine-hair);
+  border-radius: var(--cine-radius-pill);
+  background: var(--cine-glass-ink);
+  font-size: var(--cine-text-label);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-mist);
+}
+.wk__links { margin-top: var(--cine-space-5); display: flex; flex-wrap: wrap; align-items: center; gap: var(--cine-space-3) var(--cine-space-5); }
+/* The product's own destination: the hero's ghost control. */
+.wk__go {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cine-space-2);
+  min-height: var(--cine-control-h-sm);
+  padding: 0 var(--cine-space-5);
+  border: 1px solid var(--cine-edge);
+  border-radius: var(--cine-radius-pill);
+  background: var(--cine-glass-ink);
+  font-size: var(--cine-text-body);
+  font-weight: var(--cine-weight-control);
+  letter-spacing: var(--cine-tracking-control);
+  color: var(--cine-ink);
+  text-decoration: none;
+  transition: background-color var(--cine-dur-hover) var(--cine-ease), border-color var(--cine-dur-hover) var(--cine-ease);
+}
+.wk__go:hover { border-color: var(--cine-edge-hover); background: var(--cine-glass-ink-hover); }
+.wk .wk__go:focus-visible { border-radius: var(--cine-radius-pill); }
+/* Its case study (R4): a button that reads as the accent's text link, at control height. It opens the site's dialog. */
+.wk__more {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--cine-target-min);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--cine-text-body);
+  font-weight: var(--cine-weight-control);
+  color: var(--cine-cyan);
+  text-decoration: none;
+  text-underline-offset: 4px;
+}
+.wk__more:hover { text-decoration: underline; }
+.wk .wk__private { color: var(--cine-faint); min-height: var(--cine-target-min); }
+
+/* ── The stage: the real capture on glass, its glow behind it. It lifts on hover, keyboard focus anywhere in the
+   panel, and touch: a controlled step up (--cine-lift), a cyan edge and halo. With reduced motion it never moves;
+   the edge and halo still answer. ── */
+.wk__stage {
+  margin: 0;
+  display: grid;
+  place-items: center;
+  padding: clamp(20px, 3vw, 40px);
+  border: 1px solid var(--cine-hair);
+  border-radius: var(--cine-radius-stage);
+  background: var(--cine-glow-cyan), var(--cine-glass-ink);
+  transition: translate var(--cine-dur-hover) var(--cine-ease), border-color var(--cine-dur-hover) var(--cine-ease), box-shadow var(--cine-dur-hover) var(--cine-ease);
+}
+.wk__panel[data-tone="violet"] .wk__stage { background: var(--cine-glow-violet), var(--cine-glass-ink); }
+.wk__device { overflow: hidden; border: 1px solid var(--cine-hair); box-shadow: var(--cine-elevation); }
+.wk__panel[data-kind="phone"] .wk__device { width: min(300px, 72vw); border-radius: var(--cine-radius-device); }
+.wk__panel[data-kind="window"] .wk__device { width: 100%; border-radius: var(--cine-radius-window); }
+.wk__device img { display: block; width: 100%; height: auto; }
+
+/* ── The carousel (Reel.tsx): a CSS 3D coverflow. Every capture sits in the same grid cell; the front one is flat and
+   whole, its neighbours step aside, turn away and dim (2D elements in perspective: no WebGL). The stage clips them
+   sideways. Without JS only the first is shown, and the controls stay hidden (they would do nothing). ── */
+.wk__stage[data-captures]:not([data-captures="1"]) { overflow-x: clip; }
+.wk__panel[data-kind="phone"] .wk__reel .wk__device { width: min(250px, 60vw); }
+.wk__reel { --wk-flow-x: 56%; width: 100%; }
+.wk__track { display: grid; place-items: center; perspective: 1100px; touch-action: pan-y; user-select: none; }
+.wk__slide {
+  grid-area: 1 / 1;
+  transition: transform var(--cine-dur-move) var(--cine-ease-reveal), opacity var(--cine-dur-move) var(--cine-ease);
+}
+.wk__slide:not([data-shown]) { visibility: hidden; }
+/* Every slide keeps its capture's box, drawn or not: an empty device holds the shape the server handed the carousel, so
+   the stage is as tall as its tallest capture from the first paint, with or without JS, and keeps that height as the
+   reader moves (Aegis's alert row and its board are different shapes). */
+.wk__slide .wk__device:empty::before { content: ""; display: block; aspect-ratio: var(--wk-box); }
+/* Windows in a carousel: the front one narrower than the stage, so its neighbours show either side. */
+.wk__panel[data-kind="window"] .wk__slide { width: 80%; }
+.wk__slide[data-offset="0"] { z-index: 3; }
+.wk__slide[data-offset="1"] { z-index: 2; cursor: pointer; transform: translateX(var(--wk-flow-x)) rotateY(calc(-1 * var(--cine-flow-turn))) scale(var(--cine-flow-scale)); }
+.wk__slide[data-offset="-1"] { z-index: 2; cursor: pointer; transform: translateX(calc(-1 * var(--wk-flow-x))) rotateY(var(--cine-flow-turn)) scale(var(--cine-flow-scale)); }
+.wk__slide[data-offset="2"] { z-index: 1; opacity: 0; transform: translateX(calc(1.6 * var(--wk-flow-x))) scale(0.6); }
+.wk__slide[data-offset="-2"] { z-index: 1; opacity: 0; transform: translateX(calc(-1.6 * var(--wk-flow-x))) scale(0.6); }
+/* A side capture dims under a layer of the field itself (opacity only, so it composites). */
+.wk__slide .wk__device { position: relative; }
+.wk__slide .wk__device::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--cine-abyss);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--cine-dur-move) var(--cine-ease);
+}
+.wk__slide:not([data-offset="0"]) .wk__device::after { opacity: var(--cine-flow-dim); }
+
+.wk__controls { display: flex; justify-content: center; align-items: center; gap: var(--cine-space-2); margin-top: var(--cine-space-4); }
+.wk__reel:not([data-ready]) .wk__controls { visibility: hidden; }
+.wk__dots { display: flex; }
+.wk__step, .wk__dot { display: grid; place-items: center; width: var(--cine-target-min); height: var(--cine-target-min); border-radius: var(--cine-radius-pill); }
+.wk__step {
+  border: 1px solid var(--cine-edge);
+  background: var(--cine-glass-ink);
+  color: var(--cine-ink);
+  transition: background-color var(--cine-dur-hover) var(--cine-ease), border-color var(--cine-dur-hover) var(--cine-ease);
+}
+.wk__step:hover { border-color: var(--cine-edge-hover); background: var(--cine-glass-ink-hover); }
+.wk__step--next svg { scale: -1 1; }
+.wk__dot::before {
+  content: "";
+  width: var(--cine-space-2);
+  height: var(--cine-space-2);
+  border-radius: var(--cine-radius-pill);
+  background: var(--cine-faint);
+  transition: width var(--cine-dur-hover) var(--cine-ease), background-color var(--cine-dur-hover) var(--cine-ease);
+}
+.wk__dot[aria-selected="true"]::before { width: var(--cine-space-5); background: var(--cine-cyan); }
+.wk .wk__step:focus-visible, .wk .wk__dot:focus-visible { border-radius: var(--cine-radius-pill); }
+
+/* Reduced motion (the OS or the site's switch): a flat slider. Only the front capture shows; no turn, no movement. */
+@media (prefers-reduced-motion: reduce) {
+  .wk__slide, .wk__slide .wk__device::after { transition: none; }
+  .wk__slide:not([data-offset="0"]) { transform: none; visibility: hidden; }
+}
+[data-reduced-motion="true"] .wk__slide, [data-reduced-motion="true"] .wk__slide .wk__device::after { transition: none; }
+[data-reduced-motion="true"] .wk__slide:not([data-offset="0"]) { transform: none; visibility: hidden; }
+
+.wk__panel:is(:hover, :focus-within, :active) .wk__stage {
+  translate: 0 var(--cine-lift);
+  border-color: var(--cine-glass-accent-edge);
+  box-shadow: var(--cine-glow-lift);
+}
+@media (prefers-reduced-motion: reduce) {
+  .wk__panel:is(:hover, :focus-within, :active) .wk__stage { translate: none; }
+}
+[data-reduced-motion="true"] .wk__panel:is(:hover, :focus-within, :active) .wk__stage { translate: none; }
+
+/* ── Two more (R5, MoreWork.tsx): the two smaller systems, under the four panels and after a hairline. The live title
+   alone, then two ruled rows on About's grid: from 1024px the name and its context take the words share, the summary
+   and the links the capture's; stacked below. It holds still. ── */
+.wk__mw {
+  margin-top: var(--cine-section-y);
+  padding-top: var(--cine-space-7);
+  border-top: 1px solid var(--cine-hair);
+}
+.wk__mw-rows { margin-top: var(--cine-space-6); }
+.wk__mw-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--cine-space-3);
+  padding-block: var(--cine-space-5);
+  border-top: 1px solid var(--cine-hair);
+}
+@media (min-width: 1024px) {
+  .wk__mw-row { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: clamp(40px, 5vw, 80px); }
+}
+.wk__mw-name {
+  font-size: var(--cine-text-lead);
+  line-height: var(--cine-leading-label);
+  font-weight: var(--cine-weight-name);
+  letter-spacing: var(--cine-tracking-name);
+  color: var(--cine-ink);
+}
+.wk__mw-context {
+  margin-top: var(--cine-space-2);
+  max-width: 36rem;
+  font-size: var(--cine-text-small);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-faint);
+}
+.wk__mw-summary {
+  max-width: 36rem;
+  font-size: var(--cine-text-body);
+  line-height: var(--cine-leading-lead);
+  color: var(--cine-mist);
+}
+.wk__mw-links { margin-top: var(--cine-space-4); }
+
+/* ── About (P3.3, About.tsx): who, in about ten seconds. Under the panels, after a hairline: from 1024px the title
+   takes the panels' words share and the words take the capture's; below that they stack, in reading order. No stage,
+   no capture, no link (R10), and it holds still. ── */
+.wk__about {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--cine-space-5);
+  margin-top: var(--cine-section-y);
+  padding-top: var(--cine-space-7);
+  border-top: 1px solid var(--cine-hair);
+}
+@media (min-width: 1024px) {
+  .wk__about { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: clamp(40px, 5vw, 80px); }
+}
+/* Stack and Contact (below) set their eyebrows and titles the same way. */
+.wk__about-eyebrow, .wk__stack-eyebrow, .wk__contact-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cine-space-3);
+  font-size: var(--cine-text-eyebrow);
+  font-weight: var(--cine-weight-eyebrow);
+  color: var(--cine-cyan);
+}
+.wk__about-eyebrow::before, .wk__stack-eyebrow::before, .wk__contact-eyebrow::before { content: ""; width: var(--cine-space-6); height: 1px; background: var(--cine-duotone); }
+/* A heading at the products' tier (it is an h2 beside theirs), each half of the live title on its own line. Stack's,
+   Think · Build · Ship's and Contact's titles share it. */
+.wk__about-title, .wk__stack-title, .wk__tbs-title, .wk__mw-title, .wk__contact-title {
+  margin-top: var(--cine-space-4);
+  font-size: var(--cine-text-name);
+  line-height: var(--cine-leading-display);
+  letter-spacing: var(--cine-tracking-display);
+  font-weight: var(--cine-weight-display);
+  color: var(--cine-ink);
+}
+.wk__about-title span, .wk__contact-title span { display: block; }
+.wk__about-lede, .wk__contact-lead {
+  max-width: 36rem;
+  font-size: var(--cine-text-lead);
+  line-height: var(--cine-leading-lead);
+  color: var(--cine-mist);
+}
+/* The four facts: a quiet two-by-two list, each on its own hairline (one column on phones). */
+.wk__about-facts { margin-top: var(--cine-space-5); max-width: 36rem; display: grid; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 640px) {
+  .wk__about-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--cine-space-5); }
+}
+.wk__about-facts li {
+  padding-block: var(--cine-space-3);
+  border-top: 1px solid var(--cine-hair);
+  font-size: var(--cine-text-small);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-ink);
+}
+/* Contact's email: the panels' control, filled in the accent (the hero's primary). */
+.wk__go--fill { border-color: var(--cine-cyan); background: var(--cine-cyan); color: var(--cine-on-accent); }
+.wk__go--fill:hover { border-color: var(--cine-cyan-hover); background: var(--cine-cyan-hover); }
+
+/* ── Stack (P3.4, StackBlock.tsx): the tools behind the work, under About and after a hairline, as the live Stack shows
+   them. "Filter by project" first (StackFilter.tsx): pills at the 44px target, the pressed one filled in the accent,
+   like the résumé; under them, the live status line, at the lead size. Then one row per group, each on its own
+   hairline: from 1024px its name takes the words share and its tools and evidence the capture's (they line up under
+   About's words); below that they stack. Every tool is a pill: outlined under All; with a project chosen, only its
+   tools remain (stack.ts writes those rules from the options), each filled in the accent, and the evidence steps back.
+   Nothing animates. ── */
+.wk__stack {
+  margin-top: var(--cine-section-y);
+  padding-top: var(--cine-space-7);
+  border-top: 1px solid var(--cine-hair);
+}
+.wk__lens { margin-top: var(--cine-space-6); }
+/* Without JavaScript, and until hydration, the buttons would do nothing: not shown, their space kept. */
+.wk__lens:not([data-ready]) { visibility: hidden; }
+.wk__lens-label { font-size: var(--cine-text-small); line-height: var(--cine-leading-label); color: var(--cine-mist); }
+.wk__lens-chips { margin-top: var(--cine-space-3); display: flex; flex-wrap: wrap; gap: var(--cine-space-2); }
+.wk__lens-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--cine-target-min);
+  padding: 0 var(--cine-space-4);
+  border: 1px solid var(--cine-edge);
+  border-radius: var(--cine-radius-pill);
+  background: var(--cine-glass-ink);
+  font-size: var(--cine-text-small);
+  font-weight: var(--cine-weight-label);
+  color: var(--cine-ink);
+  transition: background-color var(--cine-dur-hover) var(--cine-ease), border-color var(--cine-dur-hover) var(--cine-ease), color var(--cine-dur-hover) var(--cine-ease);
+}
+.wk__lens-chip:hover { border-color: var(--cine-edge-hover); background: var(--cine-glass-ink-hover); }
+.wk__lens-chip[aria-pressed="true"] { border-color: var(--cine-cyan); background: var(--cine-cyan); color: var(--cine-on-accent); }
+.wk__lens-chip[aria-pressed="true"]:hover { border-color: var(--cine-cyan-hover); background: var(--cine-cyan-hover); }
+.wk .wk__lens-chip:focus-visible { border-radius: var(--cine-radius-pill); }
+/* The status: what the filter shows, said plainly above the groups (empty under All, as on the live page). */
+.wk__lens-status {
+  min-height: 1lh;
+  margin-top: var(--cine-space-4);
+  font-size: var(--cine-text-lead);
+  font-weight: var(--cine-weight-control);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-ink);
+}
+.wk__stack-groups { margin-top: var(--cine-space-4); }
+.wk__stack-group {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--cine-space-3);
+  padding-block: var(--cine-space-5);
+  border-top: 1px solid var(--cine-hair);
+}
+@media (min-width: 1024px) {
+  .wk__stack-group { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: clamp(40px, 5vw, 80px); }
+}
+.wk__stack-name {
+  font-size: var(--cine-text-lead);
+  line-height: var(--cine-leading-label);
+  font-weight: var(--cine-weight-name);
+  letter-spacing: var(--cine-tracking-name);
+  color: var(--cine-ink);
+}
+.wk__stack-tools { display: flex; flex-wrap: wrap; gap: var(--cine-space-2); }
+/* Every tool a pill: outlined under All (the panels' control edge, at least 3:1). */
+.wk__stack-tools [data-tool] {
+  padding: var(--cine-space-1) var(--cine-space-3);
+  border: 1px solid var(--cine-edge);
+  border-radius: var(--cine-radius-pill);
+  background: var(--cine-glass-ink);
+  font-size: var(--cine-text-small);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-ink);
+}
+/* A project chosen: the tools that remain are its own, each filled in the accent; the pills are the evidence there. */
+.wk__stack-groups[data-lens] [data-tool] { border-color: var(--cine-cyan); background: var(--cine-cyan); color: var(--cine-on-accent); }
+.wk__stack-groups[data-lens] .wk__stack-evidence { display: none; }
+.wk__stack-evidence {
+  margin-top: var(--cine-space-3);
+  max-width: 36rem;
+  font-size: var(--cine-text-small);
+  line-height: var(--cine-leading-lead);
+  color: var(--cine-mist);
+}
+/* Reduced motion (the OS or the site's switch): the buttons change at once. */
+@media (prefers-reduced-motion: reduce) {
+  .wk__lens-chip { transition: none; }
+}
+[data-reduced-motion="true"] .wk__lens-chip { transition: none; }
+
+/* ── Think · Build · Ship (P3.5, TbsBlock.tsx): the live section's three principles, under Stack and after a hairline.
+   The live title alone (the live section has no eyebrow, and none is invented), then three ruled rows on About's and
+   Stack's grid: from 1024px the principle's word (a small label in the accent) and its line take the words share, the
+   summary and the evidence the capture's; below that they stack. Each piece of evidence opens with its project's
+   name, in ink. Nothing animates. ── */
+.wk__tbs {
+  margin-top: var(--cine-section-y);
+  padding-top: var(--cine-space-7);
+  border-top: 1px solid var(--cine-hair);
+}
+.wk__tbs .wk__tbs-title, .wk__mw .wk__mw-title { margin-top: 0; }
+.wk__tbs-rows { margin-top: var(--cine-space-6); }
+.wk__tbs-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--cine-space-3);
+  padding-block: var(--cine-space-5);
+  border-top: 1px solid var(--cine-hair);
+}
+@media (min-width: 1024px) {
+  .wk__tbs-row { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: clamp(40px, 5vw, 80px); }
+}
+.wk__tbs-word {
+  font-size: var(--cine-text-eyebrow);
+  font-weight: var(--cine-weight-eyebrow);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-cyan);
+}
+.wk__tbs-line {
+  margin-top: var(--cine-space-2);
+  font-size: var(--cine-text-lead);
+  line-height: var(--cine-leading-label);
+  font-weight: var(--cine-weight-name);
+  letter-spacing: var(--cine-tracking-name);
+  color: var(--cine-ink);
+}
+.wk__tbs-summary {
+  max-width: 36rem;
+  font-size: var(--cine-text-body);
+  line-height: var(--cine-leading-lead);
+  color: var(--cine-mist);
+}
+.wk__tbs-example {
+  margin-top: var(--cine-space-3);
+  max-width: 36rem;
+  font-size: var(--cine-text-small);
+  line-height: var(--cine-leading-lead);
+  color: var(--cine-mist);
+}
+.wk__tbs-project { font-weight: var(--cine-weight-control); color: var(--cine-ink); }
+
+/* ── Contact (P3.6, ContactBlock.tsx): the page's conclusion, under Think · Build · Ship and after a hairline, on
+   About's grid: from 1100px the title takes the panels' words share and the lead and links the capture's; stacked
+   below. Its two columns start at 1100px, not 1024 like About's: from 1024 to 1100 the words share is too narrow for
+   "Let's build something" (368px at 1024, measured), so the title stacks above and keeps its two lines (Tay, session
+   15). Its eyebrow, title and lead share About's rules. One filled action (email), the two profiles as a pair in the
+   panels' outlined control, and the résumé as a quiet underlined download under its own hairline, as on the live page.
+   It holds still: its links answer a hover in colour only. ── */
+.wk__contact {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--cine-space-5);
+  margin-top: var(--cine-section-y);
+  padding-top: var(--cine-space-7);
+  border-top: 1px solid var(--cine-hair);
+}
+@media (min-width: 1100px) {
+  .wk__contact { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: clamp(40px, 5vw, 80px); }
+}
+.wk__contact-links { margin-top: var(--cine-space-6); }
+/* The two profiles wrap as a pair (the live page's rule), at the links' own spacing. */
+.wk__contact-profiles { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cine-space-3) var(--cine-space-5); }
+/* The note stays whole: on the narrowest phones it drops under the link as one piece, instead of splitting after the
+   link's 44px line (measured at 320px). */
+.wk__contact-resume {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--cine-space-1);
+  margin-top: var(--cine-space-6);
+  padding-top: var(--cine-space-3);
+  max-width: 36rem;
+  border-top: 1px solid var(--cine-hair);
+  font-size: var(--cine-text-small);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-mist);
+}
+.wk__contact-resume a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--cine-target-min);
+  font-weight: var(--cine-weight-control);
+  color: var(--cine-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--cine-edge);
+  text-underline-offset: 4px;
+}
+.wk__contact-resume a:hover { text-decoration-color: currentColor; }
+.wk__contact-resume span { white-space: nowrap; }
+
+/* ── Smaller screens: a phone capture is capped by the screen's width AND height (T Poker's tall screens no longer
+   take the whole view), the stage and the panel tighten, and the art-directed phone crops keep their own shape. ── */
+@media (max-width: 639px) {
+  .wk__head { padding-block: 40px 28px; }
+  .wk__panel { gap: var(--cine-space-5); }
+  .wk__line { margin-top: var(--cine-space-2); }
+  .wk__status { margin-top: var(--cine-space-4); }
+  .wk__links { margin-top: var(--cine-space-4); }
+  .wk__go { flex: 1 1 auto; justify-content: center; }
+  .wk__stage { padding: var(--cine-space-4) var(--cine-space-3); }
+  .wk__panel[data-kind="phone"] .wk__device,
+  .wk__panel[data-kind="phone"] .wk__reel .wk__device { width: min(190px, 48vw, calc(44svh * 0.46)); }
+  .wk__reel { --wk-flow-x: 50%; }
+  /* Only a capture with a phone crop carries this (Shot.tsx); every other keeps the ratio its width and height give,
+     reserved before it loads. (A blanket "auto" here dropped that reservation: CLS 0.017 on phones, measured.) */
+  .wk__device img[style] { aspect-ratio: var(--wk-ratio-phone); }
+  .wk__slide .wk__device:empty::before { aspect-ratio: var(--wk-box-phone, var(--wk-box)); }
+  .wk__panel[data-kind="window"] .wk__slide { width: 86%; }
+  .wk__about-facts li { padding-block: var(--cine-space-2); }
+  .wk__stack-group { gap: var(--cine-space-3); padding-block: var(--cine-space-4); }
+  .wk__tbs-row, .wk__mw-row { padding-block: var(--cine-space-4); }
+  /* The pair fills its own line under the email action, as the panels' links fill theirs, 12px apart like the rows: at
+     the links' wider spacing it needs 282px, 2px more than a 320px screen gives, and would split. */
+  .wk__contact-profiles { flex: 1 1 auto; column-gap: var(--cine-space-3); }
+}
+/* The narrowest phones: seven 44px targets (previous, five dots, next) need 324px, more than the stage has below 390px.
+   The dots take their own row under the capture and the two arrows sit below them; focus still runs previous, the
+   chosen dot, next, and every target keeps its size. */
+@media (max-width: 389px) {
+  .wk__controls { display: grid; grid-template-columns: repeat(2, auto); justify-content: center; justify-items: center; gap: var(--cine-space-1) var(--cine-space-2); }
+  .wk__dots { grid-column: 1 / -1; grid-row: 1; justify-content: center; }
+}

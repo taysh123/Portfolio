@@ -1,22 +1,29 @@
-import type { Content } from "@/lib/content";
-import { AboutVisual } from "./AboutVisual";
-import "./about.css";
+import { aboutBlock as a } from "./aboutBlock";
 
 /**
- * About (M10): the title, two paragraphs at a reading measure, one line of facts — and beside them the four products
- * together (AboutVisual), with no caption.
+ * About (P3.3), under Work: who, in about ten seconds. The title on one side; the two sentences and the four facts on
+ * the other (stacked on phones, in reading order). Server-rendered, with no client code, no photo and no capture: the
+ * products above are the picture.
+ *
+ * It ends on the facts (R10, ROADMAP #15): composed, the hero carries the résumé and the availability pill, Contact
+ * has all four links, and the footer repeats them, so About no longer repeats its availability line and links.
+ *
+ * It holds still. The page's one opening reveal stays the only one (docs/CINEMATIC_SYSTEM.md, "Motion language").
  */
-export function About({ c }: { c: Content }) {
-  const { about } = c;
+export function About() {
   return (
-    <section id="about" aria-labelledby="about-title" className="about">
-      <div className="shell about__grid">
-        <h2 id="about-title" className="about__title">{about.title[0]}<br /><span>{about.title[1]}</span></h2>
-        <div className="about__body">
-          {about.paragraphs.map((p) => <p key={p.slice(0, 24)} className="about__p">{p}</p>)}
-          <ul className="about__facts">{about.facts.map((f) => <li key={f}>{f}</li>)}</ul>
-        </div>
-        <AboutVisual label={about.visual.label} />
+    <section id="about" aria-labelledby="wk-about-title" className="wk__about" data-about>
+      <div className="wk__about-head">
+        <p className="wk__about-eyebrow">{a.eyebrow}</p>
+        <h2 id="wk-about-title" className="wk__about-title">
+          <span>{a.title[0]}</span> <span>{a.title[1]}</span>
+        </h2>
+      </div>
+      <div className="wk__about-body">
+        <p className="wk__about-lede">{a.lede}</p>
+        <ul className="wk__about-facts">
+          {a.facts.map((f) => <li key={f}>{f}</li>)}
+        </ul>
       </div>
     </section>
   );

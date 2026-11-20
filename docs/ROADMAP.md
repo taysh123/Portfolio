@@ -12,7 +12,8 @@ true project facts, through a prototype-first sequence with an owner approval ga
 riskiest piece (the hero) in isolation against hard budgets, then build sections, motion, and case
 studies on a branch cut from production `main`. Release through a Vercel Preview and Tay's sign-off.
 
-**Owner / approver:** Tay (every gate). **Last updated:** 2026-11-18 (M0 audit session).
+**Owner / approver:** Tay (every gate). **Last updated:** 2026-11-20 (the S21+S22 close-out: S21+S22 done and approved; the GRAVITY FLOW capture swap moved
+out of S23, to after the release, #18).
 
 ## Global constraints (apply to every phase)
 
@@ -33,8 +34,12 @@ studies on a branch cut from production `main`. Release through a Vercel Preview
 - No deploy, push, merge, or install without Tay's explicit ask.
 - **Direction (D1, 2026-11-18):** evolve Product Plates; calm/premium, restrained cyan/violet accents;
   the reference README's do-NOT-take list applies (no RGB wash, no holographic cube, no fabricated stats).
+  **D1 was reopened by Tay the same day for Concept A,** and in session 16 he approved replacing the live `/` with it
+  ("Concept A: P4–P6" below). These rules hold on `main` until that release merges.
 - **No 3D now (D2):** the 3D-guard tests and the JS budget are not modified by any phase below unless
-  Tay later approves a separate M2 prototype.
+  Tay later approves a separate M2 prototype. **The one exception (Tay, session 16, R12):** for the release,
+  `tests/e2e/page.spec.ts:43` allows exactly one canvas, the hero's 2D `aria-hidden` field. The WebGL guards and the
+  budget stay unchanged.
 - **Concept A is not M2.** It is the active direction under the reopened D1 (Tay, 2026-11-18): a measured cinematic
   prototype on `proto/hero-a-cinematic`, never merged, with no WebGL. D2 is still not reopened.
 
@@ -98,7 +103,7 @@ Acceptance criteria:
 
 Risks: low. Content-only diffs; the existing tests already guard neighbouring claims.
 
-### M1 — Art direction, design system, storyboard · `IN PROGRESS` (core A–E live 2026-11-18: A/C/D #8, B #11, E #12; F to be built on a preview branch next session, per Tay at the session 9 close)
+### M1 — Art direction, design system, storyboard · `IN PROGRESS` (core A–E live 2026-11-18: A/C/D #8, B #11, E #12; F deferred to Tay's call after previewing A–E live; **F retired by Tay in session 16, R14**: the Concept A release supersedes it)
 
 Scope per D1: **evolve** Product Plates (calm/premium, restrained cyan/violet accents). This is not a
 replacement. The reference README's take / do-NOT-take applies (quoted in `docs/RESEARCH_AND_DECISIONS.md` §1).
@@ -186,6 +191,79 @@ Acceptance criteria:
       rollback to the previous production deployment.
 - [ ] Post-release check of the live site: headers, the main route, the chat path, `/privacy`, `/he` redirect.
 
+M3–M7 were written for evolving Product Plates. For Concept A, the work they describe is done by P3 on the prototype,
+then by P5 and P6 below (S23 is M6's validation, and S24 is M7's release and checks).
+
+---
+
+## Concept A: P4–P6 (plan approved by Tay, 2026-11-19, session 16)
+
+P1–P3 (the hero and the six sections) are done and approved on `proto/hero-a-cinematic` (`docs/WORKLOG.md`, sessions
+10–15). The plan's gap audit and test list are in `docs/WORKLOG.md` (session 16). Tay's decisions, R1–R15, are in
+`docs/RESEARCH_AND_DECISIONS.md` ("Resolved in session 16"). Goal: the new site replaces the live `/` as soon as
+possible, because Tay is job hunting; the demos (P4) come after the release.
+
+### P5 (integration) and P6 (release) · `IN PROGRESS` (S17 done, 2026-11-19; S18+S19 done and approved by Tay, 2026-11-20; S20 done, 2026-11-20; S21+S22 done and approved by Tay, 2026-11-20; S23 done and approved by Tay, 2026-11-20, draft PR #21 open; S24 next)
+
+The work happens on `release/concept-a`, cut from an up-to-date `origin/main` (R1). Nothing on `main` changes until
+Tay merges. Each test change goes in its own commit naming Tay's approval (R12); the WebGL guards stay unchanged.
+
+| Session | One focused thing | Done when |
+|---|---|---|
+| **S17** | **The release branch and the baseline.** Cut `release/concept-a` from `origin/main`. Copy the prototype's source over unchanged in one commit: every non-doc path in `git diff --name-only main...proto/hero-a-cinematic`, after checking that none changed on `main` since the branch point. Measure production's baseline: Lighthouse mobile (median of 5), first-load JS and HTML bytes. Measure the chat launcher over LinkedIn mid-scroll on phones (#16) | The full suite passes with `/` byte-identical; the baseline is in the WORKLOG |
+| **S18+S19** | **Compose `/`, with the case studies and Two more.** One page: the header (R2), the hero, Work, About, Stack, Think · Build · Ship, Contact and the live Footer. One `main` and one h1 (Work's title an h2, the products h3s); the live anchor ids (R7); dark `<html>` (R3); the layer imported by `/`. `/lab` and the retired live components deleted (the `data/` modules unit tests read stay). "Case study" buttons in the panels (R4) and the Two more block (R5); the dialogs checked with axe on the dark page. The approved guard edits (R12), the "still to name" ones included (approved as a group in S17), each in its own commit. JS and HTML budgets measured | `/` is the new page; `budget.spec.ts` and the tests the plan lists as unchanged pass. **Done, approved by Tay (2026-11-20):** `482d29e`…`7a85e92` (`docs/WORKLOG.md`, "Sessions 18+19") |
+| **S20** | **The tests.** Retire the old page's feature specs (the approved set). Port `lab-hero-a.*` and `lab-work.*` to `/`, deleting the two prototype-only tests (`/`'s CSS pinned to `main`'s digest; Contact "as on the live `/`", which becomes fixed expected values). Add the new guards (R12) | The full suite passes. **Done (2026-11-20):** unit 218/218, Playwright 183/183, the two `@ts-nocheck` lines gone (`docs/WORKLOG.md`, "Session 20") |
+| **S21+S22** | **Privacy and SEO surfaces, then the backlog on the composed page.** The `theme` cookie out and `/privacy` updated with N7's sentence: **Tay approves the exact wording before the commit** (R13). The dark social card and the headline in `siteMeta` (R8); the manifest and `themeColor`; the sitemap's date; the 404. Then the launcher fix (#16), #13 measured (R11), #14 re-checked, and the case-study dialog's two axe findings (#17). (#15 and the Work lede, R10, were done in S18+S19.) | Each change measured against S17's baseline; the suite passes. **Done, approved by Tay (2026-11-20):** `b97f92e`…`e58508b`; unit 225/225, Playwright 187/187 right after deleting `.next` and warm; #13 measured and not kept (`docs/WORKLOG.md`, "Sessions 21+22") |
+| **S23** | **The release candidate.** Full validation on a production build: typecheck, lint, unit, e2e in Chromium **plus Playwright WebKit and Firefox runs**, axe, Lighthouse mobile (median of 5) against the baseline, headers, privacy and secret scans. Screenshots at the standard viewports. On Tay's go: push and open the PR, which builds a Preview. **Tay reviews it on his own phone.** (The GRAVITY FLOW capture swap is no longer part of S23: Tay, S21+S22 close; it is #18, after the release.) | Tay approves the Preview. **Done, approved by Tay (2026-11-20)** after his phone review. Chromium 187/187, Firefox 178/187, WebKit 169/187 (through the S23 proxy): every failure was traced and rerun alone ×3, and none is a release bug. The pre-existing F1 and F2 went to the backlog (#21, #20), and the engine-specific tests to #22. **Draft PR #21** is open (`docs/WORKLOG.md`, "Session 23" and its close-out) |
+| **S24** | **The release.** The `product-plates-final` tag on `443a1f9` is already pushed (R15, done in S17); check it still points there. Tay merges. The production checks below. Close out the docs on `main`, `docs/CINEMATIC_SYSTEM.md` included; the prototype branch stays frozen | The production checks pass |
+
+**Rollback:** Vercel's Instant Rollback to `443a1f9`'s deployment (no rebuild), then a `git revert -m 1 <merge>` PR.
+After an instant rollback, Vercel stops promoting new production deployments automatically until the rollback is undone
+(NC: confirm in Vercel's docs at the time).
+
+**The production checks (S24, read-only):**
+- The Production deployment is the merge's SHA.
+- `/` answers 200 with `index, follow`, the canonical, the title, OG, JSON-LD and the new h1.
+- Every security header is present, and `X-Powered-By` is absent.
+- `/privacy` 200, `/nope` 404, `/he` 308, `/lab/work` 404. Robots, the sitemap and the social card are served.
+- The résumé is 80,593 bytes.
+- `POST /api/chat` with an empty body answers 400, and Tay asks one real question.
+- Cloudflare's HTML matches Vercel's.
+- A Playwright check at 390 and 1440: no console errors, one 2D canvas, no WebGL.
+- Lighthouse mobile (median of 5) against S17's baseline.
+- Tay's manual steps: LinkedIn's Post Inspector to refresh the share card, and a reindex request if he uses Search
+  Console.
+
+**After the release (no session of its own):** the GRAVITY FLOW capture swap, a small PR whenever Tay provides the
+image (backlog #18). Also (Tay, S23):
+- #20: F2's fix in the shared focus trap, a small PR right after S24, before #19.
+- #19: Next 16.3.8 → 16.4.6 for the `npm audit` advisories, a separate PR on `main` with the full suite and Lighthouse.
+- #21: F1, after #20.
+- Later, #22: per-browser handling of the engine-specific tests.
+
+### P4 (the project demos) · `NOT STARTED` (after the release)
+
+Each panel keeps its empty, hidden demo slot (`data-demo-slot`; `docs/CINEMATIC_SYSTEM.md`, "Work slice"). A demo mounts
+there.
+
+**P4 restore record (R6, Tay's condition).** The release removes the live chapters, and with them four explainers.
+- **All four are intact at `443a1f9`** (`main` = production, 2026-11-19), which is tagged **`product-plates-final`**
+  (R15: an annotated tag, `8f0a96a`, pushed in S17). S24 confirms that the release merge's first parent still has them, and adds both
+  SHAs here.
+- **Restore one:** `git checkout product-plates-final -- <its paths>`, or read it with
+  `git show product-plates-final:<path>`.
+- **Shared by all four:** `components/work/Work.tsx` (last changed in `fddc36e`), `components/work/work.css`
+  (`a4d0e99`), `lib/content.ts` (`fddc36e`, which hands each chapter its data), the plate tones and studio light in
+  `app/globals.css` (the `[data-plate]` rules, `b5941cf`), and the captures in `public/work/` through `data/images.ts`
+  (`fddc36e`).
+
+| Explainer | Component and styles (last changed in) | Data, strings, captures (last changed in) | The tests that held it |
+|---|---|---|---|
+| **T Poker stepper:** three steps as a radio group, each bringing its real screen to the front; works without JS | `components/work/PokerChapter.tsx` (`fddc36e`), `components/work/poker.css` (`b5941cf`) | `pokerSteps` in `data/work.ts` (`fddc36e`); `dict.poker` in `lib/dict.ts` (`e105917`); the captures `poker-home`, `poker-live`, `poker-settle` | `tests/e2e/chapters.spec.ts`, "T Poker" and "T Poker on desktop"; the T Poker cases in `tests/unit/work.test.ts` (`fddc36e`) |
+| **Aegis trace:** ingest → normalise → detect, the parallel fork, then live; the highlighted port-scan row on the alerts capture | `components/work/AegisChapter.tsx` (`fddc36e`), `components/work/aegis.css` (`b5941cf`) | `aegisTrace`, `aegisCopy` in `data/work.ts`; `AEGIS_ROW`, `AEGIS_CROPS` and the captures `aegis-alerts`, `aegis-alerts-phone` in `data/images.ts`; `dict.aegis` | `chapters.spec.ts`, "Aegis"; `work.test.ts`, "Aegis: the trace is the implemented path" |
+| **DeveloperOS cite-or-decline:** index → retrieve → evidence → cite, or decline; the refusal as real text; citation boxes on the capture's file:line chips | `components/work/DeveloperOSChapter.tsx` (`fddc36e`), `components/work/dos.css` (`b5941cf`) | `dosFlow`, `dosRefusal`, `dosRefusalCaption` in `data/work.ts`; the captures `dos-search`, `dos-search-phone`; `dict.dos` | `chapters.spec.ts`, "DeveloperOS"; `work.test.ts`, "DeveloperOS: evidence, then cite or decline" |
+| **GRAVITY FLOW marked frame:** the mechanic marked on the real gameplay frame, then the facts | `components/work/GravityChapter.tsx` (`fddc36e`; the marks are its `MARKS`), `components/work/gravity.css` (`b5941cf`) | `gfFacts` in `data/work.ts`; the captures `gf-gameplay`, `gf-boss`; `dict.gf` | `chapters.spec.ts`, "GRAVITY FLOW"; `work.test.ts`, "GRAVITY FLOW: gameplay first, no physics claims" |
+
 ---
 
 ## Prioritised backlog (not yet scheduled)
@@ -202,5 +280,15 @@ Acceptance criteria:
 | 8 | Prune stale remote branches (with Tay) | Merged ones deleted in session 4 (D8). Six unmerged ones remain, each needing its own yes | any |
 | 9 | Consider adding `/privacy` to `app/sitemap.ts` | Currently `/` only. Minor; Tay's call | M5/M6 |
 | 10 | Consider a nonce-based CSP (`script-src` currently allows `'unsafe-inline'`) | The route is already dynamic (cookies), so nonces are feasible. Needs measurement | M6 |
-| 11 | N7: ~~Cloudflare's beacon and Email Address Obfuscation~~ turned off by Tay 2026-11-18 (verified live). Left: `/privacy` names only Vercel, though Cloudflare proxies the site | Privacy wording. **Deferred to the end of the build** (Tay, session 9 close); the draft is in `docs/RESEARCH_AND_DECISIONS.md` N7 | end of build |
+| 11 | N7: ~~Cloudflare's beacon and Email Address Obfuscation~~ turned off by Tay 2026-11-18 (verified live). Left: `/privacy` names only Vercel, though Cloudflare proxies the site | Privacy wording. **Deferred to the end of the build** (Tay, session 9 close); **scheduled in session 16 (R13)** for the release's `/privacy` edit, with its exact wording shown to Tay before the commit. The draft is in `docs/RESEARCH_AND_DECISIONS.md` N7. **Done in S21+S22** (`2424e23`, on `release/concept-a`): Tay's approved wording, without the draft's "on the site's behalf" (Cloudflare's policy calls itself a controller of that data). The shipped text: `docs/RESEARCH_AND_DECISIONS.md`, N7. It reaches production with the release | P5: S21+S22 (done) |
 | 12 | ~~N8: GRAVITY FLOW's private repository name in nine doc lines~~ Done in session 9, merged in PR #16 (live `a7a89fd`): the lines say "the private GRAVITY FLOW repository", and the guard pins both private repos by digest | — | any |
+| 13 | Concept A: let the off-screen Stack, Think · Build · Ship and Contact skip their layout (`content-visibility: auto`), together with anchoring the violet glow so it no longer sits at a share of the page's height | Stack costs LCP +14 ms desktop and +46 ms on a phone at 4× CPU (session 13). Think · Build · Ship adds +2 / +42 ms (session 14; a first round +8 / +72), most of it its layout: `content-visibility` on it measured 852 ms against 932 as served (phone, through one interception). **Tay keeps both costs for now and added Think · Build · Ship to this fix** (session 13 and 14 closes). Contact adds +0 to +8 ms desktop and +4 to +18 ms phone (session 15, three rounds of 10 interleaved); **Tay keeps that cost too and added Contact to this fix** (session 15 close). `content-visibility` alone moves the glow when Stack renders (slice CLS 0.353 at 320px, measured), so the two go together. Details: `docs/WORKLOG.md`, sessions 13, 14 and 15. **Session 16 (R11):** composing `/` anchors the glow to its section anyway; then `content-visibility` is measured on the composed page, and kept only if phone LCP improves, scroll-through CLS stays 0 and nav jumps still land exactly. Otherwise the release ships without it, unless phone LCP is worse than production's baseline. **Measured in S21+S22 and not kept (R11):** phone LCP at most 20 ms better at 4× CPU (inside the noise; Lighthouse equal, 1,063 ms), a new layout shift from the violet glow (still at a share of `.wk`'s height; up to 0.10 at 320px), and jumps to `#approach` and `#contact` off by up to 311px. The release ships without it (`docs/WORKLOG.md`, "Sessions 21+22" §4) | P5: S21+S22 (measured, not kept) |
+| 14 | Concept A: Stack's filter hold, with sections below it. **Done in session 14:** Tay keeps the hold as it is; its test's comment reworded (`a8062e6`). **Left for P5: re-check the visible gap case** | The hold (`app/lab/work/StackFilter.tsx`) is 0 at 1440×900 and 390×844 whenever the buttons are in view (session 14, with Think · Build · Ship below). It engages on tall screens with the buttons near the top (128–729px; up to 448px of space at 1440×1800) and after a press with the buttons out of view above (keyboard only; 579–1,215px of space), and that space now sits between the filtered list and the next section, until All is pressed. Without it the view would jump that far. **Session 15, with Contact below:** whenever the buttons are in view the hold is 0 at 1440×900, 390×844, 1920×1200 and 2560×1440, and 346px at 1440×1800 (0–81px of space; it was 729px). The page's-end case is unchanged (1,096px at 1440 wide, 1,619px at 390): there the hold always equals the full list's height, so no section below changes it. The view moved 0px in every case. `StackFilter.tsx`'s header comment fixed (`bbd9d55`, comment only). **Tay keeps the hold as it is** (session 15 close). Re-check the 1440×1800-class and the keyboard-only end cases once the page is composed. Details: `docs/WORKLOG.md`, sessions 14 and 15. **Session 16:** keep the hold; re-measure on the composed page, where the footer now follows Contact. **Re-checked in S21+S22** on the composed page: a press never moves the view; the hold is 0 except 239px with the buttons near the top at 1440×1800 (no visible gap), and the keyboard-only end case is unchanged (1,096px at 1440 and wider, 1,619px at 390). Kept as it is (`docs/WORKLOG.md`, "Sessions 21+22" §5) | P5: S21+S22 (re-checked) |
+| 15 | Concept A: Contact repeats About's availability wording ("on-site, hybrid, or remote") and its three links (the résumé, GitHub, LinkedIn). **Re-check whether About keeps its links once the full page is assembled** | Logged by Tay (session 15). Contact uses the live Contact's lead and links word for word and target for target; About's line and links were approved in session 12, before Contact existed. Details: `docs/WORKLOG.md`, session 15. **Decided in session 16 (R10):** About drops its three links and its availability line and ends on the facts. Composed, the hero has the résumé and the availability pill, Contact has all four links, and the footer repeats them. Work also drops its lede, which repeats the hero's **Done in S18+S19** (Tay's brief brought it forward): About ends on the facts, and Work has no lede and no reveal of its own | P5: S18+S19 (done) |
+| 16 | Concept A: the chat launcher passes over LinkedIn mid-scroll on phones (Tay, session 16). **Measured in S17** (`docs/WORKLOG.md`, S17 §8): the LinkedIn it covers is About's on `/lab/work` (23–54% of it full, 11–26% tucked); no focused target is ever wholly hidden, several partly (up to 82%, "More on Aegis" at 430); on the live `/`, the hero index's last tile sits partly under the full label on load at 320–375 | Measure in S17 (320–430, the label full and tucked): done. Fix in S21+S22: `scroll-padding-bottom` of the launcher's height plus a gap, so a link focused by keyboard is never under it (WCAG 2.4.11), and the Tab test's "unobscured" check extended to the launcher. #15 removes About's links, the case Tay reported. Don't move or hide the launcher. **Done in S21+S22** (`f3bd556`, `50d3bec`): the page's bottom scroll padding (5rem; 4.5rem on phones and short screens) and the Tab test's launcher check; a Tab walk at 9 sizes, motion reduced and on, finds no stop under the launcher | P5: S17, S21+S22 (done) |
+| 17 | Concept A: fix the case-study dialog's two axe best-practice findings, even though production has them too (Tay, S18+S19 review): `aria-allowed-role` (the panel is an `<aside role="dialog">`: `components/ui/CaseStudyPanel.tsx`) on all six case studies, and `image-redundant-alt` (a gallery image whose alt repeats its caption) on three: T Poker, DeveloperOS and GRAVITY FLOW, at 1440 and 390 | Found by S18+S19's axe check with each overlay open (`docs/WORKLOG.md`, "Sessions 18+19" §5). The same script on `main`'s build gives the same two, so they are pre-existing. Both are axe best-practice rules, not WCAG A/AA. Fix them in the dialog, then check every case study with axe at 1440 and 390 on the dark page. **Done in S21+S22** (`addbd2f`, `e46b693`): the dialog is a div, and a gallery image is silent beside its caption, which said the same words; axe 18 findings → 0, held by `tests/e2e/case-study-axe.spec.ts` | P5: S21+S22 (done) |
+| 18 | After the release: **the GRAVITY FLOW capture swap.** One of its captures changes for an image Tay provides (session 11: "Tay will swap one himself") | Moved out of S23 by Tay at the S21+S22 close-out (2026-11-20). A small PR of its own, whenever Tay provides the image; it follows the release and does not hold it | After the release |
+| 19 | After S24: **Next 16.3.8 → 16.4.6**, in a separate PR on `main` (Tay, S23). Bump `next` and the matching `eslint-config-next`, `npm ci`, read `node_modules/next/dist/docs` for changes (AGENTS.md), then the full suite (unit, typecheck, lint, build, Playwright) and Lighthouse mobile (median of 5) against the release's numbers; re-measure the JS and HTML budgets (the chunks will change). Update CLAUDE.md's "Next 16.3.8" lines | Found in S23 (VL, `npm audit --omit=dev`, 2026-11-20): advisories against `next` `16.0.0`–`16.4.4`, fixed in 16.4.6. Critical: GHSA-2464-fhr4-w9xw (code execution in the image optimiser when SVG files are used) and GHSA-673q-mjm6-r5xr (code execution in `use cache` functions); high: GHSA-p3m5-59mp-jv5r (Server Actions denial of service); seven moderate. It is in production already (the lockfile is identical on `main` and the release), not added by the release. **Exposure, as read in S23:** no `use cache`, no server actions, no `dangerouslyAllowSVG`, no SVG under `public/`, no remote image patterns; the optimiser serves local images only. The share card is `next/og`'s `ImageResponse`, prerendered static, from the site's own modules (no fetch, params, `<img>`, or user-supplied or remote SVG). sharp: the project's `0.34.5` (dev, the image script) and Next's own `0.35.5` | After S24 (`main`) |
+| 20 | Right after S24, **before #19**: **F2, Safari: focus escapes the menu sheet and the chat for one Tab.** A small PR on `main` that fixes it in the shared focus trap (`lib/useFocusTrap.ts`), for example by having the trap move focus itself on every Tab within its list. The trap serves every overlay (the case study, accessibility, the chat, the menu sheet), so check each in all three engines; WebKit's `chat.spec.ts:76` and `chrome.spec.ts:185` should then pass (Tay, S23) | Found in S23 (VL; `docs/WORKLOG.md`, "Session 23" §5). The trap steps in only at the first and last items of its list, which includes links. The last item is a link in both sheets: the menu sheet's "Get in touch" and the chat's Privacy. Safari's default Tab skips links, so the trap never sees that last item. From the menu sheet's "Accessibility settings", focus goes to a "Case study" button on the page behind; from the chat's field, to `body`. The next Tab comes back. **Pre-existing:** `main`'s sheet also ends on a link, and the hook is unchanged by the release. Not in PR #21 (Tay) | After S24 (`main`), before #19 |
+| 21 | After #20: **F1, Firefox ignores the bottom scroll padding for controls already on screen**, so a focused control can sit partly under the chat launcher (Tay, S23) | Found in S23 (VL; `docs/WORKLOG.md`, "Session 23" §5). #16's `html { scroll-padding-bottom }` works in Chromium (0 stops under the launcher at 8 sizes). Firefox's focus scroll ignores it for a target already inside the viewport: "Case study" at 375×667 (2% covered) and the hero's GRAVITY FLOW link at 390×844 (12%), found by Firefox's `chrome.spec.ts:268` at 390. Never wholly hidden, so WCAG 2.4.11 (AA) holds; #16's "never under it" does not. In a probe, `scroll-margin-bottom` on `:focus-visible` cleared one of the two. A reliable fix is a focus handler in the launcher's client code: measure first-load JS against the budget. Production has no bottom scroll padding at all. Not in PR #21 (Tay) | After #20 (`main`) |
+| 22 | Later: **per-browser handling of the engine-specific tests.** Today's suite runs on Chromium only (the repo's config), and S23 ran WebKit and Firefox from scratch configs. Give WebKit and Firefox proper handling: their own projects, with each engine-specific test either made engine-neutral or annotated with its reason; never a silent skip. **No test changes until then** (Tay, S23) | From S23's runs (VL; `docs/WORKLOG.md`, "Session 23" §3–4), the tests that fail for an engine reason, not a site bug: **Chromium-only touch API** (CDP): `chrome.spec.ts:140`, `lab-work.spec.ts:260`. **Firefox's reduced-motion frame** (the `0.001ms` transitions in `app/globals.css` run for one frame, so a same-tick read sees the old style): `lab-work.spec.ts:338`, `:566`. **Sub-pixel exact compares:** `lab-work.spec.ts:690` ×2. **WebKit:** Safari's Tab skips links (`chrome.spec.ts:268` ×2, `focus-ring.spec.ts:8` ×2, `lab-hero-a.spec.ts:192`, `lab-work.spec.ts:303`); a click doesn't focus a button (`lab-work.spec.ts:566`); no `mouse.wheel` in mobile WebKit (`chat.spec.ts:130`); a tap sets no `:hover` (`lab-work.spec.ts:338`); LCP reported after FCP (`lab-hero-a.spec.ts:93`); DPR 2 software canvas (`lab-hero-a.spec.ts:129`); the instant-`fill` focus race (`chat.spec.ts:174`, `page.spec.ts:138`). The WebKit harness also needs the CSP's `upgrade-insecure-requests` dropped over `http://localhost` | Later |

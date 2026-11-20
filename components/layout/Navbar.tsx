@@ -4,8 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { Logo } from "@/components/ui/Logo";
 import { IconButton } from "@/components/ui/IconButton";
-import { ButtonLink } from "@/components/ui/Button";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { AvailabilityPill } from "@/components/layout/AvailabilityPill";
 import { MenuIcon, CloseIcon, AccessibilityIcon } from "@/components/ui/icons";
 import { useFocusTrap, useScrollLock } from "@/lib/useFocusTrap";
 import { toggleOverlay, useOverlayOpen } from "@/lib/overlays";
@@ -27,17 +26,19 @@ const LINE = 0.4;
 const BAND = 32;
 
 /**
- * The site header (M10): name, four destinations, the theme and accessibility controls, and one clear Contact
- * action. No command palette. The assistant has its own floating launcher (components/chat/ChatLauncher.tsx), not a
- * header button.
+ * The site header (M10's behaviour, re-toned in the cinematic layer for Concept A: R2). The locked hero's wordmark and
+ * availability pill, four destinations with the current-section underline, the accessibility control, and one Contact
+ * action; on phones, the menu sheet. No theme control: the site is dark only (R3). No command palette. The assistant
+ * has its own floating launcher (components/chat/ChatLauncher.tsx), not a header button.
  *
- * One neutral surface on every section — the page's own paper (or ink in the dark theme), frosted over whatever
- * passes beneath it (globals.css). It used to repaint itself in each chapter's colour as the boundary crossed its
- * bottom edge; that read as a flash at every chapter, so the bar no longer changes with the content at all.
+ * Over the hero, at the top of the page, it shows no surface, so the first screen still reads as the locked hero. Once
+ * the page has moved it is one surface on every section: the field, frosted over whatever passes beneath it
+ * (app/cinematic.css), with a hairline. It never repaints with the content.
  *
- * One reader decides the header's only two states, in the same animation frame: whether the page has moved (the
- * hairline), and which section is current (the underline). Both come from the scroll position, so a slow scroll, a
- * fast one, a reversal, a touch fling and an anchor jump all resolve the same way.
+ * Two readers, one per state. Whether the page has moved is set in the scroll event itself, so the surface is there in
+ * the same frame as the scroll that needs it (in a frame of its own it would lag one frame behind the first move).
+ * Which section is current is decided once per animation frame, from the scroll position, so a slow scroll, a fast
+ * one, a reversal, a touch fling and an anchor jump all resolve the same way.
  */
 export function Navbar() {
   const header = useRef<HTMLElement>(null);
@@ -60,10 +61,12 @@ export function Navbar() {
     const sections = LINKS.map((l) => document.getElementById(l.href.slice(1))).filter((s): s is HTMLElement => Boolean(s));
     if (!el || sections.length === 0) return;
     let raf = 0, current = -1, atEnd = false;
-    const read = () => {
-      raf = 0;
+    const moved = () => {
       const scrolled = window.scrollY > 8;
       if (scrolled !== (el.dataset.scrolled !== undefined)) { if (scrolled) el.dataset.scrolled = ""; else delete el.dataset.scrolled; }
+    };
+    const read = () => {
+      raf = 0;
       const line = window.innerHeight * LINE;
       const tops = sections.map((s) => s.getBoundingClientRect().top);
       // The end of the page makes the last section current (Contact is shorter than a screen, so its top may never
@@ -81,10 +84,11 @@ export function Navbar() {
       if (el.dataset.active !== key) { el.dataset.active = key; setActive(key); }
     };
     const schedule = () => { if (!raf) raf = requestAnimationFrame(read); };
-    read();
-    window.addEventListener("scroll", schedule, { passive: true });
+    const onScroll = () => { moved(); schedule(); };
+    moved(); read();
+    window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", schedule, { passive: true });
-    return () => { window.removeEventListener("scroll", schedule); window.removeEventListener("resize", schedule); cancelAnimationFrame(raf); };
+    return () => { window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", schedule); cancelAnimationFrame(raf); };
   }, []);
 
   const a11yOpen = useOverlayOpen("a11y");
@@ -92,7 +96,7 @@ export function Navbar() {
   return (
     <>
       <header ref={header} data-site-nav className="site-nav fixed inset-x-0 top-0 z-50">
-        <nav aria-label={t.nav.label} className="shell flex h-[var(--nav-h)] items-center justify-between gap-4">
+        <nav aria-label={t.nav.label} className="site-nav__row shell flex h-[var(--nav-h)] items-center justify-between gap-4" data-reveal>
           <Logo label={fmt(t.nav.home, { name: siteMeta.name })} />
 
           <ul className="hidden items-center gap-1 lg:flex">
@@ -101,9 +105,9 @@ export function Navbar() {
               return (
                 <li key={l.href}>
                   <a href={l.href} aria-current={isActive ? "true" : undefined}
-                    className={cn("relative inline-flex h-11 items-center px-3.5 text-[0.9375rem] transition-colors duration-150", isActive ? "text-fg" : "text-fg-muted hover:text-fg")}>
+                    className={cn("relative inline-flex h-11 items-center px-3.5 text-[0.9375rem] transition-[color] duration-150", isActive ? "text-fg" : "text-fg-muted hover:text-fg")}>
                     {t.nav[l.key]}
-                    <span aria-hidden="true" className="nav-underline absolute inset-x-3.5 bottom-2 h-px bg-fg" />
+                    <span aria-hidden="true" className="nav-underline absolute inset-x-3.5 bottom-2 h-px" />
                   </a>
                 </li>
               );
@@ -111,15 +115,14 @@ export function Navbar() {
           </ul>
 
           <div className="hidden items-center gap-1.5 lg:flex">
+            <AvailabilityPill className="site-nav__pill" />
             <IconButton label={t.nav.a11y} data-overlay-trigger="a11y" size="sm" tone="bare" aria-expanded={a11yOpen} onClick={() => toggleOverlay("a11y")}>
               <AccessibilityIcon size={17} />
             </IconButton>
-            <ThemeToggle tone="bare" />
-            <ButtonLink href="#contact" size="sm" className="ml-2">{t.nav.getInTouch}</ButtonLink>
+            <a href="#contact" className="site-nav__cta">{t.nav.getInTouch}</a>
           </div>
 
           <div className="flex items-center gap-1 lg:hidden">
-            <ThemeToggle tone="bare" size="md" />
             <IconButton label={t.nav.openMenu} tone="bare" aria-expanded={open} aria-controls="mobile-menu" onClick={openMenu}>
               <MenuIcon size={20} />
             </IconButton>
@@ -156,7 +159,7 @@ export function Navbar() {
                 <AccessibilityIcon size={18} />{t.nav.a11y}
               </button>
             </div>
-            <ButtonLink href="#contact" onClick={closeMenu} size="lg" className="mt-5 w-full">{t.nav.getInTouch}</ButtonLink>
+            <a href="#contact" onClick={closeMenu} className="hxa__btn hxa__btn--primary mt-5 w-full">{t.nav.getInTouch}</a>
           </div>
         </div>
       )}

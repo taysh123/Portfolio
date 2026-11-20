@@ -37,10 +37,12 @@ Tay decides everything here.
     hold.
   - Session 10's docs recorded this as "D2 reopened". Tay corrected it at the session 11 close: it is D1 that was
     reopened (D2 below).
+  - In session 16 Tay approved replacing the live `/` with it (R1–R15 below). It ships from
+    `release/concept-a` (R1); until that release merges, the rules above still hold on `main`.
 
 **D2 — 3D: NOT now.**
 - No 3D or WebGL in the current work. A 3D hero stays a possible **future, separate, measured
-  prototype** (ROADMAP M2, deferred).
+  prototype** (ROADMAP M2, deferred). Still not reopened (Concept A's field is a 2D canvas).
 - The production guard tests are **not** modified in this work: the `three`/`lenis`/WebGL/`<canvas>`
   bans in `tests/unit/dead-code.test.ts`, `tests/e2e/budget.spec.ts:47` and `tests/e2e/page.spec.ts`,
   and the first-load JS budget (≤ 205.7 KiB gzip) in `tests/e2e/budget.spec.ts:7`.
@@ -48,6 +50,11 @@ Tay decides everything here.
   Concept A prototype.
   - The prototype's live elements are a 2D canvas and CSS perspective on 2D elements.
   - `main`'s guards are unchanged, and none needed editing. The prototype routes meet the same 205.7 KiB budget.
+- **One exception, approved by Tay in session 16 for the release (R12):** `tests/e2e/page.spec.ts:43`'s `<canvas>`
+  count of 0 becomes exactly one canvas, the hero's 2D, `aria-hidden` field. **The WebGL guards stay unchanged:**
+  `page.spec.ts:42` (`__gl` = 0, counted by `COUNT_WEBGL` in `tests/support/page.ts`), `tests/unit/dead-code.test.ts`
+  (no `three`, `lenis`, `getContext("webgl")` or `WebGLRenderer`) and `tests/e2e/budget.spec.ts:47`. So does the
+  budget.
 
 **D3 — Docs branch:** done. The M0 docs are on `docs/m0-audit`, cut from `origin/main` (`3f0c5e5`),
 **PR #4, merged 2026-11-18** (merge commit `661dce1`).
@@ -153,10 +160,122 @@ the private T Poker repository @ `91d2b97` (the local clone equals GitHub `main`
 - The guard itself still scans only site code (`app`, `components`, `data`, `lib`, `public`). Widening it to the docs
   would be a test change, so it was not made.
 
+### Resolved in session 16 (2026-11-19): the P5 (integration) and P6 (release) plan
+
+**The goal (Tay):** the new site, the locked hero and the approved sections, replaces the live `/` as soon as possible,
+because Tay is job hunting. The project demos (P4) come after the release. Session 16 was a plan only. The plan,
+with its gap audit and test list, is in `docs/WORKLOG.md` (session 16), and the sessions are in `docs/ROADMAP.md`
+("Concept A: P4–P6"). Tay approved it with these decisions:
+
+- **R1 — How it ships.**
+  - A release branch, `release/concept-a`, cut from an up-to-date `origin/main`.
+  - The prototype's source is copied over unchanged in one commit; the suite must pass with `/` byte-identical. Then
+    the swap commits.
+  - `/lab` is never shipped to `main`. `proto/hero-a-cinematic` stays frozen as the record (never merged, never
+    deleted).
+  - A PR that Tay merges. Rollback: Vercel's Instant Rollback to `443a1f9`'s deployment, then a `git revert -m 1` PR.
+- **R2 — The header.** Reuse `components/layout/Navbar.tsx`'s behaviour, re-toned dark in the cinematic layer.
+  - Keep: the four anchors with the current-section underline, the accessibility button, "Get in touch" and the
+    phone menu sheet.
+  - No theme toggle. It carries the hero's wordmark and availability pill.
+  - Over the hero it shows no surface, so the first screen still reads as the locked hero.
+- **R3 — The theme: dark only, site-wide.**
+  - `<html data-theme="dark">`. The toggle, the ThemeProvider and the `theme` cookie are removed.
+  - The overlays (chat, accessibility, case study), `/privacy`, the 404 and the error page use the site's existing
+    dark theme.
+  - `/privacy`'s cookie paragraph changes (see R13).
+- **R4 — Depth.** Each panel's "More on X" link (`/#work-<id>`, a live chapter the swap removes) becomes a "Case
+  study" button, with the same `data-case-study` and the existing lazy dialog.
+- **R5 — Two more.** A compact block in the layer under the four panels: Job Assistant and Orders & Delivery in the
+  live words, each with its case study. The page keeps six case-study triggers.
+- **R6 — The live chapters' explainers retire for the release:** the T Poker stepper, the Aegis trace, DeveloperOS's
+  cite-or-decline and GRAVITY FLOW's marked frame.
+  - **Tay's condition:** `docs/ROADMAP.md` (P4) records the exact files and the last commit that has each, so P4 can
+    restore them from git.
+  - Done in session 16: "P4 restore record" in `docs/ROADMAP.md`.
+- **R7 — Anchors.** Keep every live id: `#hero`, `#work`, `#work-<id>`, `#more-work`, `#about`, `#skills`,
+  `#contact`. The hero's links become in-page (`#work`, `#work-<id>`).
+- **R8 — The headline and the share card.**
+  - The hero's h1 and lede move into `siteMeta` (`headline`, `heroLead`), so the page, the social card and the tests
+    read one source.
+  - The social card becomes a dark one. `tests/unit/content.test.ts:20,22` take the new strings.
+- **R9 — The hero's "↗".** Drawn with the site's SVG arrow icon. The guard, `tests/e2e/chrome.spec.ts:280` (no "↗" in
+  `main`), stays unchanged.
+- **R10 — Repetition.**
+  - ROADMAP #15: About drops its three links and its availability line, and ends on the facts.
+  - Work drops its lede (`siteMeta.heroLead`, which the hero says) and its load reveal: the hero keeps the page's one
+    reveal.
+- **R11 — ROADMAP #13.** Measure it on the composed page. Ship without it unless phone LCP is worse than production's
+  baseline (measured in S17).
+- **R12 — Tests.** Each change goes in its own commit naming this approval. The WebGL guards stay unchanged (see D2).
+  - **Approved as written:**
+    - `tests/e2e/page.spec.ts:43`: exactly one canvas, the hero's, `aria-hidden` (was 0).
+    - `page.spec.ts:75`: positions 0.5 and 1 unchanged (0 frames: the field pauses off screen); position 0 runs with
+      reduced motion (0 frames).
+    - The dark-only theme tests:
+      - `chrome.spec.ts:12`: drop the theme-toggle line.
+      - `chrome.spec.ts:26`: becomes "dark is the only theme, cookie or not".
+      - `chrome.spec.ts:36`: the toggle-layout test is deleted.
+      - `chrome.spec.ts:70`, `:132`, `:147` and `page.spec.ts:93`: dark only.
+      - `privacy.spec.ts:43`: `["a11y"]`.
+      - `site.test.ts:145`: writes the `a11y` cookie.
+      - `site.test.ts:160`: the `THEME_COOKIE` match is dropped.
+    - The new guards:
+      - `/` serves `index, follow` with the canonical `https://tayshofer.dev` and no noindex;
+      - `/lab/hero-a` and `/lab/work` answer 404;
+      - exactly one canvas: 2D and `aria-hidden`.
+  - **The old page's feature tests retire as a set:**
+    - `tests/e2e/hero.spec.ts`;
+    - `chapters.spec.ts`, except its "Case study" block;
+    - `lower.spec.ts`, except `:142` (the résumé's bytes) and `:164` (the footer);
+    - `chrome.spec.ts:70` and `:178` move to the panels.
+
+    The ported lab specs carry their intent.
+  - **Approved by Tay as a group in S17 (2026-11-19).** These follow from R7–R9; session 16 logged them as "still to
+    name, one by one":
+    - `page.spec.ts:10,13`: the new h1 and h2 strings;
+    - `chrome.spec.ts:268`: the focus ring becomes the layer's cyan;
+    - `chrome.spec.ts:255`: the Tab order's new labels;
+    - `content.test.ts:20,22`: the new headline strings (R8);
+    - `work.test.ts:99` and `:163–176`: they read `GravityChapter.tsx` and `AboutVisual.tsx`, which are deleted.
+
+    The approval covers the group, but each change still goes in its own commit naming it, as the other R12 changes
+    do. None is made in S17: they land with the swap (S18+S19) or the test port (S20).
+- **R13 — N7.** Its Cloudflare sentence goes into the `/privacy` edit in S21+S22, with R3's cookie change. **Tay
+  approves the exact final wording there, before it is committed.** **Done in S21+S22:** approved by Tay and shipped on
+  `release/concept-a` (`2424e23`); the wording is under N7 below.
+- **R14 — Move F** (`docs/M1_VISUAL_PLAN.md`) is retired. It was a Product Plates move, and the release supersedes it.
+- **R15 — The tag.** Before the merge, `443a1f9` (the last Product Plates commit, live) is tagged
+  `product-plates-final`, and the tag is pushed. **Done in S17** (Tay's brief brought it forward from S24): an
+  annotated tag, `8f0a96a`, pointing at `443a1f9`, and pushed to `origin`.
+- **The sessions** (`docs/ROADMAP.md`):
+  - S18 and S19 are paired, and so are S21 and S22.
+  - S23 adds Playwright WebKit and Firefox runs, Tay's review on his own phone through the Preview, and the GRAVITY
+    FLOW capture swap (ask Tay for the image then). **Changed by Tay at the S21+S22 close-out:** the swap is no longer
+    part of S23; it is `docs/ROADMAP.md` #18, a small PR after the release, whenever Tay provides the image.
+  - S17 does not start in session 16.
+
 ### Still open
 
-- **N7 — Cloudflare in front of the site.** Found in session 4, investigated in session 8, then partly resolved. The
-  `/privacy` wording is **deferred to the end of the build** (Tay, 2026-11-18):
+- ~~N7 — Cloudflare in front of the site~~ **Resolved in S21+S22 (2026-11-20)** on `release/concept-a` (`2424e23`,
+  with the `privacy.spec.ts:49` edit `a632a66`); it reaches production with the release.
+  - **The shipped `/privacy` wording** (Hosting and logs, after the Vercel sentence; exact text approved by Tay, R13):
+
+    > Requests reach Vercel through Cloudflare, which sits in front of the site as its network proxy and processes
+    > information about that traffic, such as your IP address: [Cloudflare's privacy policy](https://www.cloudflare.com/privacypolicy/).
+
+  - **Why it differs from the draft below:** the draft said Cloudflare processes that information "on the site's
+    behalf". Cloudflare's policy (read 2026-11-20, "effective as of November 4th, 2025") says it is "a data
+    controller for the personal information collected from all categories of data subjects listed above" (End Users
+    among them), and a processor only of Customer Logs, some account settings, and content that transits its network.
+    So the phrase went beyond the policy and was dropped.
+  - Shipped with it: R3's cookie change (one cookie, `a11y`), "Last updated 20 November 2026", the provider comment
+    now naming three pages, and `privacy.spec.ts` counting 3 new-tab links and checking "through Cloudflare".
+  - **Re-verified live on 2026-11-20:** `Server: cloudflare` with a `CF-RAY`; no beacon, no `email-protection`
+    rewriting, no decode script, no external script and no `Set-Cookie` on `/` or `/privacy`.
+  - The record before S21+S22 follows.
+
+  The `/privacy` wording was **deferred to the end of the build** (Tay, 2026-11-18):
   - **Dashboard toggles: done** (Tay, 2026-11-18). Web Analytics is set to Disable, and Email Address Obfuscation is
     Off.
   - **Verified live at the session 8 close (VL):** with browser headers, `/` and `/privacy` have no beacon, no
@@ -165,6 +284,9 @@ the private T Poker repository @ `91d2b97` (the local clone equals GitHub `main`
   - So "loads no third-party scripts" holds again.
   - **The `/privacy` wording: deferred to the end of the build.** Tay decided this at the session 9 close
     (2026-11-18). It is not a now-task, so don't raise it as pending. The draft below is kept for then.
+  - **Decided in session 16 (R13):** it goes into the release's `/privacy` edit in S21+S22, with the `theme` cookie's
+    removal (R3). Tay approves the exact final wording there before it is committed. The draft below is the starting
+    point; the edit also needs the approved `tests/e2e/privacy.spec.ts` change noted under it.
 
   The findings that led here:
   - **Nothing in the code (VL).**
@@ -344,6 +466,10 @@ Playwright MCP, Superpowers, UI UX Pro Max, Frontend Design, the Figma plugin (c
 
 | Date | Decision | By |
 |---|---|---|
+| 2026-11-20 | S21+S22 close-out: S21+S22 approved as built and pushed (`b97f92e`…`e58508b`); the footer rings' fix (`fa5c23d`, outside the brief) kept; the GRAVITY FLOW capture swap moved out of S23, to after the release (ROADMAP #18, a small PR whenever Tay provides the image) | Tay |
+| 2026-11-20 | S21+S22 Step 1: N7's `/privacy` wording approved as corrected (without "on the site's behalf"); the one-cookie paragraph; `colorScheme` "dark"; the manifest and `themeColor` `#04060d`; the sitemap date 2026-11-20 (S24 moves it to the merge date); the dark share card with the four names only, no states. Test edits approved: `hero.test.ts:43`, `privacy.spec.ts:49` (count 3, plus "through Cloudflare") | Tay |
+| 2026-11-19 | S17: R12's "still to name" test changes (the h1/h2 strings, the focus ring's colour, the Tab order's labels, the headline pins, the two `work.test.ts` cases that read deleted files) approved as a group, each still in its own commit. The five state docs that changed on both sides come over by a three-way merge; the other 77 paths are copied unchanged | Tay |
+| 2026-11-19 | Session 16: the P5/P6 plan approved (R1–R15): the release branch, the header, dark only, case studies and Two more, the explainers retired with a P4 restore record, live anchors, the headline and card, the "↗" icon, #15 and the Work lede, #13 measured, the approved test changes (WebGL guards unchanged), N7 in the `/privacy` edit with its wording approved first, Move F retired, `443a1f9` tagged `product-plates-final` before the merge. Sessions S17–S24 (S18+S19 and S21+S22 paired) | Tay |
 | 2026-11-19 | Session 11 close: the carousels approved (T Poker 5, Aegis 2, DeveloperOS 4, GRAVITY FLOW 5; no duplicate "final count"; the DeveloperOS refusal and AI-features captures left out). The framing corrected: D1 was reopened for Concept A, and D2 is still not reopened (no WebGL). Concept A is the active direction; `proto/hero-a-cinematic` at `5d4610b` | Tay |
 | 2026-11-18/19 | Session 10: D1 reopened for one measured prototype, Concept A, on `proto/hero-a-cinematic` (draft PR #18, never merged; no WebGL; `main`'s guards unchanged; first recorded as "D2 reopened", corrected at the session 11 close). Hero locked; the `--cine-*` design system extracted; the Projects section with 3D coverflow carousels and the phone fix. The Projects title is "Four projects, built end to end." (not all four are shipped). | Tay |
 | 2026-11-18 | Session 9 close: PR #16 (N8) merged (`a7a89fd`, live). The N7 `/privacy` wording is deferred to the end of the build. Move F is to be built on a preview branch next session | Tay |
