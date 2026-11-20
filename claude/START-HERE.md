@@ -19,9 +19,10 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
    - Tay reopened **D1** for it (2026-11-18). **D2 is still not reopened, so no WebGL.**
    - The Product Plates site it replaced is tagged **`product-plates-final`** (`443a1f9`).
 2. **Next, in this order (Tay, S24):** backlog #20 (F2, Safari's focus in the sheets: **done in S25, PR #23, merged as
-   `7ebff9c`**), #19 (Next 16.4.6: **done in S26, PR #24 for Tay's merge**), #21 (F1, Firefox's scroll padding), #18
+   `7ebff9c`**), #19 (Next 16.4.6: **done in S26, PR #24, merged as `ce818a0`**), #21 (F1, Firefox's scroll padding: **done in
+   S27, PR #25 for Tay's merge**), #18
    (the GRAVITY FLOW capture swap), #22 (per-browser tests); then **P4**, the project demos. Low priority: #23 (S25).
-   `docs/ROADMAP.md` has each.
+   Later, a small PR: #24 (S27). `docs/ROADMAP.md` has each.
 3. **The Concept A prototype, on `proto/hero-a-cinematic`: the frozen record.** Draft PR #18, never merged, never
    deleted (R1).
 4. **The release track (session 16 to S24, done).** Concept A replaced the live `/` as soon as possible, because Tay is
@@ -51,8 +52,9 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - The six security headers are exactly as before the merge.
   - One 2D canvas, `aria-hidden`, and zero WebGL contexts. 0 console errors at 390 and 1440.
 - **Production** = GitHub `taysh123/Portfolio` **`main`**, the source of truth.
-  - Deployed **`7ebff9c`**: PR #23 (#20, the shared focus trap), 2026-11-20 20:16Z (verified in S26). Before it,
-    `2cc324c` (PR #22: docs and a comment in `app/sitemap.ts`) and the release, `3a98d22` (PR #21, 2026-11-20 02:53Z).
+  - Deployed **`ce818a0`**: PR #24 (#19, Next 16.4.6), 2026-11-20 21:22Z (verified in S26's close-out: the headers and
+    CSP, 0 console errors and 0 CSP violations at 390 and 1440, the chat). Before it, `7ebff9c` (PR #23, the shared
+    focus trap), `2cc324c` (PR #22, docs) and the release, `3a98d22` (PR #21, 2026-11-20 02:53Z).
   - **Rollback**, if ever needed:
     - Vercel's Instant Rollback to `443a1f9`'s deployment.
     - Then a `git revert -m 1 3a98d22` PR.
@@ -199,7 +201,7 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - **Lighthouse mobile, median of 5:** 100, LCP 1,058 ms (the h1), TBT 20 ms, CLS 0, 100/100/100. First-load JS
     185.10 KiB, HTML 127,732 B.
   - **Next 16.3.8's `npm audit` advisories** are already in production and not in this release: ROADMAP #19, a PR on
-    `main` after S24 (Tay). Done in S26 (PR #24).
+    `main` after S24 (Tay). Done in S26 (PR #24, merged as `ce818a0`).
 - **Cut from `origin/main` `443a1f9`** (`--no-track`), pushed in S17 with its upstream set: branch only, no PR, no
   merge.
 - **The copy (R1):**
@@ -397,33 +399,46 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - Chromium 193/193; WebKit and Firefox: no failure the fix caused.
   - #22's WebKit list gained two tests, and #23 is new (low priority).
   - Detail: `docs/WORKLOG.md`, "Session 25 (#20)".
-- **S26 (#19) is done (2026-11-20), for Tay's review: PR #24**, from `chore/next-16-4-6`.
+- **S26 (#19) is done (2026-11-20): PR #24, merged by Tay as `ce818a0`** (Production since 21:22Z; its production
+  checks passed).
   - `next` and `eslint-config-next` 16.3.8 → 16.4.6, exact; the lockfile moves only Next's own packages. No code
     change.
   - `npm audit`: the nine `next` advisories are gone, both critical ones included. Next's sharp stays `0.35.5`.
   - Unit 225/225, Chromium 193/193 cold and warm. First-load JS 186.70 KiB (`main` 185.34), the headers identical,
     the card byte-identical, Lighthouse 100 with LCP 1,061 ms.
   - Detail: `docs/WORKLOG.md`, "Session 26 (#19)".
+- **S27 (#21) is done (2026-11-21), for Tay's review: PR #25**, from `fix/f1-launcher-focus`.
+  - After a Tab press, once the browser's own scroll has settled, the chat launcher moves a control still under it up
+    to #16's padding edge (instantly under reduced motion). Only Firefox needed it: in Chromium and WebKit it never
+    fires.
+  - A new spec, `tests/e2e/launcher-focus.spec.ts`, approved in advance.
+  - Chromium 197/197 cold and warm; Firefox and WebKit: no failure outside S23's and S25's tables. JS +0.36 KiB; the
+    stylesheets and CLS unchanged.
+  - `chrome.spec.ts:268` at 390 still fails in Firefox: it reads the instant after the press (Tay's call: #22).
+  - Detail: `docs/WORKLOG.md`, "Session 27 (#21)".
 - **The release track (P5/P6) is done.** Next, in this order (Tay, S24), each a PR on `main`:
   1. **#20:** F2, Safari's focus leaving the menu sheet or the chat for one Tab; the fix goes in the shared focus trap.
      **Done in S25** (PR #23, merged as `7ebff9c`).
   2. **#19:** Next 16.3.8 → 16.4.6 for the `npm audit` advisories, with the full suite and Lighthouse. **Done in S26**
-     (PR #24).
-  3. **#21:** F1, Firefox ignoring the bottom scroll padding for controls already on screen.
+     (PR #24, merged as `ce818a0`).
+  3. **#21:** F1, Firefox ignoring the bottom scroll padding for controls already on screen. **Done in S27** (PR #25).
   4. **#18:** the GRAVITY FLOW capture swap, whenever Tay provides the image.
   5. **#22:** per-browser handling of the engine-specific tests.
   6. Then **P4**, the project demos (`docs/ROADMAP.md`, P4, with the restore record).
   - Low priority (Tay, S25): **#23**, Safari's focus return after a modal opened by a mouse click.
+  - Later, a small separate PR (Tay, S27): **#24**, dev-dependency audit hygiene.
 
-## Open PRs / branches (S26, 2026-11-20; verified with `gh` and `git ls-remote`)
-- **PR #24** (`chore/next-16-4-6` → `main`), backlog #19: **open, ready for review**, for Tay to merge. After the
+## Open PRs / branches (S27, 2026-11-21; verified with `gh` and `git ls-remote`)
+- **PR #25** (`fix/f1-launcher-focus` → `main`), backlog #21: **open, ready for review**, for Tay to merge. After the
   merge: delete the branch once `git merge-base --is-ancestor` confirms it.
+- **PR #24** (`chore/next-16-4-6` → `main`), backlog #19: **merged** by Tay on 2026-11-20 as `ce818a0`; the branch is
+  deleted, local and remote.
 - **PR #23** (`fix/f2-focus-trap` → `main`), backlog #20: **merged** by Tay on 2026-11-20 as `7ebff9c`; the branch is
   gone from `origin`.
 - **PR #21** (`release/concept-a` → `main`), "Release: Concept A": **merged** by Tay on 2026-11-20 as `3a98d22`.
 - **PR #22** (`docs/s24-release-closeout` → `main`), the S24 close-out: **merged** by Tay on 2026-11-20 as `2cc324c`.
 - **Deleted after their merges**, local and remote: `release/concept-a` (tip `5ea8d57`),
-  `docs/s24-release-closeout` and `fix/f2-focus-trap`.
+  `docs/s24-release-closeout`, `fix/f2-focus-trap` and `chore/next-16-4-6`.
 - **Kept:** `proto/hero-a-cinematic` (tip `92b08fd`, local and remote; **draft PR #18**): not merged, by design. R1
   keeps it frozen as the record ("never merge, never delete"), so deleting it would also need R1 changed.
 - **Tag `product-plates-final`** (`8f0a96a`) on `443a1f9`, pushed in S17: the rollback and P4 restore point (R6, R15).
@@ -437,17 +452,20 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Review and merge PR #24** (#19, Next 16.4.6). Then the close-out: delete `chore/next-16-4-6` after the ancestor
-  check, confirm `main` is clean, and check the merge's Production deployment serves `/` correctly.
-- **His call, not in PR #24:** two build-time transitive advisories (`source-map-js`, `baseline-browser-mapping`; `npm
-  audit fix`) and the project's dev `sharp` 0.34.5 (only the image script uses it).
+- **Review and merge PR #25** (#21, F1). Then the close-out: delete `fix/f1-launcher-focus` after the ancestor check,
+  confirm `main` is clean, the merge's Production deployment is `success`, and `/` has 0 console errors at 390 and
+  1440.
+- **His call:** whether `chrome.spec.ts:268` at 390 (Firefox reads it the instant after the press, before the
+  correction) joins #22's Firefox list. No test changed in S27.
+- **#24, later:** two build-time transitive advisories (`source-map-js`, `baseline-browser-mapping`) and the project's
+  dev `sharp` 0.34.5 (only the image script uses it); none ships to visitors.
 - **Optional, on a Mac:** Playwright's WebKit can't reproduce Option+Tab, or Safari with macOS keyboard navigation off.
   Desktop Safari on production (PR #23 is live) would confirm both (the menu at a narrow width, the chat sheet, a case study).
 - **His manual steps after the release, if not done yet:**
   - Refresh the share card in LinkedIn's Post Inspector (https://www.linkedin.com/post-inspector/).
   - A reindex request for `https://tayshofer.dev/` if he uses Google Search Console.
 - **`proto/hero-a-cinematic`** stays (R1: never delete) unless he changes R1.
-- **Then #21**, in a new session.
+- **Then #18** (when he has the image) and **#22**, each in a new session.
 - **The GRAVITY FLOW image** for the capture swap (ROADMAP #18), whenever he has it.
 - **Optional, on `main`:** the site's chat launcher folds its label as the page scrolls. That is 0.0076 CLS on `/` at
   1440 and 390 (measured in session 11), well inside "good". Untouched.

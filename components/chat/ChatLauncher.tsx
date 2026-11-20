@@ -43,6 +43,44 @@ export function ChatLauncher() {
     return () => { window.removeEventListener("scroll", onScroll); cancelAnimationFrame(raf); };
   }, []);
   useEffect(() => {
+    // #21 (F1): Firefox's own focus scroll skips the page's bottom scroll padding (#16, chat.css) for a control that is
+    // already on screen, so a Tab could leave one partly under this launcher. Once the browser's own scroll for a Tab
+    // has settled, a control still under the launcher is moved up to the padding's edge, where Chromium and Safari put
+    // it themselves (for them this finds nothing to do). Only a Tab press counts: a pointer, a touch or a script giving
+    // focus back never moves the page. Never inside an overlay, nor while a modal is open: its focus trap owns focus.
+    const el = ref.current; if (!el) return;
+    let tab = false, raf = 0;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab" || e.ctrlKey || e.metaKey) return;
+      tab = true; setTimeout(() => { tab = false; });   // the focus move happens within this same key press
+    };
+    const onFocus = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (!tab || el.contains(target) || target.closest('[role="dialog"]') || document.querySelector('[aria-modal="true"]')) return;
+      cancelAnimationFrame(raf);
+      let y = scrollY, still = 0, frames = 0;
+      const check = () => {
+        // Wait out the browser's own scroll (smooth unless motion is reduced): three frames without a move.
+        if (scrollY !== y) { y = scrollY; still = 0; } else still++;
+        if (still < 3 && ++frames < 90) { raf = requestAnimationFrame(check); return; }
+        if (document.activeElement !== target) return;
+        const r = target.getBoundingClientRect(), c = el.getBoundingClientRect();
+        if (r.right <= c.left + 1 || r.left >= c.right - 1 || r.bottom <= c.top + 1 || r.top >= c.bottom - 1) return;
+        const pad = getComputedStyle(document.documentElement);
+        // Just far enough for its foot to meet the padding's edge, and never so far that its head goes under the header.
+        const by = Math.min(r.bottom - (innerHeight - (parseFloat(pad.scrollPaddingBottom) || 0)), r.top - (parseFloat(pad.scrollPaddingTop) || 0));
+        if (by > 0) scrollBy({ top: by });   // the page's own scroll: smooth, or instant when motion is reduced
+      };
+      raf = requestAnimationFrame(check);
+    };
+    document.addEventListener("keydown", onKey, true);
+    document.addEventListener("focusin", onFocus);
+    return () => {
+      document.removeEventListener("keydown", onKey, true); document.removeEventListener("focusin", onFocus);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+  useEffect(() => {
     const w = window as Window & { __chatReady?: boolean; __chatEarly?: number };
     w.__chatReady = true;
     if (w.__chatEarly) { w.__chatEarly = 0; toggleOverlay("chat"); }
