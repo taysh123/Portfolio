@@ -1,9 +1,11 @@
 import { IMAGES, type ImageName } from "@/data/images";
 
 /**
- * The captures only the Work carousels show (first added for the Concept A prototype), in the shape data/images.ts
- * uses (each name, its encoded widths, its largest size). scripts/m10-images.mjs writes them into public/work/ like
- * every other capture; tests/unit/lab-work.test.ts checks this list against the files on disk.
+ * The captures only the Work carousels and the case studies show (first added for the Concept A prototype), in the
+ * shape data/images.ts uses (each name, its encoded widths, its largest size). scripts/m10-images.mjs writes them into
+ * public/work/ like every other capture; tests/unit/lab-work.test.ts checks this list against the files on disk. The
+ * case study (client code) never imports this file: data/projects.ts repeats the names and widths it serves
+ * (`media.encoded`), and tests/unit/case-study-images.test.ts holds the two equal.
  *
  * They were listed here and not in data/images.ts because the Product Plates About visual (client code, retired in
  * the release) imported that file's IMAGES whole, so one more entry there would have shipped in first-load
@@ -18,6 +20,9 @@ export const LAB_IMAGES = {
   "gf-gravity-run": { widths: [320, 480, 640], w: 640, h: 1280 },
   "gf-cosmetics": { widths: [320, 480, 640], w: 640, h: 1280 },
   "gf-win": { widths: [320, 480, 640], w: 640, h: 1280 },
+  // The case study's (S21+S22): the two DeveloperOS captures the carousel does not show.
+  "dos-ai-features": { widths: [800, 1200, 1600], w: 1600, h: 900 },
+  "dos-desktop": { widths: [800, 1200, 1600], w: 1600, h: 900 },
 } as const;
 
 export type LabImageName = keyof typeof LAB_IMAGES;

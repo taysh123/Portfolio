@@ -78,6 +78,10 @@ const jobs = [
   { name: "gf-gravity-run", src: `${P}/gravity-flow/gravity-run.webp`, widths: [320, 480, 640] },
   { name: "gf-cosmetics", src: `${P}/gravity-flow/cosmetics.webp`, widths: [320, 480, 640] },
   { name: "gf-win", src: `${P}/gravity-flow/win.webp`, widths: [320, 480, 640] },
+  // RELEASE (S21+S22): the case study's two DeveloperOS captures the carousel does not show, whole, at the other DeveloperOS
+  // captures' widths, so every case-study image is served pre-encoded and none goes through the on-demand optimiser.
+  { name: "dos-ai-features", src: `${P}/developeros/ai-features.webp`, widths: [800, 1200, 1600] },
+  { name: "dos-desktop", src: `${P}/developeros/hero.webp`, widths: [800, 1200, 1600] },
 ];
 
 // Job names on the command line run only those jobs (the outputs of the others stand); none runs every job.
@@ -106,7 +110,7 @@ for (const j of run) {
     console.log(`${j.name}-${w}`.padEnd(26), `${m.width}×${m.height}`.padEnd(10), `avif ${(avif.length / 1024).toFixed(1)} KiB`.padEnd(16), `webp ${(webp.length / 1024).toFixed(1)} KiB`, j.crop ? "" : `(src ${meta.width}×${meta.height})`);
   }
 }
-// The Aegis case study's capture, at the crop's own size: its panel serves it through next/image (AVIF, then WebP).
+// The Aegis case study's capture, at the crop's own size: its panel serves this file as it is (`direct`, S21+S22).
 const board = capture("aegis/08-incident-kanban.png");
 if (!only.length && board && fs.existsSync(board)) {
   const buf = await sharp(board).extract(AEGIS_BOARD).webp({ quality: 90, effort: 6 }).toBuffer();
