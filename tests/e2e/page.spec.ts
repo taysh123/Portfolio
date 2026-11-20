@@ -63,6 +63,14 @@ test("/ is indexable: index, follow, the canonical https://tayshofer.dev, and no
   expect(html).not.toMatch(/noindex|nofollow/i);
 });
 
+// R12 (Tay, session 16), a new guard: the prototype's routes are not shipped (R1: /lab never reaches main).
+test("/lab, /lab/hero-a and /lab/work answer 404", async ({ request }) => {
+  for (const path of ["/lab", "/lab/hero-a", "/lab/work"]) {
+    const r = await request.get(path, { headers: { Accept: "text/html" }, maxRedirects: 0 });
+    expect(r.status(), path).toBe(404);
+  }
+});
+
 test("every interactive element is ≥ 44px tall below lg (390 and 320)", async ({ browser }) => {
   for (const vp of [[390, 844], [320, 568]] as const) {
     const { ctx, page } = await open(browser, vp);
