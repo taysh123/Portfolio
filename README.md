@@ -1,7 +1,7 @@
 # Tay Shofer — Portfolio
 
 [![Live Site](https://img.shields.io/badge/Live%20Site-tayshofer.dev-1a4fe0?style=flat-square&logo=vercel&logoColor=white)](https://tayshofer.dev)
-[![Next.js](https://img.shields.io/badge/Next.js-16.3-black?style=flat-square&logo=next.js)](https://nextjs.org)
+[![Next.js](https://img.shields.io/badge/Next.js-16.4-black?style=flat-square&logo=next.js)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38bdf8?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 
@@ -48,7 +48,7 @@ Each entry carries an `honestNote` naming the system's limits.
 
 | Layer | Technology |
 |---|---|
-| Framework | Next.js 16.3.8 (App Router, Turbopack) |
+| Framework | Next.js 16.4.6 (App Router, Turbopack) |
 | Language | TypeScript 5 (strict) |
 | Styling | Tailwind CSS v4 + CSS custom properties |
 | Animation | CSS transitions and scroll-driven animations; Framer Motion only inside the case-study, accessibility and chat panels (loaded on demand) |

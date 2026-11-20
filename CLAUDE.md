@@ -7,8 +7,8 @@ Detailed material lives in `docs/`; this file stays short and points to it.
 M0 (audit + decisions) closed 2026-11-18. **Concept A is live on `main` since 2026-11-20** (PR #21, merge `3a98d22`;
 S24 verified production). It replaced the Product Plates site (the M1 core, moves A–E; tagged `product-plates-final`);
 **Move F is retired** (R14). The release track is done: decisions R1–R15 in `docs/RESEARCH_AND_DECISIONS.md`, sessions
-S17–S24 in `docs/ROADMAP.md` ("Concept A: P4–P6"). Next: backlog #20 (fixed in S25, PR #23), #19, #21, #18, #22, then
-P4; #23 is low priority. Tay reopened **D1**
+S17–S24 in `docs/ROADMAP.md` ("Concept A: P4–P6"). Next: backlog #19 (Next 16.4.6, done in S26, PR #24), #21, #18, #22,
+then P4; #23 is low priority. #20 is merged (PR #23, `7ebff9c`). Tay reopened **D1**
 for Concept A on 2026-11-18. **D2 is still not reopened, so no WebGL**, anywhere. Keep refining this file with
 verified facts only.
 
@@ -24,8 +24,8 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
 
 ## Where production code is (verified 2026-11-20)
 - **`main` is the source of truth.** Production = GitHub `taysh123/Portfolio` `main`; every merge deploys
-  via Vercel's GitHub integration (last verified: **`2cc324c`**, 2026-11-20, PR #22, in S25; its page is the Concept A
-  release's, PR #21, `3a98d22`). Cloudflare
+  via Vercel's GitHub integration (last verified: **`7ebff9c`**, 2026-11-20, PR #23, #20's focus trap, in S26; the Concept A
+  release is PR #21, `3a98d22`). Cloudflare
   proxies the domain in front of Vercel (N7 in `docs/RESEARCH_AND_DECISIONS.md`). Its Web Analytics and Email Address
   Obfuscation are off (Tay, 2026-11-18), and E2E can't see the edge, so check the live page with a browser `Accept`
   header. `origin` is `https://github.com/taysh123/Portfolio.git` (the old name `Tay-Shofer---Portfolio` redirects).
@@ -93,7 +93,7 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
   repo URLs). Never build, deploy, or copy content from it. (The local `feature/premium-portfolio-redesign`,
   fully merged, was deleted 2026-11-18.)
 - Start live-site work from an up-to-date `origin/main` (needs `git fetch`; ask first in a read-only
-  session), then `npm ci` so `node_modules/next/dist/docs` matches Next 16.3.8.
+  session), then `npm ci` so `node_modules/next/dist/docs` matches Next 16.4.6.
 - Check what is live, read-only: `gh api "repos/taysh123/Portfolio/deployments?environment=Production&per_page=1"`.
 
 ## Workflow
@@ -177,7 +177,7 @@ Verified gotchas (2026-11-18):
   its `node` child holding the port: check `Get-NetTCPConnection -LocalPort <port> -State Listen` and stop that PID.
 - The Windows-only `tests/unit/site.test.ts:78` failure (N6) is fixed (`b4d5c73`, PR #7). On `main` since the
   release (`3a98d22`): 225/225 unit tests in 18 files, and Playwright 187/187 in 15 files on Chromium (S23, right after
-  deleting `.next`). #20 (PR #23) adds `focus-trap.spec.ts`: 193/193 in 16 files (S25). Run `npm test` from Git Bash: a test shells out `git grep … || true`, and cmd.exe (PowerShell's
+  deleting `.next`). #20 (PR #23) adds `focus-trap.spec.ts`: 193/193 in 16 files (S25). S26, Next 16.4.6: 225/225 and 193/193, cold and warm. Run `npm test` from Git Bash: a test shells out `git grep … || true`, and cmd.exe (PowerShell's
   child shell) has no `true`, so it fails there spuriously.
 - **The suite's config runs Chromium only.** S23 ran WebKit and Firefox from scratch configs, and the engine-specific
   failures are listed in `docs/WORKLOG.md` ("Session 23" close-out). Per-browser handling is backlog #22.
