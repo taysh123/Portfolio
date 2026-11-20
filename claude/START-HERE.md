@@ -28,7 +28,7 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
      after his review on the Preview.
    - **S20 (2026-11-20): the tests.** The lab tests are ported to `/`, the old page's retired, R12's new guards added:
      unit 218/218, Playwright 183/183.
-   - **S21+S22 (2026-11-20): the surfaces and the backlog, built and pushed; Tay's review pending.** Unit 225/225,
+   - **S21+S22 (2026-11-20): the surfaces and the backlog, approved by Tay and closed out.** Unit 225/225,
      Playwright 187/187 cold and warm. Detail below and in `docs/WORKLOG.md`, "Sessions 21+22". S23 is next.
    - The plan, S17 to S24: `docs/ROADMAP.md`, "Concept A: P4–P6". Tay's decisions, R1 to R15:
      `docs/RESEARCH_AND_DECISIONS.md`, "Resolved in session 16".
@@ -122,8 +122,9 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - **One catch:** right after `.next` is deleted, the first full run failed `aegis.spec.ts:15` and the Case study
     block's image test: the Aegis case-study capture's first on-demand AVIF encode outlasted their polls. **Fixed in
     S21+S22** without touching a test: no case-study image goes through the optimiser now.
-- **S21+S22 (2026-11-20): the surfaces and the backlog.** Built after Tay's OK on Step 1; 21 commits, `b97f92e` to
-  `e58508b`, pushed. Detail: `docs/WORKLOG.md`, "Sessions 21+22".
+- **S21+S22 (2026-11-20): the surfaces and the backlog, approved by Tay.** Built after Tay's OK on Step 1; 21
+  commits, `b97f92e` to `e58508b`, pushed, then the docs and the close-out. Detail: `docs/WORKLOG.md`, "Sessions 21+22"
+  and its close-out.
   - **R8:** the hero's h1 and lede live in `siteMeta` (`headlineLines`, `headline`, `heroLead`); the page's words are
     unchanged. **The share card is dark:** the hero in miniature, with the h1 and the four flagships' names only, no
     states (Tay: a cached card outlives them). `lib/tokens.ts` mirrors the layer's field and inks (`cine`).
@@ -314,7 +315,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 - **N8** (merged in PR #16): GRAVITY FLOW's private repository name is out of the docs. The private-repo guard pins both
   private repos, T Poker and GRAVITY FLOW, by SHA-256 digest.
 - **Session 11 (Tay's answers):** T Poker has 5 captures, not 6 (no duplicate). The DeveloperOS refusal and
-  AI-features captures are left out. GRAVITY FLOW's existing two stay; Tay will swap one himself.
+  AI-features captures are left out. GRAVITY FLOW's existing two stay; Tay will swap one himself. **That swap comes
+  after the release** (Tay, S21+S22 close-out): `docs/ROADMAP.md` #18, a small PR whenever he provides the image.
 
 ## What's next
 - **S17 is done** (2026-11-19): the tag, the branch and the copy, the clean run, the baseline, #16, CLAUDE.md.
@@ -327,10 +329,12 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - Measure the JS and HTML budgets.
 - **S20 is done** (2026-11-20): the lab tests ported to `/`, the old page's retired, the new guards added; the suite
   is green and pushed.
-- **S21+S22 is built and pushed** (2026-11-20): the privacy and SEO surfaces, then the backlog (#13 measured and not
-  kept, #14 re-checked, #16, #17, the cold cache, the rings). **Waiting on Tay's review, then its close-out.**
-- Then S23 (the release candidate: WebKit and Firefox runs, Tay's review on his own phone, the GRAVITY FLOW capture
-  swap) and S24 (check the tag, Tay's merge, the production checks).
+- **S21+S22 is done and approved by Tay (2026-11-20)**, and closed out: the privacy and SEO surfaces, then the
+  backlog (#13 measured and not kept, #14 re-checked, #16, #17, the cold cache, the rings; the footer rings' fix kept).
+- **S23 is next:** the release candidate (WebKit and Firefox runs, Tay's review on his own phone; on Tay's go, the PR).
+  Then S24 (check the tag, Tay's merge, the production checks).
+- **After the release:** the GRAVITY FLOW capture swap (ROADMAP #18), a small PR whenever Tay provides the image. It is
+  no longer part of S23.
 
 ## Open PRs / branches (S21+S22, 2026-11-20)
 - **`release/concept-a`**: the release branch, pushed in S17, in S18+S19 (the code at `270ab27`), in S20 (tests
@@ -348,12 +352,9 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Review S21+S22** on the Preview (the session stays open until then): the share card, `/privacy`, the case studies,
-  the rings, the launcher's clearance on a phone. Keep or drop the footer rings' commit (`fa5c23d`, outside the brief).
-- **Then its close-out:** CLAUDE.md's two gotchas this session made stale (the cold-cache failure, the ring that eased
-  in), ROADMAP (the S21+S22 row, #13, #14, #16, #17), RESEARCH_AND_DECISIONS (N7 resolved), the memory, the scratch
-  worktree of `4b6a8e2`.
-- **In S23:** the GRAVITY FLOW image for the capture swap; the review on his own phone through the Preview.
+- **Start S23** in a new session, on `release/concept-a`: the release candidate.
+- **In S23:** the review on his own phone through the Preview, and the go for the PR.
+- **After the release:** the GRAVITY FLOW image for the capture swap (ROADMAP #18).
 - **In S24:** merge. The `product-plates-final` tag is already pushed (S17).
 - **Optional, on `main`:** the site's chat launcher folds its label as the page scrolls. That is 0.0076 CLS on `/` at
   1440 and 390 (measured in session 11), well inside "good". Untouched.

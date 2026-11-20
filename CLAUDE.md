@@ -47,6 +47,12 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
     lines are gone. `hero.spec.ts` is deleted; `chapters.spec.ts` keeps Navigation, its Case study block and four
     ported checks; `lower.spec.ts` keeps the résumé's bytes, the phones' overflow check and the footer. R12's three new
     guards are in `page.spec.ts`. Every retired test and its reason: `docs/WORKLOG.md`, "Session 20".
+  - **S21+S22 (approved by Tay, 2026-11-20): the surfaces and the backlog.** R8: the hero's h1 and lede live in
+    `siteMeta`, and the share card is dark, with the four flagships' names only (no states). `/privacy` names Cloudflare
+    (N7) and one cookie, `a11y`; the browser colour and the manifest are the field's `#04060d`. #16: focus scrolls
+    clear of the chat launcher. #17: the case-study dialog's axe findings are fixed. No case-study image goes through
+    the on-demand optimiser. Every focus ring shows at once. #13 was measured and not kept (R11). Detail:
+    `docs/WORKLOG.md`, "Sessions 21+22".
   - One PR, opened in S23 on Tay's go; Tay merges.
   - Rollback: Vercel's Instant Rollback to `443a1f9`'s deployment, then a `git revert -m 1` PR. `443a1f9` is tagged
     `product-plates-final` (R15, pushed in S17).
@@ -150,8 +156,8 @@ Verified gotchas (2026-11-18):
   old build. Serve manual checks on another port. On Windows, stopping a backgrounded `npx next start` can leave
   its `node` child holding the port: check `Get-NetTCPConnection -LocalPort <port> -State Listen` and stop that PID.
 - The Windows-only `tests/unit/site.test.ts:78` failure (N6) is fixed (`b4d5c73`, PR #7): the unit suite is
-  122/122 on Windows (`main` `1c57789`; PR #20 changed docs only). On `release/concept-a` since S20: 218/218 tests in
-  16 files, and Playwright 183/183 in 13 files. Run
+  122/122 on Windows (`main` `1c57789`; PR #20 changed docs only). On `release/concept-a` since S21+S22: 225/225 tests
+  in 18 files, and Playwright 187/187 in 15 files, both right after deleting `.next` and warm. Run
   `npm test` from Git Bash: a test shells out `git grep … || true`, and cmd.exe (PowerShell's child shell) has no
   `true`, so it fails there spuriously.
 - Lighthouse is not a dependency. S17 ran `npx --yes lighthouse@13.6.0` (Tay's go) with the installed Chrome; the
@@ -163,13 +169,12 @@ Verified gotchas (2026-11-18):
   fails the build, and the Preview with it (S18+S19 bridged two with a temporary `@ts-nocheck`; S20 removed it).
 - **A test whose route is gone waits out its whole timeout** (60 s), and one file's tests run one after another. To
   list a broken set quickly, run it with `--fully-parallel --timeout=15000`.
-- **After deleting `.next`, the first full Playwright run can fail two tests** (`aegis.spec.ts:15`,
-  `chapters.spec.ts`'s "every case study's images finish loading"). The Aegis case study's capture goes through the
-  on-demand image optimiser, and its first AVIF encode, at the suite's start, outlasts their polls. A second run, with
-  `.next/cache/images` warm, passes (S20; `docs/WORKLOG.md`, "Session 20" §4). The fix is Tay's call.
-- **A focus ring can ease in.** The header's four links carry the site's colour transition, which also eases
-  `outline-color` over 150 ms. A test that reads a ring right after Tab sees its first frame: wait for the focused
-  element's `getAnimations()` to finish first (as `lab-hero-a.spec.ts` does).
+- **No case-study image goes through the on-demand optimiser** (S21+S22). Each is a `direct` file or listed in its
+  project's `media.encoded` (pre-encoded by `scripts/m10-images.mjs`); `tests/unit/case-study-images.test.ts` holds
+  that. A new case-study capture needs a script job, or `direct`.
+- **The page's bottom scroll padding moves Playwright's clicks** (#16). It keeps focus out of the chat launcher's strip
+  (5rem; 4.5rem on phones), so `click()` and `scrollIntoViewIfNeeded()` first scroll a target that sits in it. To
+  measure what a press itself moves, dispatch the click inside the page.
 - **The Vercel connector's authenticated fetch** (`web_fetch_vercel_url`) creates a 23-hour share link on a protected
   deployment, which opens it to anyone holding the link. Don't use it without Tay's go.
 - `git rm` of a folder's last tracked files also removes the folder, so a `git mv` into it then fails: recreate it.

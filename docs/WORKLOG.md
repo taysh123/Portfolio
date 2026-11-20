@@ -11,6 +11,60 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-20 — Sessions 21+22 close-out: approved by Tay; the GRAVITY FLOW swap moves after the release (Claude Code)
+
+**Scope (Tay's brief):** S21+S22 reviewed and approved; keep the footer rings' fix (`fa5c23d`). Close out: CLAUDE.md
+(drop the two stale notes), the ROADMAP rows, N7 in RESEARCH_AND_DECISIONS (the shipped wording), START-HERE, this log
+and the memory; remove the scratch worktree and clean scratch; `npm test`; push `release/concept-a` (no PR, no merge);
+confirm `main` is clean and level with `origin/main`. **New:** the GRAVITY FLOW capture swap is no longer part of S23;
+it becomes a post-release item (a small PR whenever Tay provides the image).
+
+### Decisions (Tay)
+- **S21+S22 approved** as built and pushed (`b97f92e`…`e58508b`, docs `00ea86d`).
+- **The footer rings' fix (`fa5c23d`) is kept.**
+- **The GRAVITY FLOW capture swap moves out of S23**, to after the release: `docs/ROADMAP.md` #18.
+
+### Docs
+- **`CLAUDE.md`:** the S21+S22 summary under the release branch; the suite counts (unit 225/225 in 18 files,
+  Playwright 187/187 in 15, cold and warm). **Dropped:** the gotcha about the first full run after deleting `.next`
+  failing two tests (fixed by the pre-encoded case-study captures), and the one about the header links' ring easing in
+  (fixed in `5d937ca`, `fa5c23d`). **Added:** no case-study image goes through the optimiser (`direct` or
+  `media.encoded`; a new capture needs a script job); the page's bottom scroll padding (#16) makes Playwright's
+  `click()` scroll a target out of the launcher's strip first.
+- **`docs/ROADMAP.md`:** last updated; P5/P6 status (S21+S22 done and approved, S23 next); the S21+S22 row's commits
+  and results; the S23 row without the capture swap; "After the release" under the production checks; backlog #11
+  (N7) done, #13 measured and not kept, #14 re-checked, #16 and #17 done; **new #18**, the swap after the release.
+- **`docs/RESEARCH_AND_DECISIONS.md`:** N7 resolved, with the shipped wording and why it drops the draft's "on the
+  site's behalf"; R13 done; the session note on S23 records the swap's move; two decision-history rows.
+- **`claude/START-HERE.md`:** S21+S22 approved and closed out; what's next (S23, then S24; the swap after the
+  release); what waits on Tay.
+- **The memory:** the state note, and the measurement lessons (content-visibility on the composed page; Satori's
+  radial gradients; the scroll padding and Playwright's clicks).
+
+### Clean-up (VL)
+- **The scratch worktree of `4b6a8e2`:** `git worktree remove --force` deleted it, `node_modules` included, and
+  `git worktree prune` ran; `git worktree list` shows only the repo.
+- **Scratch:** every file deleted (the probes, the Lighthouse reports, the renders and screenshots, the diffs).
+- Ports 3400–3402 are free.
+
+### Validation (Git Bash)
+| Command | Result |
+|---|---|
+| `npm test` after the docs edits | **225/225 tests, 18/18 files**; the private-repo and institution guards pass over the new docs |
+| `npm run build` (Turbopack cache cleared), with the close-out docs and without them (`git stash`) | `/`'s two stylesheets identical in name, size and SHA-256 (`1v6nld9ia-p76.css` 44,069 B, `3_ro9fti2b1c6.css` 28,727 B): CLAUDE.md and START-HERE add or remove no utility |
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production, tagged `product-plates-final`. Untouched.
+- `release/concept-a`: S21+S22 and this close-out, pushed. No PR.
+- `proto/hero-a-cinematic`: frozen; PR #18 a draft.
+
+### Waiting on Tay
+- **S23** in a new session, on `release/concept-a`: the release candidate (WebKit and Firefox runs, axe, Lighthouse,
+  headers, privacy and secret scans, screenshots; Tay's review on his own phone; on his go, the PR).
+- **After the release:** the GRAVITY FLOW image for the capture swap (#18).
+
+---
+
 ## 2026-11-20 — Sessions 21+22: privacy and SEO surfaces, then the backlog (#13, #14, #16, #17, the cold cache, the rings) (Claude Code)
 
 **Scope (Tay's brief, S21+S22):**

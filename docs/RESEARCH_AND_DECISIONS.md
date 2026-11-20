@@ -242,7 +242,8 @@ with its gap audit and test list, is in `docs/WORKLOG.md` (session 16), and the 
     The approval covers the group, but each change still goes in its own commit naming it, as the other R12 changes
     do. None is made in S17: they land with the swap (S18+S19) or the test port (S20).
 - **R13 — N7.** Its Cloudflare sentence goes into the `/privacy` edit in S21+S22, with R3's cookie change. **Tay
-  approves the exact final wording there, before it is committed.**
+  approves the exact final wording there, before it is committed.** **Done in S21+S22:** approved by Tay and shipped on
+  `release/concept-a` (`2424e23`); the wording is under N7 below.
 - **R14 — Move F** (`docs/M1_VISUAL_PLAN.md`) is retired. It was a Product Plates move, and the release supersedes it.
 - **R15 — The tag.** Before the merge, `443a1f9` (the last Product Plates commit, live) is tagged
   `product-plates-final`, and the tag is pushed. **Done in S17** (Tay's brief brought it forward from S24): an
@@ -250,13 +251,31 @@ with its gap audit and test list, is in `docs/WORKLOG.md` (session 16), and the 
 - **The sessions** (`docs/ROADMAP.md`):
   - S18 and S19 are paired, and so are S21 and S22.
   - S23 adds Playwright WebKit and Firefox runs, Tay's review on his own phone through the Preview, and the GRAVITY
-    FLOW capture swap (ask Tay for the image then).
+    FLOW capture swap (ask Tay for the image then). **Changed by Tay at the S21+S22 close-out:** the swap is no longer
+    part of S23; it is `docs/ROADMAP.md` #18, a small PR after the release, whenever Tay provides the image.
   - S17 does not start in session 16.
 
 ### Still open
 
-- **N7 — Cloudflare in front of the site.** Found in session 4, investigated in session 8, then partly resolved. The
-  `/privacy` wording is **deferred to the end of the build** (Tay, 2026-11-18):
+- ~~N7 — Cloudflare in front of the site~~ **Resolved in S21+S22 (2026-11-20)** on `release/concept-a` (`2424e23`,
+  with the `privacy.spec.ts:49` edit `a632a66`); it reaches production with the release.
+  - **The shipped `/privacy` wording** (Hosting and logs, after the Vercel sentence; exact text approved by Tay, R13):
+
+    > Requests reach Vercel through Cloudflare, which sits in front of the site as its network proxy and processes
+    > information about that traffic, such as your IP address: [Cloudflare's privacy policy](https://www.cloudflare.com/privacypolicy/).
+
+  - **Why it differs from the draft below:** the draft said Cloudflare processes that information "on the site's
+    behalf". Cloudflare's policy (read 2026-11-20, "effective as of November 4th, 2025") says it is "a data
+    controller for the personal information collected from all categories of data subjects listed above" (End Users
+    among them), and a processor only of Customer Logs, some account settings, and content that transits its network.
+    So the phrase went beyond the policy and was dropped.
+  - Shipped with it: R3's cookie change (one cookie, `a11y`), "Last updated 20 November 2026", the provider comment
+    now naming three pages, and `privacy.spec.ts` counting 3 new-tab links and checking "through Cloudflare".
+  - **Re-verified live on 2026-11-20:** `Server: cloudflare` with a `CF-RAY`; no beacon, no `email-protection`
+    rewriting, no decode script, no external script and no `Set-Cookie` on `/` or `/privacy`.
+  - The record before S21+S22 follows.
+
+  The `/privacy` wording was **deferred to the end of the build** (Tay, 2026-11-18):
   - **Dashboard toggles: done** (Tay, 2026-11-18). Web Analytics is set to Disable, and Email Address Obfuscation is
     Off.
   - **Verified live at the session 8 close (VL):** with browser headers, `/` and `/privacy` have no beacon, no
@@ -447,6 +466,8 @@ Playwright MCP, Superpowers, UI UX Pro Max, Frontend Design, the Figma plugin (c
 
 | Date | Decision | By |
 |---|---|---|
+| 2026-11-20 | S21+S22 close-out: S21+S22 approved as built and pushed (`b97f92e`…`e58508b`); the footer rings' fix (`fa5c23d`, outside the brief) kept; the GRAVITY FLOW capture swap moved out of S23, to after the release (ROADMAP #18, a small PR whenever Tay provides the image) | Tay |
+| 2026-11-20 | S21+S22 Step 1: N7's `/privacy` wording approved as corrected (without "on the site's behalf"); the one-cookie paragraph; `colorScheme` "dark"; the manifest and `themeColor` `#04060d`; the sitemap date 2026-11-20 (S24 moves it to the merge date); the dark share card with the four names only, no states. Test edits approved: `hero.test.ts:43`, `privacy.spec.ts:49` (count 3, plus "through Cloudflare") | Tay |
 | 2026-11-19 | S17: R12's "still to name" test changes (the h1/h2 strings, the focus ring's colour, the Tab order's labels, the headline pins, the two `work.test.ts` cases that read deleted files) approved as a group, each still in its own commit. The five state docs that changed on both sides come over by a three-way merge; the other 77 paths are copied unchanged | Tay |
 | 2026-11-19 | Session 16: the P5/P6 plan approved (R1–R15): the release branch, the header, dark only, case studies and Two more, the explainers retired with a P4 restore record, live anchors, the headline and card, the "↗" icon, #15 and the Work lede, #13 measured, the approved test changes (WebGL guards unchanged), N7 in the `/privacy` edit with its wording approved first, Move F retired, `443a1f9` tagged `product-plates-final` before the merge. Sessions S17–S24 (S18+S19 and S21+S22 paired) | Tay |
 | 2026-11-19 | Session 11 close: the carousels approved (T Poker 5, Aegis 2, DeveloperOS 4, GRAVITY FLOW 5; no duplicate "final count"; the DeveloperOS refusal and AI-features captures left out). The framing corrected: D1 was reopened for Concept A, and D2 is still not reopened (no WebGL). Concept A is the active direction; `proto/hero-a-cinematic` at `5d4610b` | Tay |
