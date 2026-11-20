@@ -11,6 +11,196 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-20 — Sessions 21+22: privacy and SEO surfaces, then the backlog (#13, #14, #16, #17, the cold cache, the rings) (Claude Code)
+
+**Scope (Tay's brief, S21+S22):**
+- **A. Surfaces:** `/privacy` (the `theme` cookie out, N7's Cloudflare sentence); R8 (the hero's h1 and lede into
+  `siteMeta`, a dark OG/Twitter card); the manifest and `themeColor` in the field's colour; the sitemap's date; the
+  dark 404 and error pages. The approved test edits, each in its own commit.
+- **B. Backlog:** #16 (`scroll-padding-bottom`, and the Tab test's unobscured check extended to the launcher; the
+  launcher not moved or hidden); #17 (the case-study dialog's two axe findings); the case studies' captures
+  pre-encoded with the image script's settings, so the cold-cache failures go without touching the tests; the header
+  links' ring at once; #13 measured (kept only if phone LCP improves, scroll CLS stays 0 and jumps land exactly); #14
+  re-checked.
+- Step 1 shown first (the `/privacy` diff, the card's text and render, any 404/error wording change); Step 2 after
+  Tay's OK. The full suite cold and warm; Lighthouse mobile (median of 5); first-load JS and HTML. Push the branch (no
+  PR, no merge), the Preview URL, START-HERE and this log. The session stays open until Tay reviews.
+
+### 1. Preconditions (VL)
+- `git fetch`, `release/concept-a` checked out and pulled: HEAD **`4b6a8e2`**. `main` = `origin/main` = **`443a1f9`**
+  = Production (`gh api …/deployments`, created 2026-11-19 03:20Z). `npm ci` exit 0; `.next` deleted; `npm run build`
+  exit 0 (8 routes).
+- **N7 re-checked live** (read-only `curl` with a browser `Accept` header, 2026-11-20): `/` and `/privacy` answer
+  `Server: cloudflare` with a `CF-RAY` and an `x-vercel-id`; no beacon, no `email-protection` link, no decode script,
+  no external `<script src>`, no `Set-Cookie`. Cloudflare still proxies; "loads no third-party scripts" holds.
+- **Cloudflare's privacy policy** (`https://www.cloudflare.com/privacypolicy/`, 200, "effective as of November 4th,
+  2025") was read for the sentence. It lists End Users' "IP addresses, traffic routing data, system configuration
+  information, and other information about traffic", and says "Cloudflare is a data controller for the personal
+  information collected from all categories of data subjects listed above", a processor only of Customer Logs, some
+  settings, and content that transits its network. **So N7's draft phrase "on the site's behalf" went beyond the
+  policy and was dropped.**
+
+### 2. Step 1, and Tay's answers
+- Shown: the exact `/privacy` diff, the card's text with a render in scratch, and the 404/error pages (no wording
+  change: both are already dark through the root layout's `data-theme="dark"`, on the site's dark `#0b0c0f`, as R3
+  says; every word still true for the one page).
+- **Approved by Tay**, with one change: the card shows the four names only, no states ("cached cards outlive
+  statuses": GRAVITY FLOW's "Release candidate" will change). Also approved: the `/privacy` wording with the corrected
+  N7 sentence; `colorScheme` "dark"; the manifest and `themeColor` `#04060d`; the sitemap date 2026-11-20 (S24 moves it
+  to the merge date).
+- **Test edits approved by Tay**, each in its own commit: `hero.test.ts:43` (the regex as proposed) and
+  `privacy.spec.ts:49` (count 3, plus "through Cloudflare"), both new in this session; and R12's `privacy.spec.ts:43`,
+  `site.test.ts:161` (R12 said `:160`; an S18+S19 comment moved it) and `content.test.ts:20,22`.
+
+### 3. What changed (VL; 21 commits, `b97f92e`…`e58508b`)
+**A. Surfaces**
+- `b97f92e` **R8:** `siteMeta.headlineLines` (the h1's two lines), `siteMeta.headline` (joined) and `siteMeta.heroLead`
+  (the hero's lede, word for word); `Hero.tsx` reads them. `/`'s h1 and lede markup is byte-identical (§6).
+- `11a2ef5` test: `content.test.ts:20,22` take the new strings. `143733f` test: `hero.test.ts:43` ends
+  `/, from the interface down to the infrastructure\.$/`.
+- `1bfebb5` **The dark card** (`app/opengraph-image.tsx`): the hero's sky, its two glows placed and sized as
+  `.hxa__glow`, a seeded still of the constellation (no node or link midpoint on the copy), the wordmark with its
+  glyph, `tayshofer.dev`, "Software Engineer" as the eyebrow, the h1 with its second line in the duotone, and under a
+  hairline the four names only. `og:image:alt` is "Tay Shofer — Building software. Turning ideas into products."
+  `lib/tokens.ts` gains `cine`, the TypeScript mirror of the layer's field and inks.
+- `e6733c4` **R3:** `themeColor` `#04060d` (one colour), `colorScheme` "dark"; the manifest's `background_color` and
+  `theme_color` `#04060d`. The Product Plates `brand` mirror had no user left and is removed.
+- `d16c814` test (new file): `surfaces.test.ts` holds `cine` to the layer's base values, the manifest and viewport to
+  `cine.abyss`, and the card to the h1 and names with no state, figure or availability.
+- `2424e23` **`/privacy` (R3, R13):** N7's sentence after Vercel's: "Requests reach Vercel through Cloudflare, which
+  sits in front of the site as its network proxy and processes information about that traffic, such as your IP
+  address: Cloudflare's privacy policy." (a third new-tab link). The cookie paragraph names one cookie, `a11y` ("It
+  holds nothing else, can last up to a year …": "can last" keeps `site.test.ts`'s "last up to a year" pin). The meta
+  and OG descriptions say "one optional preference cookie". Last updated 20 November 2026. `lib/theme.ts` drops
+  `THEME_COOKIE`.
+- `5753bdc` test: `privacy.spec.ts:43` `["a11y"]`. `0b543a4` test: `site.test.ts:161` drops the `THEME_COOKIE` match.
+  `a632a66` test: `privacy.spec.ts:49` counts 3 and checks "through Cloudflare".
+- `6fa14a8` the sitemap's `CONTENT_LAST_MODIFIED` is `2026-11-20`.
+- The 404 and error pages: unchanged (§2).
+
+**B. Backlog**
+- `f3bd556` **#16:** `html { scroll-padding-bottom }` of the launcher's edge, height and a 12px gap (5rem; 4.5rem on
+  phones and short screens) plus the bottom safe area, in `components/chat/chat.css`. The launcher is unchanged.
+  `50d3bec` test: `chrome.spec.ts`'s Tab walk also fails a stop that overlaps the launcher's box at all (red before
+  the fix: the hero's GRAVITY FLOW link at 390×844).
+  - A scratch Tab walk of `/` at 320×568, 360×780, 375×667, 390×844, 414×896, 430×932, 768×1024, 1024×768 and
+    1440×900, motion reduced and on: **no stop overlaps the launcher** (47–52 stops each). Anchor jumps still land:
+    `chapters.spec.ts` Navigation ×3 and `lab-hero-a.spec.ts`'s Featured work jump, 4/4.
+- `addbd2f` **#17:** the dialog is a `div` (an `aside` may not take `role="dialog"`), and each gallery image is
+  silent (`alt=""`): its unchanged figcaption, which repeated the alt word for word, names the figure. No description
+  invented; `data/projects.ts`' alt text unchanged. axe (WCAG 2.2 A/AA + best-practice), each case study open, 1440
+  and 390: **18 findings before, 0 after.** `e46b693` test (new file): `case-study-axe.spec.ts` (it waits for the
+  dialog's fade: mid-fade, axe flags half-drawn text's contrast).
+- **The cold cache (S20 §4), fixed without touching a test:**
+  - `ada732d` the image script gains `dos-ai-features` and `dos-desktop` (the case study's two DeveloperOS captures
+    the carousel does not show; AVIF q60 / WebP q80, effort 6, at 800/1200/1600), run for those two jobs only; listed
+    in `data/lab-images.ts`. 314 KiB.
+  - `cfb5b5f` Aegis's case study serves its one capture as it is (`direct: true`): it is the script's own output at the
+    crop's size (1108×623, 29 KiB), so `aegis.spec.ts:29`'s `incident-board-open.webp` pin holds. DeveloperOS and
+    GRAVITY FLOW list each capture's pre-encoded files (`media.encoded`, the tables' names and widths, repeated because
+    client code never imports the tables: `lab-work.test.ts:157–176`), and the panel's new `Capture` serves them in a
+    `<picture>`, AVIF then WebP. T Poker unchanged (`direct`).
+  - Checked: all 16 case-study images load at 1440 and 390 (DPR 3) with **0 requests to `/_next/image`**; the dialogs
+    look as before (screenshots in scratch). `e1e1654` test (new file): `case-study-images.test.ts`.
+- **The focus rings:**
+  - `5d937ca` the header's four links ease only their text colour (their colour utility also eased `outline-color`),
+    so the ring is cyan on its first frame. **Found while probing:** the footer's six links (Email, GitHub, LinkedIn,
+    Résumé, Privacy, Back to top) did the same, at both widths; S20's note named only the header.
+  - `fa5c23d` the same one-word fix in the footer, **in its own commit so Tay can drop it**. A Tab walk with motion on:
+    rings that ease in, 10 → 0 at 1440 and 6 → 0 at 390.
+  - `e58508b` test (new file): `focus-ring.spec.ts`.
+
+### 4. ROADMAP #13: `content-visibility` on the composed page: measured, **not kept** (VL)
+- **Variant B** (a scratch worktree of the final tree, never committed): `content-visibility: auto` on Stack, Think ·
+  Build · Ship and Contact, `contain-intrinsic-block-size: auto` at their measured heights (412 wide: 1,883 / 761 /
+  462 px; 1440 wide, from 1024: 1,342 / 576 / 263 px). The violet glow still sits at `top: 38%` of the whole `.wk`
+  region (composing did not anchor it to a section, as R11 had expected).
+- **Phone LCP:** Lighthouse 13.6.0 mobile, interleaved, 5 each: A 1,063 ms, B 1,063 ms (Performance 100 both).
+  Directly at 4× CPU (CDP throttling, 412×823, a fresh context per load, two rounds of 15 interleaved): medians A 424 /
+  B 416 ms, then A 372 / B 352 ms, ranges overlapping (280–660 ms). The h1 is the LCP element in every run. At most a
+  20 ms gain, inside the noise.
+- **Scroll CLS** (the whole page in 120px steps, no input; 7 sizes from 320×568 to 1440×1800, motion reduced and on):
+  A's only shifts are the chat launcher folding its label (0.0032–0.0244, the known pre-existing source). B adds the
+  violet glow moving as the sections render: 0.0105–0.1021 (0.0777 of it the glow at 320×568).
+- **Jumps** (`#about`, `#skills`, `#approach`, `#contact` from a fresh load, 1.6 s and 3.1 s after): A lands every
+  target within ±0.5px, except where the page's end clamps the scroll (`#contact` at 768 and wider, `#approach` at
+  1440×1800; the same in both). B misses `#approach` by −17 to −311px and `#contact` by −11 to −71px at several sizes.
+- **R11: the release ships without it.** Two of the three conditions fail, and the LCP gain is within noise. Nothing
+  changed on the branch.
+
+### 5. ROADMAP #14: Stack's filter hold, re-checked on the composed page (VL; report only)
+- A press from All on each project, with the buttons at the top, middle and bottom of the view (clicks dispatched in
+  the page: Playwright's `click()` first scrolls a target out of #16's bottom strip, which a mouse never does), at
+  1440×900, 390×844, 1920×1200, 2560×1440 and 1440×1800:
+  - **The view never moves** (0px in every case).
+  - The hold is 0 everywhere except with the buttons near the top at 1440×1800: **239px** (session 15: 346px), with
+    **no visible gap** (the filtered list still fills it).
+  - **The keyboard-only end case** (a button focused, the page scrolled to its end, Enter): the hold is the full list's
+    height, **1,096px** at 1440 and wider and **1,619px** at 390, as in session 15; the space shows under the filtered
+    list (815px and 1,215px) until All is pressed; the scroll does not move.
+- Tay kept the hold in sessions 14–16; nothing changed.
+
+### 6. Validation (VL, Git Bash, the final tree `e58508b`)
+| Command | Result |
+|---|---|
+| `npm run typecheck` (after `npx next typegen`) | exit 0 |
+| `npm run lint` | exit 0 |
+| `npm test` | **225/225 tests, 18/18 files** (was 218/16: +3 `surfaces`, +4 `case-study-images`) |
+| **Cold:** `.next` deleted, `npm run build`, `GROQ_API_KEY= npx playwright test` | **187/187**, 2.0 min (was 183: +2 `case-study-axe`, +2 `focus-ring`). The two S20 cold-cache failures pass with no test changed |
+| **Warm:** the same run again | **187/187**, 2.0 min |
+| `.next/cache/images` after both runs | does not exist: nothing in the suite went through the on-demand optimiser |
+
+**Against the session's start** (`4b6a8e2`, built in a scratch worktree, both served by `next start`):
+
+| | Start `4b6a8e2` | Final `e58508b` |
+|---|---|---|
+| First-load JS gzip (budget 205.7 KiB) | 185.00 KiB, 9 scripts | **185.10 KiB**, 9 scripts (+0.10: `siteMeta`'s new strings in the client chunks that already carried it) |
+| HTML (budget 568 KB) | 127,970 B | **127,732 B** |
+| Stylesheets | 43,672 + 28,727 B | 44,069 + 28,727 B: exactly three new rules (the links' colour-only transition, the two `scroll-padding-bottom` rules), no stray utility |
+| Markup | | Differs only in the theme-color and color-scheme metas, the card's URL hash and alt, the ten links' class, and the same in the RSC payload |
+
+**Lighthouse 13.6.0 mobile** (defaults: simulated throttling, 412×823; HeadlessChrome 158; interleaved, 5 each; this
+machine's benchmark index 2,067–3,280 today, against 3,912–4,086 in S18+S19):
+
+| Median of 5 | S18+S19 (`270ab27`) | Start `4b6a8e2` | **Final `e58508b`** |
+|---|---|---|---|
+| Performance | 100 | 100 | **100** |
+| LCP (the h1) | 1,061 ms | 1,065 ms | **1,063 ms** |
+| FCP | 1,061 ms | 1,065 ms | **1,063 ms** |
+| TBT | 23 ms | 22 ms | **20 ms** |
+| CLS | 0 | 0 | **0** |
+| Speed Index | 1,063 ms | 1,329 ms | **1,362 ms** |
+| A11y / BP / SEO | 100 / 100 / 100 | 100 / 100 / 100 | **100 / 100 / 100** |
+| Bytes loaded | 389,747 | 389,749 | **389,818** |
+
+No run warnings. Start and final match within noise; Speed Index is higher for both today with the slower benchmark.
+Production's baseline (S17) stays the yardstick for S24.
+
+### 7. Pushed, and the Preview
+- `release/concept-a` pushed: `4b6a8e2..e58508b` (21 commits), then this docs commit. No PR, no merge; Production is
+  still `443a1f9`.
+- The branch's Preview link (behind Vercel's login):
+  `https://tay-shofer-portfolio-git-release-840354-tays-projects-d5aefd6e.vercel.app/`.
+- Scratch, for Tay: the card, `step1/card-names-only.png`; today's card and 404, `step1/today-*.png`; the case
+  studies, `step1/cs-*.png`.
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production, tagged `product-plates-final`. Untouched.
+- `release/concept-a`: S21+S22's 21 commits and this docs commit, pushed. No PR.
+- `proto/hero-a-cinematic`: frozen; PR #18 a draft.
+- A scratch worktree of `4b6a8e2` (for the comparison builds) is still registered; the close-out removes it.
+
+### Waiting on Tay
+- **Review** on the Preview: the share card (shown by a share preview, or at `/opengraph-image`), `/privacy`, the
+  case studies' images and axe fixes, the rings, the launcher's clearance on a phone.
+- **The footer rings (`fa5c23d`)**: outside the brief's "header links", in its own commit; keep or drop.
+- **Then the close-out** (on Tay's word): CLAUDE.md's two gotchas that this session made stale (the cold-cache failure
+  and the ring that eased in), ROADMAP (the S21+S22 row; #13, #14, #16, #17), RESEARCH_AND_DECISIONS (N7 resolved),
+  the memory, the scratch worktree.
+- **S23** next: the release candidate (WebKit and Firefox, Tay's phone, the GRAVITY FLOW capture swap).
+
+---
+
 ## 2026-11-20 — Session 20: the tests (the lab tests ported to `/`, the old page's retired, R12's new guards) (Claude Code)
 
 **Scope (Tay's brief, S20, tests only; no page or copy change):**

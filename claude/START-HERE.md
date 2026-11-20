@@ -27,11 +27,13 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
    - **S18+S19 (2026-11-20): on that branch, `/` is now the Concept A page** and `/lab` is gone. **Approved by Tay**
      after his review on the Preview.
    - **S20 (2026-11-20): the tests.** The lab tests are ported to `/`, the old page's retired, R12's new guards added:
-     unit 218/218, Playwright 183/183. S21+S22 is next.
+     unit 218/218, Playwright 183/183.
+   - **S21+S22 (2026-11-20): the surfaces and the backlog, built and pushed; Tay's review pending.** Unit 225/225,
+     Playwright 187/187 cold and warm. Detail below and in `docs/WORKLOG.md`, "Sessions 21+22". S23 is next.
    - The plan, S17 to S24: `docs/ROADMAP.md`, "Concept A: P4–P6". Tay's decisions, R1 to R15:
      `docs/RESEARCH_AND_DECISIONS.md`, "Resolved in session 16".
 
-## What's live now (verified 2026-11-20 at the S20 close: Production is still `443a1f9`, status success)
+## What's live now (verified 2026-11-20 in S21+S22: Production is still `443a1f9`)
 - The current site is the calm, light **"Product Plates"** editorial design (M10), with the whole **M1 core, moves
   A–E**:
   - **A**, the iris accent: `#4a3fe0` light, `#a5a8ff` dark, `#b1b4ff` on the dark plates.
@@ -79,8 +81,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
     surface at the top of the page. The pill sits in the bar from 1280px and opens the hero below that.
   - **On phones** the bar holds the wordmark and the menu. The accessibility button lives in the menu sheet, and a test
     checks it there at 320 and 390 (Tay's condition).
-  - **Dark only (R3):** `<html data-theme="dark">`. `ThemeProvider` and `ThemeToggle` are deleted.
-    `THEME_COOKIE` stays only while `/privacy` names it (S21+S22).
+  - **Dark only (R3):** `<html data-theme="dark">`. `ThemeProvider` and `ThemeToggle` are deleted, and since S21+S22
+    `THEME_COOKIE` too: `/privacy` names one cookie, `a11y`.
   - **Depth and the rest:** "Case study" buttons on the existing dialog (R4). Two more in the live words (R5), so six
     triggers. The hero's arrows are SVG icons (R9). About ends on the facts; Work has no lede and no reveal of its own
     (R10, in full).
@@ -90,16 +92,17 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - **Tests:** R12's edits and the S17 group, plus six Tay approved in-session (`english.spec.ts:45`, the phone toggle
     line, one phone header icon, the new phone accessibility test, at least 8 new-tab links, the Aegis captures). Each
     is its own commit.
-  - Not yet, by plan: `privacy.spec.ts:43`, `site.test.ts:160` and `content.test.ts:20,22` (S21+S22).
+  - Made in S21+S22, each in its own commit: `privacy.spec.ts:43`, `site.test.ts:161` (R12's `:160`) and
+    `content.test.ts:20,22`.
   - **Results (at the S18+S19 close):** typecheck, lint and build exit 0. Unit 121/121, the two lab unit files failing
     at load. Must-pass e2e 70/70 + 6/6. S20 fixed the rest (below).
   - **The gate** (local production builds, Lighthouse 13.6.0 mobile, median of 5, interleaved): Performance 100, LCP
     1,061 ms (the h1). Local `main` gives 93 and 3,191 ms.
   - **Budgets:** first-load JS 185.00 KiB (budget 205.7), HTML 127,970 B (budget 568 KB).
   - **Status codes:** `/` serves `index, follow` with its canonical; `/lab/*` answers 404.
-  - **axe with the overlays open:** the accessibility panel has 0 violations. The case study has two best-practice
+  - **axe with the overlays open:** the accessibility panel has 0 violations. The case study had two best-practice
     findings that production's code shares: `aria-allowed-role` on its `aside`, all six; `image-redundant-alt`, three.
-    **Tay: fix both in S21+S22** (ROADMAP #17).
+    **Fixed in S21+S22** (ROADMAP #17): 0 findings.
   - **Preview:** `https://tay-shofer-portfolio-git-release-840354-tays-projects-d5aefd6e.vercel.app/` (the branch's
     link, behind Vercel's login).
 - **S20 (2026-11-20): the tests, green.** Detail and every retired test's reason: `docs/WORKLOG.md`, "Session 20".
@@ -116,9 +119,32 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
     `/lab/hero-a`, `/lab/work` answer 404; exactly one canvas, 2D and `aria-hidden`. The WebGL guards are unchanged.
   - **Results:** unit 218/218 (16 files), typecheck, lint and build exit 0, Playwright 183/183 (13 files) on the
     standard config. `/`'s stylesheets and JS chunks are byte-identical to before.
-  - **One catch, for Tay:** right after `.next` is deleted, the first full run fails `aegis.spec.ts:15` and the Case
-    study block's image test. The Aegis case-study capture's first on-demand AVIF encode outlasts their polls.
-    Reproduced twice; with the cache warm, all pass. Nothing changed for it (WORKLOG, "Session 20" §4).
+  - **One catch:** right after `.next` is deleted, the first full run failed `aegis.spec.ts:15` and the Case study
+    block's image test: the Aegis case-study capture's first on-demand AVIF encode outlasted their polls. **Fixed in
+    S21+S22** without touching a test: no case-study image goes through the optimiser now.
+- **S21+S22 (2026-11-20): the surfaces and the backlog.** Built after Tay's OK on Step 1; 21 commits, `b97f92e` to
+  `e58508b`, pushed. Detail: `docs/WORKLOG.md`, "Sessions 21+22".
+  - **R8:** the hero's h1 and lede live in `siteMeta` (`headlineLines`, `headline`, `heroLead`); the page's words are
+    unchanged. **The share card is dark:** the hero in miniature, with the h1 and the four flagships' names only, no
+    states (Tay: a cached card outlives them). `lib/tokens.ts` mirrors the layer's field and inks (`cine`).
+  - **R3:** the browser chrome and the manifest take the field's `#04060d`; the colour scheme is dark only.
+  - **`/privacy` (R13, wording approved by Tay):** N7's Cloudflare sentence and one cookie, `a11y`. N7's draft said
+    Cloudflare acts "on the site's behalf"; its policy calls it a controller of that data, so the phrase went.
+  - **The sitemap's date:** 2026-11-20 (S24 moves it to the merge date). **The 404 and error pages:** already dark
+    (R3); no wording changed.
+  - **#16:** focus scrolls clear of the chat launcher (a bottom scroll padding of its height plus a gap); the Tab test
+    also checks the launcher. **#17:** the dialog is a div, and a gallery image is silent where its caption says the
+    same words.
+  - **The cold cache:** Aegis's case-study capture is served as it is; DeveloperOS's and GRAVITY FLOW's come
+    pre-encoded from the image script (two new DeveloperOS jobs). **The rings:** the header's four links, and the
+    footer's six (found in this session; their own commit, for Tay to keep or drop), ring at once.
+  - **#13 measured, not kept** (R11): at most 20 ms of phone LCP, inside the noise, against a new layout shift (the
+    violet glow) and jumps that miss by up to 311px. **#14 re-checked:** the view never moves; the hold is unchanged.
+  - **New tests** (new files only): `surfaces.test.ts`, `case-study-images.test.ts`, `case-study-axe.spec.ts`,
+    `focus-ring.spec.ts`. Approved edits: R12's three, plus `hero.test.ts:43` and `privacy.spec.ts:49` (Tay, S21+S22).
+  - **Results:** typecheck and lint exit 0; unit 225/225 (18 files); Playwright 187/187 cold (right after deleting
+    `.next`) and warm. First-load JS 185.10 KiB (budget 205.7), HTML 127,732 B. Lighthouse mobile, median of 5:
+    Performance 100, LCP 1,063 ms, TBT 20 ms, CLS 0, 100/100/100 (the session's start: 100, 1,065 ms).
 - **Cut from `origin/main` `443a1f9`** (`--no-track`), pushed in S17 with its upstream set: branch only, no PR, no
   merge.
 - **The copy (R1):**
@@ -283,8 +309,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   "The Concept A prototype" above.
 - **N1, N2** (merged in PR #14): the reference README's text is in `docs/references/`, byte for byte, with no image; the
   agent docs say "the institution" instead of its abbreviation.
-- **N7, the Cloudflare toggles:** done. The `/privacy` wording is **deferred to the end of the build** (Tay, session 9
-  close). Don't raise it before then.
+- **N7, the Cloudflare toggles:** done (2026-11-18). **The `/privacy` wording: done in S21+S22** on
+  `release/concept-a`, its exact text approved by Tay (R13); it reaches production with the release.
 - **N8** (merged in PR #16): GRAVITY FLOW's private repository name is out of the docs. The private-repo guard pins both
   private repos, T Poker and GRAVITY FLOW, by SHA-256 digest.
 - **Session 11 (Tay's answers):** T Poker has 5 captures, not 6 (no duplicate). The DeveloperOS refusal and
@@ -301,14 +327,15 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - Measure the JS and HTML budgets.
 - **S20 is done** (2026-11-20): the lab tests ported to `/`, the old page's retired, the new guards added; the suite
   is green and pushed.
-- **S21+S22 is next** (privacy and SEO surfaces, then the backlog: #13 against S17's baseline, #14, #16, and #17, the
-  case study's two axe findings; #15 was done in S18+S19),
-  S23 (the release candidate: WebKit and Firefox runs, Tay's review on his own phone, the GRAVITY FLOW capture swap),
-  S24 (check the tag, Tay's merge, the production checks).
+- **S21+S22 is built and pushed** (2026-11-20): the privacy and SEO surfaces, then the backlog (#13 measured and not
+  kept, #14 re-checked, #16, #17, the cold cache, the rings). **Waiting on Tay's review, then its close-out.**
+- Then S23 (the release candidate: WebKit and Firefox runs, Tay's review on his own phone, the GRAVITY FLOW capture
+  swap) and S24 (check the tag, Tay's merge, the production checks).
 
-## Open PRs / branches (S17, 2026-11-19)
-- **`release/concept-a`**: the release branch, pushed in S17, in S18+S19 (the code at `270ab27`) and in S20 (tests
-  only, then the close-out), with no PR yet. S23 opens it on Tay's go; Tay merges.
+## Open PRs / branches (S21+S22, 2026-11-20)
+- **`release/concept-a`**: the release branch, pushed in S17, in S18+S19 (the code at `270ab27`), in S20 (tests
+  only, then the close-out) and in S21+S22 (to `e58508b`, then the docs), with no PR yet. S23 opens it on Tay's go; Tay
+  merges.
 - **Tag `product-plates-final`** (`8f0a96a`) on `443a1f9`, pushed in S17: the P4 restore point (R6, R15).
 - **PR #18** (`proto/hero-a-cinematic`, draft): the Concept A prototype. Never merge, never delete; Preview only.
 - Merged and deleted (each checked with `git merge-base --is-ancestor` first):
@@ -321,21 +348,17 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Start S21+S22** in a new session, on `release/concept-a`: privacy and SEO surfaces, then the backlog.
-- **In S21+S22:** fix the case study's two axe best-practice findings (#17).
-- **From S20:** the cold-cache timeouts on the Aegis case-study capture: pre-encode the case studies' captures (a page
-  change), lengthen the two polls (a test change), or leave it.
-- **In S21+S22:** approve N7's exact final `/privacy` wording before it is committed (R13).
+- **Review S21+S22** on the Preview (the session stays open until then): the share card, `/privacy`, the case studies,
+  the rings, the launcher's clearance on a phone. Keep or drop the footer rings' commit (`fa5c23d`, outside the brief).
+- **Then its close-out:** CLAUDE.md's two gotchas this session made stale (the cold-cache failure, the ring that eased
+  in), ROADMAP (the S21+S22 row, #13, #14, #16, #17), RESEARCH_AND_DECISIONS (N7 resolved), the memory, the scratch
+  worktree of `4b6a8e2`.
 - **In S23:** the GRAVITY FLOW image for the capture swap; the review on his own phone through the Preview.
 - **In S24:** merge. The `product-plates-final` tag is already pushed (S17).
 - **Optional, on `main`:** the site's chat launcher folds its label as the page scrolls. That is 0.0076 CLS on `/` at
   1440 and 390 (measured in session 11), well inside "good". Untouched.
 - **A note from session 7's preview shots:** at 390px the TBS row word (20.3px, 600) is close to the row's lead line
   `.tbs__line` (19px, 600). It follows the plan exactly, and no change was made.
-- **The N7 `/privacy` wording is scheduled:** it goes into S21+S22's `/privacy` edit (R13), with its exact final
-  wording shown to Tay before the commit.
-  - The draft is in `docs/RESEARCH_AND_DECISIONS.md` N7.
-  - It needs an approved edit to `tests/e2e/privacy.spec.ts`, which pins 2 outbound links.
 - **D8 remainder:** six unmerged remote branches are kept (`feature/portfolio-polish`,
   `feature/premium-portfolio-redesign-1mqmgf`, four `review/m10-*`), plus `reference/premium-redesign-package`. Delete
   only on a per-branch yes.
