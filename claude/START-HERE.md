@@ -4,9 +4,8 @@ Orientation doc for the Portfolio Project. Read this first in any new chat here 
 Claude Code session, then continue with the current task. Update it before each transition
 (new chat / new session) so the next one starts informed.
 
-> **This copy is on `release/concept-a`** (S17, 2026-11-19), the release branch: cut from `main`, carrying the
-> prototype. It has the full prototype detail; `main`'s copy has the essentials (PR #19). It reaches `main` with the
-> release PR, which Tay merges. The prototype branch keeps its own session 16 copy, frozen.
+> **Concept A is live** (2026-11-20). This copy reached `main` with the release (PR #21, merged as `3a98d22`). It
+> carries the full prototype and release history. The prototype branch keeps its own session 16 copy, frozen.
 
 ## What the product is
 Tay Shofer's live software-engineering portfolio at https://www.tayshofer.dev/.
@@ -14,31 +13,61 @@ Goal: get Tay interviews for junior/entry software roles. Next.js 16 / React 19 
 Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONTEXT.md`.
 
 ## The tracks
-1. **The live site, on `main`:** calm Product Plates with the M1 core (A–E). Nothing on the prototype branch reaches
-   it.
-2. **The Concept A prototype, on `proto/hero-a-cinematic`: the active direction.** A cinematic direction, measured,
-   under the noindex `/lab` segment.
+1. **The live site, on `main`: Concept A, since 2026-11-20** (PR #21, merge `3a98d22`; S24 verified production).
+   - A dark, cinematic, single page: the hero's 2D canvas field, the four product panels with their carousels, Two
+     more, About, Stack, Think · Build · Ship, Contact.
    - Tay reopened **D1** for it (2026-11-18). **D2 is still not reopened, so no WebGL.**
-   - Draft PR #18, never merged, Vercel Preview only.
-3. **The release (session 16, approved by Tay): Concept A replaces the live `/`** as soon as possible, because Tay is
-   job hunting. The demos (P4) come after.
-   - It ships from `release/concept-a`, cut from `main` in S17 and pushed (no PR yet), through a PR that Tay merges.
-     The prototype branch stays frozen as the record.
+   - The Product Plates site it replaced is tagged **`product-plates-final`** (`443a1f9`).
+2. **Next, in this order (Tay, S24):** backlog #20 (F2, Safari's focus in the sheets), #19 (Next 16.4.6), #21 (F1,
+   Firefox's scroll padding), #18 (the GRAVITY FLOW capture swap), #22 (per-browser tests); then **P4**, the project
+   demos. `docs/ROADMAP.md` has each.
+3. **The Concept A prototype, on `proto/hero-a-cinematic`: the frozen record.** Draft PR #18, never merged, never
+   deleted (R1).
+4. **The release track (session 16 to S24, done).** Concept A replaced the live `/` as soon as possible, because Tay is
+   job hunting.
+   - It shipped from `release/concept-a`, cut from `main` in S17, through PR #21, which Tay merged in S24.
    - **S18+S19 (2026-11-20): on that branch, `/` is now the Concept A page** and `/lab` is gone. **Approved by Tay**
      after his review on the Preview.
    - **S20 (2026-11-20): the tests.** The lab tests are ported to `/`, the old page's retired, R12's new guards added:
      unit 218/218, Playwright 183/183.
    - **S21+S22 (2026-11-20): the surfaces and the backlog, approved by Tay and closed out.** Unit 225/225,
      Playwright 187/187 cold and warm. Detail below and in `docs/WORKLOG.md`, "Sessions 21+22".
-   - **S23 (2026-11-20): the release candidate, approved by Tay after his phone review, and closed out.** Draft PR #21
-     is open (https://github.com/taysh123/Portfolio/pull/21), not merged and not ready. S24 is next. Detail below and
-     in `docs/WORKLOG.md`, "Session 23" and its close-out.
+   - **S23 (2026-11-20): the release candidate, approved by Tay after his phone review, and closed out.** Detail
+     below and in `docs/WORKLOG.md`, "Session 23" and its close-out.
+   - **S24 (2026-11-20): the release.**
+     - Tay merged PR #21 (https://github.com/taysh123/Portfolio/pull/21) with a merge commit, `3a98d22`.
+     - Vercel's Production deployment is `3a98d22`, and every production check passes.
+     - Detail: `docs/WORKLOG.md`, "Session 24".
    - The plan, S17 to S24: `docs/ROADMAP.md`, "Concept A: P4–P6". Tay's decisions, R1 to R15:
      `docs/RESEARCH_AND_DECISIONS.md`, "Resolved in session 16".
 
-## What's live now (verified 2026-11-20 in S21+S22: Production is still `443a1f9`)
-- The current site is the calm, light **"Product Plates"** editorial design (M10), with the whole **M1 core, moves
-  A–E**:
+## What's live now (verified 2026-11-20 in S24: Production is `3a98d22`)
+- **Concept A**, the page `release/concept-a` built in S18–S23 (detail in the next section). Measured on production
+  in S24, through Cloudflare:
+  - Lighthouse mobile, median of 5: Performance 100, LCP 1,064 ms (the h1), FCP 1,064 ms, TBT 33 ms, CLS 0, Speed
+    Index 1,651 ms; 100/100/100.
+  - First-load JS 185.36 KiB gzip over 9 scripts (budget 205.7); HTML 128,168 B.
+  - The six security headers are exactly as before the merge.
+  - One 2D canvas, `aria-hidden`, and zero WebGL contexts. 0 console errors at 390 and 1440.
+- **Production** = GitHub `taysh123/Portfolio` **`main`**, the source of truth.
+  - Deployed **`3a98d22`**: PR #21, 2026-11-20 02:53Z.
+  - **Rollback**, if ever needed:
+    - Vercel's Instant Rollback to `443a1f9`'s deployment.
+    - Then a `git revert -m 1 3a98d22` PR.
+    - `443a1f9` is tagged **`product-plates-final`**.
+  - The S17 production baseline, for comparison: Performance 98, LCP 2,288 ms.
+- **Cloudflare proxies the site in front of Vercel** (N7). Tay turned its two HTML changes off on 2026-11-18: Web
+  Analytics is Disabled and Email Address Obfuscation is Off. In S24 the HTML through Cloudflare was byte-identical to
+  Vercel's (`cf-cache-status: DYNAMIC`).
+- **Flagship projects shown:** T Poker, Aegis, DeveloperOS, GRAVITY FLOW; plus Job Assistant and Orders & Delivery.
+  Statuses and limitations: PROJECT_CONTEXT §4. T Poker's and GRAVITY FLOW's repositories are private ("Private
+  repository" label).
+- **Check your branch first.** Live work branches from an up-to-date `main`, and changes go through a PR that Tay
+  merges. `reference/premium-redesign-package` is a stale September design branch: never build or deploy from it.
+
+### Before the release (the record): Product Plates on `443a1f9`
+- The site until 2026-11-20 was the calm, light **"Product Plates"** editorial design (M10), with the whole **M1 core,
+  moves A–E**:
   - **A**, the iris accent: `#4a3fe0` light, `#a5a8ff` dark, `#b1b4ff` on the dark plates.
   - **C**, two heading tiers: `--text-chapter` 36→64 for the four products; `--text-h2` 30→42 for every paper section.
   - **D**, the motion tokens.
@@ -47,11 +76,11 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - **E**, the lower half: "Two more" as two lit paper plates; the About and Contact titles fully in ink.
   - Think · Build · Ship row words on the h3 tier (`--text-h3` 20→26), under the 42px title.
 
-  The site has no WebGL, and tests on `main` enforce that. `tokens.test.ts` also guards the "Email me" fill (≥ 3:1
-  against `--bg-raised` and `--bg`, both themes).
-- **Production** = GitHub `taysh123/Portfolio` **`main`**, the source of truth.
+  The site had no WebGL, and tests on `main` enforced that (they still do). `tokens.test.ts` also guards the "Email me"
+  fill (≥ 3:1 against `--bg-raised` and `--bg`, both themes).
+- **Production until the release:**
   - Deployed **`443a1f9`**: PR #20, 2026-11-19 03:20Z.
-  - The site code is still PR #12's, since PRs #13–#20 change docs only.
+  - The site code was PR #12's, since PRs #13–#20 change docs only.
   - PR #19's CLAUDE.md line had leaked three unused rules into `/`'s Tailwind sheet (44,530 → 44,829 bytes). **PR #20
     removed them:** the live sheet is 44,530 bytes again (read-only `curl`, session 13). This branch has the same
     change in `fb3bb41`.
@@ -61,15 +90,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
     2,288 ms, FCP 1,140 ms, TBT 35 ms, CLS 0. First-load JS 182.04 KiB gzip (9 scripts), HTML 160,584 B. Detail:
     `docs/WORKLOG.md`, S17 §7. Compare production with production, and a local build with a local build of `main`.
   - `443a1f9` is tagged **`product-plates-final`** (annotated, `8f0a96a`, pushed in S17: R15).
-- **Cloudflare proxies the site in front of Vercel** (N7). Tay turned its two HTML changes off on 2026-11-18: Web
-  Analytics is Disabled and Email Address Obfuscation is Off.
-- **Flagship projects shown:** T Poker, Aegis, DeveloperOS, GRAVITY FLOW; plus Job Assistant and Orders & Delivery.
-  Statuses and limitations: PROJECT_CONTEXT §4. T Poker's and GRAVITY FLOW's repositories are private ("Private
-  repository" label).
-- **Check your branch first.** Live work branches from an up-to-date `main`, and changes go through a PR that Tay
-  merges. `reference/premium-redesign-package` is a stale September design branch: never build or deploy from it.
 
-## The release branch: `release/concept-a` (S17, S18+S19)
+## The release branch: `release/concept-a` (S17 to S23; merged in S24 as `3a98d22`)
 - **S18+S19 (2026-11-20): the swap, approved by Tay.** `/` is the Concept A page; detail in `docs/WORKLOG.md`,
   "Sessions 18+19" and its close-out.
   - **The page** (`app/page.tsx`): the header in its own `.cine` root; then `main`, holding the page's root (the hero,
@@ -314,10 +336,10 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   CLAUDE.md, session 12); the digest test catches it. Describe a utility in words, never by its class name.
 
 ## Decided (Tay, 2026-11-18; details in `docs/RESEARCH_AND_DECISIONS.md` §1)
-- **D1 Direction: reopened by Tay on 2026-11-18 for Concept A.** The cinematic prototype on `proto/hero-a-cinematic` is
-  the active direction.
-  - The live site stays calm / premium Product Plates (evolve, don't replace) until Tay decides otherwise.
-  - On `main`: restrained cyan/violet accents, and the reference README's take / do-NOT-take (its text:
+- **D1 Direction: reopened by Tay on 2026-11-18 for Concept A**, which replaced the live `/` on 2026-11-20 (session 16's
+  R1–R15; released in S24).
+  - Before that, the live site was calm / premium Product Plates (evolve, don't replace).
+  - Still in force: the reference README's take / do-NOT-take (its text:
     `docs/references/premium-redesign-README.md`): no RGB wash, no holographic cube, no fabricated on-screen stats.
 - **D2 3D: still not reopened. No WebGL**, on `main` or on the prototype.
   - The prototype's field is a 2D canvas; its carousels are CSS perspective on 2D elements.
@@ -340,8 +362,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   "The Concept A prototype" above.
 - **N1, N2** (merged in PR #14): the reference README's text is in `docs/references/`, byte for byte, with no image; the
   agent docs say "the institution" instead of its abbreviation.
-- **N7, the Cloudflare toggles:** done (2026-11-18). **The `/privacy` wording: done in S21+S22** on
-  `release/concept-a`, its exact text approved by Tay (R13); it reaches production with the release.
+- **N7, the Cloudflare toggles:** done (2026-11-18). **The `/privacy` wording: done in S21+S22**, its exact text
+  approved by Tay (R13); live since the release (verified in S24).
 - **N8** (merged in PR #16): GRAVITY FLOW's private repository name is out of the docs. The private-repo guard pins both
   private repos, T Poker and GRAVITY FLOW, by SHA-256 digest.
 - **Session 11 (Tay's answers):** T Poker has 5 captures, not 6 (no duplicate). The DeveloperOS refusal and
@@ -361,20 +383,28 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   is green and pushed.
 - **S21+S22 is done and approved by Tay (2026-11-20)**, and closed out: the privacy and SEO surfaces, then the
   backlog (#13 measured and not kept, #14 re-checked, #16, #17, the cold cache, the rings; the footer rings' fix kept).
-- **S23 is done and approved by Tay (2026-11-20)**, and closed out. **Draft PR #21** is open.
-- **S24 is next:** check the tag, then Tay marks PR #21 ready and merges it, then the production checks in the PR
-  body. Then the docs close-out on `main`.
-- **After the release:**
-  - The GRAVITY FLOW capture swap (ROADMAP #18), a small PR whenever Tay provides the image.
-  - Next 16.3.8 → 16.4.6 (ROADMAP #19), a separate PR on `main` after S24, with the full suite and Lighthouse.
+- **S23 is done and approved by Tay (2026-11-20)**, and closed out.
+- **S24 is done (2026-11-20): Concept A is live.**
+  - Tay merged PR #21 with a merge commit, `3a98d22`.
+  - Vercel's Production deployment is `3a98d22`, and every production check passes (`docs/WORKLOG.md`, "Session 24").
+  - The docs close-out is its own PR, from `docs/s24-release-closeout`.
+- **The release track (P5/P6) is done.** Next, in this order (Tay, S24), each a PR on `main`:
+  1. **#20:** F2, Safari's focus leaving the menu sheet or the chat for one Tab; the fix goes in the shared focus trap.
+  2. **#19:** Next 16.3.8 → 16.4.6 for the `npm audit` advisories, with the full suite and Lighthouse.
+  3. **#21:** F1, Firefox ignoring the bottom scroll padding for controls already on screen.
+  4. **#18:** the GRAVITY FLOW capture swap, whenever Tay provides the image.
+  5. **#22:** per-browser handling of the engine-specific tests.
+  6. Then **P4**, the project demos (`docs/ROADMAP.md`, P4, with the restore record).
 
-## Open PRs / branches (S21+S22, 2026-11-20)
-- **`release/concept-a`**: the release branch, pushed in S17, in S18+S19 (the code at `270ab27`), in S20 (tests
-  only, then the close-out), in S21+S22 (to `e58508b`, then the docs) and in S23 (docs only).
-- **PR #21** (`release/concept-a` → `main`, **draft**), "Release: Concept A", opened in S23 on Tay's go:
-  https://github.com/taysh123/Portfolio/pull/21. Tay marks it ready and merges in S24. Claude never merges.
-- **Tag `product-plates-final`** (`8f0a96a`) on `443a1f9`, pushed in S17: the P4 restore point (R6, R15).
-- **PR #18** (`proto/hero-a-cinematic`, draft): the Concept A prototype. Never merge, never delete; Preview only.
+## Open PRs / branches (S24, 2026-11-20)
+- **PR #21** (`release/concept-a` → `main`), "Release: Concept A": **merged** by Tay on 2026-11-20 as `3a98d22`.
+- **The S24 close-out PR**, from `docs/s24-release-closeout`: open, for Tay to merge.
+- **Kept until Tay gives a per-branch yes** (S24; nothing deleted):
+  - `release/concept-a` (tip `5ea8d57`, local and remote): **merged** into `main`, so it is safe to delete whenever
+    Tay says so.
+  - `proto/hero-a-cinematic` (tip `92b08fd`, local and remote; **draft PR #18**): not merged, by design. R1 keeps it
+    frozen as the record ("never merge, never delete"), so deleting it would also need R1 changed.
+- **Tag `product-plates-final`** (`8f0a96a`) on `443a1f9`, pushed in S17: the rollback and P4 restore point (R6, R15).
 - Merged and deleted (each checked with `git merge-base --is-ancestor` first):
   - `docs/claude-md-tailwind-leak` (#20, tip `2e73766`, local and remote, in session 13);
   - `docs/session-10-closeout` (#19, tip `2101ef6`, local and remote, at the session 12 close);
@@ -385,11 +415,14 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Start S24** in a new session: check the tag, Tay marks PR #21 ready and merges it, then the production checks
-  and the docs close-out on `main`.
-- **After S24:** #20 (F2) right after S24, before #19 (Next 16.4.6); #21 (F1) after #20; later, #22.
-- **After the release:** the GRAVITY FLOW image for the capture swap (ROADMAP #18).
-- **In S24:** merge. The `product-plates-final` tag is already pushed (S17).
+- **Merge the S24 close-out PR** (docs, plus the sitemap's comment).
+- **His manual steps after the release:**
+  - Refresh the share card in LinkedIn's Post Inspector (https://www.linkedin.com/post-inspector/).
+  - A reindex request for `https://tayshofer.dev/` if he uses Google Search Console.
+- **A per-branch yes** for `release/concept-a` (merged) and `proto/hero-a-cinematic` (R1: never delete), whenever he
+  wants.
+- **Then #20**, in a new session.
+- **The GRAVITY FLOW image** for the capture swap (ROADMAP #18), whenever he has it.
 - **Optional, on `main`:** the site's chat launcher folds its label as the page scrolls. That is 0.0076 CLS on `/` at
   1440 and 390 (measured in session 11), well inside "good". Untouched.
 - **A note from session 7's preview shots:** at 390px the TBS row word (20.3px, 600) is close to the row's lead line
@@ -409,8 +442,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 
 ## Handoff / state doc
 Claude Code records session state in `docs/WORKLOG.md` (plus `docs/ROADMAP.md` for phases).
-Update them at the end of each milestone. On this branch, `docs/WORKLOG.md` carries sessions 10 to 17 in full, and
-`main`'s summary of sessions 10–11 too. `main`'s own copy ends with that summary until the release merges.
+Update them at the end of each milestone. Since the release, `main`'s `docs/WORKLOG.md` carries sessions 10 to 24 in
+full, with the old summary of sessions 10–11 too.
 
 ## Transition prompts (fill the task, paste into Claude Code)
 
@@ -424,11 +457,8 @@ Update them at the end of each milestone. On this branch, `docs/WORKLOG.md` carr
 > && git pull`), then read claude/START-HERE.md, docs/WORKLOG.md, CLAUDE.md and docs/CINEMATIC_SYSTEM.md on that
 > branch. Then: <the new task>.
 
-**Open a release session (S18 onwards):**
-> New session. First `git fetch && git checkout release/concept-a && git pull`, then `npm ci`, and read
-> claude/START-HERE.md, docs/WORKLOG.md, CLAUDE.md, docs/ROADMAP.md ("Concept A: P4–P6") and
-> docs/RESEARCH_AND_DECISIONS.md ("Resolved in session 16") there. Then: <Sn only>.
+**Open a new session (the live site; the default since the release):**
+> New session. First `git fetch && git checkout main && git pull`, then `npm ci`, and read claude/START-HERE.md,
+> docs/WORKLOG.md, CLAUDE.md and docs/ROADMAP.md (the backlog) on `main`. Then: <the new task, e.g. backlog #20>.
 
-**Open a new session (the live site):**
-> New session. First read claude/START-HERE.md, docs/WORKLOG.md, and CLAUDE.md on `main` to load the
-> current state. Then: <the new task>.
+(The release sessions, S17–S24, opened on `release/concept-a`. That track is done.)

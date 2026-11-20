@@ -1,30 +1,52 @@
 # Cinematic system (Concept A): tokens and motion language
 
-**Prototype only.** It lives on `proto/hero-a-cinematic` and applies only under `/lab`. Tay reopened D1 for it
-(2026-11-18); D2 is still not reopened, so no WebGL (corrected at the session 11 close: earlier docs and code comments
-here say "D2 reopened").
-The branch is never merged. Nothing here touches the live site's paper theme, `app/globals.css`, its contrast floors,
-or `/`.
+**Live on `/` since 2026-11-20** (PR #21, merge `3a98d22`; S24 verified production). Tay reopened D1 for Concept A
+(2026-11-18) and approved it replacing the live `/` (session 16, R1–R15). D2 is still not reopened, so no WebGL: the
+field is a 2D canvas, and the carousels are CSS perspective on 2D elements (corrected at the session 11 close: earlier
+docs and code comments said "D2 reopened").
 
-The system was **extracted from the locked hero** (`/lab/hero-a`), value for value. Nothing was invented: the hero is
-its first consumer. After the extraction, its computed styles and pixels are unchanged (round 4 in `docs/WORKLOG.md`).
+**How to read this file.**
+- "Where it lives" below is the live map.
+- The sections after it were written while the system was a prototype under `/lab` on `proto/hero-a-cinematic`.
+  That branch stays frozen as the record (draft PR #18, never merged).
+- Read their `app/lab/…` paths through the map at the end of this section. Each round's measurements stay as they were
+  taken.
+
+The system was **extracted from the locked hero** (`/lab/hero-a` then; the hero of `/` now), value for value. Nothing
+was invented: the hero is its first consumer. After the extraction, its computed styles and pixels are unchanged (round
+4 in `docs/WORKLOG.md`).
 
 ## Where it lives
 
 | File | What it holds |
 |---|---|
-| `app/lab/_cinematic/cinematic.css` | The tokens (`--cine-*`), the scope chrome, the focus ring, duotone text, the one reveal |
-| `app/lab/layout.tsx` | Its only importer, so only `/lab` routes load it |
-| `app/lab/hero-a/hero-a.css` | The reference consumer: the hero's own geometry, every shared value read from the layer |
-| `app/lab/hero-a/Constellation.tsx` | The reference live element: the loop contract below, in code |
-| `app/lab/work/` | The second consumer: the Work slice (below), with no client code of its own |
-| `tests/unit/lab-hero-a.test.ts` | Pins the scope, the contrast floors and the token integrity |
-| `tests/e2e/lab-hero-a.spec.ts` | Pins the behaviour: budget, axe, no-JS, reduced motion, pause |
+| `app/cinematic.css` | The tokens (`--cine-*`), the scope chrome, the focus ring, duotone text, the one reveal |
+| `app/page.tsx` | Its only importer, so only `/` loads it (`/privacy`, the 404 and the error page never do) |
+| `components/sections/hero.css`, `Hero.tsx` | The reference consumer: the hero's own geometry, every shared value read from the layer |
+| `components/sections/Constellation.tsx` | The reference live element: the loop contract below, in code |
+| `components/sections/` (Work, `panels.ts`, `Reel`, `Shot`, `MoreWork`, About, Stack, `StackFilter`, ThinkBuildShip, Contact, `work.css`) | The second consumer: Work, Two more and the sections below them |
+| `components/layout/Navbar.tsx`, `Logo.tsx`, `AvailabilityPill.tsx` | The header, in its own `.cine` root (R2) |
+| `tests/unit/lab-hero-a.test.ts`, `lab-work.test.ts` | Pin the scope, the contrast floors, the token integrity and every string's source |
+| `tests/e2e/lab-hero-a.spec.ts`, `lab-work.spec.ts` | Pin the behaviour: budget, axe, no-JS, reduced motion, pause, the carousels, Stack's filter |
 
-`_cinematic` is a private folder (the leading underscore): Next never routes it.
+The four test files keep their prototype names (S20): code comments and this file point at them.
+
+**The prototype's paths, then and now** (S18+S19, `482d29e`: the files moved with `git mv`, their copy unchanged; the
+two lab pages were composed into one):
+
+| On `proto/hero-a-cinematic` | On `main` |
+|---|---|
+| `app/lab/_cinematic/cinematic.css` | `app/cinematic.css` |
+| `app/lab/layout.tsx` (the only importer) | `app/page.tsx` (the only importer) |
+| `app/lab/hero-a/page.tsx`, `app/lab/work/page.tsx` | `app/page.tsx`, with `components/sections/Hero.tsx` and `Work.tsx` |
+| `app/lab/hero-a/hero-a.css`, `Constellation.tsx`, `featured.ts` | `components/sections/hero.css`, `Constellation.tsx`, `featured.ts` |
+| `app/lab/work/panels.ts`, `Reel.tsx`, `Shot.tsx`, `StackFilter.tsx`, `work.css` | `components/sections/`, the same names |
+| `app/lab/work/about.ts`, `stack.ts`, `tbs.ts`, `contact.ts` | `components/sections/aboutBlock.ts`, `stackBlock.ts`, `tbsBlock.ts`, `contactBlock.ts` |
+| `app/lab/work/AboutBlock.tsx`, `StackBlock.tsx`, `TbsBlock.tsx`, `ContactBlock.tsx` | `components/sections/About.tsx`, `Stack.tsx`, `ThinkBuildShip.tsx`, `Contact.tsx` |
+| `/lab/hero-a`, `/lab/work` (noindex) | `/`; every `/lab` route answers 404 |
 
 **Scope, twice over.**
-- Only the `/lab` layout imports the sheet.
+- Only `app/page.tsx` imports the sheet (on the prototype, only the `/lab` layout did).
 - Every selector needs a `.cine` root, or `:has(.cine)` for the page around it. So the sheet is inert anywhere else,
   even if it outlives a client navigation.
 
@@ -61,7 +83,9 @@ its first consumer. After the extraction, its computed styles and pixels are unc
   - It happened four times: a test comment (round 4), an object key named after a shadow utility (round 5), a test
     comment (session 11), and the root `CLAUDE.md`'s own gotcha line (session 12). The repo root and `claude/` are
     scanned too: only `docs/`, `design/`, `.claude/` and `.impeccable/` are skipped.
-  - `tests/e2e/lab-work.spec.ts` now pins `/`'s stylesheets to `origin/main`'s bytes, so a leak fails the suite.
+  - On the prototype, `tests/e2e/lab-work.spec.ts` pinned `/`'s stylesheets to `origin/main`'s bytes, so a leak failed
+    the suite. That pin was deleted in S20 (on `main`, `/` is this layer). Now check by hand: rebuild, and compare `/`'s
+    stylesheets (names, bytes, SHA-256) before and after any edit outside `docs/`.
 - **Docs go in `docs/`**, which Tailwind skips.
 
 ## The token set
