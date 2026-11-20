@@ -12,7 +12,7 @@ import { DUR, easeOutExpo } from "@/lib/motion";
 import { useFocusTrap, useScrollLock } from "@/lib/useFocusTrap";
 import { useReducedMotionPref } from "@/lib/useReducedMotionPref";
 import { PrivateRepoLabel } from "@/components/ui/PrivateRepoLabel";
-import { publicRepoUrl, type Project } from "@/data/projects";
+import { publicRepoUrl, type Project, type ProjectMedia } from "@/data/projects";
 import { repoLabel } from "@/data/projects";
 import { clientDict as t } from "@/lib/dict-client";
 import { fmt } from "@/lib/fmt";
@@ -124,14 +124,12 @@ export function CaseStudyPanel({
                   className={"relative w-full overflow-hidden rounded-2xl " + (project.media.fit === "contain" ? "aspect-[16/11]" : "aspect-[16/9]")}
                   style={{ background: plateOf(project.id) }}
                 >
-                  <Image
+                  {/* The first thing in view when the panel opens (it mounts on open): lazy left it blank for a beat. */}
+                  <Capture
+                    media={project.media}
                     src={project.media.image}
                     alt={project.media.alt ?? fmt(t.cs.interface, { name: project.name })}
-                    unoptimized={project.media.direct}
-                    fill
-                    // The first thing in view when the panel opens (it mounts on open): lazy left it blank for a beat.
-                    loading="eager"
-                    fetchPriority="high"
+                    eager
                     sizes="(max-width: 1100px) 100vw, 68rem"
                     className={project.media.fit === "contain" ? "object-contain p-6" : "object-cover object-top"}
                   />
@@ -222,12 +220,10 @@ export function CaseStudyPanel({
                           >
                             {/* The caption below says exactly what the capture shows and names the figure, so the
                                 image itself is silent: the same words twice would be read twice (#17). */}
-                            <Image
+                            <Capture
+                              media={project.media!}
                               src={shot.src}
                               alt=""
-                              unoptimized={project.media?.direct}
-                              fill
-                              loading="lazy"
                               sizes={wide ? "(max-width: 1100px) 100vw, 68rem" : "(max-width: 640px) 100vw, 33rem"}
                               className={project.media?.fit === "contain" ? "object-contain p-4" : "object-cover object-top"}
                             />
@@ -316,6 +312,33 @@ export function CaseStudyPanel({
         </>
       )}
     </AnimatePresence>
+  );
+}
+
+/** Fills its box as next/image's `fill` does. */
+const FILL: React.CSSProperties = { position: "absolute", inset: 0, width: "100%", height: "100%" };
+
+/**
+ * One capture filling its box. Where the project lists the capture's pre-encoded files (`media.encoded`, written by
+ * scripts/m10-images.mjs), they are served straight: AVIF first, WebP for the rest, every width. Otherwise next/image,
+ * with `direct` files (T Poker's, Aegis's) served as they are. Either way, no case-study image waits on the on-demand
+ * optimiser (S21+S22).
+ */
+function Capture({ media, src, alt, sizes, className, eager }: {
+  media: ProjectMedia; src: string; alt: string; sizes: string; className: string; eager?: boolean;
+}) {
+  const e = media.encoded?.[src];
+  if (!e) {
+    return <Image src={src} alt={alt} unoptimized={media.direct} fill loading={eager ? "eager" : "lazy"}
+      fetchPriority={eager ? "high" : undefined} sizes={sizes} className={className} />;
+  }
+  const set = (ext: "avif" | "webp") => e.widths.map((w) => `/work/${e.name}-${w}.${ext} ${w}w`).join(", ");
+  return (
+    <picture>
+      <source type="image/avif" srcSet={set("avif")} sizes={sizes} />
+      <img src={`/work/${e.name}-${e.widths.at(-1)}.webp`} srcSet={set("webp")} sizes={sizes} alt={alt} decoding="async"
+        loading={eager ? "eager" : "lazy"} fetchPriority={eager ? "high" : undefined} className={className} style={FILL} />
+    </picture>
   );
 }
 
