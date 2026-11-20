@@ -29,7 +29,10 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
    - **S20 (2026-11-20): the tests.** The lab tests are ported to `/`, the old page's retired, R12's new guards added:
      unit 218/218, Playwright 183/183.
    - **S21+S22 (2026-11-20): the surfaces and the backlog, approved by Tay and closed out.** Unit 225/225,
-     Playwright 187/187 cold and warm. Detail below and in `docs/WORKLOG.md`, "Sessions 21+22". S23 is next.
+     Playwright 187/187 cold and warm. Detail below and in `docs/WORKLOG.md`, "Sessions 21+22".
+   - **S23 (2026-11-20): the release candidate. Draft PR #21 is open** (https://github.com/taysh123/Portfolio/pull/21),
+     not merged and not ready. Tay's phone review is pending, and the session stays open until then. Detail below and
+     in `docs/WORKLOG.md`, "Session 23".
    - The plan, S17 to S24: `docs/ROADMAP.md`, "Concept A: P4–P6". Tay's decisions, R1 to R15:
      `docs/RESEARCH_AND_DECISIONS.md`, "Resolved in session 16".
 
@@ -146,6 +149,30 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - **Results:** typecheck and lint exit 0; unit 225/225 (18 files); Playwright 187/187 cold (right after deleting
     `.next`) and warm. First-load JS 185.10 KiB (budget 205.7), HTML 127,732 B. Lighthouse mobile, median of 5:
     Performance 100, LCP 1,063 ms, TBT 20 ms, CLS 0, 100/100/100 (the session's start: 100, 1,065 ms).
+- **S23 (2026-11-20): the release candidate, and draft PR #21.** Detail: `docs/WORKLOG.md`, "Session 23".
+  - **Clean build:** typecheck and lint exit 0; unit 225/225; Playwright on Chromium 187/187, cold.
+  - **Firefox 153: 178/187.** Each failure is traced: CDP is Chromium only (2); load, passing alone (2); reduced
+    motion's 1µs ease read in the same tick (2); a 0.0000153px float (2); and F1 (1).
+  - **WebKit 26.5: 169/187**, through a scratch proxy.
+    - Over plain `http://localhost` WebKit applies the CSP's `upgrade-insecure-requests` to every file, so nothing
+      loads (64/187). The proxy drops that one directive; production is HTTPS.
+    - The 18 failures: Safari's Tab skips links and a click doesn't focus a button (7); APIs it lacks (3); a test-only
+      focus race (2); software canvas at DPR 2 (1); LCP timing (1); tap hover (1); load (1); and F2 (2).
+  - **Found, for Tay:**
+    - F1: in Firefox, two focus stops sit partly under the chat launcher at 375 and 390, because it ignores the bottom
+      scroll padding for a target already in view.
+    - F2: in Safari, focus can leave a modal sheet for one Tab, because the trap's last item is a link Safari skips.
+      Pre-existing.
+    - No release bug was found, and no fix was made.
+  - **The review of the diff:**
+    - `/` is `index, follow` with one canonical, and `/lab/*` answers 404.
+    - The six security headers equal production's; `proxy.ts` and `next.config.ts` are unchanged.
+    - `GROQ_API_KEY` is read on the server only, and no secret is in the diff.
+    - The guards pass, over the commits and the PR body too. No leftover marker. The résumé is unchanged.
+  - **Lighthouse mobile, median of 5:** 100, LCP 1,058 ms (the h1), TBT 20 ms, CLS 0, 100/100/100. First-load JS
+    185.10 KiB, HTML 127,732 B.
+  - **Next 16.3.8's `npm audit` advisories** are already in production and not in this release: ROADMAP #19, a PR on
+    `main` after S24 (Tay).
 - **Cut from `origin/main` `443a1f9`** (`--no-track`), pushed in S17 with its upstream set: branch only, no PR, no
   merge.
 - **The copy (R1):**
@@ -331,15 +358,18 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   is green and pushed.
 - **S21+S22 is done and approved by Tay (2026-11-20)**, and closed out: the privacy and SEO surfaces, then the
   backlog (#13 measured and not kept, #14 re-checked, #16, #17, the cold cache, the rings; the footer rings' fix kept).
-- **S23 is next:** the release candidate (WebKit and Firefox runs, Tay's review on his own phone; on Tay's go, the PR).
-  Then S24 (check the tag, Tay's merge, the production checks).
-- **After the release:** the GRAVITY FLOW capture swap (ROADMAP #18), a small PR whenever Tay provides the image. It is
-  no longer part of S23.
+- **S23 is under way (2026-11-20):** the validation, the WebKit and Firefox runs and the review are done, and **draft
+  PR #21** is open. Waiting on Tay's review on his own phone, and his word on F1 and F2. Then S24 (check the tag, Tay
+  marks the PR ready and merges, the production checks in the PR body).
+- **After the release:**
+  - The GRAVITY FLOW capture swap (ROADMAP #18), a small PR whenever Tay provides the image.
+  - Next 16.3.8 → 16.4.6 (ROADMAP #19), a separate PR on `main` after S24, with the full suite and Lighthouse.
 
 ## Open PRs / branches (S21+S22, 2026-11-20)
 - **`release/concept-a`**: the release branch, pushed in S17, in S18+S19 (the code at `270ab27`), in S20 (tests
-  only, then the close-out) and in S21+S22 (to `e58508b`, then the docs), with no PR yet. S23 opens it on Tay's go; Tay
-  merges.
+  only, then the close-out), in S21+S22 (to `e58508b`, then the docs) and in S23 (docs only).
+- **PR #21** (`release/concept-a` → `main`, **draft**), "Release: Concept A", opened in S23 on Tay's go:
+  https://github.com/taysh123/Portfolio/pull/21. Tay marks it ready and merges in S24. Claude never merges.
 - **Tag `product-plates-final`** (`8f0a96a`) on `443a1f9`, pushed in S17: the P4 restore point (R6, R15).
 - **PR #18** (`proto/hero-a-cinematic`, draft): the Concept A prototype. Never merge, never delete; Preview only.
 - Merged and deleted (each checked with `git merge-base --is-ancestor` first):
@@ -352,8 +382,9 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Start S23** in a new session, on `release/concept-a`: the release candidate.
-- **In S23:** the review on his own phone through the Preview, and the go for the PR.
+- **In S23 (open):** the review on his own phone through the Preview (behind Vercel's login). Then the close-out.
+- **F1 and F2** (`docs/WORKLOG.md`, "Session 23" §5): fix in PR #21, log for after the release, or leave.
+- **In S24:** mark PR #21 ready and merge it; then the production checks.
 - **After the release:** the GRAVITY FLOW image for the capture swap (ROADMAP #18).
 - **In S24:** merge. The `product-plates-final` tag is already pushed (S17).
 - **Optional, on `main`:** the site's chat launcher folds its label as the page scrolls. That is 0.0076 CLS on `/` at

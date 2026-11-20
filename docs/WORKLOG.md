@@ -11,6 +11,165 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-20 — Session 23: the release candidate; draft PR #21 opened (Claude Code)
+
+**Scope (Tay's brief, S23):**
+1. Full validation on a clean build, then the suite on WebKit and Firefox. Installing Playwright's two browsers is approved; no project dependency. Report per browser. A real bug gets its own commit. Show Tay any test that can't apply to a browser; skip none silently.
+2. A final review of `git diff main...release/concept-a`: noindex, `/lab`, headers and CSP, `GROQ_API_KEY` and secrets, the private-repo and institution guards, leftover markers, the résumé.
+3. Lighthouse mobile (median of 5) on a local production build, with first-load JS and HTML; screenshots of `/` at 390 and 1440 in scratch.
+4. Push, then a **draft** PR "Release: Concept A" into `main`. Do not merge it or mark it ready. Then the PR link, the Preview, START-HERE and this log. The session stays open until Tay reviews on his phone.
+
+**Added by Tay mid-session:**
+- The Next 16.3.8 advisories are not in this release: backlog #19 (a separate PR on `main` after S24).
+- Two facts for the report, read-only: the installed sharp version, and what the share card renders.
+
+### 1. Preconditions (VL)
+- `git fetch`, `release/concept-a` checked out and pulled: HEAD **`94d8330`**. `main` = `origin/main` = **`443a1f9`** = Production (`gh api …/deployments`, created 2026-11-19 03:20Z).
+- `npm ci` exit 0 (the known allow-scripts warning for sharp and unrs-resolver). `.next` deleted; `npm run build` exit 0, 8 routes, no `/lab`.
+
+### 2. Validation (VL, Git Bash)
+| Command | Result |
+|---|---|
+| `npm run build` (`.next` deleted first) | exit 0 |
+| `npx next typegen`, `npm run typecheck` | exit 0 |
+| `npm run lint` | exit 0 |
+| `npm test` | **225/225, 18 files** |
+| `GROQ_API_KEY= npx playwright test` (the repo's config, Chromium), cold, right after the clean build | **187/187**, 15 files, 2.0 min |
+| `npx playwright install webkit firefox` (approved) | Firefox 153.0 (v1538), WebKit 26.5; no project file changed |
+| Firefox: the same tests, server and timeout, through a scratch config that swaps only the browser (`Desktop Firefox`, 1440×900) | **178/187** (§3) |
+| WebKit: the same scratch config with `Desktop Safari` | 64/187: the harness, not the site (§4) |
+| WebKit through a scratch proxy that drops only `upgrade-insecure-requests` from the CSP | **169/187** (§4) |
+
+The scratch configs import the repo's own Playwright and run `tests/e2e` unchanged; nothing in the repo changed for them.
+
+### 3. Firefox: the 9 failures, each traced (VL)
+- **2 can't apply:** `chrome.spec.ts:140` and `lab-work.spec.ts:260` open a CDP session, which is Chromium only ("CDP session is only available in Chromium").
+- **2 pass alone (load):** `lab-hero-a.spec.ts:129` (4 frames in 600 ms under 8 Firefox workers) and `lab-work.spec.ts:228` (the side-capture click). Both pass alone with one worker.
+- **2 read reduced motion's 1µs transitions in the same tick:**
+  - The source: `app/globals.css:382` and `:392`, `transition-duration: 0.001ms !important` (unchanged from `main`).
+  - Firefox creates real transitions for them and finishes them on the next frame; Chromium reports the end value at once.
+  - Probed:
+    - Stack: right after a press, `getAnimations()` lists background, border and colour transitions and the pill is still the glass ink; at 50 ms it is cyan.
+    - The stage's hover edge: old at the read in 2 of 8 tries, with five 0.001 ms transitions "running"; at 50 ms, 8 of 8 changed.
+  - The tests: `lab-work.spec.ts:566` (deterministic) and `:338` (intermittent, 2 of 3). To a visitor it is one frame.
+- **2 sub-pixel:** `lab-work.spec.ts:690` ×2. The title's top reads `5001.633117675781` against `5001.63313293457` (0.0000153px; Firefox lays out in 1/60 px units) under exact equality.
+- **1 real finding, F1** (`chrome.spec.ts:268` at 390×844; below).
+
+### 4. WebKit (VL)
+**The first run (64/187) is the harness.** A probe of `/` over `http://localhost:3401` in WebKit 26.5:
+- Every `/_next/static` request went to `https://localhost:3401` and failed: 15 requests, "SSL connect error".
+- No stylesheet applied (the body transparent), no JS, no hydration, and the case study did not open.
+- The cause is the CSP's `upgrade-insecure-requests`, which WebKit applies to localhost. Chromium and Firefox treat localhost as trustworthy, and both loaded everything (0 failed requests, the dialog opens).
+- Production is HTTPS, where the directive changes nothing; `main` has the same `proxy.ts`.
+- `openssl` is blocked here, and a Windows certificate would go into Tay's store, so no local TLS.
+
+**The second run goes through a scratch proxy instead** (`uir-proxy.mjs`, Node's `http` only):
+- It forwards every request and response unchanged, except that it removes that one directive from the `Content-Security-Policy` header. Every other directive stays enforced.
+- The one test that reads the CSP only checks that it is present (`english.spec.ts:24`).
+- Probed through it: 0 failed requests, 0 console errors, both stylesheets applied, and the case study opens.
+
+**169/187. The 18 failures, each traced:**
+- **Safari's keyboard model (7).**
+  - By default Safari's Tab skips links (they need Option+Tab or a system setting). The walks start at a button ("Accessibility settings" at 1440, "Open menu" at 390) instead of "Skip to content", and reach 25 stops, not 40+. Every missing stop in the diffs is a link.
+  - The tests: `chrome.spec.ts:268` ×2, `focus-ring.spec.ts:8` ×2, `lab-hero-a.spec.ts:192`, `lab-work.spec.ts:303`.
+  - Safari also doesn't focus a button on click: `lab-work.spec.ts:566` ("Expected: focused, Received: inactive").
+- **APIs not in WebKit (3):** CDP (`chrome.spec.ts:140`, `lab-work.spec.ts:260`); "Mouse wheel is not supported in mobile WebKit" (`chat.spec.ts:130`).
+- **A focus race, not visitor-facing (2):** `chat.spec.ts:174` and `page.spec.ts:138`, both at 390.
+  - Instrumented: with the text typed the instant the panel appears, Enter's `keydown` lands on a **button**. `useFocusTrap`'s passive effect (unchanged) moves focus to Close after Playwright's `fill`, so Enter presses Close.
+  - With 500 ms before typing, `keydown` lands on the field and the form submits (one request). Chromium runs the effect before the `fill` at both waits.
+  - A plain HTML form submits on a page-level Enter in the same WebKit, desktop and mobile. `textbox.press("Enter")` and tapping Send both work at 390.
+- **Software canvas (1):** `lab-hero-a.spec.ts:129`, 0 frames counted.
+  - `Desktop Safari`'s scale factor is 2 (`Desktop Chrome`'s and `Desktop Firefox`'s are 1). The test's own counter in WebKit gives 16–17 frames in 600 ms at DPR 1, 3–4 at DPR 2, and 0 under the suite's load. The field is "running" throughout, with the page visible.
+  - Headless WebKit on Windows draws canvas in software, which is pessimistic like headless Chromium's SwiftShader. The field already caps its DPR (`Constellation.tsx:132`: 2, or 1.5 in its light mode).
+- **LCP timing (1):** `lab-hero-a.spec.ts:93`. WebKit's LCP element is the h1 (`hxa__title`) at 160 ms, FCP 118 ms (Chromium 112 / 112). The reveal doesn't hide it; the test's equality is Chromium's report.
+- **Touch hover (1):** `lab-work.spec.ts:338`. After a tap in mobile WebKit the panel matches neither `:hover` nor `:active`, so the stage doesn't lift (Chromium: `:hover`, lifted). Cosmetic; a real iPhone shows the truth (NC).
+- **Load (1):** `chrome.spec.ts:89` passes alone.
+- **A real finding, F2 (2):** `chat.spec.ts:76`, `chrome.spec.ts:185` (below).
+
+### 5. Found in this session, for Tay (neither caused by the release; no fix made)
+- **F1, Firefox: a focused control partly under the chat launcher at two phone widths.**
+  - #16 relies on `html { scroll-padding-bottom }`. Firefox's focus scroll ignores it when the target is already inside the viewport.
+  - Probed at 390×844: the hero's GRAVITY FLOW link at 702–806, the launcher at 782–832; Firefox leaves the page at `scrollY` 0, where Chromium's scroll leaves the link ending at 772.
+  - A Tab walk at 8 sizes (320×568 to 1440×900, plus 1024×500): Firefox has 2 stops partly under it, "Case study" at 375×667 (2%) and that link at 390×844 (12%). Chromium has 0 at all 8. None is wholly hidden, so WCAG 2.4.11 (AA) holds; #16's "never under it" does not.
+  - Production has no bottom scroll padding (only the header's `scroll-padding-top`); S17 measured the same tile under the label on load at 320–375.
+  - Tried in a probe only: a `scroll-margin-bottom` on `:focus-visible` cleared the 375 stop but not the 390 one. A reliable fix is a focus handler in the launcher's client code. Tay's call.
+- **F2, Safari: focus can leave a modal sheet for one Tab** (pre-existing).
+  - `lib/useFocusTrap.ts` (unchanged from `main`) steps in only at the first and last items of its list, which includes links. The last item is a link in both sheets: the menu sheet's "Get in touch" and the chat's Privacy.
+  - Safari's default Tab skips links, so the trap never sees the last item:
+    - From the menu sheet's "Accessibility settings", focus goes to a "Case study" button on the page behind.
+    - From the chat's field, it goes to `body`.
+    - The next Tab comes back to Close.
+  - `main`'s sheet also ends on its "Get in touch" link, so this is pre-existing.
+  - A fix (the trap moving focus itself on every Tab) changes a hook every overlay shares. Tay's call.
+
+### 6. The review of `git diff main...release/concept-a` (VL; 149 files: 86 added, 22 deleted, 41 modified)
+- **`/` indexable, `/lab` gone** (the build on `:3401`):
+  - `index, follow` (robots and googlebot), exactly one canonical `https://tayshofer.dev`, no `noindex` in the HTML or `X-Robots-Tag`, and none in `app`, `components`, `lib`, `data`, `proxy.ts` or `next.config.ts`.
+  - `/lab`, `/lab/hero-a`, `/lab/work` answer 404. `/privacy` 200, `/nope` 404, `/he` 308 → `/`.
+  - Robots, the sitemap, the card (126,193 B PNG) and the manifest answer 200. The résumé is 80,593 B. `POST /api/chat` with an empty body answers 400.
+- **Headers and CSP identical:**
+  - `proxy.ts` and `next.config.ts` have 0 diff lines.
+  - The six security headers on `/` and `/privacy` of the release build equal live production's, byte for byte (a read-only `curl` with a browser `Accept`: `Server: cloudflare`, a `CF-RAY`, an `x-vercel-id`). `X-Powered-By` is absent on both.
+  - The one inline script in the diff is `main`'s early-click handler, moved unchanged from `components/work/Work.tsx` to `app/page.tsx`. Both canvas contexts in the added code are `"2d"`.
+- **`GROQ_API_KEY`:**
+  - Read only in `app/api/chat/route.ts` (0 diff lines). The diff mentions it only in doc lines.
+  - No `GROQ_API_KEY`, `gsk_` or `api.groq.com` anywhere in `.next/static`. No `NEXT_PUBLIC_` in the tracked code. No `.env` file tracked.
+- **Secrets:** a pattern scan of every added line (key prefixes, private keys, tokens, assignments of long secrets) finds none. The only new external URL in the code is Cloudflare's privacy policy.
+- **The guards:**
+  - The unit suite's private-repo and institution guards pass over the tree.
+  - `tests/support/`'s own functions, run in Node over every commit message on the branch and over the PR body, find nothing.
+  - The guard files (`dead-code.test.ts`, `budget.spec.ts`, `tokens.test.ts`, `tests/support/*`, both private-repo tests, `smoke`, `chat`, `chat-route`) have 0 changed lines; `english.spec.ts` has 2 (R12, `3784a48`).
+- **Leftovers:** none of `TODO`, `FIXME`, `@ts-nocheck`, `@ts-ignore`, `eslint-disable`, `.only(`, `.skip(`, `.fixme(` or `test.fail(` on an added line, or anywhere in the code and test tree.
+- **The résumé:** the same blob on both sides (`70e4b7e`, 80,593 B), with 0 diff lines.
+- **Copy:** project statuses and limitations are unchanged; `data/projects.ts` changes only media fields (`direct`, `encoded`, `PROJECT_GALLERIES`). The headline has one source (`siteMeta`), read by the hero and the card.
+- **Dependencies:**
+  - `package.json` and the lockfile have 0 diff lines.
+  - `npm audit --omit=dev`: advisories against `next` 16.0.0–16.4.4 (two critical, one high, seven moderate), fixed in 16.4.6, already in production. Tay: backlog #19 (`505d1e1`).
+  - The two facts Tay asked for:
+    - `npm ls sharp`: `sharp@0.34.5` (the project's own, dev) and `next@16.3.8 └── sharp@0.35.5`.
+    - `app/opengraph-image.tsx` is `next/og`'s `ImageResponse`, prerendered static. It draws inline JSX and SVG elements from `siteMeta`, `heroIndex` and `cine`: no fetch, params, `<img>`, or remote or user-supplied SVG.
+- **Nits, dev-only, left as they are:**
+  - `scripts/lab-hero-a.mjs` defaults to `/lab/hero-a` (now 404).
+  - `scripts/m10-images.mjs:71`'s comment mentions the deleted About visual.
+
+### 7. Lighthouse, bytes, screenshots (VL)
+**Bytes** (`budget.spec.ts`'s algorithm, the build on `:3401`): first-load JS **185.10 KiB** gzip over 9 scripts (606,933 B raw; budget 205.7), HTML **127,732 B** (budget 568 KB). Both are the same as the S21+S22 close. The stylesheets are the same two files (44,069 B and 28,727 B).
+
+**Lighthouse 13.6.0** (`npx --yes`, as since S17; mobile defaults, simulated throttling, 412×823; HeadlessChrome 158; 5 runs in a row on an idle machine, benchmark index 4,054–4,115, no run warnings):
+
+| Run | Perf | A11y | BP | SEO | FCP | LCP | TBT | CLS | SI | Bytes |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 100 | 100 | 100 | 100 | 1,059 ms | 1,059 ms | 65 ms | 0 | 1,378 ms | 389,820 |
+| 2 | 100 | 100 | 100 | 100 | 1,059 ms | 1,059 ms | 20 ms | 0 | 1,059 ms | 389,820 |
+| 3 | 100 | 100 | 100 | 100 | 1,058 ms | 1,058 ms | 35 ms | 0 | 1,353 ms | 389,820 |
+| 4 | 100 | 100 | 100 | 100 | 1,058 ms | 1,058 ms | 19 ms | 0 | 1,362 ms | 389,820 |
+| 5 | 100 | 100 | 100 | 100 | 1,058 ms | 1,058 ms | 16 ms | 0 | 1,341 ms | 389,820 |
+| **Median** | **100** | **100** | **100** | **100** | **1,058 ms** | **1,058 ms** | **20 ms** | **0** | **1,353 ms** | **389,820** |
+
+- The LCP element is the h1 (`section#hero > div.hxa__main > div.hxa__hero > h1#hxa-title`).
+- Against the S21+S22 close (100, 1,063 ms) and a local `main` (S18+S19: 93, 3,191 ms). Production's S17 baseline (98, 2,288 ms) is S24's yardstick, production against production.
+
+**Screenshots** (scratch, not committed; the first screen and the full page at 390×844 DPR 3 and 1440×900): no horizontal overflow, 0 console errors, one canvas, inside `#hero` and `aria-hidden`, at both sizes. At 390 the launcher sits over the GRAVITY FLOW tile's last line on load: S17's at-rest overlap, pre-existing.
+
+### 8. Pushed, and the draft PR
+- `505d1e1`: ROADMAP backlog #19 (Next 16.4.6 after S24) and the "After the release" line.
+- `release/concept-a` pushed: `94d8330..505d1e1`, then this docs commit.
+- **Draft PR #21**, "Release: Concept A", `release/concept-a` → `main`: https://github.com/taysh123/Portfolio/pull/21. Not merged and not marked ready.
+  - Its body: what changes for visitors, R1–R15, every test and guard change with its commit and approval, the S23 results above, F1 and F2, the rollback plan, and the S24 checklist.
+- Production is still `443a1f9`.
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production, tagged `product-plates-final`. Untouched.
+- `release/concept-a`: S23's two docs commits, pushed. **Draft PR #21** open.
+- `proto/hero-a-cinematic`: frozen; PR #18 a draft.
+
+### Waiting on Tay
+- **The review on his phone**, through the Preview (behind Vercel's login). Then the session closes.
+- **F1 and F2** (§5): fix now in the PR, log for after the release, or leave.
+- **S24:** his merge of PR #21 (mark it ready first), then the production checks in the PR body.
+
+---
+
 ## 2026-11-20 — Sessions 21+22 close-out: approved by Tay; the GRAVITY FLOW swap moves after the release (Claude Code)
 
 **Scope (Tay's brief):** S21+S22 reviewed and approved; keep the footer rings' fix (`fa5c23d`). Close out: CLAUDE.md
