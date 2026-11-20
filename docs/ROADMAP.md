@@ -12,8 +12,8 @@ true project facts, through a prototype-first sequence with an owner approval ga
 riskiest piece (the hero) in isolation against hard budgets, then build sections, motion, and case
 studies on a branch cut from production `main`. Release through a Vercel Preview and Tay's sign-off.
 
-**Owner / approver:** Tay (every gate). **Last updated:** 2026-11-20 (the S21+S22 close-out: S21+S22 done and approved; the GRAVITY FLOW capture swap moved
-out of S23, to after the release, #18).
+**Owner / approver:** Tay (every gate). **Last updated:** 2026-11-20 (S24: Concept A is live, PR #21 merged as `3a98d22`;
+the production checks pass; P5/P6 done. Next: backlog #20, #19, #21, #18, #22, then P4).
 
 ## Global constraints (apply to every phase)
 
@@ -183,7 +183,10 @@ Acceptance criteria:
 - [ ] CSP and security headers unchanged or stricter; no new third-party origins without review.
 - [ ] Screenshots at the standard viewports reviewed by Tay.
 
-### M7 — Release candidate and controlled production release · `NOT STARTED`
+### M7 — Release candidate and controlled production release · `DONE for Concept A` (S23, S24: PR #21, merged 2026-11-20 as `3a98d22`)
+
+For Concept A, S23 and S24 met these criteria (below): the PR with its verification log, the Preview reviewed on Tay's
+phone, Tay's merge with a known rollback, and the post-release checks.
 
 Acceptance criteria:
 - [ ] PR to `main` with the verification log; protected Vercel Preview reviewed by Tay.
@@ -203,7 +206,8 @@ P1–P3 (the hero and the six sections) are done and approved on `proto/hero-a-c
 `docs/RESEARCH_AND_DECISIONS.md` ("Resolved in session 16"). Goal: the new site replaces the live `/` as soon as
 possible, because Tay is job hunting; the demos (P4) come after the release.
 
-### P5 (integration) and P6 (release) · `IN PROGRESS` (S17 done, 2026-11-19; S18+S19 done and approved by Tay, 2026-11-20; S20 done, 2026-11-20; S21+S22 done and approved by Tay, 2026-11-20; S23 done and approved by Tay, 2026-11-20, draft PR #21 open; S24 next)
+### P5 (integration) and P6 (release) · `IN PROGRESS` (S17 done, 2026-11-19; S18+S19 done and approved by Tay, 2026-11-20; S20 done, 2026-11-20; S21+S22 done and approved by Tay, 2026-11-20; S23 done and approved by Tay, 2026-11-20; **S24 done, 2026-11-20: PR #21 merged as `3a98d22`, Concept A live, the
+production checks pass**) · **`DONE`**
 
 The work happens on `release/concept-a`, cut from an up-to-date `origin/main` (R1). Nothing on `main` changes until
 Tay merges. Each test change goes in its own commit naming Tay's approval (R12); the WebGL guards stay unchanged.
@@ -215,9 +219,10 @@ Tay merges. Each test change goes in its own commit naming Tay's approval (R12);
 | **S20** | **The tests.** Retire the old page's feature specs (the approved set). Port `lab-hero-a.*` and `lab-work.*` to `/`, deleting the two prototype-only tests (`/`'s CSS pinned to `main`'s digest; Contact "as on the live `/`", which becomes fixed expected values). Add the new guards (R12) | The full suite passes. **Done (2026-11-20):** unit 218/218, Playwright 183/183, the two `@ts-nocheck` lines gone (`docs/WORKLOG.md`, "Session 20") |
 | **S21+S22** | **Privacy and SEO surfaces, then the backlog on the composed page.** The `theme` cookie out and `/privacy` updated with N7's sentence: **Tay approves the exact wording before the commit** (R13). The dark social card and the headline in `siteMeta` (R8); the manifest and `themeColor`; the sitemap's date; the 404. Then the launcher fix (#16), #13 measured (R11), #14 re-checked, and the case-study dialog's two axe findings (#17). (#15 and the Work lede, R10, were done in S18+S19.) | Each change measured against S17's baseline; the suite passes. **Done, approved by Tay (2026-11-20):** `b97f92e`…`e58508b`; unit 225/225, Playwright 187/187 right after deleting `.next` and warm; #13 measured and not kept (`docs/WORKLOG.md`, "Sessions 21+22") |
 | **S23** | **The release candidate.** Full validation on a production build: typecheck, lint, unit, e2e in Chromium **plus Playwright WebKit and Firefox runs**, axe, Lighthouse mobile (median of 5) against the baseline, headers, privacy and secret scans. Screenshots at the standard viewports. On Tay's go: push and open the PR, which builds a Preview. **Tay reviews it on his own phone.** (The GRAVITY FLOW capture swap is no longer part of S23: Tay, S21+S22 close; it is #18, after the release.) | Tay approves the Preview. **Done, approved by Tay (2026-11-20)** after his phone review. Chromium 187/187, Firefox 178/187, WebKit 169/187 (through the S23 proxy): every failure was traced and rerun alone ×3, and none is a release bug. The pre-existing F1 and F2 went to the backlog (#21, #20), and the engine-specific tests to #22. **Draft PR #21** is open (`docs/WORKLOG.md`, "Session 23" and its close-out) |
-| **S24** | **The release.** The `product-plates-final` tag on `443a1f9` is already pushed (R15, done in S17); check it still points there. Tay merges. The production checks below. Close out the docs on `main`, `docs/CINEMATIC_SYSTEM.md` included; the prototype branch stays frozen | The production checks pass |
+| **S24** | **The release.** The `product-plates-final` tag on `443a1f9` is already pushed (R15, done in S17); check it still points there. Tay merges. The production checks below. Close out the docs on `main`, `docs/CINEMATIC_SYSTEM.md` included; the prototype branch stays frozen | The production checks pass. **Done (2026-11-20):** Tay merged PR #21 with a merge commit, `3a98d22` (first parent `443a1f9`, second the PR head `5ea8d57`, the same tree); Vercel's Production deployment is `3a98d22`; every production check passes, Lighthouse mobile median 100 and LCP 1,064 ms against S17's 98 and 2,288 ms (`docs/WORKLOG.md`, "Session 24") |
 
-**Rollback:** Vercel's Instant Rollback to `443a1f9`'s deployment (no rebuild), then a `git revert -m 1 <merge>` PR.
+**Rollback:** Vercel's Instant Rollback to `443a1f9`'s deployment (no rebuild), then a `git revert -m 1 <merge>` PR. The
+merge is `3a98d22` (S24), so the revert is `git revert -m 1 3a98d22`.
 After an instant rollback, Vercel stops promoting new production deployments automatically until the rollback is undone
 (NC: confirm in Vercel's docs at the time).
 
@@ -234,12 +239,14 @@ After an instant rollback, Vercel stops promoting new production deployments aut
 - Tay's manual steps: LinkedIn's Post Inspector to refresh the share card, and a reindex request if he uses Search
   Console.
 
-**After the release (no session of its own):** the GRAVITY FLOW capture swap, a small PR whenever Tay provides the
-image (backlog #18). Also (Tay, S23):
-- #20: F2's fix in the shared focus trap, a small PR right after S24, before #19.
-- #19: Next 16.3.8 → 16.4.6 for the `npm audit` advisories, a separate PR on `main` with the full suite and Lighthouse.
-- #21: F1, after #20.
-- Later, #22: per-browser handling of the engine-specific tests.
+**After the release, in this order (Tay, S24):**
+1. **#20:** F2's fix in the shared focus trap, a small PR on `main`.
+2. **#19:** Next 16.3.8 → 16.4.6 for the `npm audit` advisories, a separate PR on `main` with the full suite and
+   Lighthouse.
+3. **#21:** F1, Firefox's bottom scroll padding.
+4. **#18:** the GRAVITY FLOW capture swap, a small PR whenever Tay provides the image.
+5. **#22:** per-browser handling of the engine-specific tests.
+6. Then **P4**, the project demos.
 
 ### P4 (the project demos) · `NOT STARTED` (after the release)
 
@@ -248,8 +255,10 @@ there.
 
 **P4 restore record (R6, Tay's condition).** The release removes the live chapters, and with them four explainers.
 - **All four are intact at `443a1f9`** (`main` = production, 2026-11-19), which is tagged **`product-plates-final`**
-  (R15: an annotated tag, `8f0a96a`, pushed in S17). S24 confirms that the release merge's first parent still has them, and adds both
-  SHAs here.
+  (R15: an annotated tag, `8f0a96a`, pushed in S17).
+- **Confirmed in S24:** the release merge is **`3a98d22`**, and its first parent is **`443a1f9`** (=
+  `product-plates-final`). Every file named below exists at `3a98d22^1`. At `3a98d22` the chapter components and their
+  stylesheets are deleted, and `lib/content.ts`, `data/work.ts`, `data/images.ts` and `lib/dict.ts` remain.
 - **Restore one:** `git checkout product-plates-final -- <its paths>`, or read it with
   `git show product-plates-final:<path>`.
 - **Shared by all four:** `components/work/Work.tsx` (last changed in `fddc36e`), `components/work/work.css`

@@ -4,11 +4,12 @@
 
 Concise, durable instructions for every Claude Code session in this repo.
 Detailed material lives in `docs/`; this file stays short and points to it.
-M0 (audit + decisions) closed 2026-11-18. The M1 core (moves A–E) is live on `main`; **Move F is retired** (R14).
-**Concept A replaces the live `/`** (Tay, session 16). That is the release track: decisions R1–R15 in
-`docs/RESEARCH_AND_DECISIONS.md`, sessions S17–S24 in `docs/ROADMAP.md` ("Concept A: P4–P6"), the work on
-`release/concept-a`. Tay reopened **D1** for Concept A on 2026-11-18. **D2 is still not reopened, so no WebGL**,
-anywhere. Keep refining this file with verified facts only.
+M0 (audit + decisions) closed 2026-11-18. **Concept A is live on `main` since 2026-11-20** (PR #21, merge `3a98d22`;
+S24 verified production). It replaced the Product Plates site (the M1 core, moves A–E; tagged `product-plates-final`);
+**Move F is retired** (R14). The release track is done: decisions R1–R15 in `docs/RESEARCH_AND_DECISIONS.md`, sessions
+S17–S24 in `docs/ROADMAP.md` ("Concept A: P4–P6"). Next: backlog #20, #19, #21, #18, #22, then P4. Tay reopened **D1**
+for Concept A on 2026-11-18. **D2 is still not reopened, so no WebGL**, anywhere. Keep refining this file with
+verified facts only.
 
 ## What this is
 Tay Shofer's existing, **live** software-engineering portfolio (https://www.tayshofer.dev/).
@@ -22,14 +23,29 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
 
 ## Where production code is (verified 2026-11-20)
 - **`main` is the source of truth.** Production = GitHub `taysh123/Portfolio` `main`; every merge deploys
-  via Vercel's GitHub integration (last verified: `443a1f9`, 2026-11-20, PRs #8–#20). Cloudflare proxies the domain
-  in front of Vercel (N7 in `docs/RESEARCH_AND_DECISIONS.md`). Its Web Analytics and Email Address Obfuscation are
-  off (Tay, 2026-11-18), and E2E can't see the edge, so check the live page with a browser `Accept` header. `origin` is
-  `https://github.com/taysh123/Portfolio.git` (the old name `Tay-Shofer---Portfolio` redirects). The repo
-  is **public**. Changes go through a branch and a PR; Tay merges. Claude pushes or opens a PR only when the
+  via Vercel's GitHub integration (last verified: **`3a98d22`**, 2026-11-20, PR #21, the Concept A release). Cloudflare
+  proxies the domain in front of Vercel (N7 in `docs/RESEARCH_AND_DECISIONS.md`). Its Web Analytics and Email Address
+  Obfuscation are off (Tay, 2026-11-18), and E2E can't see the edge, so check the live page with a browser `Accept`
+  header. `origin` is `https://github.com/taysh123/Portfolio.git` (the old name `Tay-Shofer---Portfolio` redirects).
+  The repo is **public**. Changes go through a branch and a PR; Tay merges. Claude pushes or opens a PR only when the
   brief says so, and never merges.
-- **The release branch: `release/concept-a`** (R1), cut from `origin/main` `443a1f9` in S17. Concept A work happens
-  here now.
+  - **The live page** is Concept A: the layer `app/cinematic.css` (imported by `app/page.tsx` only), the sections in
+    `components/sections/`, the header in `components/layout/Navbar.tsx`. The system: `docs/CINEMATIC_SYSTEM.md`.
+  - **S24 (2026-11-20):** Production = `3a98d22`, and every production check passed. That covered:
+    - the headers, unchanged from `443a1f9`;
+    - `index, follow`, and `/lab/*` 404;
+    - the dark card, the résumé's 80,593 B, and the chat;
+    - Cloudflare's HTML byte-identical to `tay-shofer-portfolio.vercel.app`'s;
+    - one 2D canvas and no WebGL;
+    - Lighthouse mobile 100, LCP 1,064 ms (S17: 98, 2,288 ms).
+
+    Detail: `docs/WORKLOG.md`, "Session 24".
+  - **Rollback:** Vercel's Instant Rollback to `443a1f9`'s deployment, then a `git revert -m 1 3a98d22` PR. `443a1f9`
+    is tagged `product-plates-final` (R15).
+  - The production deployment's own URLs and the team aliases need Vercel's login. `tay-shofer-portfolio.vercel.app`
+    is public, and serves the same build.
+- **The release branch: `release/concept-a`** (R1), cut from `origin/main` `443a1f9` in S17, **merged in S24** (PR
+  #21, `3a98d22`). Kept until Tay gives a per-branch yes. Its history follows.
   - S17 copied the prototype over unchanged (`8b77de1`): the 77 paths of
     `git diff --name-only main...proto/hero-a-cinematic` that `main` had not touched since the branch point. Then it
     merged the five state docs both sides had changed.
@@ -53,10 +69,10 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
     clear of the chat launcher. #17: the case-study dialog's axe findings are fixed. No case-study image goes through
     the on-demand optimiser. Every focus ring shows at once. #13 was measured and not kept (R11). Detail:
     `docs/WORKLOG.md`, "Sessions 21+22".
-  - One PR, opened in S23 on Tay's go; Tay merges.
-  - Rollback: Vercel's Instant Rollback to `443a1f9`'s deployment, then a `git revert -m 1` PR. `443a1f9` is tagged
-    `product-plates-final` (R15, pushed in S17).
-  - Push this branch only when the brief says so. No PR, merge or deploy before S23/S24.
+  - **S23 (approved by Tay after his phone review):** the release candidate, PR #21. Chromium 187/187; Firefox
+    178/187 and WebKit 169/187, every failure traced (none a release bug; F1 and F2, pre-existing, went to the backlog
+    as #21 and #20).
+  - **S24:** Tay merged PR #21 with a merge commit, `3a98d22`.
 - **The prototype record: `proto/hero-a-cinematic`** (draft PR #18; its code is `1369b00`, session 15). **Never merge
   it, never delete it**: it stays frozen as the record (R1).
   - Its routes are all noindex under `/lab`: the locked hero `/lab/hero-a`, and the Work slice `/lab/work`. Below its
@@ -66,9 +82,10 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
   - The Work slice has four carousels of real captures: T Poker 5, Aegis 2, DeveloperOS 4, GRAVITY FLOW 5 (approved by
     Tay, session 11).
   - Its lab-only design system is `app/lab/_cinematic/`, documented in `docs/CINEMATIC_SYSTEM.md`. Both came over to
-    `release/concept-a` in the copy (the layer is `app/cinematic.css` there since S18+S19); the WORKLOG's sessions
-    10–16 came with the docs merge.
-  - On that branch `/` and every guard file stay identical to `main`; an e2e test pins `/`'s stylesheets.
+    `release/concept-a` in the copy (the layer is `app/cinematic.css` since S18+S19), and reached `main` with the
+    release; the WORKLOG's sessions 10–16 came with the docs merge.
+  - On that branch, `/` and every guard file stay identical to `main` before the release (`443a1f9`); an e2e test there
+    pins `/`'s stylesheets to that build.
 - `reference/premium-redesign-package` is **stale** (Next 16.2.6, old names, institution label, private
   repo URLs). Never build, deploy, or copy content from it. (The local `feature/premium-portfolio-redesign`,
   fully merged, was deleted 2026-11-18.)
@@ -104,12 +121,11 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
 - Preserve genuine product captures; do not replace them with generated images unless asked.
 - Reference images in the pack are AI-generated direction only, never production assets.
 - Direction (Tay; D1/D2 in `docs/RESEARCH_AND_DECISIONS.md`):
-  - **D1 was reopened by Tay on 2026-11-18 for Concept A**, and in session 16 he approved it replacing the live `/`
-    (R1–R15), from `release/concept-a`.
-  - Until that release merges, the live site stays the calm Product Plates design (moves A–E), and D1's rules hold on
-    `main`: restrained cyan/violet accents; no RGB wash, holographic cube, or fabricated stats.
-  - **D2 is still not reopened: no 3D and no WebGL**, on `main`, the prototype or the release. The field is a 2D canvas,
-    and the carousels are CSS perspective on 2D elements. The WebGL guards and the JS budget stay unchanged.
+  - **D1 was reopened by Tay on 2026-11-18 for Concept A**. In session 16 he approved it replacing the live `/`
+    (R1–R15), and it went live on 2026-11-20 (PR #21).
+  - D1's rules that still hold on `main`: no RGB wash, holographic cube, or fabricated stats.
+  - **D2 is still not reopened: no 3D and no WebGL**, on `main` or the prototype. The field is a 2D canvas, and the
+    carousels are CSS perspective on 2D elements. The WebGL guards and the JS budget stay unchanged.
   - CREATIVE_DIRECTION's 3D-hero plan stays superseded.
   - M1 plan `docs/M1_VISUAL_PLAN.md`: moves A–E are live; **Move F is retired** (R14: the Concept A release supersedes
     it). Geist stays; use the plan's token values exactly.
@@ -124,7 +140,8 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
   bodies or commits; say "the private T Poker repository". Run `npm test` after any docs commit.
   The private-repo guard pins both private repos (T Poker and GRAVITY FLOW) by digest in `tests/support/private-repo.ts`.
 - **The release's approved test changes are R12's list** (`docs/RESEARCH_AND_DECISIONS.md`), including the "still to
-  name" group Tay approved in S17, plus six Tay approved in S18+S19 (`docs/WORKLOG.md`, "Sessions 18+19" §3).
+  name" group Tay approved in S17, plus six Tay approved in S18+S19 (`docs/WORKLOG.md`, "Sessions 18+19" §3). All are
+  on `main` since the release; PR #21's body lists each with its commit and approval.
   - The one canvas exception: `page.spec.ts:43` allows exactly one canvas, the hero's 2D, `aria-hidden` field. R12's
     new guards (S20, `page.spec.ts`): exactly one canvas, 2D (every context requested is recorded) and `aria-hidden`;
     `/` serves `index, follow` with its one canonical and no noindex; `/lab`, `/lab/hero-a`, `/lab/work` answer 404.
@@ -155,11 +172,14 @@ Verified gotchas (2026-11-18):
 - Playwright reuses any server already on :3400 (`reuseExistingServer`), so a stale `next start` there tests an
   old build. Serve manual checks on another port. On Windows, stopping a backgrounded `npx next start` can leave
   its `node` child holding the port: check `Get-NetTCPConnection -LocalPort <port> -State Listen` and stop that PID.
-- The Windows-only `tests/unit/site.test.ts:78` failure (N6) is fixed (`b4d5c73`, PR #7): the unit suite is
-  122/122 on Windows (`main` `1c57789`; PR #20 changed docs only). On `release/concept-a` since S21+S22: 225/225 tests
-  in 18 files, and Playwright 187/187 in 15 files, both right after deleting `.next` and warm. Run
-  `npm test` from Git Bash: a test shells out `git grep … || true`, and cmd.exe (PowerShell's child shell) has no
-  `true`, so it fails there spuriously.
+- The Windows-only `tests/unit/site.test.ts:78` failure (N6) is fixed (`b4d5c73`, PR #7). On `main` since the
+  release (`3a98d22`): 225/225 unit tests in 18 files, and Playwright 187/187 in 15 files on Chromium (S23, right after
+  deleting `.next`). Run `npm test` from Git Bash: a test shells out `git grep … || true`, and cmd.exe (PowerShell's
+  child shell) has no `true`, so it fails there spuriously.
+- **The suite's config runs Chromium only.** S23 ran WebKit and Firefox from scratch configs, and the engine-specific
+  failures are listed in `docs/WORKLOG.md` ("Session 23" close-out). Per-browser handling is backlog #22.
+  - Over `http://localhost`, WebKit applies the CSP's `upgrade-insecure-requests` to every file, so nothing loads. Drop
+    that one directive through a scratch proxy.
 - Lighthouse is not a dependency. S17 ran `npx --yes lighthouse@13.6.0` (Tay's go) with the installed Chrome; the
   production baseline is in `docs/WORKLOG.md` (S17). Compare later runs against it on the same machine.
 - A fresh `npm ci` here warns that some packages' install scripts await approval ("allow-scripts"). A production build
@@ -189,9 +209,9 @@ Verified gotchas (2026-11-18):
   - It happened three times on the prototype branch, then a fourth time from this file (session 12). Rebuild and
     compare `/`'s stylesheets (names and bytes) before and after any edit here or in `claude/`.
 - **A client component can change `/`'s first-load JS** by importing a shared module.
-  - On `main`, `components/sections/AboutVisual.tsx` (client) imports `data/images.ts` whole, so a new entry there
-    ships in `/`. The release deletes it; the carousel (`Reel.tsx`) imports no image data, and the newer captures
-    stay listed in `data/lab-images.ts`.
+  - Before the release, `components/sections/AboutVisual.tsx` (client) imported `data/images.ts` whole, so a new entry
+    there shipped in `/`. The release deleted it; the carousel (`Reel.tsx`) imports no image data, and the newer
+    captures stay listed in `data/lab-images.ts`.
   - Verify by hashing `.next/static/chunks` before and after.
 - **A CSS reveal from `opacity: 0` hides text from LCP.**
   - Headless Chromium's GPU is SwiftShader, so canvas cost measured headless is pessimistic.

@@ -11,6 +11,111 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-20 — Session 24: the release verified; Concept A is live at `3a98d22` (Claude Code)
+
+**Scope (Tay's brief, S24, read-only on production):**
+1. Confirm the merge commit on `main`, and that Vercel's Production deployment is that SHA.
+2. The production checklist through Cloudflare with a browser `Accept` header, pass or fail with evidence. On any
+   failure, stop and report: no fix on `main`, no rollback.
+3. If all pass, a small branch from `main`: the sitemap date at the merge date, and the docs close-out (START-HERE,
+   this log, the ROADMAP, CLAUDE.md). `npm test`, push, a PR; no merge.
+4. Delete no branch; list `release/concept-a` and `proto/hero-a-cinematic` for a later per-branch yes.
+
+### 0. A first attempt, stopped (VL)
+- The brief's first version said PR #21 was merged. After `git fetch` and `pull`, `main` was still `443a1f9`.
+- `gh pr view 21`: OPEN, still a draft, `mergedAt` null. Production was still `443a1f9`.
+- Nothing was run on production, and nothing was changed. Reported to Tay; GitHub won't merge a draft before "Ready
+  for review".
+- Tay then marked it ready, merged it with a merge commit, and asked for S24 from step 1.
+
+### 1. The merge and the deploy (VL)
+- **PR #21: MERGED** 2026-11-20 02:53:15Z, merge commit **`3a98d22`**.
+  - First parent `443a1f9` (= `product-plates-final`, whose tag still points there); second parent the PR head
+    `5ea8d57`.
+  - The tree is identical to the PR head (`git diff 5ea8d57 3a98d22`: empty).
+- **Vercel's Production deployment is `3a98d22`:** deployment `7931917395`, created 02:53:47Z, status `success`. The
+  commit's combined status is `success`. It is the latest Production deployment.
+
+### 2. The production checklist (VL; `https://www.tayshofer.dev` through Cloudflare, browser `Accept`, 2026-11-20)
+| Check | Result | Evidence |
+|---|---|---|
+| `/`: `index, follow`, one canonical, no noindex | **Pass** | 200. `robots` "index, follow", `googlebot` "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1". Canonical `["https://tayshofer.dev"]` (one). "noindex" nowhere in the HTML; no `X-Robots-Tag` |
+| `/`: the h1 and lede are Concept A's | **Pass** | One h1, "Building software. Turning ideas into products."; the lede, "I build end to end — mobile apps, security systems, developer tools and games, from the interface down to the infrastructure." `data-theme="dark"`; 2 JSON-LD blocks; no Product Plates markup. Title "Tay Shofer — Software Engineer" |
+| Security headers and CSP equal to `main` before the merge | **Pass** | The six headers (CSP, HSTS, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`) on `/` and `/privacy` are **identical** to production's at `443a1f9`, captured in S23 the same way. `X-Powered-By` absent; no `Set-Cookie` on either |
+| `/privacy`: the Cloudflare sentence, one cookie | **Pass** | 200. The approved sentence and its link to `cloudflare.com/privacypolicy/`. "One first-party cookie exists only if you change a setting yourself", naming `a11y`; no theme cookie. "Last updated 20 November 2026" |
+| The 404 page dark | **Pass** | `/nope` 404 with `data-theme="dark"`. In Chromium, `/lab/work`'s 404 body is `rgb(11, 12, 15)`: "That page doesn't exist." (`robots` "noindex, follow" on the 404 only) |
+| `/lab`, `/lab/hero-a`, `/lab/work` | **Pass** | 404, 404, 404. `/he` 308 → `/` |
+| `robots.txt`, `sitemap.xml` | **Pass** | Robots 200: `Allow: /`, `Disallow: /api/`, the sitemap link. Sitemap 200: `https://tayshofer.dev`, `lastmod` 2026-11-20 |
+| The OG image (dark, names only) and its meta tags | **Pass** | `og:image` 200, `image/png`, 126,193 B, 1200×630. Viewed: the dark hero in miniature with the h1, and "T Poker, Aegis, DeveloperOS, GRAVITY FLOW" only, no states. Meta: `og:title` "Tay Shofer — Software Engineer", `og:type` profile, `og:url`, `og:image:alt` "Tay Shofer — Building software. Turning ideas into products.", 1200×630 `image/png`, `twitter:card` `summary_large_image`, `twitter:image`, `theme-color` `#04060d`, `color-scheme` dark |
+| The résumé PDF, 80,593 bytes | **Pass** | 200, `application/pdf`, **80,593 B**; its SHA-256 equals the repo's file |
+| The chat answers (one real question) | **Pass** | An empty POST: 400. "What is Aegis, and is its AI analysis a real LLM?": 200 in 0.97 s, a correct answer that says Aegis's "AI analysis" is a deterministic template engine, not a language model |
+| Cloudflare's HTML == Vercel's | **Pass** | `www.tayshofer.dev` (`Server: cloudflare`, `cf-cache-status: DYNAMIC`) and `tay-shofer-portfolio.vercel.app` (`Server: Vercel`), twice each with the same headers: **byte-identical**, 128,168 B, SHA-256 `3a963e9e5cd4de4f…`, the same chunk and stylesheet names. The deployment's own URL and the team aliases answer 302 to Vercel's login; the connector's authenticated fetch was not used (it creates a share link). The `.vercel.app` alias serves this same build, which the identical chunk names prove. No cache purge needed |
+| One 2D `aria-hidden` canvas, zero WebGL | **Pass** | Chromium at 390×844 (DPR 3, touch) and 1440×900, every `getContext` call recorded from the first script, then the page scrolled through. One canvas, in `#hero`, `aria-hidden="true"`, `data-state="running"`. 13 contexts requested, all `"2d"`: the field's own, plus its 12 detached sprite canvases (a sprite and a glow per hue, `Constellation.tsx:117–136`). **0 WebGL**, 0 console errors, 0 failed requests, no horizontal overflow |
+| Lighthouse mobile, median of 5, against S17 | **Pass** | Performance **100** (S17: 98), LCP **1,064 ms** (S17: 2,288 ms). Below |
+
+**Lighthouse 13.6.0 on production** (`npx --yes`, mobile defaults: simulated throttling, 412×823; HeadlessChrome 158;
+five runs in a row; benchmark index 3,990–4,071, against S17's 3,971–4,036; no run warnings):
+
+| Run | Perf | A11y | BP | SEO | FCP | LCP | TBT | CLS | SI | Bytes |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 100 | 100 | 100 | 100 | 1,060 ms | 1,060 ms | 7 ms | 0 | 1,394 ms | 380,004 |
+| 2 | 100 | 100 | 100 | 100 | 1,066 ms | 1,066 ms | 39 ms | 0 | 1,775 ms | 380,126 |
+| 3 | 100 | 100 | 100 | 100 | 1,053 ms | 1,053 ms | 32 ms | 0 | 1,462 ms | 380,004 |
+| 4 | 100 | 100 | 100 | 100 | 1,064 ms | 1,064 ms | 57 ms | 0 | 1,651 ms | 380,070 |
+| 5 | 99 | 100 | 100 | 100 | 1,272 ms | 1,272 ms | 33 ms | 0 | 2,865 ms | 380,028 |
+| **Median** | **100** | **100** | **100** | **100** | **1,064 ms** | **1,064 ms** | **33 ms** | **0** | **1,651 ms** | **380,028** |
+| S17 (`443a1f9`) | 98 | 100 | 100 | 100 | 1,140 ms | 2,288 ms | 35 ms | 0 | 1,439 ms | 345,031 |
+
+- The LCP element is the h1 (`h1#hxa-title`). S17's was a hero tile's image.
+- **Speed Index is 212 ms above the baseline** (1,651 against 1,439; run 5 alone 2,865). It is still well inside
+  "good". The page's first screen carries the hero's living field, whose drawing keeps the visual progress moving
+  (NC as the whole cause). Performance and LCP, the two numbers the brief compares, are both better.
+- **Bytes** (`budget.spec.ts`'s algorithm, through Cloudflare): first-load JS **185.36 KiB** gzip over 9 scripts
+  (607,522 B raw; budget 205.7; S17 production 182.04), HTML **128,168 B** (S17: 160,584). Vercel's chunks run a little
+  larger than a local build's (185.10 KiB), as S17 recorded.
+
+**Everything passes**, so step 3 went ahead.
+
+### 3. The close-out branch `docs/s24-release-closeout` (from `main` `3a98d22`)
+- **(a) The sitemap date:** `CONTENT_LAST_MODIFIED` is already `2026-11-20`, the merge's date (02:53Z UTC; 04:53 local),
+  so the value stays. Only its comment changes: "S24 moves it to the merge date" became "live since PR #21 merged on
+  this date (S24)".
+- **(b) The docs:**
+  - **START-HERE:** Concept A is live; the release track is done; next, #20, #19, #21, #18, #22, then P4. Product
+    Plates is kept as the record. The branches are listed, and the live-site session prompt replaces the release one.
+  - **`docs/ROADMAP.md`:**
+    - P5/P6 done, the S24 row done, and M7 done for Concept A.
+    - The rollback names `3a98d22`.
+    - "After the release" in Tay's order.
+    - The P4 restore record's two SHAs: every file it names exists at `3a98d22^1` = `443a1f9`.
+  - **CLAUDE.md:**
+    - The intro and "Where production code is" (Production `3a98d22`, the live page's files, S24's checks, the
+      rollback, which Vercel URLs are public).
+    - The release branch as merged; D1 live; the suite on `main`; the Chromium-only config and WebKit's localhost CSP
+      note (#22).
+  - **`docs/CINEMATIC_SYSTEM.md`** (the ROADMAP's S24 row lists it): the status (live on `/`), "Where it lives" with
+    the live paths, and a map of the prototype's paths to `main`'s, so the prototype-era sections below stay readable.
+    The CSS-pin line says the pin was deleted in S20.
+
+### 4. The branches (VL; none deleted)
+- **Kept for a per-branch yes:**
+  - `release/concept-a` (`5ea8d57`, local and remote): **merged** into `main`; safe to delete on Tay's word.
+  - `proto/hero-a-cinematic` (`92b08fd`, local and remote; **draft PR #18** open): not merged, by design. R1 keeps it
+    frozen as the record ("never merge, never delete").
+- **Unchanged since D8** (unmerged, kept): `feature/portfolio-polish`, `feature/premium-portfolio-redesign-1mqmgf`, the
+  four `review/m10-*`, and `reference/premium-redesign-package` (stale; never build from it).
+
+### Waiting on Tay
+- **Merge the close-out PR.**
+- **His manual steps:**
+  - Refresh the share card in LinkedIn's Post Inspector (https://www.linkedin.com/post-inspector/).
+  - A reindex request for `https://tayshofer.dev/` if he uses Google Search Console (URL Inspection → Request
+    indexing).
+- **A per-branch yes** for `release/concept-a` and `proto/hero-a-cinematic`, whenever he wants.
+- **Next:** backlog #20, in a new session.
+
+---
+
 ## 2026-11-20 — Session 23 close-out: the phone review approved; every engine failure traced ×3; F1, F2 to the backlog (Claude Code)
 
 **Scope (Tay's brief):** the phone review is done ("everything works on my phone"), approved on one condition: list
