@@ -6,7 +6,7 @@ import { siteMeta } from "@/data/socials";
  * whether anything changed, which search engines learn to discount. This is a
  * real content date — bump it when the page content actually changes.
  */
-const CONTENT_LAST_MODIFIED = "2026-11-20";   // Concept A: the new page (S18+S19) and its headline (R8); S24 moves it to the merge date
+const CONTENT_LAST_MODIFIED = "2026-11-20";   // Concept A: the new page, live since PR #21 merged on this date (S24)
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
