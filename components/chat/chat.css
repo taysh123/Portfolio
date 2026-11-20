@@ -45,6 +45,12 @@
 @keyframes chat-launcher-in { from { opacity: 0; transform: translateY(12px) scale(0.96); } }
 @media print { .chat-launcher { display: none; } }
 
+/* #16 (WCAG 2.4.11): keyboard focus and every scroll into view stop short of the launcher's strip, so a focused
+   control is scrolled clear of it, never left under it. The strip is the launcher's edge, its height and a 12px gap
+   (16 + 52 + 12, and 12 + 48 + 12 on phones). The launcher itself never moves or hides. */
+html { scroll-padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); }
+@media (max-width: 639px), (max-height: 520px) { html { scroll-padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)); } }
+
 /* The page's last strip stays clear for the launcher, so the footer is never under it at the end of the page. */
 .site-footer { padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px)); }
 @media (min-width: 1024px) { .site-footer { padding-bottom: 4.5rem; } }
