@@ -11,7 +11,172 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-20 — Session 26 (#19): Next 16.3.8 → 16.4.6, the security release; PR #24 (Claude Code)
+
+**Scope (Tay's brief, #19; he approved this one dependency change and no other):**
+1. Upgrade `next` to exactly 16.4.6, with whatever must move in lockstep, in the repo's pinning style. Read the 16.4
+   notes and the bundled docs for changes that touch the repo; stop and report if more than a trivial type fix is needed.
+2. Security facts: `npm audit` before and after; `npm ls sharp` (Next's sharp ≥ 0.35.5; the project's own reported,
+   not changed).
+3. Validate on a clean build: typecheck, lint, unit, build, Playwright on Chromium cold and warm. No test or guard edit.
+4. Compare with `main`'s build: JS, HTML, `/`'s stylesheets, headers and CSP, the card, `/lab/*`, the résumé, the chat
+   route; Lighthouse mobile against S23's local numbers.
+5. Docs; 6. push and a PR, ready for review. No merge, deploy, env or DNS change.
+
+### 0. Preconditions (VL)
+- `git fetch` (one DNS blip for github.com, retried), `main` pulled: `main` = `origin/main` = Production = **`7ebff9c`**,
+  the tree clean.
+  - **PR #23 (#20) is merged:** Tay merged it at 20:16:29Z as `7ebff9c`. The Production deployment of `7ebff9c` was
+    created at 20:16:54Z and its status is `success`. `fix/f2-focus-trap` is gone from `origin`.
+- `chore/next-16-4-6` cut from `main` (`--no-track`). Node 24.18.0, npm 11.16.0.
+
+### 1. The upgrade (VL)
+- `npm install --save-exact next@16.4.6 eslint-config-next@16.4.6`, then `npm ci` from the new lockfile: exit 0, with
+  the known allow-scripts warning (`sharp@0.34.5`, `unrs-resolver`).
+- **`package.json`:** `next` and `eslint-config-next`, 16.3.8 → 16.4.6, both exact as before. Nothing else.
+- **The lockfile moves only Next's own packages:** `next`, `@next/env`, `@next/eslint-plugin-next`, the eight
+  `@next/swc-*` binaries and `eslint-config-next` (and the root's two version strings).
+  - The Linux SWC packages now declare their `libc`.
+  - `next`'s optional `sharp` range is `^0.35.5` (was `^0.35.4`).
+  - `eslint-config-next` asks for `eslint-plugin-react-hooks ^7.1.0` and `typescript-eslint ^8.56.0`. The installed
+    7.1.1 and 8.59.4 already satisfy both, so neither moved.
+  - 16.4.6 declares the same dependencies as 16.3.8, apart from its own packages.
+- **No code change was needed.** Typecheck, lint and the build pass on the untouched code.
+
+### 2. What 16.4 changes that touches the repo (VL: the two versions' bundled `node_modules/next/dist/docs`, 129 files differ)
+- **`proxy.ts`:** the docs add a "Limitations" section: `use cache`, `use server` and `fetch`'s caching options do
+  nothing in Proxy. Ours only sets the six headers. No change; the headers are identical (§4).
+- **`next.config.ts`:** nothing it uses changed. The upgrade guide adds that a direct `/_next/image` request with a `q`
+  outside `images.qualities` answers 400 (ours: 75 and 90; no case-study image goes through the optimiser). The image
+  docs now say Next never optimises SVG, and that the default `dangerouslyAllowSVG: false` rejects it (not set here).
+- **`next/font`:** wording only. The built output changed: the Geist class names are shorter (§4).
+- **Metadata, `next/og`, the route handler:** no change the repo uses. The card is byte-identical (§4); the chat route
+  answers as before.
+- **`error.js`:** the docs now type its `error` prop `unknown` (it was `Error & { digest?: string }`), since a value
+  thrown in a client component reaches it as-is. `app/error.tsx` keeps the old type; 16.4.6 doesn't enforce the new
+  one (typecheck and build pass). Left unchanged: changing it is code, not part of this brief.
+- **Tooling:** `next experimental-analyze` is now `next analyze`; `next upgrade --agent` is new; `eslint-config-next`
+  supports ESLint 10 (the repo stays on 9). The repo's scripts use none of these.
+- **AGENTS.md:** when `next dev` runs under a detected coding agent, it adds or updates a managed block in AGENTS.md.
+  16.3.8 does the same; 16.4 only adds an opt-out (`experimental.agentRules`). Our AGENTS.md has no such block, and no
+  validation here runs `next dev`.
+
+### 3. The security facts (VL)
+| `npm audit` | Before (16.3.8) | After (16.4.6) |
+|---|---|---|
+| Whole tree | 19: 1 critical, 7 high, 10 moderate, 1 low | **18: 0 critical**, 7 high, 10 moderate, 1 low |
+| `--omit=dev` | 3: `next` (critical), `source-map-js` (high), `baseline-browser-mapping` (moderate) | **2**: `source-map-js`, `baseline-browser-mapping` |
+
+- **Gone, all nine against `next` 16.0.0–16.4.4:** critical GHSA-2464-fhr4-w9xw (image optimiser and SVG) and
+  GHSA-673q-mjm6-r5xr (`use cache`); high GHSA-p3m5-59mp-jv5r (Server Actions); moderate GHSA-mfr8-8qww-v76h,
+  GHSA-vc7v-qv4w-wrv8, GHSA-7qx7-33qx-rqx2, GHSA-f3mh-rxg3-f5g2, GHSA-pc58-hwjq-p385, GHSA-rhh4-g77r-r9qj. **No new
+  advisory.** (S23 counted seven moderate; today's database lists six against `next`.)
+- **Left, pre-existing, outside the brief:** `source-map-js` 1.2.1 (high GHSA-68fv-2mgg-jv7q, fixed in 1.2.2; through
+  `next`'s `postcss` and Tailwind) and `baseline-browser-mapping` 2.10.32 (moderate GHSA-w5vr-8v7q-w6rv, fixed in
+  2.11.0; through `next` and `browserslist`). Both are build-time tools; `npm audit fix` would move them. Not done.
+- **`npm ls sharp`:** `next@16.4.6 └── sharp@0.35.5` (≥ 0.35.5, as required). The project's own `sharp@0.34.5` (dev;
+  only `scripts/m10-images.mjs` uses it) is unchanged. `npm audit` flags it high: GHSA-f88m-g3jw-g9cj (libvips, fixed in
+  0.35.0), GHSA-rgj7-g3m4-5g8c (libheif, 0.35.4), GHSA-wq5f-xc86-pv6w (librsvg, 0.35.5).
+
+### 4. Validation and the comparison (VL)
+**The suite**, from `.next` deleted, `npx next typegen` first:
+
+| Check | Result |
+|---|---|
+| `npm run typecheck` | exit 0 |
+| `npm run lint` | exit 0, no findings |
+| `npm test` (Git Bash) | 225/225, 18 files |
+| `npm run build` | exit 0; the same 8 routes as `main`'s table (`/`, `/privacy`, `/api/chat` dynamic; the rest static) |
+| `GROQ_API_KEY= npx playwright test`, cold | **193/193**, 16 files, 2.0 min |
+| The same, warm | **193/193**, 2.1 min |
+
+**Against `main`** (`7ebff9c` built in a scratch worktree with its own `npm ci`, on :3402; the branch on :3401; both
+`next start`, keyless):
+
+| | `main` (16.3.8) | This branch (16.4.6) |
+|---|---|---|
+| First-load JS (gzip, `budget.spec.ts`'s method) | 185.34 KiB, 9 scripts, 607,569 B raw | **186.70 KiB**, 9 scripts, 611,060 B raw; budget 205.7 |
+| HTML of `/` | 127,732 B | 127,422 B |
+| `/`'s Tailwind sheet | `1v6nld9ia-p76.css`, 44,069 B | `278gwr1omn8ec.css`, 44,021 B |
+| `/`'s cinematic sheet | `3_ro9fti2b1c6.css`, 28,727 B | **the same file**, byte-identical |
+| Headers on `/` and `/privacy` | 14 | **identical**, the CSP and the six security headers included, but for `link` (below) |
+| `/` | `index, follow`, one canonical | the same |
+| `/lab`, `/lab/hero-a`, `/lab/work` | 404 | 404 |
+| The résumé | 80,593 B | byte-identical |
+| The card (`/opengraph-image`) | 126,193 B | byte-identical; looked at: the dark card, the four names, no states |
+| robots, sitemap, manifest, favicon | 83, 256, 387, 25,931 B | byte-identical |
+| `POST /api/chat`, empty JSON body | 400 | 400 |
+| The same, no content type | 415 | 415 |
+| A question, no key (the offline path) | 503, "The assistant is offline right now…" | the same |
+
+**Each difference, explained:**
+- **The Tailwind sheet (−48 B), two causes; nothing else differs once both are masked, and no selector is added or
+  removed:**
+  - `next/font` names the two Geist classes with a short hash instead of the longer module-style name: 24 B shorter
+    each. The five font files get new hashed names; their bytes are identical.
+  - The CSS minifier now writes the full-pill radius (Tailwind's "infinite" radius) as `2147483647px` instead of
+    `3.40282e38px`, in its two rules. The two values have the same length, and a browser clamps either one to a pill.
+- **The `link` header** preloads the same Geist file under its new name.
+- **First-load JS (+1.36 KiB gzip):** 8 of the 9 chunks changed. Parsed module by module (acorn, as in S17), every app
+  module matches `main`'s once two 16.4 build changes are masked:
+  - the minifier's local names;
+  - Turbopack's shorter module export names in production (the `siteMeta` export ships as a one-letter name).
+
+  The modules that differ are Next's own client runtime (the router, the bootstrap with its version string) and the
+  React canary that Next vendors for the App Router: `19.3.0-canary-cbb046ab-20260731` → `19.3.0-canary-278794d7-20261002`.
+- **The HTML (−310 B):** with the scripts and preloads removed and the per-build names masked, the markup is
+  identical. The difference is Next's own output: the RSC payload's rows are ordered and keyed differently, and the
+  Turbopack bootstrap is now an inline script that lists the other chunks. The CSP's script source already allows
+  inline scripts, unchanged; the suite saw no console error.
+- **`next start` now gzips the metadata routes** (favicon, manifest, robots, sitemap); 16.3.8 sent them uncompressed.
+  The bytes are the same. Production compresses at Vercel's edge (NC: check it after the merge).
+
+**Lighthouse 13.6.0** (`npx --yes`, as since S17; mobile defaults, simulated throttling; HeadlessChrome 158; the two
+builds interleaved run by run, 5 each; no run warnings; benchmark index 4,061–4,419):
+
+| Median of 5 | `main` 16.3.8 (this session) | **This branch 16.4.6** | S23 (local, the release candidate) |
+|---|---|---|---|
+| Performance | 100 | **100** | 100 |
+| LCP | 1,062 ms | **1,061 ms** | 1,058 ms |
+| FCP | 1,062 ms | 1,061 ms | 1,058 ms |
+| TBT | 17 ms | **27 ms** | 20 ms |
+| CLS | 0 | **0** | 0 |
+| Speed Index | 1,348 ms | 1,388 ms | 1,353 ms |
+| A11y / BP / SEO | 100 / 100 / 100 | 100 / 100 / 100 | 100 / 100 / 100 |
+| Total bytes | 390,062 | 374,785 | 389,820 |
+
+- The LCP element is the h1 (`h1#hxa-title`) in all 10 runs.
+- TBT: the branch's five runs are 19–43 ms and `main`'s 14–23 ms. The difference is inside one run's spread.
+- Total bytes fall by 15 KB mostly because the favicon is now gzipped locally (transfer 26,262 → 9,680 B). Scripts are
+  +1.4 KB.
+
+### 5. Docs, push, the PR
+- **This docs commit:** this entry; `docs/ROADMAP.md` (#19 done, #20 merged); `claude/START-HERE.md` (the state,
+  "Open PRs / branches", "Waiting on Tay"); `CLAUDE.md` (Production `7ebff9c`, the backlog line, Next 16.4.6, the
+  suite); `docs/PROJECT_CONTEXT.md` (Next.js 16.4.6). S25's entry gets one line recording its merge.
+- **A separate commit Tay can drop:** `README.md`'s two version mentions (the badge and the stack table). README isn't
+  on the brief's list, but both lines describe the current stack.
+- `npm test` after the docs: 225/225. `/` rebuilt from a clean `.next` with the docs in place: its two stylesheets have
+  the same names and bytes as before the docs (CLAUDE.md, README and `claude/` are scanned).
+- `chore/next-16-4-6` pushed; **PR #24**, ready for review, not merged.
+
+### State (VL)
+- `main` = `origin/main` = Production = **`7ebff9c`**. Untouched.
+- `chore/next-16-4-6`: `19b9e16` (the upgrade), this docs commit, the README commit; pushed; PR #24 open.
+- `proto/hero-a-cinematic`: frozen; PR #18 a draft.
+
+### Waiting on Tay
+- **Review and merge PR #24.** Then the close-out: the ancestor check, delete `chore/next-16-4-6`, `main` clean, and
+  the merge's Production deployment `success`, serving `/` correctly (`index, follow`, the canonical, the headers).
+- **Not in this PR, his call:** `source-map-js` and `baseline-browser-mapping` (transitive, build-time; `npm audit
+  fix`), and the project's dev `sharp` 0.34.5 (three high advisories; only the image script uses it).
+- **Next:** #21.
+
+---
+
 ## 2026-11-20 — Session 25 (#20): F2 fixed in the shared focus trap; PR #23 (Claude Code)
+
+> **Merged** by Tay on 2026-11-20 at 20:16:29Z as `7ebff9c`; its Production deployment is `success` (Session 26, §0).
 
 **Scope (Tay's brief, #20):**
 1. Diagnose first: trace the trap, list every overlay that uses it, confirm the cause in Playwright WebKit. Continue

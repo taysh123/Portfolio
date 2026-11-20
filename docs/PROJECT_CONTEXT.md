@@ -38,7 +38,7 @@ The website is already live at https://www.tayshofer.dev/. This is an existing p
 
 From the reviewed repository README and package metadata:
 
-- Next.js 16.3.8, App Router, React 19.2.4
+- Next.js 16.4.6, App Router, React 19.2.4
 - TypeScript 5, strict typing
 - Tailwind CSS v4 and CSS custom properties/design tokens
 - Geist through `next/font`
