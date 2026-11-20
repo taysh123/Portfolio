@@ -105,7 +105,7 @@ export function Navbar() {
               return (
                 <li key={l.href}>
                   <a href={l.href} aria-current={isActive ? "true" : undefined}
-                    className={cn("relative inline-flex h-11 items-center px-3.5 text-[0.9375rem] transition-colors duration-150", isActive ? "text-fg" : "text-fg-muted hover:text-fg")}>
+                    className={cn("relative inline-flex h-11 items-center px-3.5 text-[0.9375rem] transition-[color] duration-150", isActive ? "text-fg" : "text-fg-muted hover:text-fg")}>
                     {t.nav[l.key]}
                     <span aria-hidden="true" className="nav-underline absolute inset-x-3.5 bottom-2 h-px" />
                   </a>
