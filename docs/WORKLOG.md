@@ -11,6 +11,106 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-20 — Session 23 close-out: the phone review approved; every engine failure traced ×3; F1, F2 to the backlog (Claude Code)
+
+**Scope (Tay's brief):** the phone review is done ("everything works on my phone"), approved on one condition: list
+all 18 WebKit failures one by one, like Firefox's, each with its test, error and class. Rerun every suspected flake
+alone three times. Stop before fixing if any is a real site bug introduced by the release. Then log F1 and F2 (not in
+PR #21) and the engine-specific tests in the ROADMAP, and close S23: the PR body, START-HERE, this log and the ROADMAP
+in one docs commit; `npm test`; push; delete the scratch Playwright config; confirm `main` and Production.
+
+### Decisions (Tay)
+- **The phone review: approved, 2026-11-20** (the Preview).
+- **F1 and F2 are not in PR #21.**
+  - F2 is backlog **#20**: a small PR right after S24, before #19, that fixes it in the shared focus trap.
+  - F1 is backlog **#21**, after #20.
+- **The engine-specific tests** are backlog **#22**, a later item for proper per-browser handling. No test changes now.
+
+### 1. Every failure, alone ×3 (VL; one worker, `--repeat-each=3`; WebKit through the S23 proxy)
+**No failure is a site bug introduced by the release**, so the close went ahead.
+
+The classes:
+- **engine-only:** an API or behaviour the engine lacks or does differently.
+- **starvation:** passes alone; failed under 8 parallel workers.
+- **timing:** a measurement or race window, not the page.
+- **sub-pixel:** an exact float compare.
+- **F1 / F2:** the known issues.
+
+**WebKit 26.5 (18):**
+
+| Test | Error (full run) | Class | Alone ×3 |
+|---|---|---|---|
+| `chat.spec.ts:76` | focus inside the chat panel: expected true, received false | F2 | 0/3 |
+| `chat.spec.ts:130` | `mouse.wheel: Mouse wheel is not supported in mobile WebKit` | engine-only (API) | 0/3 |
+| `chat.spec.ts:174` | the reply's count: expected 1, received 0 (1440 twice, 390 once) | timing: the trap's deferred focus after an instant `fill` | 0/3 |
+| `chrome.spec.ts:89` | the underline at "about": expected `""`, received `"#work"` | starvation | 3/3 |
+| `chrome.spec.ts:140` | `CDP session is only available in Chromium` | engine-only (API) | 0/3 |
+| `chrome.spec.ts:185` | focus inside the menu sheet: expected true, received false | F2 | 0/3 |
+| `chrome.spec.ts:268` 1440×900 | the first stop: expected "Skip to content", received "Accessibility settings" | engine-only: Safari's Tab skips links | 0/3 |
+| `chrome.spec.ts:268` 390×844 | the same, received "Open menu" | engine-only: Safari's Tab | 0/3 |
+| `focus-ring.spec.ts:8` 1440×900 | the walk: expected > 40 stops, received 25 | engine-only: Safari's Tab | 0/3 |
+| `focus-ring.spec.ts:8` 390×844 | the same, 25 | engine-only: Safari's Tab | 0/3 |
+| `lab-hero-a.spec.ts:93` | LCP = FCP: expected 127, received 237 (×3: 78/183, 75/181) | timing: WebKit files the h1's LCP late (below) | 0/3 |
+| `lab-hero-a.spec.ts:129` | rAF count: expected > 10, received 0 (×3: 3, 4, 3) | timing: software canvas at Desktop Safari's DPR 2 | 0/3 |
+| `lab-hero-a.spec.ts:192` | 14 lines differ: every link is missing from the order | engine-only: Safari's Tab | 0/3 |
+| `lab-work.spec.ts:260` | the same CDP error | engine-only (API) | 0/3 |
+| `lab-work.spec.ts:303` | 8 lines differ: the panels' and Two more's links are missing | engine-only: Safari's Tab | 0/3 |
+| `lab-work.spec.ts:338` | the phone tap (`:348`): expected `"0px -4px"`, received `"none"` | engine-only: a tap sets no `:hover` in mobile WebKit | 0/3 |
+| `lab-work.spec.ts:566` | `toBeFocused()`: received inactive | engine-only: Safari doesn't focus a button on click | 0/3 |
+| `page.spec.ts:138` | "offline right now": element not found | timing: the same race as `chat.spec.ts:174` | 0/3 |
+
+**Firefox 153 (9):**
+
+| Test | Error (full run) | Class | Alone ×3 |
+|---|---|---|---|
+| `chrome.spec.ts:140` | `CDP session is only available in Chromium` | engine-only (API) | 0/3 |
+| `lab-work.spec.ts:260` | the same | engine-only (API) | 0/3 |
+| `lab-hero-a.spec.ts:129` | rAF count: expected > 10, received 4 | timing: headless canvas at the threshold (the miss alone received 10) | 2/3 |
+| `lab-work.spec.ts:228` | a side-capture click: expected 4, received 0 | starvation | 3/3 |
+| `lab-work.spec.ts:338` | the hovered edge unchanged | timing: reduced motion's frame | 1/3 |
+| `lab-work.spec.ts:566` | C#'s fill: received `rgba(238, 242, 251, 0.03)` | timing: reduced motion's frame | 1/3 |
+| `lab-work.spec.ts:690` (motion on) | `5001.63313293457` against `5001.633117675781` | sub-pixel | 0/3 |
+| `lab-work.spec.ts:690` (reduced motion) | the same | sub-pixel | 0/3 |
+| `chrome.spec.ts:268` 390×844 | GRAVITY FLOW under the chat launcher | F1 | 0/3 (1440: 3/3 pass) |
+
+### 2. Two probes added at the close (VL)
+- **WebKit's LCP (`lab-hero-a.spec.ts:93`): not the reveal.** The hero is new in the release, so this one was checked against the stop rule.
+  - Three loads at DPR 2: the h1 is `opacity 1`, `visible` from its first sampled frame, which lands at FCP (120/121, 75/77, 113/114 ms). Geist has loaded before FCP (49–109 ms).
+  - WebKit files the h1's LCP entry later (239, 183, 205 ms). Chromium files it at FCP (116, 116, 112).
+  - So the h1 shows with the first paint in both. The gap is WebKit's LCP timing.
+- **Firefox's frame rate:** headless Firefox 153 draws a blank page at 73 frames per 600 ms, and `/` with the field at 12–16. The loop runs correctly, and real Firefox draws on the GPU. A real Firefox window was not measured (NC); Tay can open the Preview in desktop Firefox.
+
+### 3. Docs and the PR
+- **`docs/ROADMAP.md`:**
+  - Backlog **#20** (F2, right after S24, before #19), **#21** (F1, after #20) and **#22** (the engine-specific tests, later; no test changes now).
+  - The "After the release" lines.
+  - P5/P6: S23 done and approved, S24 next. The S23 row marked done.
+- **This log:** the close-out, plus two refinements in "Session 23" (§3 Firefox's `:129` and `:228`; §4 the race's viewports).
+- **`claude/START-HERE.md`:** S23 approved and closed; what's next (S24); what waits on Tay.
+- **PR #21's body:**
+  - "Phone review: approved by Tay, 2026-11-20".
+  - Both engines' failures as per-test tables (test, error, class, alone ×3).
+  - "Known issues (pre-existing, not in this release)": F1, F2 and #22.
+  - The backlog order.
+  - Still a draft: not marked ready, not merged.
+
+### Clean-up (VL)
+- The scratch Playwright configs (`xbrowser.config.ts`, `webkit-uir.config.ts`) are deleted, with their results folders. Ports 3400–3411 are free.
+- `.next` is this tree's build.
+
+### State (VL)
+- `origin/main` = **`443a1f9`** = Production, tagged `product-plates-final`. Untouched.
+- `release/concept-a`: S23's docs commits, pushed. **Draft PR #21**, approved on the phone.
+- `proto/hero-a-cinematic`: frozen; PR #18 a draft.
+
+### Waiting on Tay (S24)
+- **Before the merge:** check that `product-plates-final` still points at `443a1f9`.
+- **Mark PR #21 ready, and merge it** (a merge commit, so `git revert -m 1` works for the rollback).
+- **Then the production checks** in the PR body, read-only, in a session.
+- **His manual steps:** LinkedIn's Post Inspector for the card; a reindex request if he uses Search Console.
+
+---
+
 ## 2026-11-20 — Session 23: the release candidate; draft PR #21 opened (Claude Code)
 
 **Scope (Tay's brief, S23):**
@@ -45,6 +145,7 @@ The scratch configs import the repo's own Playwright and run `tests/e2e` unchang
 ### 3. Firefox: the 9 failures, each traced (VL)
 - **2 can't apply:** `chrome.spec.ts:140` and `lab-work.spec.ts:260` open a CDP session, which is Chromium only ("CDP session is only available in Chromium").
 - **2 pass alone (load):** `lab-hero-a.spec.ts:129` (4 frames in 600 ms under 8 Firefox workers) and `lab-work.spec.ts:228` (the side-capture click). Both pass alone with one worker.
+  - **Refined at the close-out (×3 alone):** `:228` passes 3/3, so it is starvation. `:129` passes 2/3 (the miss received 10 against "> 10"), so it is timing: headless Firefox draws the field at 12–16 frames per 600 ms.
 - **2 read reduced motion's 1µs transitions in the same tick:**
   - The source: `app/globals.css:382` and `:392`, `transition-duration: 0.001ms !important` (unchanged from `main`).
   - Firefox creates real transitions for them and finishes them on the next frame; Chromium reports the end value at once.
@@ -74,7 +175,7 @@ The scratch configs import the repo's own Playwright and run `tests/e2e` unchang
   - The tests: `chrome.spec.ts:268` ×2, `focus-ring.spec.ts:8` ×2, `lab-hero-a.spec.ts:192`, `lab-work.spec.ts:303`.
   - Safari also doesn't focus a button on click: `lab-work.spec.ts:566` ("Expected: focused, Received: inactive").
 - **APIs not in WebKit (3):** CDP (`chrome.spec.ts:140`, `lab-work.spec.ts:260`); "Mouse wheel is not supported in mobile WebKit" (`chat.spec.ts:130`).
-- **A focus race, not visitor-facing (2):** `chat.spec.ts:174` and `page.spec.ts:138`, both at 390.
+- **A focus race, not visitor-facing (2):** `chat.spec.ts:174` and `page.spec.ts:138`. The full run failed `:174` at 390; alone ×3 it failed at 1440 twice and at 390 once, so the viewport doesn't matter.
   - Instrumented: with the text typed the instant the panel appears, Enter's `keydown` lands on a **button**. `useFocusTrap`'s passive effect (unchanged) moves focus to Close after Playwright's `fill`, so Enter presses Close.
   - With 500 ms before typing, `keydown` lands on the field and the form submits (one request). Chromium runs the effect before the `fill` at both waits.
   - A plain HTML form submits on a page-level Enter in the same WebKit, desktop and mobile. `textbox.press("Enter")` and tapping Send both work at 390.
