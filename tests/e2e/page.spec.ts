@@ -49,6 +49,32 @@ for (const vp of VIEWPORTS) {
   });
 }
 
+// R12 (Tay, session 16), a new guard: the page's one canvas is the hero's field, drawn in 2D and hidden from assistive
+// tech. Every context any canvas asks for is recorded: only "2d" may appear. The WebGL guards (the zero count above, and
+// tests/unit/dead-code.test.ts) are unchanged: D2 is not reopened.
+const COUNT_CONTEXTS = `(() => { window.__ctx = []; const o = HTMLCanvasElement.prototype.getContext;
+  HTMLCanvasElement.prototype.getContext = function (t, ...a) { window.__ctx.push(String(t)); return o.call(this, t, ...a); }; })();`;
+test("exactly one canvas: the hero's field, 2D and aria-hidden (1440 and 390, motion on and reduced)", async ({ browser }) => {
+  for (const vp of [[1440, 900], [390, 844]] as const) for (const reducedMotion of ["no-preference", "reduce"] as const) {
+    const label = `${vp[0]} ${reducedMotion}`;
+    const ctx = await browser.newContext({ viewport: { width: vp[0], height: vp[1] }, isMobile: vp[0] < 900, hasTouch: vp[0] < 900, reducedMotion });
+    await ctx.addInitScript(COUNT_WEBGL);
+    await ctx.addInitScript(COUNT_CONTEXTS);
+    const page = await ctx.newPage();
+    await page.goto("/", { waitUntil: "networkidle" });
+    await scrollThrough(page);
+    await expect(page.locator("canvas"), label).toHaveCount(1);
+    const canvas = page.locator("#hero canvas");
+    await expect(canvas, label).toHaveCount(1);
+    await expect(canvas, label).toHaveAttribute("aria-hidden", "true");
+    const contexts = () => page.evaluate(() => (window as unknown as { __ctx: string[] }).__ctx);
+    await expect.poll(async () => (await contexts()).length, { message: `${label}: the field draws` }).toBeGreaterThan(0);
+    expect([...new Set(await contexts())], label).toEqual(["2d"]);
+    expect(await page.evaluate(() => (window as unknown as { __gl: number }).__gl), label).toBe(0);
+    await ctx.close();
+  }
+});
+
 // R12 (Tay, session 16), a new guard: / is the page search engines index. It says index, follow, names the site's
 // origin as its one canonical, and carries no noindex in its markup or its headers.
 test("/ is indexable: index, follow, the canonical https://tayshofer.dev, and no noindex anywhere", async ({ request }) => {
