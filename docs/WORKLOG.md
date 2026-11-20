@@ -11,6 +11,226 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-20 — Session 25 (#20): F2 fixed in the shared focus trap; PR #23 (Claude Code)
+
+**Scope (Tay's brief, #20):**
+1. Diagnose first: trace the trap, list every overlay that uses it, confirm the cause in Playwright WebKit. Continue
+   unless the fix needs more than the trap.
+2. Fix it in the shared trap so it works whatever the browser treats as tabbable (Safari's default, Option+Tab,
+   Chromium, Firefox; Shift+Tab too). Keep Escape, the focus return, and the menu sheet's accessibility button. No new
+   dependency.
+3. **Approved in advance:** a new regression spec in its own commit. No edit to an existing test or guard; WebKit and
+   Firefox only through a scratch config outside the repo.
+4. Validate: typecheck, lint, unit, build, Chromium; WebKit and Firefox full runs. Anything not in S23's tables: stop
+   and report.
+5. Docs; 6. push and a PR, ready for review. No merge.
+
+**Added by Tay after the first report** (I stopped at step 4 on five unlisted failures, §4):
+- Continue to the docs and the PR.
+- Confirm the three modals hold no radio group, positive tabindex, select, iframe, contenteditable or shadow root (§5).
+- Backlog: `chat.spec.ts:158` and `chrome.spec.ts:185`'s `:200` join #22's WebKit list; a new **#23**, low priority
+  (§4). Record the parallel-load failures and the `chat.spec.ts:158` probe numbers here.
+
+### 0. Preconditions (VL)
+- `git fetch`, `main` pulled: `main` = `origin/main` = Production = **`2cc324c`** (deployment created 17:00:33Z), the tree
+  clean. `fix/f2-focus-trap` cut from it. `npm ci` exit 0 (the known allow-scripts warning).
+- Verified for the stale lines: PR #22 merged at 17:00:05Z as `2cc324c`. `release/concept-a` and
+  `docs/s24-release-closeout` are gone, local and remote. The only open PR is #18 (the prototype, a draft).
+
+### 1. The diagnosis (VL; the unfixed build; WebKit 26.5 through S23's proxy, Firefox 153, Chromium 1234)
+- **The path:** `lib/useFocusTrap.ts` let the browser move focus on every Tab and stepped in only when focus already
+  sat on its last item (first, for Shift+Tab). Its list includes links. Safari's Tab skips links, so focus never
+  reached a last item that was a link, and the browser's own move left the dialog.
+- **Who uses it:**
+
+  | Overlay | Where | Modal | Last item | WebKit, unfixed |
+  |---|---|---|---|---|
+  | The menu sheet | `Navbar.tsx:56` | yes | "Get in touch" (link) | leaks to a "Case study" button behind it; 3 of 9 presses |
+  | The chat | `ChatPanel.tsx:55` | only as the phone sheet | Privacy (link) | leaks to `body`; 3 of 9 |
+  | The case study | `CaseStudyPanel.tsx:66` | yes | a link | **leaks too** (not in S23): from Close to the chat launcher, as every other control is a link; 4 of 8 |
+  | Accessibility; the chat on wide screens | `AccessibilityPanel.tsx:52`; `ChatPanel.tsx:55` | no (by design) | — | Tab is not held; unaffected |
+
+- **A side effect S23 did not record:** the leak scrolls the locked page behind it. In the menu sheet, `scrollY` went
+  from 0 to 964 at 390 and to 1,241 at 320.
+- **Chromium and Firefox:** 0 leaks in every overlay.
+- **Two constraints found:**
+  - Playwright's WebKit treats Alt+Tab exactly as Tab (links still skipped), so a key press can't reproduce Option+Tab.
+  - Chromium and Firefox make a **scroll area with nothing focusable inside** a Tab stop of its own: the chat's
+    transcript, once it scrolls. Script focus of it: Chromium yes, Firefox no, WebKit no (probed with a transcript
+    taller than its box; none of the three focuses it while it doesn't scroll). A trap that only called `focus()` would
+    drop that stop in Firefox.
+
+### 2. The fix (`63565e8`; `lib/useFocusTrap.ts` only)
+- In a modal, the trap now moves focus itself on every Tab, Shift+Tab and Option+Tab, in document order, wrapping at
+  both ends, whatever the browser counts as a stop. Ctrl and Cmd+Tab stay with the browser.
+- From the container itself or from outside, it counts from where focus sits in the document: Tab enters at the first
+  stop after it, Shift+Tab at the last before it. A stop that refuses focus is passed over.
+- **The list keeps a scroll area with nothing focusable inside**, as Chromium and Firefox do. Where script can't focus
+  one (Firefox, WebKit), it holds `tabindex="-1"` only while focused.
+- **The ring: `focus({ focusVisible: true })`.** The first version's walks found no `:focus-visible` on WebKit's
+  Option+Tab stops. Probed: script focus during a Tab press, with no ring already showing:
+
+  | Key | Chromium | Firefox | WebKit | With `focusVisible` |
+  |---|---|---|---|---|
+  | Tab | ring | ring | ring | ring in all three |
+  | Alt+Tab | **none** | ring | **none** | ring in all three |
+  | Shift+Tab | ring | ring | **none** | ring in all three |
+  | Shift+Alt+Tab | ring | ring | **none** | ring in all three |
+
+  The cast `as FocusOptions` is needed: TypeScript's DOM types don't list `focusVisible` yet.
+- **A stylesheet detour:** the first build added one rule to `/`'s first stylesheet, `.blur` (44,069 → 44,281 B, a new
+  file name). Tailwind read the event name in `addEventListener("blur", …)`, a string in code, not a comment, as a
+  class. The listener uses `focusout` (the same here: the scroller has nothing focusable inside), and the stylesheets
+  are back to identical.
+- **And a second one, caught at the docs step:** a comment in the new spec said the click point keeps clear of the
+  dialog's `rounded` corner. That word is a utility too, so the builds the first report's full runs used carried one
+  unused rule, `.rounded` (44,069 → 44,099 B). The comment now says
+  "curved", folded into the spec's own commit before the push. The final build's stylesheets are the baseline's, names
+  and bytes. The first report's JS figure (185.33 KiB) was also measured before `focusVisible`; the final build's is
+  185.34 KiB. The final full runs (§4) are on the final build.
+- **Unchanged:** Escape (including the non-modal rule), the focus moved in on open, the focus return, the stack of
+  overlays, the scroll lock, the non-modal popovers.
+- **What changes for a visitor:** Chromium's and Firefox's order is identical to before, the long transcript's stop
+  included (compared stop for stop with the unfixed walks). Safari now reaches every control in a modal, the menu's
+  four section links and "Get in touch" included, which its default Tab skipped, and the long transcript.
+
+### 3. The new spec (`43f86dd`; `tests/e2e/focus-trap.spec.ts`, approved in advance)
+- Six tests: the menu sheet (390, 320), the chat sheet (390, and with a transcript taller than its box), the case study
+  (T Poker at 1440, Aegis at 390). Each runs four Tab models:
+  - Chromium's own Tab;
+  - Option+Tab;
+  - Safari's default (`tabindex="-1"` takes the links out of Chromium's Tab order while the trap still lists them);
+  - Safari without keyboard navigation (links and buttons out).
+- Each model checks:
+  - The walk: the overlay opened from the keyboard, then two full turns each way from a pointer click on the dialog's
+    surface (focus on the dialog, the ring off), so every stop's ring comes from the press.
+  - Every stop in document order, focus never outside, every stop ringed.
+  - The page behind never moves; Escape returns focus to the trigger.
+- **On the unfixed trap** (Chromium): every Safari model leaks (focus outside, no ring). The case study's page behind
+  scrolled 1,271 → 6,739 at 1440 and 1,850 → 8,241 at 390. Before `focusVisible`, the Option+Tab model failed only its
+  ring check, in all six.
+- **With the fix:** 6/6 in Chromium (40 s), and 6/6 in Firefox and WebKit in their full runs.
+- No existing test or guard is changed. The suite's config still runs Chromium only (#22).
+
+### 4. Validation (VL; the fixed build, `.next` deleted first)
+| Command | Result |
+|---|---|
+| `npm run typecheck`, `npm run lint` | exit 0 |
+| `npm test` | **225/225**, 18 files |
+| `npm run build` | exit 0 |
+| `GROQ_API_KEY= npx playwright test` (the repo's config, Chromium) | **193/193** (S23's 187 plus the 6 new tests), 2.1 min, in both the first and the final run |
+| Firefox 153: the same tests through a scratch config outside the repo (`Desktop Firefox`, 1440×900; S23's setup) | first run **182/193** (4.0 min); final build **183/193** (3.8 min) |
+| WebKit 26.5: the same, `Desktop Safari`, through S23's CSP proxy | first run **175/193** (4.2 min); final build **175/193** (4.1 min), the same 18 |
+
+The first runs were on the build of the first report; the final runs on the pushed tree (§2: it differs only by the
+unused `.rounded` rule and the 0.01 KiB of `focusVisible`).
+
+Besides the suites, a scratch probe walked the fixed build 84 times (3 engines × Tab and Option+Tab × forward-first and
+backward-first × 7 overlays): 0 stops outside, 0 stops without a ring, and the page behind never moved.
+
+**Firefox, the failures (first run 11, final run 10):**
+
+| Test | First / final | In S23's table? | Class | Alone ×3 |
+|---|---|---|---|---|
+| `chrome.spec.ts:140`, `lab-work.spec.ts:260` | both | yes | engine-only (CDP) | — |
+| `lab-hero-a.spec.ts:129` | both | yes | timing (headless canvas) | — |
+| `lab-work.spec.ts:566` | both | yes | timing (reduced motion's frame) | — |
+| `lab-work.spec.ts:690` ×2 | both | yes | sub-pixel | — |
+| `chrome.spec.ts:268` 390×844 | both | yes | F1 (#21) | — |
+| `chapters.spec.ts:10` at 1440×900 | both | **no** | **parallel load**: a hash jump that never scrolled (the panel 1,193 px away after 5 s), among the run's first tests | **3/3 pass** |
+| `chapters.spec.ts:10` at 1280×720, 390×844 | first | **no** | the same (957 / 475 px away) | **3/3 pass** each |
+| `aegis.spec.ts:6` | first | **no** | **parallel load**: the case study did not appear within 5 s of the click; the run's first test | **3/3 pass** |
+| `case-study-axe.spec.ts:12` at 1440×900 | final | **no** | **parallel load**: the case study did not appear within 5 s of the click, so axe never ran | **3/3 pass**, at 1440 and 390 (axe clean with every case study open) |
+| `chrome.spec.ts:63` | final | **no** | **parallel load**: the header's surface read `rgba(0, 0, 0, 0)`, early in the run | **3/3 pass** |
+
+Not failing in either run: `lab-work.spec.ts:228` (S23: starvation) and `:338` (S23: intermittent).
+
+**WebKit, the 18 failures (the same in both runs):**
+- **15 are in S23's table:** `chat.spec.ts:130`, `chrome.spec.ts:89`, `chrome.spec.ts:140`, `chrome.spec.ts:268` ×2,
+  `focus-ring.spec.ts:8` ×2, `lab-hero-a.spec.ts:93`, `:129`, `:192`, `lab-work.spec.ts:260`, `:303`, `:338`, `:566`,
+  `page.spec.ts:138`.
+- **3 are not:**
+
+  | Test | Class | Alone ×3 |
+  |---|---|---|
+  | `page.spec.ts:30` 1920×1080 | **parallel load**: an image-decode wait (20 s) timed out | **3/3 pass** (all 10 viewports, 30/30) |
+  | `chat.spec.ts:158` | S23's instant-`fill` race (below) | 0/3 |
+  | `chrome.spec.ts:185` | its F2 loop (`:199`) **passes**; it now stops at `:200`: Safari doesn't focus a button on click (below) | 0/3 |
+
+- **Now passing: `chat.spec.ts:76` (F2).** Also passing in both runs: `chat.spec.ts:174` (the race, by chance).
+
+**The `chat.spec.ts:158` race, probed on both builds** (WebKit, 1440, the test's steps: open, `fill`, Enter; 10 runs
+each):
+- **`main` (`2cc324c`):** Enter's `keydown` landed on Close **6/10** times (no request; the panel closed). On the field
+  4/10 (one request; the answer came).
+- **The fix:** on Close **8/10**, on the field 2/10. An earlier 5-run probe on the fix: 3/5.
+- The same race on both builds: the trap's on-open focus move, the passive effect this PR doesn't touch, lands after
+  Playwright's instant `fill`. It passed in S23's full run by chance. Tay: added to #22's WebKit list.
+
+**`chrome.spec.ts:185`'s `:200`, probed on both builds** (WebKit, 390, the menu):
+- Opened by a click: focus inside goes to Close; after Escape, `body`. Identical on `main` and the fix.
+- Opened from the keyboard (focus the button, Enter): after Escape, "Open menu". Identical on both.
+- Safari doesn't focus a button on click, so the trap had nothing to return to. S23 never reached `:200`, because the
+  F2 loop failed first. Tay: added to #22's WebKit list, and the behaviour itself is backlog **#23** (low priority,
+  pre-existing, not in this PR).
+
+**The rest of step 4:**
+- Axe on the case study (`case-study-axe.spec.ts`, every case study at 1440 and 390) passes in Chromium and WebKit in
+  both runs. In Firefox it passes in the first run, and alone ×3 after the final run's load failure (above).
+- The accessibility button in the menu sheet (`chrome.spec.ts:208` at 320 and 390) passes in all three engines.
+- The new spec passes 6/6 in all three, in both runs.
+
+### 5. Tay's check: what the trap's own walk could get wrong (VL)
+- **The rendered DOM** (Chromium; the menu sheet and the chat sheet at 390, all six case studies at 1440 and 390):
+  - Nothing found, in every modal: 0 radio inputs or radio roles, 0 positive `tabindex`, 0
+    `select`/`iframe`/`frame`/`object`/`embed`, 0 contenteditable, 0 `audio`/`video`, 0 `details`/`summary`, 0 shadow
+    roots, 0 custom elements.
+  - The menu sheet has 24 elements, the chat sheet 25, the case studies 97–177. No `tabindex` attribute inside any of
+    them (only the dialog roots' own `-1`).
+- **The source:** a search of `app`, `components`, `lib` and `data` finds none of these.
+- The page's only shadow root is Next's `next-route-announcer`, at the body level, outside every dialog.
+
+### 6. Bytes (VL; `budget.spec.ts`'s algorithm)
+| | Before (`2cc324c`) | After |
+|---|---|---|
+| First-load JS (gzip, 9 scripts) | 185.10 KiB (606,933 B raw) | **185.34 KiB** (607,569 B raw); budget 205.7 |
+| HTML | 127,732 B | 127,732 B |
+| `/`'s stylesheets | `1v6nld9ia-p76.css` 44,069 B, `3_ro9fti2b1c6.css` 28,727 B | **the same names and bytes** |
+
+Against production's own copy, the first stylesheet's selectors are identical. Its bytes differ only in the fonts'
+hashed file names, which come from Vercel's build.
+
+### 7. Docs, push, the PR
+- **This docs commit:**
+  - `docs/ROADMAP.md`: #20 done; #22's WebKit list gains `chat.spec.ts:158` and `chrome.spec.ts:185`'s `:200`; the
+    new #23.
+  - This entry.
+  - `claude/START-HERE.md`: the state, and its stale "Open PRs / branches".
+  - `CLAUDE.md`: its stale release-branch line, and the suite's count.
+- `npm test` after it: 225/225. `/` rebuilt with these docs in place: its stylesheets are the baseline's, names and
+  bytes (CLAUDE.md and `claude/` are scanned).
+- `fix/f2-focus-trap` pushed; **PR #23**, ready for review, not merged.
+
+### Clean-up (VL)
+- The scratch Playwright config, the CSP proxy, the probes and their results are deleted.
+- A temporary worktree of `main` (`2cc324c`), built for the comparisons, is removed (`git worktree prune`).
+- Ports 3400–3431 are free.
+
+### State (VL)
+- `main` = `origin/main` = Production = **`2cc324c`**. Untouched.
+- `fix/f2-focus-trap`: `63565e8` (the fix), `43f86dd` (the spec), then this docs commit; pushed; PR #23 open.
+- `proto/hero-a-cinematic`: frozen; PR #18 a draft.
+
+### Waiting on Tay
+- **Review and merge PR #23.** Then the close-out: delete `fix/f2-focus-trap` after the ancestor check, and confirm
+  `main` is clean.
+- **Optional, on a Mac (NC here):** Playwright's WebKit can't reproduce Option+Tab or Safari with macOS keyboard
+  navigation off. Desktop Safari on the Preview would confirm both: open the menu at a narrow width, the chat sheet, a
+  case study; Tab, Option+Tab and Shift+Tab should wrap inside, each stop ringed.
+- **Next:** #19.
+
+---
+
 ## 2026-11-20 — Session 24: the release verified; Concept A is live at `3a98d22` (Claude Code)
 
 **Scope (Tay's brief, S24, read-only on production):**

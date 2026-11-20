@@ -7,7 +7,8 @@ Detailed material lives in `docs/`; this file stays short and points to it.
 M0 (audit + decisions) closed 2026-11-18. **Concept A is live on `main` since 2026-11-20** (PR #21, merge `3a98d22`;
 S24 verified production). It replaced the Product Plates site (the M1 core, moves A–E; tagged `product-plates-final`);
 **Move F is retired** (R14). The release track is done: decisions R1–R15 in `docs/RESEARCH_AND_DECISIONS.md`, sessions
-S17–S24 in `docs/ROADMAP.md` ("Concept A: P4–P6"). Next: backlog #20, #19, #21, #18, #22, then P4. Tay reopened **D1**
+S17–S24 in `docs/ROADMAP.md` ("Concept A: P4–P6"). Next: backlog #20 (fixed in S25, PR #23), #19, #21, #18, #22, then
+P4; #23 is low priority. Tay reopened **D1**
 for Concept A on 2026-11-18. **D2 is still not reopened, so no WebGL**, anywhere. Keep refining this file with
 verified facts only.
 
@@ -23,7 +24,8 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
 
 ## Where production code is (verified 2026-11-20)
 - **`main` is the source of truth.** Production = GitHub `taysh123/Portfolio` `main`; every merge deploys
-  via Vercel's GitHub integration (last verified: **`3a98d22`**, 2026-11-20, PR #21, the Concept A release). Cloudflare
+  via Vercel's GitHub integration (last verified: **`2cc324c`**, 2026-11-20, PR #22, in S25; its page is the Concept A
+  release's, PR #21, `3a98d22`). Cloudflare
   proxies the domain in front of Vercel (N7 in `docs/RESEARCH_AND_DECISIONS.md`). Its Web Analytics and Email Address
   Obfuscation are off (Tay, 2026-11-18), and E2E can't see the edge, so check the live page with a browser `Accept`
   header. `origin` is `https://github.com/taysh123/Portfolio.git` (the old name `Tay-Shofer---Portfolio` redirects).
@@ -45,7 +47,8 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
   - The production deployment's own URLs and the team aliases need Vercel's login. `tay-shofer-portfolio.vercel.app`
     is public, and serves the same build.
 - **The release branch: `release/concept-a`** (R1), cut from `origin/main` `443a1f9` in S17, **merged in S24** (PR
-  #21, `3a98d22`). Kept until Tay gives a per-branch yes. Its history follows.
+  #21, `3a98d22`), then deleted, local and remote (tip `5ea8d57`, an ancestor of `main`; verified in S25). Its history
+  follows.
   - S17 copied the prototype over unchanged (`8b77de1`): the 77 paths of
     `git diff --name-only main...proto/hero-a-cinematic` that `main` had not touched since the branch point. Then it
     merged the five state docs both sides had changed.
@@ -174,7 +177,7 @@ Verified gotchas (2026-11-18):
   its `node` child holding the port: check `Get-NetTCPConnection -LocalPort <port> -State Listen` and stop that PID.
 - The Windows-only `tests/unit/site.test.ts:78` failure (N6) is fixed (`b4d5c73`, PR #7). On `main` since the
   release (`3a98d22`): 225/225 unit tests in 18 files, and Playwright 187/187 in 15 files on Chromium (S23, right after
-  deleting `.next`). Run `npm test` from Git Bash: a test shells out `git grep … || true`, and cmd.exe (PowerShell's
+  deleting `.next`). #20 (PR #23) adds `focus-trap.spec.ts`: 193/193 in 16 files (S25). Run `npm test` from Git Bash: a test shells out `git grep … || true`, and cmd.exe (PowerShell's
   child shell) has no `true`, so it fails there spuriously.
 - **The suite's config runs Chromium only.** S23 ran WebKit and Firefox from scratch configs, and the engine-specific
   failures are listed in `docs/WORKLOG.md` ("Session 23" close-out). Per-browser handling is backlog #22.

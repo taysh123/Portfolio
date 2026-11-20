@@ -18,9 +18,9 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
      more, About, Stack, Think · Build · Ship, Contact.
    - Tay reopened **D1** for it (2026-11-18). **D2 is still not reopened, so no WebGL.**
    - The Product Plates site it replaced is tagged **`product-plates-final`** (`443a1f9`).
-2. **Next, in this order (Tay, S24):** backlog #20 (F2, Safari's focus in the sheets), #19 (Next 16.4.6), #21 (F1,
-   Firefox's scroll padding), #18 (the GRAVITY FLOW capture swap), #22 (per-browser tests); then **P4**, the project
-   demos. `docs/ROADMAP.md` has each.
+2. **Next, in this order (Tay, S24):** backlog #20 (F2, Safari's focus in the sheets: **fixed in S25, PR #23 for Tay's
+   merge**), #19 (Next 16.4.6), #21 (F1, Firefox's scroll padding), #18 (the GRAVITY FLOW capture swap), #22
+   (per-browser tests); then **P4**, the project demos. Low priority: #23 (S25). `docs/ROADMAP.md` has each.
 3. **The Concept A prototype, on `proto/hero-a-cinematic`: the frozen record.** Draft PR #18, never merged, never
    deleted (R1).
 4. **The release track (session 16 to S24, done).** Concept A replaced the live `/` as soon as possible, because Tay is
@@ -50,7 +50,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - The six security headers are exactly as before the merge.
   - One 2D canvas, `aria-hidden`, and zero WebGL contexts. 0 console errors at 390 and 1440.
 - **Production** = GitHub `taysh123/Portfolio` **`main`**, the source of truth.
-  - Deployed **`3a98d22`**: PR #21, 2026-11-20 02:53Z.
+  - Deployed **`2cc324c`**: PR #22, 2026-11-20 17:00Z (verified in S25). It changed docs and a comment in
+    `app/sitemap.ts`, so the page is `3a98d22`'s: PR #21, 2026-11-20 02:53Z.
   - **Rollback**, if ever needed:
     - Vercel's Instant Rollback to `443a1f9`'s deployment.
     - Then a `git revert -m 1 3a98d22` PR.
@@ -387,23 +388,33 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 - **S24 is done (2026-11-20): Concept A is live.**
   - Tay merged PR #21 with a merge commit, `3a98d22`.
   - Vercel's Production deployment is `3a98d22`, and every production check passes (`docs/WORKLOG.md`, "Session 24").
-  - The docs close-out is its own PR, from `docs/s24-release-closeout`.
+  - The docs close-out was PR #22, merged by Tay as `2cc324c` (now Production).
+- **S25 (#20) is done (2026-11-20), for Tay's review: PR #23**, from `fix/f2-focus-trap`.
+  - In a modal (the menu sheet, the chat sheet, the case study), the shared trap now moves focus itself on every Tab,
+    so focus never leaves in Safari, whatever it counts as a stop.
+  - A new spec, `tests/e2e/focus-trap.spec.ts`, approved in advance.
+  - Chromium 193/193; WebKit and Firefox: no failure the fix caused.
+  - #22's WebKit list gained two tests, and #23 is new (low priority).
+  - Detail: `docs/WORKLOG.md`, "Session 25 (#20)".
 - **The release track (P5/P6) is done.** Next, in this order (Tay, S24), each a PR on `main`:
   1. **#20:** F2, Safari's focus leaving the menu sheet or the chat for one Tab; the fix goes in the shared focus trap.
+     **Done in S25** (PR #23).
   2. **#19:** Next 16.3.8 → 16.4.6 for the `npm audit` advisories, with the full suite and Lighthouse.
   3. **#21:** F1, Firefox ignoring the bottom scroll padding for controls already on screen.
   4. **#18:** the GRAVITY FLOW capture swap, whenever Tay provides the image.
   5. **#22:** per-browser handling of the engine-specific tests.
   6. Then **P4**, the project demos (`docs/ROADMAP.md`, P4, with the restore record).
+  - Low priority (Tay, S25): **#23**, Safari's focus return after a modal opened by a mouse click.
 
-## Open PRs / branches (S24, 2026-11-20)
+## Open PRs / branches (S25, 2026-11-20; verified with `gh` and `git ls-remote`)
+- **PR #23** (`fix/f2-focus-trap` → `main`), backlog #20: **open, ready for review**, for Tay to merge. After the
+  merge: delete the branch once `git merge-base --is-ancestor` confirms it.
 - **PR #21** (`release/concept-a` → `main`), "Release: Concept A": **merged** by Tay on 2026-11-20 as `3a98d22`.
-- **The S24 close-out PR**, from `docs/s24-release-closeout`: open, for Tay to merge.
-- **Kept until Tay gives a per-branch yes** (S24; nothing deleted):
-  - `release/concept-a` (tip `5ea8d57`, local and remote): **merged** into `main`, so it is safe to delete whenever
-    Tay says so.
-  - `proto/hero-a-cinematic` (tip `92b08fd`, local and remote; **draft PR #18**): not merged, by design. R1 keeps it
-    frozen as the record ("never merge, never delete"), so deleting it would also need R1 changed.
+- **PR #22** (`docs/s24-release-closeout` → `main`), the S24 close-out: **merged** by Tay on 2026-11-20 as `2cc324c`.
+- **Deleted after their merges**, local and remote: `release/concept-a` (tip `5ea8d57`) and
+  `docs/s24-release-closeout`.
+- **Kept:** `proto/hero-a-cinematic` (tip `92b08fd`, local and remote; **draft PR #18**): not merged, by design. R1
+  keeps it frozen as the record ("never merge, never delete"), so deleting it would also need R1 changed.
 - **Tag `product-plates-final`** (`8f0a96a`) on `443a1f9`, pushed in S17: the rollback and P4 restore point (R6, R15).
 - Merged and deleted (each checked with `git merge-base --is-ancestor` first):
   - `docs/claude-md-tailwind-leak` (#20, tip `2e73766`, local and remote, in session 13);
@@ -415,13 +426,15 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Merge the S24 close-out PR** (docs, plus the sitemap's comment).
-- **His manual steps after the release:**
+- **Review and merge PR #23** (#20, F2). Then the close-out: delete `fix/f2-focus-trap` after the ancestor check, and
+  confirm `main` is clean.
+- **Optional, on a Mac:** Playwright's WebKit can't reproduce Option+Tab, or Safari with macOS keyboard navigation off.
+  Desktop Safari on PR #23's Preview would confirm both (the menu at a narrow width, the chat sheet, a case study).
+- **His manual steps after the release, if not done yet:**
   - Refresh the share card in LinkedIn's Post Inspector (https://www.linkedin.com/post-inspector/).
   - A reindex request for `https://tayshofer.dev/` if he uses Google Search Console.
-- **A per-branch yes** for `release/concept-a` (merged) and `proto/hero-a-cinematic` (R1: never delete), whenever he
-  wants.
-- **Then #20**, in a new session.
+- **`proto/hero-a-cinematic`** stays (R1: never delete) unless he changes R1.
+- **Then #19**, in a new session.
 - **The GRAVITY FLOW image** for the capture swap (ROADMAP #18), whenever he has it.
 - **Optional, on `main`:** the site's chat launcher folds its label as the page scrolls. That is 0.0076 CLS on `/` at
   1440 and 390 (measured in session 11), well inside "good". Untouched.

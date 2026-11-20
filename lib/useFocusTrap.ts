@@ -15,6 +15,33 @@ const FOCUSABLE = [
  *  phase, where stopPropagation cannot silence the others — so one Escape closed every stacked overlay (review #2). */
 const stack: object[] = [];
 
+/** A scroll area with nothing focusable inside. Chromium and Firefox make it a Tab stop of its own, so it can be scrolled
+ *  from the keyboard (the chat's transcript, once a conversation outgrows it); the trap keeps that stop. */
+function bareScroller(el: HTMLElement) {
+  const y = el.scrollHeight > el.clientHeight, x = el.scrollWidth > el.clientWidth;
+  if (!(x || y) || el.hasAttribute("tabindex")) return false;
+  const s = getComputedStyle(el), scrolls = (v: string) => v === "auto" || v === "scroll";
+  return ((y && scrolls(s.overflowY)) || (x && scrolls(s.overflowX))) && !el.querySelector(FOCUSABLE);
+}
+
+/** Focuses `el` for a Tab press and says whether it took.
+ *  - `focusVisible`: a press shows the ring, as the browser's own Tab does. Without it, script focus during a press with
+ *    a modifier showed none (Option+Tab in Chromium and WebKit; Shift+Tab in WebKit, when no ring was already showing).
+ *  - Only Chromium lets script focus a bare scroller, so in Firefox and Safari it holds a tabindex of -1 while it has
+ *    focus. (`focusout`, not the other name of that event: Tailwind reads every string here as a class candidate, and
+ *    that one is a utility, which would add a rule to the site's stylesheet.) */
+function focusOn(el: HTMLElement) {
+  const opts = { focusVisible: true } as FocusOptions;   // not in TypeScript's DOM types yet
+  el.focus(opts);
+  if (document.activeElement !== el && !el.matches(FOCUSABLE)) {
+    el.tabIndex = -1;
+    el.focus(opts);
+    if (document.activeElement === el) el.addEventListener("focusout", () => el.removeAttribute("tabindex"), { once: true });
+    else el.removeAttribute("tabindex");
+  }
+  return document.activeElement === el;
+}
+
 /**
  * Traps Tab focus inside `ref` while `active`, then restores focus to whatever
  * was focused before it opened.
@@ -32,10 +59,12 @@ export function useFocusTrap(
    *  focus still moves in on open, Escape still closes, and focus still returns (review #10). */
   modal = true,
 ) {
-  const focusables = () =>
-    Array.from(ref.current?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []).filter(
-      (el) => el.offsetParent !== null || el === document.activeElement,
-    );
+  const shown = (el: HTMLElement) => el.offsetParent !== null || el === document.activeElement;
+  const focusables = () => Array.from(ref.current?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []).filter(shown);
+  /** Every Tab stop, in document order: the focusables, and any bare scroller among them. */
+  const stops = () => Array.from(ref.current?.querySelectorAll<HTMLElement>("*") ?? []).filter(
+    (el) => (el.matches(FOCUSABLE) && shown(el)) || bareScroller(el),
+  );
 
   // Keys are trapped from a layout effect, so Escape and Tab work before the overlay's first paint: with an
   // on-demand chunk under load, a passive effect left a visible case-study panel ignoring Escape (Plan 2
@@ -57,31 +86,27 @@ export function useFocusTrap(
         onEscape?.();
         return;
       }
-      if (e.key !== "Tab" || !root || !modal) return;
+      // Ctrl and Cmd+Tab belong to the browser. Option+Tab (Safari's "every item") is a Tab like any other here.
+      if (e.key !== "Tab" || e.ctrlKey || e.metaKey || !root || !modal) return;
 
-      const items = focusables();
-      if (items.length === 0) {
-        e.preventDefault();
-        return;
+      // The trap moves focus itself on every press. It used to step in only at its first and last items and leave the
+      // rest to the browser, whose own idea of a Tab stop it cannot see: Safari's default Tab skips links (and, without
+      // macOS keyboard navigation, buttons), so it walked past a last item that was a link and out of the dialog, and
+      // the locked page behind scrolled to wherever focus landed (#20, F2).
+      e.preventDefault();
+      const items = stops();
+      const current = document.activeElement ?? document.body;
+      let i = items.indexOf(current as HTMLElement);
+      // Not on a stop (the container itself, tabIndex -1, or outside): count from where focus sits in the document,
+      // so Tab enters at the first stop after it and Shift+Tab at the last one before it.
+      if (i < 0) {
+        const before = items.filter((el) => el.compareDocumentPosition(current) & Node.DOCUMENT_POSITION_FOLLOWING).length;
+        i = e.shiftKey ? before : before - 1;
       }
-
-      const first = items[0];
-      const last = items[items.length - 1];
-      const current = document.activeElement;
-
-      // Focus can sit on the container itself (tabIndex -1) — treat that as
-      // "before the first item" so Tab enters the list rather than escaping.
-      if (!root.contains(current)) {
-        e.preventDefault();
-        (e.shiftKey ? last : first).focus();
-        return;
-      }
-      if (e.shiftKey && current === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && current === last) {
-        e.preventDefault();
-        first.focus();
+      // Wrapping at both ends; a stop that refuses focus is passed over.
+      for (let n = 0; n < items.length; n++) {
+        i = (i + (e.shiftKey ? items.length - 1 : 1)) % items.length;
+        if (focusOn(items[i])) return;
       }
     };
 
