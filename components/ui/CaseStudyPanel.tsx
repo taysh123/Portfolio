@@ -59,7 +59,7 @@ export function CaseStudyPanel({
   onClose: () => void;
 }) {
   const reduced = useReducedMotionPref();
-  const panelRef = useRef<HTMLElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const open = Boolean(project);
 
   const handleEscape = useCallback(() => onClose(), [onClose]);
@@ -81,7 +81,8 @@ export function CaseStudyPanel({
             className="fixed inset-0 z-[60] bg-[color-mix(in_oklab,var(--bg)_86%,transparent)] backdrop-blur-md"
           />
 
-          <motion.aside
+          {/* A div, not an aside: an aside may not take role="dialog" (axe aria-allowed-role, #17). */}
+          <motion.div
             key="panel"
             ref={panelRef}
             role="dialog"
@@ -219,9 +220,11 @@ export function CaseStudyPanel({
                             }
                             style={{ background: plateOf(project.id) }}
                           >
+                            {/* The caption below says exactly what the capture shows and names the figure, so the
+                                image itself is silent: the same words twice would be read twice (#17). */}
                             <Image
                               src={shot.src}
-                              alt={shot.alt}
+                              alt=""
                               unoptimized={project.media?.direct}
                               fill
                               loading="lazy"
@@ -309,7 +312,7 @@ export function CaseStudyPanel({
                 )}
               </div>
             </div>
-          </motion.aside>
+          </motion.div>
         </>
       )}
     </AnimatePresence>
