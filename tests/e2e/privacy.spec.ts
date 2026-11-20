@@ -37,7 +37,7 @@ test("the Privacy page says what the site does — the chat via Groq, logs, the 
   await page.goto("/privacy");
   const text = (await page.locator("main").innerText()).replace(/\s+/g, " ");
   for (const s of ["passes them to Groq", "doesn't save the conversation", "five questions a minute", "one-way fingerprint of your latest question",
-    "none are written to disk or logged", "hosted on Vercel", "Visiting sets no cookies",
+    "none are written to disk or logged", "hosted on Vercel", "through Cloudflare", "Visiting sets no cookies",
     "no analytics, advertising or tracking", "loads no third-party scripts or fonts", "Please don't share personal or sensitive information"])
     expect(text, s).toContain(s);
   await expect(page.locator("main code")).toHaveText(["a11y"]);   // dark only (R3): no theme cookie
@@ -46,7 +46,7 @@ test("the Privacy page says what the site does — the chat via Groq, logs, the 
     await expect(l).toHaveAttribute("rel", "noopener noreferrer");
     expect(await l.textContent()).toMatch(/opens in a new tab/);
   }
-  await expect(page.locator('main a[target="_blank"]')).toHaveCount(2);
+  await expect(page.locator('main a[target="_blank"]')).toHaveCount(3);   // Groq, Vercel and Cloudflare (N7)
   expect(text).not.toMatch(/[֐-׿]/);
   expect(text).not.toMatch(/\+972|\b05\d[\s-]?\d{3}[\s-]?\d{4}\b/);
   await expect(page.locator('a[href^="tel:"]')).toHaveCount(0);
