@@ -39,12 +39,11 @@ export function Hero({ c }: { c: Content }) {
         <div className="hxa__hero">
           <p className="hxa__eyebrow" data-reveal>{siteMeta.role}</p>
           <h1 id="hxa-title" className="hxa__title" data-reveal="settle">
-            <span className="hxa__l1">Building software.</span>{" "}
-            <span className="cine-duotone-text">Turning ideas into products.</span>
+            <span className="hxa__l1">{siteMeta.headlineLines[0]}</span>{" "}
+            <span className="cine-duotone-text">{siteMeta.headlineLines[1]}</span>
           </h1>
           <p className="hxa__lede" data-reveal>
-            I build end to end — mobile apps, security systems, developer tools and games, from the interface down to the
-            infrastructure.
+            {siteMeta.heroLead}
           </p>
           <div className="hxa__ctas" data-reveal>
             <a href="#work" className="hxa__btn hxa__btn--primary">
