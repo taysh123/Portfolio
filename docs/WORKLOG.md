@@ -11,7 +11,179 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-21 — Session 27 (#21): F1 fixed, a Tab never leaves a control under the chat launcher; PR #25 (Claude Code)
+
+**Scope (Tay's brief, #21):**
+1. Diagnose: reproduce in Playwright Firefox, list every control affected at 320, 375, 390 and 1440, confirm the cause.
+   Continue unless the fix needs more than a small focus handler.
+2. Fix: after keyboard focus lands on a control the launcher overlaps, scroll just enough to clear it (instant under
+   reduced motion). Keyboard only, never while a modal is open, #16's padding kept. No change in Chromium or WebKit, no
+   CLS, no new dependency, no class-like words.
+3. **Approved in advance:** one new regression spec in its own commit. No edit to an existing test or guard; Firefox and
+   WebKit only through a scratch config, deleted after.
+4. Validate: typecheck, lint, unit, build, Chromium cold and warm; full Firefox and WebKit runs, each failure in S23's
+   or S25's tables (anything new: stop). JS, `/`'s stylesheets and CLS before and after.
+5. Docs: #19 merged, #21 done, this entry, a backlog item for dev-dependency audit hygiene. 6. Push and a PR. No merge.
+
+### 0. Preconditions (VL)
+- `git fetch`, `main` pulled: `main` = `origin/main` = Production = **`ce818a0`**, the tree clean; the only open PR is
+  #18 (the prototype, a draft). `fix/f1-launcher-focus` cut from it (`--no-track`); `npm ci` exit 0.
+- **PR #24 (#19) is merged:** Tay merged it at 2026-11-20 21:19:17Z as `ce818a0` (parents `7ebff9c` and `7acc149`; the
+  tree is the PR head's). Its Production deployment (`7952836512`) was `success` at 21:22:33Z. `chore/next-16-4-6` was
+  deleted, local and remote, after `git merge-base --is-ancestor` (S26's close-out).
+- **S26's production checks** (through Cloudflare, and on `tay-shofer-portfolio.vercel.app`):
+  - `/` and `/privacy`: 200, the CSP and the six security headers exact, `index, follow`, one canonical, no `noindex`.
+  - Chromium at 390 and 1440, both pages: 0 CSP violations, 0 console errors, 0 failed requests.
+  - The scripts carry Next 16.4.6 and React `19.3.0-canary-278794d7-20261002`. First-load JS 186.97 KiB, HTML 127,702 B.
+  - The chat answered a real question (200, 0.80 s) correctly: Aegis's "AI analysis" is a deterministic template
+    provider, not a language model. An empty POST: 400. `/lab/*`: 404.
+  - robots, the sitemap and the manifest: 200, the right types, the bytes of the local build. Through Cloudflare all
+    three are brotli (83 → 74, 256 → 178, 387 → 239 B). Vercel's own domain sends those three uncompressed
+    (`Content-Length: 83` for robots) while it compresses the favicon (25,931 → 9,309 B) and the pages: a minimum size,
+    by the look of it (NC: Vercel's docs didn't say).
+
+### 1. The diagnosis (VL; `main`'s build; Firefox 153, Chromium 151, WebKit 26.5)
+A Tab walk of `/`, each stop read right after the press and again once the page settles:
+
+| Firefox 153 | 320×568 | 375×667 | 390×844 | 1440×900 |
+|---|---|---|---|---|
+| Stops under the launcher, motion reduced and on | 0 | **"Case study", 1.6%** | **the hero's GRAVITY FLOW link, 12.4%** | 0 |
+
+- In both, Firefox's `scrollY` doesn't move on the Tab (4219 and 0): the control is already on screen.
+- Chromium: 0 at all four once settled. With motion on, two stops overlap for a moment right after the press, while its
+  own smooth focus scroll runs. So a fix has to look only after the browser's own scroll has settled.
+- **The cause, probed at 390×844:** both engines compute `html`'s `scroll-padding-bottom` as 72px. Firefox honours it
+  for `scrollIntoView({ block: "nearest" })` (the link moves to 668–772, and 772 = 844 − 72) but not for focus:
+  `scrollY` stays 0. Chromium's focus applies it (`scrollY` 34).
+- **Found while verifying, at sizes S23 didn't walk** (it walked 1024×500, not 1024×768): Firefox also leaves the
+  GRAVITY FLOW link 1.8% under at 1024×768 (both motion modes) and "Case study" 5.1% under at 430×932 with motion on.
+
+### 2. The fix (`da224bb`, `components/chat/ChatLauncher.tsx`: one effect, no new module or dependency)
+- After a Tab press (Shift and Option too; not Ctrl or Cmd), on `focusin` the effect waits for the browser's own scroll
+  to settle: three frames without a move.
+- If the control still overlaps the launcher, the page moves up just far enough for the control's bottom to meet #16's
+  padding edge, read from `html`'s computed `scroll-padding-bottom`. That is where Chromium and Safari put it. It
+  never moves so far that the control's top goes under the header (`scroll-padding-top`).
+- It uses `scrollBy` with the page's own `scroll-behavior`: smooth, or instant under reduced motion (both the system
+  setting and the site's own switch).
+- **It never acts:**
+  - on a pointer, touch or script focus (only a Tab press counts);
+  - inside an overlay (`role="dialog"`), or while any `aria-modal="true"` dialog is open;
+  - on the launcher itself.
+- #16's padding is unchanged.
+
+### 3. Verified (VL; scratch probes, `main` on :3402 against the fix on :3401; WebKit through S23's CSP proxy)
+**No change in Chromium or WebKit.** A Tab walk at 320×568, 375×667, 390×844, 430×932, 1024×768 and 1440×900, motion
+reduced and on, every stop read once settled, with `window.scrollBy` counted (only the fix calls it):
+
+| | Chromium 151 | WebKit 26.5 | Firefox 153 (the fix only) |
+|---|---|---|---|
+| Stops, and settled `scrollY` per stop, against `main` | **identical** in all 12 | **identical** in all 12 | — |
+| The fix's scrolls | **0** | **0** | 1 each at 375, 390, 1024×768 (both modes), 430×932 (motion on) |
+| Stops under the launcher | 0 | 0 | **0 at all 12** (`main`: the four cases in §1) |
+
+In Firefox the corrected positions are Chromium's own: "Case study" at 551–595 (`scrollY` 4231; Chromium 4230) and the
+link at 668–772 (`scrollY` 34, as in Chromium).
+
+**The gates, in Firefox:**
+
+| Case | Result |
+|---|---|
+| (a) Script focus of the link under the launcher | not moved, 0 scrolls |
+| (b) A mouse press on it (focused, not released) | not moved, 0 |
+| (c) A touch tap on it | the link's own jump only, 0 |
+| (d) The menu sheet open, 12 Tabs inside | 0 |
+| (e) The corrected "Case study" (1 scroll), then Enter, 8 Tabs inside, Escape | still 1, and focus returns with the page unmoved |
+| (f) Reduced motion | one jump, 0 → 34, three frames after the press |
+| (f) Motion on | a glide over about 20 frames |
+
+**CLS (Chromium; load, then a 52-Tab walk; 390 and 1440, both motion modes):**
+- Load: 0. CLS without input: 0.
+- The only shifts are the chat launcher folding its label (pre-existing), all during input.
+- Their count and total are identical on `main` and the fix: 0.0182 / 0.0153 at 390, 0.0097 / 0.0076 at 1440.
+
+**Tried and dropped: correcting in the next task under reduced motion.** It made `chrome.spec.ts:268` pass in Firefox,
+but WebKit defers its own focus scroll to the next rendering update, even with motion reduced. Probed 3 times at
+375×667: `scrollY` at `focusin`, in the next task and in the first frame is the old one, and the second frame has
+WebKit's. The early check therefore fired in WebKit once per walk ("Case study": 11 px, one frame before WebKit's own
+move to the same place). From the page, a browser that will still scroll (WebKit) and one that won't (Firefox) can't be
+told apart at that point, so the fix waits for the page to settle.
+
+### 4. The spec (`d29f80d`, new, approved in advance in Tay's brief)
+- `tests/e2e/launcher-focus.spec.ts` Tabs through `/` at 320×568 and 390×844, motion reduced and on. It reads each
+  stop once `scrollY` has held for 10 frames, so it holds in every engine's Tab model. The walk ends at the launcher,
+  the page's last stop (Firefox's Tab then leaves the page and `activeElement` stays on it).
+- Red on `main` in Firefox at 390×844, both modes ("GRAVITY FLOW…"); green with the fix: **12/12** in Chromium, Firefox
+  and WebKit.
+
+### 5. Validation (VL; the final tree, `.next` deleted, `npx next typegen` first)
+| Check | Result |
+|---|---|
+| `npm run typecheck` · `npm run lint` | exit 0 · exit 0 |
+| `npm test` | 225/225, 18 files |
+| `npm run build` | exit 0 |
+| `GROQ_API_KEY= npx playwright test` (Chromium) | **197/197**, 17 files (S25's 193 + the 4 new), 2.1 min cold and 2.1 min warm |
+| Firefox 153, the scratch config | **187/197**; the new spec 4/4 |
+| WebKit 26.5, the scratch config and proxy | **180/197**; the new spec 4/4 |
+
+**Firefox, the 10 failures:** all in the tables.
+- In S23's: `lab-hero-a.spec.ts:129`, `chrome.spec.ts:140`, `lab-work.spec.ts:260`, `:566`, `:690` ×2.
+- In S25's parallel-load class, passing alone ×3: `chapters.spec.ts:10` at 1440 and 1280, and
+  `case-study-axe.spec.ts:12` at 1440.
+- **`chrome.spec.ts:268` at 390×844, F1's own entry, still fails (0/3 alone).** It reads each stop the instant after the
+  key press, and the fix moves the link three frames later. Once the page settles, the link is clear: the new spec,
+  which reads then, passes. An earlier run also failed `aegis.spec.ts:6` and `chrome.spec.ts:63`, both S25's parallel
+  load.
+
+**WebKit, the 17 failures:** all in the tables. They are S25's 18 except `chrome.spec.ts:89`, which passed this time.
+- S23's: `chat.spec.ts:130`, `chrome.spec.ts:140`, `chrome.spec.ts:268` ×2, `focus-ring.spec.ts:8` ×2,
+  `lab-hero-a.spec.ts:93`, `:129`, `:192`, `lab-work.spec.ts:260`, `:303`, `:338`, `:566`, `page.spec.ts:138`.
+- S25's: `chat.spec.ts:158`, `chrome.spec.ts:185`, and `page.spec.ts:30` at 1920×1080 (parallel load: 30/30 alone ×3).
+
+**Bytes** (`budget.spec.ts`'s method, `next start`, keyless):
+
+| | `main` (`ce818a0`) | This branch |
+|---|---|---|
+| First-load JS (gzip) | 186.70 KiB, 9 scripts | **187.06 KiB**, 9 scripts (+0.36 KiB: only the launcher's chunk changed); budget 205.7 |
+| HTML of `/` | 127,422 B | 127,422 B |
+| `/`'s stylesheets | `278gwr1omn8ec.css` 44,021 B, `3_ro9fti2b1c6.css` 28,727 B | **the same names, bytes and SHA-256** |
+| Headers on `/` | — | identical |
+
+### 6. Docs, push, the PR
+- **This docs commit:** this entry, plus one line in S26's entry recording its merge; `docs/ROADMAP.md` (#19 merged,
+  #21 done, the new **#24**); `claude/START-HERE.md`; `CLAUDE.md` (Production `ce818a0`, the backlog line, the
+  suite).
+- **#24 (new):** dev-dependency audit hygiene, a small separate PR later.
+- `npm test` after it: 225/225. `/` rebuilt from a clean `.next` with these docs in place: its stylesheets are the
+  same names and bytes (CLAUDE.md and `claude/` are scanned).
+- `fix/f1-launcher-focus` pushed; **PR #25**, ready for review, not merged.
+
+### Clean-up (VL)
+- The scratch config, the proxy, the probes and their results are deleted; the scratch worktree of `main` is removed.
+- Ports 3400–3431 are free.
+
+### State (VL)
+- `main` = `origin/main` = Production = **`ce818a0`**. Untouched.
+- `fix/f1-launcher-focus`: `da224bb` (the fix), `d29f80d` (the spec), then this docs commit; pushed; PR #25 open.
+- `proto/hero-a-cinematic`: frozen; PR #18 a draft.
+
+### Waiting on Tay
+- **Review and merge PR #25.** Then the close-out: the ancestor check, delete `fix/f1-launcher-focus`, `main` clean,
+  the merge's Production deployment `success`, and `/` with 0 console errors at 390 and 1440.
+- **His call:** `chrome.spec.ts:268` at 390×844 in Firefox reads a stop the instant after the press, so it still fails
+  after this fix. It could join #22's Firefox list (a read once the page settles, or an annotation). No test changed
+  here.
+- **Optional, on a real Firefox:** Tab from the hero at a phone width (390) and at 1024×768: the GRAVITY FLOW tile
+  should glide clear of the launcher.
+- **Next (Tay's order):** #18 (whenever he has the image), #22, then P4. Low priority: #23. Later, a small separate
+  PR: #24.
+
+---
+
 ## 2026-11-20 — Session 26 (#19): Next 16.3.8 → 16.4.6, the security release; PR #24 (Claude Code)
+
+> **Merged** by Tay on 2026-11-20 at 21:19:17Z as `ce818a0`; Production since 21:22:33Z, and S26's production checks
+> passed (Session 27, §0).
 
 **Scope (Tay's brief, #19; he approved this one dependency change and no other):**
 1. Upgrade `next` to exactly 16.4.6, with whatever must move in lockstep, in the repo's pinning style. Read the 16.4
