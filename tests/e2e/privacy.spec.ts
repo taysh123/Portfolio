@@ -33,14 +33,14 @@ test("the footer links to the Privacy page, which is English, titled, canonical 
   expect(await context.cookies()).toEqual([]);
 });
 
-test("the Privacy page says what the site does — the chat via Groq, logs, the two preference cookies, no tracking", async ({ page }) => {
+test("the Privacy page says what the site does — the chat via Groq, logs, the one preference cookie, no tracking", async ({ page }) => {
   await page.goto("/privacy");
   const text = (await page.locator("main").innerText()).replace(/\s+/g, " ");
   for (const s of ["passes them to Groq", "doesn't save the conversation", "five questions a minute", "one-way fingerprint of your latest question",
     "none are written to disk or logged", "hosted on Vercel", "Visiting sets no cookies",
     "no analytics, advertising or tracking", "loads no third-party scripts or fonts", "Please don't share personal or sensitive information"])
     expect(text, s).toContain(s);
-  await expect(page.locator("main code")).toHaveText(["theme", "a11y"]);
+  await expect(page.locator("main code")).toHaveText(["a11y"]);   // dark only (R3): no theme cookie
   // Every outbound link opens safely and says so; no Hebrew, no phone number, no tel: link.
   for (const l of await page.locator('main a[target="_blank"]').all()) {
     await expect(l).toHaveAttribute("rel", "noopener noreferrer");
