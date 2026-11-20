@@ -5,7 +5,7 @@
 // ships, its accessibility, the no-JS and reduced-motion paths, and its loop's pause behaviour.
 import { test, expect, type Page, type Browser, type BrowserContextOptions } from "playwright/test";
 import zlib from "node:zlib";
-import { COUNT_WEBGL } from "../support/page";
+import { COUNT_WEBGL, open, PHONES, CHAPTERS } from "../support/page";
 
 const ROUTE = "/";
 // axe-core is already installed (eslint-config-next → eslint-plugin-jsx-a11y); no new dependency.
@@ -227,6 +227,41 @@ test("structure: one h1, banner, main and a labelled nav; the canvas is hidden f
   // The wordmark is the header's (R2), and it leads to the top of the page.
   await expect(page.getByRole("link", { name: "Tay Shofer — home", exact: true })).toHaveAttribute("href", "#hero");
 });
+
+// Ported in S20 from hero.spec.ts (the Product Plates hero, retired): its four plates were the page's index of the
+// products. Featured work is that index now.
+test("Featured work links each flagship to its panel, with its verified state; none is called open source", async ({ page }) => {
+  await page.goto(ROUTE);
+  const nav = page.getByRole("navigation", { name: "Featured work" });
+  await expect(nav.getByRole("link")).toHaveCount(4);
+  expect(await nav.getByRole("link").evaluateAll((as) => as.map((a) => a.getAttribute("href")))).toEqual(CHAPTERS.map((c) => `#work-${c}`));
+  await expect(nav.locator(".hxa__fstate")).toHaveText(["Available on iOS, Android, and the web", "Source on GitHub", "Released", "Release candidate"]);
+  expect(await nav.textContent()).not.toMatch(/open source/i);
+});
+
+test("following a Featured work link lands its panel right under the header", async ({ browser }) => {
+  for (const vp of [[1440, 900], [390, 844]] as const) {
+    const { ctx, page } = await open(browser, vp);
+    for (const id of CHAPTERS) {
+      await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }));
+      await page.locator(`.hxa__flink[href="#work-${id}"]`).click();
+      await expect.poll(() => page.evaluate((id) => { const nav = document.querySelector("header[data-site-nav]")!.getBoundingClientRect().bottom;
+        return Math.abs(document.getElementById(`work-${id}`)!.getBoundingClientRect().top - nav); }, id), { message: `${vp[0]} ${id}` }).toBeLessThan(1);
+    }
+    await ctx.close();
+  }
+});
+
+for (const vp of PHONES) {
+  test(`${vp[0]}×${vp[1]}: the actions come before Featured work, inside the first screen, with room between them`, async ({ browser }) => {
+    const { ctx, page } = await open(browser, vp);
+    const ctas = (await page.locator(".hxa__ctas").boundingBox())!, featured = (await page.locator(".hxa__featured").boundingBox())!;
+    expect(ctas.y + ctas.height).toBeLessThanOrEqual(vp[1]);
+    expect(featured.y - (ctas.y + ctas.height)).toBeGreaterThanOrEqual(16);
+    expect((await page.locator(".hxa__title").boundingBox())!.y).toBeGreaterThanOrEqual((await page.locator("header[data-site-nav]").boundingBox())!.height);   // clear of the header
+    await ctx.close();
+  });
+}
 
 for (const [label, vp, opts] of [
   ["1440, motion on", [1440, 900], { reducedMotion: "no-preference" }],
