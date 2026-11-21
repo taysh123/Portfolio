@@ -389,6 +389,18 @@ describe("P4: T Poker, the stepper", () => {
     expect(fmt(dict.poker.walk, { name: projects.find((p) => p.id === "poker")!.name })).toBe("Walk through T Poker");
     expect(pokerSteps.map((s) => s.label)).toEqual(["Start a game", "Run the tournament", "Settle up"]);
   });
+  it("a server component with no client code: three native radios, one group, each described by its caption; the coupling lives in the carousel", () => {
+    // "The carousel and Stack's filter are the only client code under the hero" (above) reads Work.tsx; this holds the
+    // explainer itself. Its only controls are the three radios: no link, no button, no tabindex.
+    expect(poker).not.toMatch(/^["']use client["']|useState|useEffect|useRef|onChange|onClick|data-reveal|<canvas|getContext/m);
+    expect(code(poker)).not.toMatch(/<a |<button|tabIndex|href=/);
+    expect(code(poker).match(/<input /g)).toHaveLength(1);   // one, mapped over the three steps
+    expect(poker).toMatch(/<input type="radio" name="wk-poker-step" value=\{k\} data-step=\{k\} defaultChecked=\{k === 0\} aria-describedby=\{`wk-poker-cap-\$\{k\}`\} \/>/);
+    expect(poker).toMatch(/<fieldset id="wk-poker-steps" className="wk__poker-steps">/);
+    // The carousel finds the group by that id and listens to it (Reel.tsx): the steps stay server HTML.
+    expect(reel).toMatch(/document\.getElementById\(`wk-\$\{id\}-steps`\)/);
+    expect(reel).toMatch(/addEventListener\("change", onChange\)/);
+  });
 });
 
 describe("inside the cinematic layer", () => {
