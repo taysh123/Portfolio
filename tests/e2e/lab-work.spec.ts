@@ -826,6 +826,33 @@ test("T Poker: the steps and the carousel stay in step both ways (a step, the ar
   await phone.ctx.close();
 });
 
+// New in S32 (docs/P4_PLAN.md §3.1, "the Tab order: the links, the carousel, then the steps as one stop"; Tay,
+// 2026-11-21, P4 plan decisions).
+for (const vp of [[1440, 900], [390, 844]] as const) {
+  test(`T Poker at ${vp[0]}px: Tab runs the links, the carousel's three stops, then the steps as one stop (the chosen step, or the first when none is), then on to Aegis`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp, { reducedMotion: "no-preference" });
+    const name = () => page.evaluate(() => {
+      const e = document.activeElement as HTMLElement;
+      if (e instanceof HTMLInputElement && e.type === "radio") return `radio: ${e.labels![0].textContent!.replace(/^\d/, "")}`;
+      return e.getAttribute("href") ?? e.getAttribute("aria-label") ?? e.textContent ?? "";
+    });
+    const walk = async (n: number, key = "Tab") => { const seen: string[] = []; for (let i = 0; i < n; i++) { await page.keyboard.press(key); seen.push(await name()); } return seen; };
+    await poker(page).locator("a[data-primary]").focus();
+    expect(await walk(6)).toEqual(["Case study", "Previous capture", "Capture 1 of 5", "Next capture", "radio: Start a game", "https://github.com/taysh123/aegis"]);
+    // Move the carousel to the settle-up screen: Tab now lands on that step, still one stop.
+    await poker(page).getByRole("button", { name: "Next capture" }).click();
+    await poker(page).getByRole("button", { name: "Next capture" }).click();
+    await expect.poll(() => pokerStep(page)).toBe(2);
+    expect(await walk(2)).toEqual(["radio: Settle up", "https://github.com/taysh123/aegis"]);
+    expect(await walk(2, "Shift+Tab")).toEqual(["radio: Settle up", "Next capture"]);
+    // On the podium no step is checked: the group is still one stop, its first step.
+    await poker(page).getByRole("button", { name: "Next capture" }).click();
+    await expect.poll(() => pokerStep(page)).toBe(-1);
+    expect(await walk(2)).toEqual(["radio: Start a game", "https://github.com/taysh123/aegis"]);
+    await ctx.close();
+  });
+}
+
 // About (P3.3, session 12): who, in about ten seconds, under Work. Every word server-rendered, no photo, and it holds
 // still. Since R10 (S18+S19) it ends on the facts: no availability line and no links.
 test("About without JavaScript: every word, no link, no photo, nothing hidden", async ({ browser }) => {
