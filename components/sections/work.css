@@ -220,6 +220,96 @@
 }
 [data-reduced-motion="true"] .wk__panel:is(:hover, :focus-within, :active) .wk__stage { translate: none; }
 
+/* ── P4 (docs/P4_PLAN.md): a mark on a capture (Shot.tsx). The server draws it inside the capture's own frame, which
+   the slide already positions (its dim layer's context), so it moves, turns and dims with the slide and costs no
+   script. Placed in shares of the capture, and of its phone crop below 640px (below). A citation box is cyan (Q5). ── */
+.wk__mark {
+  position: absolute;
+  left: var(--wk-l);
+  top: var(--wk-t);
+  width: var(--wk-w);
+  height: var(--wk-h);
+  border: 1.5px solid var(--cine-cyan);
+  border-radius: var(--cine-radius-sm);
+  pointer-events: none;
+}
+
+/* ── P4: each panel's explainer, in the slot's own row (the panel's last child): under both columns from 1024px, on
+   the panel's own column lines, and after the capture on phones, so the first row is unchanged. Always shown; nothing
+   in it moves or takes focus. A panel without one keeps its slot empty and hidden. ── */
+/* Only its row gap is set: from 1024px the subgrid keeps the panel's own column gap, so its columns are the first row's. */
+.wk__demo:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr); row-gap: var(--cine-space-6); align-items: start; }
+@media (min-width: 1024px) {
+  .wk__demo:not([hidden]) { grid-column: 1 / -1; grid-template-columns: subgrid; }
+}
+
+/* DeveloperOS, cite or decline (DosExplainer.tsx): the retrieval sequence under its name, a rail of five steps with
+   the evidence and the citation in cyan and the decline in violet (Q5); then the refusal, the app's own words. The
+   rail runs from each node to the next, so the nodes stay open on the sky. */
+.wk__dos-label {
+  font-size: var(--cine-text-label);
+  font-weight: var(--cine-weight-label);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-faint);
+}
+.wk__dos-flow { margin-top: var(--cine-space-4); }
+.wk__dos-flow li { position: relative; padding: 0 0 var(--cine-space-5) var(--cine-space-6); }
+.wk__dos-flow li:last-child { padding-bottom: 0; }
+.wk__dos-flow li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid var(--cine-faint);
+  border-radius: var(--cine-radius-pill);
+}
+.wk__dos-flow li:not(:last-child)::after { content: ""; position: absolute; left: 4px; top: 16px; bottom: -7px; width: 1px; background: var(--cine-hair); }
+.wk__dos-flow li:is([data-k="evidence"], [data-k="cite"])::before { border-color: var(--cine-cyan); background: var(--cine-cyan); }
+.wk__dos-flow li[data-k="decline"]::before { border-color: var(--cine-violet); background: var(--cine-violet); }
+.wk__dos-flow b {
+  display: block;
+  font-size: var(--cine-text-body);
+  font-weight: var(--cine-weight-control);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-ink);
+}
+.wk__dos-flow span {
+  display: block;
+  margin-top: var(--cine-space-1);
+  max-width: 36rem;
+  font-size: var(--cine-text-small);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-mist);
+}
+.wk__dos-refusal { margin: 0; }
+.wk__dos-refusal figcaption {
+  max-width: 36rem;
+  font-size: var(--cine-text-small);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-mist);
+}
+.wk__dos-says {
+  margin-top: var(--cine-space-3);
+  padding: var(--cine-space-4) var(--cine-space-5);
+  border: 1px solid var(--cine-edge);
+  border-radius: var(--cine-radius-window);
+  background: var(--cine-glass-ink);
+}
+.wk__dos-says p { font-size: var(--cine-text-body); line-height: var(--cine-leading-lead); color: var(--cine-ink); }
+/* The command stays whole on one line, in the site's own monospace stack (app/globals.css, --font-mono: a system face,
+   no font to fetch). It is written out here: reading the variable makes Tailwind add it to the site's shared sheet. */
+.wk__dos-refusal code {
+  padding: 0 var(--cine-space-1);
+  border: 1px solid var(--cine-hair);
+  border-radius: var(--cine-radius-sm);
+  background: var(--cine-glass-ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: var(--cine-text-small);
+  white-space: nowrap;
+}
+
 /* ── Two more (R5, MoreWork.tsx): the two smaller systems, under the four panels and after a hairline. The live title
    alone, then two ruled rows on About's grid: from 1024px the name and its context take the words share, the summary
    and the links the capture's; stacked below. It holds still. ── */
@@ -524,6 +614,9 @@
   .wk__device img[style] { aspect-ratio: var(--wk-ratio-phone); }
   .wk__slide .wk__device:empty::before { aspect-ratio: var(--wk-box-phone, var(--wk-box)); }
   .wk__panel[data-kind="window"] .wk__slide { width: 86%; }
+  /* A mark on a capture with a phone crop takes the crop's own shares (Shot.tsx). */
+  .wk__mark { left: var(--wk-l-m, var(--wk-l)); top: var(--wk-t-m, var(--wk-t)); width: var(--wk-w-m, var(--wk-w)); height: var(--wk-h-m, var(--wk-h)); }
+  .wk__dos-says { padding: var(--cine-space-3) var(--cine-space-4); }
   .wk__about-facts li { padding-block: var(--cine-space-2); }
   .wk__stack-group { gap: var(--cine-space-3); padding-block: var(--cine-space-4); }
   .wk__tbs-row, .wk__mw-row { padding-block: var(--cine-space-4); }

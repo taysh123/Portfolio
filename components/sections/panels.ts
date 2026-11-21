@@ -1,7 +1,7 @@
 import { projects, publicRepoUrl, PROJECT_GALLERIES, type Project } from "@/data/projects";
 import { flagships, type WorldKey } from "@/data/work";
 import { indexStateKey } from "@/data/proof";
-import type { CaptureName } from "@/data/lab-images";
+import { captureOf, type CaptureName } from "@/data/lab-images";
 import { dict } from "@/lib/dict";
 import { fmt } from "@/lib/fmt";
 
@@ -13,8 +13,14 @@ import { fmt } from "@/lib/fmt";
  * tests/unit/lab-work.test.ts checks each against its source.
  */
 
-/** One capture in a panel's gallery. `phone` is the crop the live chapter swaps in below 640px, if it has one. */
-export type Slide = { image: CaptureName; phone?: CaptureName; alt: string };
+/** A box the server draws on a capture (P4), in shares of the capture: left, top, width and height. */
+export type Box = { l: string; t: string; w: string; h: string };
+/** A mark on a capture (P4): where it sits on the capture, and on its phone crop below 640px. */
+export type Mark = { box: Box; phone?: Box };
+
+/** One capture in a panel's gallery. `phone` is the crop the live chapter swaps in below 640px, if it has one; `marks`
+ *  are drawn on it by the server (Shot.tsx). */
+export type Slide = { image: CaptureName; phone?: CaptureName; alt: string; marks?: Mark[] };
 
 export type Panel = {
   id: WorldKey;
@@ -35,9 +41,17 @@ export type Panel = {
   tone: "cyan" | "violet";
 };
 
-/** The three file:line chips on the DeveloperOS search capture, as the live chapter names them in its alt text
- *  (product-plates-final:components/work/DeveloperOSChapter.tsx, CHIPS: not exported, so the unit test kept this copy equal). */
-export const DOS_CHIPS = ["devos/providers/ollama.py:1-50", "tests/test_ollama.py:1-50", "devos/providers/__init__.py:1-5"];
+/** The first three file:line chips on the DeveloperOS search capture (1600×1027), measured: left, top, width and height
+ *  in px. The Product Plates chapter's own (product-plates-final:components/work/DeveloperOSChapter.tsx, CHIPS: not
+ *  exported, so the unit test holds this copy equal). Its phone crop is the capture's top-left 820×612, so the same
+ *  pixels hold there. */
+export const DOS_CHIP_BOXES = [
+  { x: 21, y: 183, w: 394, h: 25, label: "devos/providers/ollama.py:1-50" },
+  { x: 21, y: 339, w: 330, h: 25, label: "tests/test_ollama.py:1-50" },
+  { x: 21, y: 495, w: 405, h: 25, label: "devos/providers/__init__.py:1-5" },
+] as const;
+/** The chips' names, as the capture's alt text gives them. */
+export const DOS_CHIPS: string[] = DOS_CHIP_BOXES.map((c) => c.label);
 
 const project = (id: string): Project => projects.find((p) => p.id === id)!;
 
@@ -77,12 +91,26 @@ const ALT: Partial<Record<CaptureName, string>> = {
 export const PHONE_CROP: Partial<Record<CaptureName, CaptureName>> = { "aegis-alerts": "aegis-alerts-phone", "dos-search": "dos-search-phone" };
 const KIND: Record<WorldKey, Panel["kind"]> = { poker: "phone", aegis: "window", developeros: "window", "gravity-flow": "phone" };
 
+/** A rectangle of a capture, in px, as a share of that capture's real size. */
+function boxOn(name: CaptureName, x: number, y: number, w: number, h: number): Box {
+  const c = captureOf(name), pct = (v: number, of: number) => `${((v / of) * 100).toFixed(2)}%`;
+  return { l: pct(x, c.w), t: pct(y, c.h), w: pct(w, c.w), h: pct(h, c.h) };
+}
+/** P4: the marks drawn on a capture, by the server, inside its carousel slide. DeveloperOS's search capture: a citation
+ *  box on each of its first three file:line chips, framed 4px out on every side, as the Product Plates chapter drew them. */
+const MARKS: Partial<Record<CaptureName, Mark[]>> = {
+  "dos-search": DOS_CHIP_BOXES.map(({ x, y, w, h }) => ({
+    box: boxOn("dos-search", x - 4, y - 4, w + 8, h + 8),
+    phone: boxOn("dos-search-phone", x - 4, y - 4, w + 8, h + 8),
+  })),
+};
+
 function galleryOf(id: WorldKey): Slide[] {
   return PROJECT_GALLERIES[id].map((e) => {
     const image = typeof e === "string" ? e : e.image;
     const alt = typeof e === "string" ? ALT[image] : e.alt;
     if (!alt) throw new Error(`${id}: capture "${image}" has no alt text (give its gallery entry one)`);
-    return { image, alt, ...(PHONE_CROP[image] ? { phone: PHONE_CROP[image] } : null) };
+    return { image, alt, ...(PHONE_CROP[image] ? { phone: PHONE_CROP[image] } : null), ...(MARKS[image] ? { marks: MARKS[image] } : null) };
   });
 }
 
