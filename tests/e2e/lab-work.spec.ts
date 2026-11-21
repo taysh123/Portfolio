@@ -533,6 +533,79 @@ for (const [label, vp, opts] of [
   });
 }
 
+// P4 (docs/P4_PLAN.md §3.2): Aegis, one alert start to finish, in its panel's own row. Restored from the Product Plates
+// chapter's tests (product-plates-final:tests/e2e/chapters.spec.ts:96, :107, :118 and :155), adapted to the panel: the
+// trace lives in the slot, and the ring on the carousel's first slide; the note beside the console doesn't come back
+// (Q6), so the row's words are checked where a reader gets them, in the capture's alt text.
+// Tay, 2026-11-21, P4 plan decisions.
+const aegis = (page: Page) => panel(page, "aegis");
+const rectOf = (page: Page, sel: string) => aegis(page).locator(sel).evaluate((e) => { const r = e.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom }; });
+test("Aegis: one alert, start to finish: ingest → normalise → detect, then the parallel fork, then live", async ({ page }) => {
+  await page.goto(ROUTE);
+  const trace = aegis(page).getByRole("figure", { name: "One alert, start to finish" }).locator(".wk__aegis-flow");
+  expect(await trace.locator(":scope > li").evaluateAll((ls) => ls.map((l) => l.querySelector(".wk__aegis-then")?.textContent ?? l.querySelector("b")?.textContent))).toEqual(
+    ["Ingest", "Normalise", "Detect", "Then, in parallel", "Live"]);
+  await expect(trace.locator(".wk__aegis-branches > li > b")).toHaveText(["Threat scoring", "Alert stream"]);
+  // In the explainer itself: the panel's tagline and chips already name both.
+  await expect(aegis(page).locator(".wk__demo")).toContainText("RabbitMQ");
+  await expect(aegis(page).locator(".wk__demo")).toContainText("PostgreSQL schema");
+  await expect(aegis(page)).not.toContainText(/open source/i);
+});
+
+test("Aegis, wide: the fork is drawn — both branches start on the main line's row, the alert stream and Live share the row below", async ({ browser }) => {
+  const { ctx, page } = await at(browser, [1440, 900]);
+  const box = async (k: string) => { const r = await rectOf(page, `[data-k="${k}"]`); return { top: Math.round(r.top), left: Math.round(r.left) }; };
+  const detect = await box("detect"), score = await box("score"), alert = await box("alert"), live = await box("live");
+  expect(score.top).toBe(detect.top);
+  expect(alert.top).toBeGreaterThan(score.top); expect(alert.left).toBe(score.left);
+  expect(live.top).toBe(alert.top); expect(live.left).toBeGreaterThan(alert.left);
+  await ctx.close();
+});
+
+for (const vp of [[1440, 900], [390, 844]] as const) {
+  test(`Aegis at ${vp[0]}px: the ring frames the real port-scan row on the carousel's first slide (its phone crop below 640px), and the Detect step says what it counted`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp);
+    const device = aegis(page).locator('.wk__slide[data-offset="0"] .wk__device');
+    await device.scrollIntoViewIfNeeded();
+    await expect.poll(() => device.locator("img").evaluate((i) => (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0)).toBe(true);
+    const r = await device.evaluate((d) => {
+      const img = d.querySelector("img") as HTMLImageElement, ir = img.getBoundingClientRect(), frame = d.getBoundingClientRect();
+      const phone = img.currentSrc.includes("aegis-alerts-phone");
+      // The row's card in the capture's pixels (left 528, 644–775 of 2160) mapped through the crop the browser picked
+      // (data/images.ts AEGIS_CROPS: desktop 492,612 1148×200; phone 500,612 1060×200).
+      const crop = phone ? { left: 500, width: 1060 } : { left: 492, width: 1148 };
+      const y = (v: number) => ir.top + ((v - 612) / 200) * ir.height, x = (v: number) => ir.left + ((v - crop.left) / crop.width) * ir.width;
+      const rings = [...d.querySelectorAll(".wk__mark")].map((m) => m.getBoundingClientRect());
+      return { phone, n: rings.length, ring: rings[0], rowTop: y(644), rowBottom: y(775), rowLeft: x(528), frameRight: frame.right, alt: img.alt };
+    });
+    expect(r.phone).toBe(vp[0] < 640);
+    expect(r.n).toBe(1);
+    expect(r.ring.top).toBeLessThanOrEqual(r.rowTop + 1); expect(r.ring.bottom).toBeGreaterThanOrEqual(r.rowBottom - 1);
+    expect(r.ring.bottom - r.ring.top).toBeLessThan((r.rowBottom - r.rowTop) * 1.4);
+    expect(r.ring.left).toBeLessThan(r.rowLeft);
+    // It runs past the frame's right edge, as the row's card does (the crop ends there, the row doesn't); the frame clips it.
+    expect(r.ring.right).toBeGreaterThan(r.frameRight);
+    // What a screen reader gets instead of the ring: the row's own words, in the capture's alt text.
+    expect(r.alt).toContain("Port scan detected from 10.10.10.2 (20 distinct ports in 60s)");
+    await expect(aegis(page).locator('[data-k="detect"]')).toContainText("fires when the estimate reaches 20");
+    await ctx.close();
+  });
+}
+
+test("Aegis at 390px: the trace is a single column with the fork as two branches side by side, and Live follows the alert stream", async ({ browser }) => {
+  const { ctx, page } = await at(browser, [390, 844]);
+  const xs = await aegis(page).locator(".wk__aegis-flow > li:not([data-k=live])").evaluateAll((ls) => ls.map((l) => Math.round(l.getBoundingClientRect().left)));
+  expect(new Set(xs).size).toBe(1);
+  const br = await aegis(page).locator(".wk__aegis-branches > li").evaluateAll((ls) => ls.map((l) => Math.round(l.getBoundingClientRect().top)));
+  expect(br[0]).toBe(br[1]);
+  // Live sits under the alert stream's branch (the right-hand one), not under threat scoring.
+  const alert = await rectOf(page, '[data-k="alert"]'), score = await rectOf(page, '[data-k="score"]'), live = await rectOf(page, '[data-k="live"]');
+  expect(alert.left).toBeGreaterThan(score.right);
+  expect(Math.abs(live.left - alert.left)).toBeLessThanOrEqual(2);
+  expect(live.top).toBeGreaterThan(alert.bottom);
+  await ctx.close();
+});
+
 // About (P3.3, session 12): who, in about ten seconds, under Work. Every word server-rendered, no photo, and it holds
 // still. Since R10 (S18+S19) it ends on the facts: no availability line and no links.
 test("About without JavaScript: every word, no link, no photo, nothing hidden", async ({ browser }) => {
