@@ -942,6 +942,34 @@ for (const [label, vp, opts] of [
   });
 }
 
+// New in S32, as S30's and S31's (Tay's yes at S32's start; Tay, 2026-11-21, P4 plan decisions): T Poker's slot-row
+// geometry.
+for (const vp of [[320, 568], [390, 844], [1024, 768], [1440, 900]] as const) {
+  test(`T Poker at ${vp[0]}px: the steps are the panel's own row under the first, under the carousel's column from 1024px and after it on phones; their only stops are the three radios`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp);
+    const r = await poker(page).evaluate((p) => {
+      const box = (s: string) => { const b = p.querySelector(s)!.getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width }; };
+      return { body: box(".wk__body"), stage: box(".wk__stage"), demo: box(".wk__demo"), steps: box(".wk__poker"), track: box(".wk__poker-track"),
+        stops: [...p.querySelectorAll<HTMLInputElement>(".wk__demo :is(a, button, input, select, textarea, [tabindex])")].map((e) => `${e.type}:${e.name}`) };
+    });
+    const near = (a: number, b: number, what: string) => expect(Math.abs(a - b), `${vp[0]}: ${what}`).toBeLessThan(1);
+    expect(r.demo.top, "under the first row").toBeGreaterThanOrEqual(Math.max(r.body.bottom, r.stage.bottom));
+    if (vp[0] >= 1024) {
+      // Under the capture's column only (T Poker shows its capture on the left), on the first row's own column lines.
+      near(r.steps.left, r.stage.left, "the steps start at the capture's column"); near(r.steps.width, r.stage.width, "and are as wide");
+      expect(r.steps.right, "never under the words").toBeLessThan(r.body.left);
+    } else {
+      // One column: the words, the capture, then the steps, the column's full width.
+      expect(r.stage.top).toBeGreaterThanOrEqual(r.body.bottom);
+      near(r.steps.width, r.body.width, "full width");
+    }
+    // The track is centred under the carousel.
+    near((r.track.left + r.track.right) / 2, (r.stage.left + r.stage.right) / 2, "centred");
+    expect(r.stops).toEqual(["radio:wk-poker-step", "radio:wk-poker-step", "radio:wk-poker-step"]);   // one group: one Tab stop
+    await ctx.close();
+  });
+}
+
 // About (P3.3, session 12): who, in about ten seconds, under Work. Every word server-rendered, no photo, and it holds
 // still. Since R10 (S18+S19) it ends on the facts: no availability line and no links.
 test("About without JavaScript: every word, no link, no photo, nothing hidden", async ({ browser }) => {
