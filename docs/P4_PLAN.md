@@ -1,14 +1,64 @@
 # P4 plan: the four explainers, back in Concept A
 
-**Status: a plan for Tay's approval (Session 29, 2026-11-21). No code changed.** Written on `docs/p4-plan`, cut from
-`main` = `origin/main` = Production = `c29c0b1`. Nothing here authorises implementation: each explainer is its own
-session, branch and PR, after Tay approves this plan and that session's brief.
+**Status: approved by Tay on 2026-11-21, with the decisions below (Session 29). No code changed.** Written on
+`docs/p4-plan`, cut from `main` = `origin/main` = Production = `c29c0b1`. Each explainer is still its own session, branch
+and PR, built on that session's brief.
 
 Labels: **VL** = verified locally in S29 (files, git objects at `product-plates-final`, read-only `gh api` and `curl`).
 **NC** = needs confirmation (an estimate, or a check left to the session that builds it).
 
 Read with: `docs/ROADMAP.md` ("P4" and its restore record), `docs/CINEMATIC_SYSTEM.md` ("The Work slice", "Galleries
 and the carousel"), `docs/PROJECT_CONTEXT.md` §4, `docs/RESEARCH_AND_DECISIONS.md` (R4, R6, R12).
+
+---
+
+## Decisions (Tay, 2026-11-21)
+
+Tay approved the plan with these decisions. Where one differs from a recommendation below, the decision wins.
+
+**The general decisions**
+- **Q1, Q2, Q3, Q5, Q6:** approved as written (§2):
+  - in the panel, not the dialog;
+  - the slot becomes the panel's new row;
+  - the marks go on the carousel's own slide;
+  - the colour mapping, with no new value;
+  - what doesn't come back.
+- **Q7 and §6, the tests:** approved.
+  - The two slot tests change once per session.
+  - Each explainer's restored, retired, changed and new tests are approved as listed in §3 and §6.
+  - Each test change goes in its own commit, naming this approval ("Tay, 2026-11-21, P4 plan decisions").
+
+**T Poker (§3.1)**
+- **Option A**, with option C as the fallback.
+- **The carousel's no-JS change** (its server output carries slides 2 and 3) gets a final look from Tay at S32's start,
+  before it is built.
+- **The legend is visible:** "Walk through T Poker" (`dict.poker.walk`).
+
+**Aegis (§3.2)**
+- **Keep the ring.**
+- **C1 is approved, in these exact words:** "Severity, a per-technique MITRE weight (higher for techniques that are
+  harder to detect), and one minus the rule's false-positive rate multiply into one score, clamped to 0–1."
+- **C2 is approved, in these exact words:** "The agent signs the request body with an HMAC; the API verifies it in
+  constant time (no replay protection yet)."
+- **C3 is not needed:** Q2 is approved and the ring stays, so "the highlighted row above" stays true.
+- **The stacked branches below about 400px:** approved, subject to Tay's review of the screenshots.
+- **The shared-schema note stays.**
+- **The `onScreen` sentence is dropped.**
+
+**DeveloperOS (§3.3)**
+- **The rail's name is visible:** "From your files to an answer, as implemented" (`dict.dos.flow`).
+
+**GRAVITY FLOW (§3.4)**
+- **Numbered rings on the frame, and a legend in the slot.**
+- **The lede is the legend's lead-in:** "Press and hold to place a gravity well, and pull a lost star home."
+  (`flagships[3].lede`).
+- **It waits for #18.**
+
+**The order (§7) and S30 (§8)**
+- **The order:** DeveloperOS (S30), Aegis, T Poker, then GRAVITY FLOW.
+- **P4 goes before #22.** This changes the standing order "#18, #22, then P4" (Tay, S24). `docs/ROADMAP.md`,
+  `claude/START-HERE.md` and `CLAUDE.md` take it in the next docs commit.
+- **S30's scope:** as written in §8.
 
 ---
 
