@@ -352,6 +352,15 @@ describe("P4: Aegis, one alert start to finish", () => {
     // No AI claim anywhere in the trace: Aegis's analysis is a deterministic mock, and the trace has no such step.
     expect(shown.join(" ")).not.toMatch(/\bAI\b|\bLLM\b|artificial intelligence|machine learning|language model|GPT/i);
   });
+  it("a server component that holds still: no client code, no reveal, nothing to focus, and no motion in its rules", () => {
+    // "The carousel and Stack's filter are the only client code under the hero" (above) reads Work.tsx and panels.ts
+    // (the ring); this holds the explainer itself.
+    expect(aegis).not.toMatch(/^["']use client["']|useState|useEffect|data-reveal|<canvas|getContext/m);
+    expect(code(aegis)).not.toMatch(/<a |<button|<input|tabIndex|href=/);
+    const rules = css.slice(css.indexOf("/* Aegis, one alert start to finish"), css.indexOf("/* ── Two more"));
+    expect(rules).toMatch(/\.wk__aegis-flow/);
+    expect(rules).not.toMatch(/transition|animation|@keyframes/);
+  });
 });
 
 describe("inside the cinematic layer", () => {
