@@ -430,7 +430,7 @@ test("structure: the hero's one h1, four product h3s under Work's h2, the sectio
   // Work, Two more (R5), About, Stack, Think · Build · Ship and Contact.
   await expect(page.locator(".wk h2")).toHaveCount(6);
   await expect(page.getByRole("region", { name: "Two more" }).locator("h3")).toHaveText(["Job Assistant", "Orders & Delivery"]);
-  await expect(page.getByRole("region", { name: "Engineer by training. Builder by nature." }).locator("h2")).toHaveCount(1);
+  await expect(page.getByRole("region", { name: "Solid foundations. Real products." }).locator("h2")).toHaveCount(1);   // Tay, 2026-11-21, copy pass
   await expect(page.getByRole("region", { name: "Tools behind the work." }).locator("h2")).toHaveCount(1);
   await expect(page.getByRole("region", { name: "Tools behind the work." }).locator("h3")).toHaveCount(STACK_GROUPS.length);
   await expect(page.getByRole("region", { name: "Think. Build. Ship." }).locator("h2")).toHaveCount(1);
@@ -555,7 +555,7 @@ const aegis = (page: Page) => panel(page, "aegis");
 const rectOf = (page: Page, sel: string) => aegis(page).locator(sel).evaluate((e) => { const r = e.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom }; });
 test("Aegis: one alert, start to finish: ingest → normalise → detect, then the parallel fork, then live", async ({ page }) => {
   await page.goto(ROUTE);
-  const trace = aegis(page).getByRole("figure", { name: "One alert, start to finish" }).locator(".wk__aegis-flow");
+  const trace = aegis(page).getByRole("figure", { name: "How one port-scan alert moves through Aegis, start to finish" }).locator(".wk__aegis-flow");   // its title: Tay, 2026-11-21, copy pass
   expect(await trace.locator(":scope > li").evaluateAll((ls) => ls.map((l) => l.querySelector(".wk__aegis-then")?.textContent ?? l.querySelector("b")?.textContent))).toEqual(
     ["Ingest", "Normalise", "Detect", "Then, in parallel", "Live"]);
   await expect(trace.locator(".wk__aegis-branches > li > b")).toHaveText(["Threat scoring", "Alert stream"]);
@@ -975,10 +975,10 @@ for (const vp of [[320, 568], [390, 844], [1024, 768], [1440, 900]] as const) {
 test("About without JavaScript: every word, no link, no photo, nothing hidden", async ({ browser }) => {
   const { ctx, page } = await at(browser, [1440, 900], { javaScriptEnabled: false });
   const ab = page.locator("[data-about]");
-  await expect(ab.locator("h2")).toHaveText("Engineer by training. Builder by nature.");
+  await expect(ab.locator("h2")).toHaveText("Solid foundations. Real products.");   // title, lede, facts: Tay, 2026-11-21, copy pass
   await expect(ab.locator(".wk__about-eyebrow")).toHaveText("About");
-  await expect(ab.locator(".wk__about-lede")).toHaveText("I'm a Computer Science graduate who enjoys turning complex ideas into useful, dependable software. Today, I work with C#/.NET, TypeScript, and Python, taking projects from an initial idea to working software.");
-  await expect(ab.locator(".wk__about-facts li")).toHaveText(["B.Sc. in Computer Science", "Full-stack: web, mobile, and backend", "Based in Israel", "Working in English and Hebrew"]);
+  await expect(ab.locator(".wk__about-lede")).toHaveText("I'm a Computer Science graduate who builds dependable software, from the first design to production. I work across the stack: C#/.NET and ASP.NET Core, TypeScript with React and React Native, Python, Java and SQL, with PostgreSQL, Redis, RabbitMQ and Docker behind them, and local models through Ollama.");
+  await expect(ab.locator(".wk__about-facts li")).toHaveText(["B.Sc. in Computer Science (2026)", "Full-stack: web, mobile, and backend", "Based in Israel", "Working in English and Hebrew"]);
   await expect(ab.locator(".wk__about-open")).toHaveCount(0);
   await expect(ab.locator("img, picture, canvas, video, figcaption, svg:not([aria-hidden='true'])")).toHaveCount(0);
   await expect(ab.locator("a, button")).toHaveCount(0);
@@ -989,7 +989,7 @@ test("About without JavaScript: every word, no link, no photo, nothing hidden", 
 // Ported in S20 from lower.spec.ts (the Product Plates About, retired).
 test("About: the four live facts; no institution anywhere in the served page; the rejected render gone in every form", async ({ page }) => {
   await page.goto(ROUTE);
-  await expect(page.locator("#about .wk__about-facts li")).toHaveText(["B.Sc. in Computer Science", "Full-stack: web, mobile, and backend", "Based in Israel", "Working in English and Hebrew"]);
+  await expect(page.locator("#about .wk__about-facts li")).toHaveText(["B.Sc. in Computer Science (2026)", "Full-stack: web, mobile, and backend", "Based in Israel", "Working in English and Hebrew"]);   // Tay, 2026-11-21, copy pass
   // No institution anywhere in the served page: copy, alt text, metadata, Open Graph or JSON-LD.
   expect(namesAny(await page.content())).toBe(false);
   expect(await page.content()).not.toMatch(/Where the work happens|A 3D render, built in code|about-studio/);
@@ -1369,7 +1369,7 @@ test("Contact without JavaScript: the eyebrow, the live title and lead, the four
   const { ctx, page } = await at(browser, [1440, 900], { javaScriptEnabled: false });
   await expect(contact(page).locator(".wk__contact-eyebrow")).toHaveText("Contact");
   await expect(contact(page).locator("h2")).toHaveText("Let's build something people use.");
-  await expect(contact(page).locator(".wk__contact-lead")).toHaveText("I'm looking for a software engineering opportunity that fits my skills—on-site, hybrid, or remote.");
+  await expect(contact(page).locator(".wk__contact-lead")).toHaveText("I'm looking for a software engineering role—backend, full-stack, AI or security. On-site or hybrid in central Israel, or remote.");   // Tay, 2026-11-21, copy pass
   const links = contact(page).locator("a");
   await expect(links).toHaveCount(CONTACT_LINKS.length);
   for (const [i, [href, name]] of CONTACT_LINKS.entries()) {

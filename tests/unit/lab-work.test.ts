@@ -326,7 +326,8 @@ describe("P4: DeveloperOS, cite or decline", () => {
     const jsx = code(dos.slice(dos.indexOf("export function DosExplainer")));
     expect([...jsx.matchAll(/>([^<>{}]+)</g)].map((m) => m[1].trim()).filter(Boolean)).toEqual([]);
     for (const s of [dict.dos.flow, ...dosFlow.map((f) => f.body), dosRefusalCaption.body, dosRefusal.message]) expect(dos).not.toContain(s);
-    expect(dict.dos.flow).toBe("From your files to an answer, as implemented");   // the rail's name, shown (Tay's decision)
+    // The rail's name, shown (Tay's decision); its words are Tay's (2026-11-21, copy pass).
+    expect(dict.dos.flow).toBe("How DeveloperOS answers a question about your code");
   });
   it("a server component that holds still: no client code, no reveal, nothing to focus", () => {
     // "The carousel and Stack's filter are the only client code under the hero" (above) reads Work.tsx; this holds it here.
@@ -441,19 +442,19 @@ describe("About (P3.3): the live About section's own words, ending on the facts 
   const hero = read("components/sections/Hero.tsx");
   const shown = [aboutBlock.eyebrow, ...aboutBlock.title, aboutBlock.lede, ...aboutBlock.facts];
 
+  // Tay, 2026-11-21, copy pass: the title, the lede and the degree's year.
   it("the eyebrow, the title and the four facts are the live ones, word for word", () => {
     expect(aboutBlock.eyebrow).toBe(dict.nav.about);
     expect(aboutBlock.title).toEqual(about.title);
-    expect([...aboutBlock.title]).toEqual(["Engineer by training.", "Builder by nature."]);
+    expect([...aboutBlock.title]).toEqual(["Solid foundations.", "Real products."]);
     expect(aboutBlock.facts).toEqual(about.facts);
-    expect([...aboutBlock.facts]).toEqual(["B.Sc. in Computer Science", "Full-stack: web, mobile, and backend", "Based in Israel", "Working in English and Hebrew"]);
+    expect([...aboutBlock.facts]).toEqual(["B.Sc. in Computer Science (2026)", "Full-stack: web, mobile, and backend", "Based in Israel", "Working in English and Hebrew"]);
   });
-  it("the lede is two sentences of the live copy, word for word (who, then what with)", () => {
-    const [who, what] = ["I'm a Computer Science graduate who enjoys turning complex ideas into useful, dependable software.",
-      "Today, I work with C#/.NET, TypeScript, and Python, taking projects from an initial idea to working software."];
-    expect(aboutBlock.lede).toBe(`${who} ${what}`);
-    expect(about.paragraphs[0].startsWith(who)).toBe(true);
-    expect(about.paragraphs[1]).toContain(` ${what} `);
+  it("the lede is Tay's two sentences, word for word (who, then what with)", () => {
+    const [who, what] = ["I'm a Computer Science graduate who builds dependable software, from the first design to production.",
+      "I work across the stack: C#/.NET and ASP.NET Core, TypeScript with React and React Native, Python, Java and SQL, with PostgreSQL, Redis, RabbitMQ and Docker behind them, and local models through Ollama."];
+    expect(aboutBlock.lede).toBe(about.body);
+    expect(about.body).toBe(`${who} ${what}`);
   });
   it("R10: no availability line and no links; it ends on the facts", () => {
     expect(Object.keys(aboutBlock)).toEqual(["eyebrow", "title", "lede", "facts"]);
@@ -470,10 +471,11 @@ describe("About (P3.3): the live About section's own words, ending on the facts 
     expect(contactBlock.resume.href).toBe(resume.href);
     expect(contactBlock.profiles.map((p) => p.href).sort()).toEqual([socials.github.url, socials.linkedin.url].sort());
   });
-  it("no photo, no capture, no institution, no year or number of its own, and no private repository", () => {
+  it("no photo, no capture, no institution, no number of its own but the degree's year, and no private repository", () => {
     expect(code(block)).not.toMatch(/<img|<picture|<Shot|<Pic|<Image/);
     for (const t of [block, read("components/sections/aboutBlock.ts"), shown.join(" ")]) expect(namesAny(t)).toBe(false);
-    expect(shown.join(" ")).not.toMatch(/\d/);
+    // The one number shown is the degree's year (Tay, 2026-11-21, copy pass).
+    expect(shown.filter((s) => /\d/.test(s))).toEqual(["B.Sc. in Computer Science (2026)"]);
     expect(privateRepoLeaks(block + JSON.stringify(aboutBlock))).toEqual([]);
   });
   it("holds still and ships no client code: the page's one reveal stays the hero's", () => {
@@ -735,7 +737,7 @@ describe("Contact (P3.6): the live Contact section's own words, and its four lin
     expect([...c.title]).toEqual(["Let's build something", "people use."]);   // the live title (Tay, session 15)
     expect(c.title.join(" ")).not.toMatch(/meaningful/);                       // not the reference images' draft
     expect(c.lead).toBe(availability.detail);
-    expect(c.lead).toBe("I'm looking for a software engineering opportunity that fits my skills—on-site, hybrid, or remote.");
+    expect(c.lead).toBe("I'm looking for a software engineering role—backend, full-stack, AI or security. On-site or hybrid in central Israel, or remote.");   // Tay, 2026-11-21, copy pass
     expect(block).toMatch(/<span>\{c\.title\[0\]\}<\/span> <span>\{c\.title\[1\]\}<\/span>/);   // each half on its own line, as live
   });
   it("the lead shows only while the site says it is open (Tay, session 15)", () => {

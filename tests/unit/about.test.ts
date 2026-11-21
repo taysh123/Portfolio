@@ -3,18 +3,19 @@ import { it, expect } from "vitest";
 import fs from "node:fs";
 import { about } from "@/data/about";
 
-it("uses the spec §5.3 title and the owner's facts line (2026-10-13)", () => {
-  expect(about.title).toEqual(["Engineer by training.", "Builder by nature."]);
-  // The degree alone: the site names no institution (the owner's decision).
-  expect(about.facts).toEqual(["B.Sc. in Computer Science", "Full-stack: web, mobile, and backend", "Based in Israel", "Working in English and Hebrew"]);
+// Tay, 2026-11-21, copy pass: the title, the body and the degree's year.
+it("uses Tay's title and facts line (copy pass, 2026-11-21)", () => {
+  expect(about.title).toEqual(["Solid foundations.", "Real products."]);
+  // The degree and its year alone: the site names no institution (the owner's decision).
+  expect(about.facts).toEqual(["B.Sc. in Computer Science (2026)", "Full-stack: web, mobile, and backend", "Based in Israel", "Working in English and Hebrew"]);
 });
-it("carries the owner's About paragraphs verbatim", () => {
-  expect(about.paragraphs[0]).toBe("I'm a Computer Science graduate who enjoys turning complex ideas into useful, dependable software. I focus on clear data models, well-defined boundaries, and tests that make important constraints explicit.");
-  expect(about.paragraphs[1]).toBe("I started with C and C++, where the machine makes mistakes hard to hide. Today, I work with C#/.NET, TypeScript, and Python, taking projects from an initial idea to working software. I'm looking for a software engineering opportunity that fits my skills and lets me contribute to useful, reliable products—from interface to infrastructure.");
+it("carries Tay's About body verbatim (copy pass, 2026-11-21)", () => {
+  expect(about.body).toBe("I'm a Computer Science graduate who builds dependable software, from the first design to production. I work across the stack: C#/.NET and ASP.NET Core, TypeScript with React and React Native, Python, Java and SQL, with PostgreSQL, Redis, RabbitMQ and Docker behind them, and local models through Ollama.");
 });
-it("is two paragraphs with no new claims: no counts at all (spec §5.3)", () => {
-  expect(about.paragraphs).toHaveLength(2);
-  for (const p of about.paragraphs) { expect(p).not.toMatch(/\d/); expect(p).not.toMatch(/6\+|shipped projects/i); }
+it("is two sentences with no new claims: no counts at all (spec §5.3)", () => {
+  expect(about.body.split(/(?<=\.)\s+/)).toHaveLength(2);
+  expect(about.body).not.toMatch(/\d/);
+  expect(about.body).not.toMatch(/6\+|shipped projects/i);
 });
 it("the 3D workstation render and its caption are gone: no 'Where the work happens', no 'A 3D render, built in code.' anywhere", () => {
   for (const d of ["components", "data", "app", "lib"]) for (const f of (fs.readdirSync(d, { recursive: true }) as string[]).filter((f) => /\.(tsx?|css)$/.test(f))) {
