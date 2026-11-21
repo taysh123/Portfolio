@@ -312,8 +312,10 @@ test("keyboard: every control under the hero in reading order, each with a solid
   const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: "no-preference" });
   // Start from the hero's last control, Featured work's GRAVITY FLOW, and walk to the end of Contact.
   await page.locator('.hxa__flink[data-featured="gravity-flow"]').focus();
+  // Tay, 2026-11-21, P4 plan decisions, and his yes at S32's start: T Poker's steps are one more stop, after its carousel
+  // (a radio group is one stop: the chosen step). Each radio is a clear box over its part, so it carries the ring itself.
   const order = [
-    "https://app.tpoker.app/", "Case study", "Previous capture", "Capture 1 of 5", "Next capture",
+    "https://app.tpoker.app/", "Case study", "Previous capture", "Capture 1 of 5", "Next capture", "radio: Start a game",
     "https://github.com/taysh123/aegis", "Case study", "Previous capture", "Capture 1 of 2", "Next capture",
     "https://github.com/taysh123/DeveloperOS", "Case study", "Previous capture", "Capture 1 of 4", "Next capture",
     "Case study", "Previous capture", "Capture 1 of 5", "Next capture",
@@ -327,7 +329,9 @@ test("keyboard: every control under the hero in reading order, each with a solid
       const e = document.activeElement as HTMLElement;
       await Promise.all(e.getAnimations().map((a) => a.finished));   // a ring that eases in is read once it has settled
       const cs = getComputedStyle(e);
-      return { at: e.getAttribute("href") ?? e.getAttribute("aria-label") ?? e.textContent ?? "", ring: `${cs.outlineStyle} ${cs.outlineWidth} ${cs.outlineColor}` };
+      // A radio is named by its label, less the step's number.
+      const radio = e instanceof HTMLInputElement && e.type === "radio" ? `radio: ${e.labels![0].textContent!.replace(/^\d/, "")}` : null;
+      return { at: e.getAttribute("href") ?? e.getAttribute("aria-label") ?? radio ?? e.textContent ?? "", ring: `${cs.outlineStyle} ${cs.outlineWidth} ${cs.outlineColor}` };
     }));
   }
   expect(seen.map((s) => s.at)).toEqual(order);
