@@ -11,7 +11,190 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-21 — Session 28 (#24): dev-dependency audit hygiene; PR #26 (Claude Code)
+
+**Scope (Tay's brief, #24; he approved these dependency changes and nothing else):**
+1. Baseline: `npm audit` (the whole tree and `--omit=dev`), `npm ls source-map-js baseline-browser-mapping sharp`;
+   which advisories reach production dependencies and which are dev or build-only.
+2. `source-map-js` and `baseline-browser-mapping` within their declared ranges (`npm audit fix` without `--force`, or
+   a targeted `npm update`). Stop and report if anything else would move, or if it needs `--force` or an override.
+3. The project's dev `sharp` 0.34.5 → the lowest release that clears its advisories, in the repo's style. Prove
+   `scripts/m10-images.mjs` still works, into a scratch folder; no image re-encoded or committed.
+4. Validate on a clean build; compare with `main`'s build (the lockfile, first-load JS, `/`'s stylesheets and scripts,
+   the headers); `npm audit` after. No test or guard edit.
+5. Docs: #21 merged, Firefox's `chrome.spec.ts:268` at 390 into #22, #24 done, this entry. 6. Push and a PR. No merge.
+
+### 0. Preconditions (VL)
+- `git fetch`, `main` pulled: `main` = `origin/main` = Production = **`5080de5`**, the tree clean; the only open PR is
+  #18 (the prototype, a draft). `chore/dev-audit` cut from it (`--no-track`); `npm ci` exit 0. Node 24.18.0, npm
+  11.16.0.
+- **PR #25 (#21) is merged:** Tay merged it at 2026-11-20 23:34:58Z as `5080de5` (parents `ce818a0` and `00feb6c`; the
+  tree is the PR head's). Its Production deployment (`7955095550`) was `success` at 23:37:37Z. `fix/f1-launcher-focus`
+  was deleted, local and remote, after `git merge-base --is-ancestor` (S27's close-out).
+- **S27's production check** (Chromium, through Cloudflare): `/` at 390 and 1440 answered 200 with 0 console errors, 0
+  CSP violations and 0 failed requests, and the served scripts carry the fix. In Firefox at 390 on production, the
+  hero's GRAVITY FLOW link settles at 772 (the launcher's top is at 782), `scrollY` 34: F1 is fixed live.
+- **Tay's decision at S27's close:** Firefox's `chrome.spec.ts:268` at 390×844 joins #22's list (now in
+  `docs/ROADMAP.md`).
+
+### 1. The baseline (VL; `main`'s lockfile)
+| `npm audit` | `main` (`5080de5`) |
+|---|---|
+| Whole tree | 18: 7 high, 10 moderate, 1 low (no critical) |
+| `--omit=dev` | 2: `source-map-js` 1.2.1 (high GHSA-68fv-2mgg-jv7q, fixed in 1.2.2) and `baseline-browser-mapping` 2.10.32 (moderate GHSA-w5vr-8v7q-w6rv, fixed in 2.11.0) |
+
+- **`npm ls`:**
+  - `source-map-js` 1.2.1, one copy, through Tailwind's `@tailwindcss/node`, the root `postcss` and Next's own `postcss`.
+  - `baseline-browser-mapping` 2.10.32, one copy, through `next` and `browserslist` (the Babel under
+    `eslint-config-next`).
+  - `sharp` twice: the project's 0.34.5 (dev) and Next's optional 0.35.5, nested under `next`.
+- **What reaches production:**
+  - `--omit=dev` counts `source-map-js` and `baseline-browser-mapping` because `next`, a production dependency, depends
+    on them. Neither ships. The server's file traces (every `.nft.json` under `.next`, on `main` and on this branch)
+    list neither, and the client gets only the built bundles. Both run while building (`postcss`'s source maps,
+    `browserslist`'s data).
+  - The project's `sharp` 0.34.5 is dev. On `main` the server trace lists only its `package.json` (resolution
+    metadata), not its code or binary. At runtime Next's image optimiser calls `require('sharp')` from
+    `next/dist/server/image-optimizer/transform.js`, which resolved Next's nested 0.35.5. The site never ran 0.34.5.
+  - The other 15 (the whole tree only) are lint and unit-test tooling, under `eslint`, `eslint-config-next` and
+    `vitest` (§5).
+- **A correction to #24's premise:** `sharp` is not used only by `scripts/m10-images.mjs`. `scripts/shoot.mjs` (the
+  contact sheet) and three unit tests (`case-study-images`, `lab-work`, `rename`: metadata and a 48px pixel compare)
+  import it too.
+
+### 2. The transitive fixes (`abb39f1`)
+- **`npm audit fix` was not used:** it would also fix the fifteen other flagged dev packages (Babel, `vitest`, `vite`,
+  `zod`, `typescript-eslint`, `brace-expansion`, `js-yaml`, `browserslist`…), which means many more moves (§5).
+- **A targeted `npm update source-map-js baseline-browser-mapping`** installs the newest release inside every declared
+  range:
+  - `source-map-js` (^1.2.1 from Tailwind's node package and both `postcss`): 1.2.1 → **1.2.4**;
+  - `baseline-browser-mapping` (^2.9.19 from `next`, ^2.10.12 from `browserslist`): 2.10.32 → **2.11.39**.
+  - Its dry run and the lockfile agree: **only these two entries move.** `package.json` is unchanged; no `--force`, no
+    override.
+- **Both releases were two days old** (published 2026-11-19), so they were checked before being accepted (VL, the
+  tarballs unpacked in a scratch folder):
+  - Neither has an install script.
+  - `source-map-js` 1.2.4 rewrites 1.2.2's lib (about 2,250 diff lines). Its one maintainer published every version. The
+    `require` set is the same eight internal modules, and nothing touches `fs`, the environment, processes or the
+    network. It drops 1.2.2's `new Function` path (its comment: for CSPs without `'unsafe-eval'`).
+  - `baseline-browser-mapping` 2.11.39 is published by GitHub Actions with SLSA provenance, as 2.10.32 and 2.11.0 were.
+    Only its two index bundles and `package.json` differ from 2.11.0.
+  - The lockfile's integrity hashes equal the inspected tarballs'.
+
+### 3. The project's sharp (`60c5aa5`)
+- `npm install --save-dev sharp@0.35.5`: `package.json` `^0.34.5` → **`^0.35.5`** (a caret devDependency, as before).
+  - 0.35.5 is the lowest release that clears all three: GHSA-f88m-g3jw-g9cj (libvips, fixed in 0.35.0),
+    GHSA-rgj7-g3m4-5g8c (libheif, 0.35.4), GHSA-wq5f-xc86-pv6w (librsvg, 0.35.5).
+  - It needs Node ≥ 20.9 (here 24.18.0) and loads libvips 8.18.7. It has no install script, so `npm ci`'s
+    allow-scripts warning now names only `unrs-resolver`.
+- **The lockfile: only sharp's own tree moves.** Next's optional `sharp` (^0.35.5) was already 0.35.5, so npm dedupes
+  the two:
+  - the root `sharp` 0.34.5 → 0.35.5, now `devOptional` (shared with `next`); `next`'s nested copy goes;
+  - its 23 platform packages move to the root at Next's versions (13 `@img/sharp-*` 0.34.5 → 0.35.5, 10
+    `@img/sharp-libvips-*` 1.2.4 → 1.3.4), with **the same integrity hashes as Next's nested copies**;
+  - 0.34.5's `@img/sharp-wasm32` goes (0.35.5's wasm packages were already at the root, through Next);
+  - sharp's `semver` is 7.8.6 (^7.8.5). 0.34.5's was 7.8.1, and Next's nested copy's 7.8.5. 7.8.6 (2026-11-02,
+    GitHub Actions, SLSA provenance, no install script) replaces a regular expression in its range parsing with a
+    plain whitespace trim.
+  - Nothing outside sharp's tree changes.
+- **The API the repo calls:** in the two versions' type definitions, the calls used here (`metadata`, `extract`,
+  `resize`, `avif`, `webp`, `png`, `composite`, `create`, `toBuffer`, `toFile`, `removeAlpha`, `raw`) keep their
+  signatures. `toBuffer` now returns `Buffer<ArrayBuffer>`, and AVIF's effort range starts at 1 (was 3). 0.35 no
+  longer exports `sharp/package.json`; nothing here reads it (`sharp.versions` has the version).
+- **The image script works** (VL): the repo's own `scripts/m10-images.mjs`, unmodified, run with its working directory
+  in a scratch folder holding a copy of `public/projects`, so every output landed there. It ran the 21 jobs whose
+  sources are public, named:
+  - the two T Poker brand jobs need the gitignored brand art, and without it the script calls `python3`, the Windows
+    stub here;
+  - the Aegis jobs need `M10_CAPTURES`.
+
+  Exit 0, 124 files in 27 s. Against the committed `public/work` files:
+  - **all 124 have the same dimensions and format**;
+  - **the 62 WebP files are byte-identical**;
+  - the 62 AVIF files differ, as AVIF always has across encoder builds: 4.7% more bytes in all (1,015,394 →
+    1,063,104 B), and a mean pixel difference of at most 0.506 at the unit tests' 48px compare (`hero-gf-240.avif`;
+    their threshold is 2).
+  - Nothing in the repo was re-encoded or written: `git status` showed only the two package files.
+- **`scripts/shoot.mjs` works too:** a run into a scratch folder against the branch's build (390 and 1440, two
+  sections) wrote the PNGs and the sharp-composited contact sheet, which looks right.
+- **Next's runtime path:** `/_next/image` (a local capture at 640, q 75) answers byte-identical AVIF and WebP from
+  `main`'s build and the branch's: the same 0.35.5, now at the root. No image on `/` uses the optimiser.
+- **The server trace** (`.next/next-server.js.nft.json`): `main`'s carried Next's nested sharp 0.35.5 (its code and
+  the 0.35.5 binary) plus the dev sharp's `package.json`. The branch's carries the root sharp 0.35.5 (the same code and
+  binary) and its `semver` 7.8.6.
+
+### 4. Validation (VL; the final tree, `.next` deleted, `npx next typegen` first)
+| Check | Result |
+|---|---|
+| `npm run typecheck` · `npm run lint` | exit 0 · exit 0 |
+| `npm test` (Git Bash) | 225/225, 18 files (the three sharp tests included) |
+| `npm run build` | exit 0; the same route table as `main`'s |
+| `GROQ_API_KEY= npx playwright test` (Chromium), cold | **197/197**, 17 files, 2.1 min |
+| The same, warm | **197/197**, 2.1 min |
+
+**Against `main`** (`5080de5` built in a scratch worktree with its own `npm ci`, on :3402; the branch on :3401; both
+`next start`, keyless):
+
+| | `main` (`5080de5`) | This branch |
+|---|---|---|
+| The build's static files (every chunk, both stylesheets, the fonts: 22) | — | **byte-identical** (names and SHA-256); the build-ID folder too, with the ID masked |
+| First-load JS (gzip, `budget.spec.ts`'s method) | 187.06 KiB, 9 scripts, 612,067 B raw | **the same**; budget 205.7 |
+| `/`'s scripts | 9 | **the same names, bytes and SHA-256** |
+| `/`'s stylesheets | `278gwr1omn8ec.css` 44,021 B, `3_ro9fti2b1c6.css` 28,727 B | **the same names, bytes and SHA-256** |
+| HTML of `/` | 127,422 B | 127,422 B |
+| Headers on `/` and `/privacy` | 200, 14 headers | **identical**, the CSP and the six security headers included |
+
+The newer `baseline-browser-mapping` data and `source-map-js` change nothing in the output: no chunk, stylesheet or
+font moved.
+
+### 5. `npm audit` after (VL)
+| `npm audit` | `main` | This branch |
+|---|---|---|
+| `--omit=dev` | 2 (1 high, 1 moderate) | **0** |
+| Whole tree | 18: 7 high, 10 moderate, 1 low | **15: 5 high, 9 moderate, 1 low** |
+
+- **Gone:** `source-map-js` (GHSA-68fv-2mgg-jv7q), `baseline-browser-mapping` (GHSA-w5vr-8v7q-w6rv) and `sharp`
+  (GHSA-f88m-g3jw-g9cj, GHSA-rgj7-g3m4-5g8c, GHSA-wq5f-xc86-pv6w). No new advisory.
+- **Left, all dev-only lint and unit-test tooling, outside the brief:**
+  - under `eslint` and `eslint-config-next`: `brace-expansion`, `js-yaml`, `browserslist` 4.28.2 (Babel's, not
+    Next's) and `zod` (high); `minimatch` and the six `typescript-eslint` packages it reaches (moderate); `@babel/core`
+    (low);
+  - under `vitest` (a direct devDependency): `vite` (high), `@vitest/mocker` and `vitest` (moderate).
+- **`npm audit fix` (no `--force`) would clear them,** but its dry run (on this branch) changes 56 packages and adds
+  one, among them Tailwind's `postcss` (8.5.28 → 8.5.33), `caniuse-lite` and `vitest` (5.0.2 → 5.1.1). Tay's call; not
+  done.
+
+### 6. Docs, push, the PR
+- **This docs commit:** this entry, plus one line in S27's entry recording its merge; `docs/ROADMAP.md` (#21 merged,
+  Firefox's `chrome.spec.ts:268` at 390 in #22, #24 done); `claude/START-HERE.md`; `CLAUDE.md` (Production `5080de5`,
+  the backlog line, the suite, and a note on running the image script).
+- `npm test` after it: 225/225. `/` rebuilt from a clean `.next` with these docs in place: its stylesheets are the
+  same names and bytes (CLAUDE.md and `claude/` are scanned).
+- `chore/dev-audit` pushed; **PR #26**, ready for review, not merged.
+
+### Clean-up (VL)
+- The scratch worktree of `main` is removed; the tarballs, the image outputs and the probes are deleted.
+- Ports 3400–3431 are free.
+
+### State (VL)
+- `main` = `origin/main` = Production = **`5080de5`**. Untouched.
+- `chore/dev-audit`: `abb39f1` (the transitive update), `60c5aa5` (sharp), then this docs commit; pushed; PR #26 open.
+- `proto/hero-a-cinematic`: frozen; PR #18 a draft.
+
+### Waiting on Tay
+- **Review and merge PR #26.** Then the close-out: the ancestor check, delete `chore/dev-audit`, `main` clean, the
+  merge's Production deployment `success`, and `/` with 0 console errors and 0 CSP violations at 390 and 1440.
+- **His call, later:** the 15 lint and unit-test advisories (§5).
+- **For #18:** the image script's AVIF from sharp 0.35.5 is about 5% larger than 0.34.5's at the same settings (WebP
+  identical). Run the one named job.
+- **Next (Tay's order):** #18 (whenever he has the image), #22, then P4. Low priority: #23.
+
+---
+
 ## 2026-11-21 — Session 27 (#21): F1 fixed, a Tab never leaves a control under the chat launcher; PR #25 (Claude Code)
+
+> **Merged** by Tay on 2026-11-20 at 23:34:58Z as `5080de5`; Production since 23:37:37Z, and S27's production check
+> passed (Session 28, §0).
 
 **Scope (Tay's brief, #21):**
 1. Diagnose: reproduce in Playwright Firefox, list every control affected at 320, 375, 390 and 1440, confirm the cause.
