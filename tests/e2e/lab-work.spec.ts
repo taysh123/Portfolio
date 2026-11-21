@@ -592,19 +592,30 @@ for (const vp of [[1440, 900], [390, 844]] as const) {
   });
 }
 
-test("Aegis at 390px: the trace is a single column with the fork as two branches side by side, and Live follows the alert stream", async ({ browser }) => {
-  const { ctx, page } = await at(browser, [390, 844]);
-  const xs = await aegis(page).locator(".wk__aegis-flow > li:not([data-k=live])").evaluateAll((ls) => ls.map((l) => Math.round(l.getBoundingClientRect().left)));
-  expect(new Set(xs).size).toBe(1);
-  const br = await aegis(page).locator(".wk__aegis-branches > li").evaluateAll((ls) => ls.map((l) => Math.round(l.getBoundingClientRect().top)));
-  expect(br[0]).toBe(br[1]);
-  // Live sits under the alert stream's branch (the right-hand one), not under threat scoring.
-  const alert = await rectOf(page, '[data-k="alert"]'), score = await rectOf(page, '[data-k="score"]'), live = await rectOf(page, '[data-k="live"]');
-  expect(alert.left).toBeGreaterThan(score.right);
-  expect(Math.abs(live.left - alert.left)).toBeLessThanOrEqual(2);
-  expect(live.top).toBeGreaterThan(alert.bottom);
-  await ctx.close();
-});
+// The tag's :155 checked the side-by-side fork at 390. The branches stack below 400px (Tay, 2026-11-21, P4 plan
+// decisions, settled in S31's review: 390–393px phones stack too), so the side-by-side fork is checked at 430, and the
+// stacked branches at 390 and 320.
+for (const [w, h, fork] of [[430, 932, "side by side"], [390, 844, "stacked"], [320, 568, "stacked"]] as const) {
+  test(`Aegis at ${w}px: the trace is a single column with the fork as two branches ${fork}, and Live follows the alert stream`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, [w, h]);
+    const xs = await aegis(page).locator(".wk__aegis-flow > li:not([data-k=live])").evaluateAll((ls) => ls.map((l) => Math.round(l.getBoundingClientRect().left)));
+    expect(new Set(xs).size).toBe(1);
+    const alert = await rectOf(page, '[data-k="alert"]'), score = await rectOf(page, '[data-k="score"]'), live = await rectOf(page, '[data-k="live"]');
+    if (fork === "side by side") {
+      const br = await aegis(page).locator(".wk__aegis-branches > li").evaluateAll((ls) => ls.map((l) => Math.round(l.getBoundingClientRect().top)));
+      expect(br[0]).toBe(br[1]);
+      // Live sits under the alert stream's branch (the right-hand one), not under threat scoring.
+      expect(alert.left).toBeGreaterThan(score.right);
+    } else {
+      // One column: the alert stream under threat scoring, on the same left edge.
+      expect(alert.top).toBeGreaterThanOrEqual(score.bottom);
+      expect(Math.abs(alert.left - score.left)).toBeLessThanOrEqual(1);
+    }
+    expect(Math.abs(live.left - alert.left)).toBeLessThanOrEqual(2);
+    expect(live.top).toBeGreaterThan(alert.bottom);
+    await ctx.close();
+  });
+}
 
 // New in S31 (docs/P4_PLAN.md §3.2, "at 320, the branches stack and Live follows the alert stream"; Tay, 2026-11-21,
 // P4 plan decisions: the stacked branches below about 400px, subject to his review of the screenshots).
