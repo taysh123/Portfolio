@@ -853,6 +853,28 @@ for (const vp of [[1440, 900], [390, 844]] as const) {
   });
 }
 
+// New in S32 (docs/P4_PLAN.md §3.1, "reduced motion swaps at once"; Tay, 2026-11-21, P4 plan decisions).
+for (const [label, opts, cookie] of [["the OS setting", { reducedMotion: "reduce" as const }, false], ["the site's own switch", {}, true]] as const) {
+  test(`T Poker, reduced motion (${label}): a step swaps the carousel's capture at once, flat, one at a time; the steps don't ease`, async ({ browser, baseURL }) => {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, ...opts });
+    if (cookie) await ctx.addCookies([{ name: "a11y", value: encodeURIComponent(JSON.stringify({ reducedMotion: true, highContrast: false, largeText: false })), url: baseURL! }]);
+    const page = await ctx.newPage();
+    await page.goto(ROUTE, { waitUntil: "networkidle" });
+    for (const [k, name] of [[1, "Run the tournament"], [2, "Settle up"], [0, "Start a game"]] as const) {
+      await poker(page).getByRole("radio", { name }).check();
+      // Nothing eases, so once the step has moved the carousel its capture is already in place.
+      await expect.poll(() => pokerFront(page)).toBe(k);
+      const s = await slides(page, "poker");
+      expect(s.filter((x) => x.seen).length, `${name}: one capture shown`).toBe(1);
+      expect(s[k].seen, `${name}: its own`).toBe(true);
+      for (const x of s) expect(x.placed, "no turn").toBe("none");
+      for (const d of await poker(page).locator(".wk__slide, .wk__poker-step span").evaluateAll((es) => es.map((e) => getComputedStyle(e).transitionDuration)))
+        for (const one of d.split(",")) expect(parseFloat(one), "no easing").toBeLessThan(0.01);
+    }
+    await ctx.close();
+  });
+}
+
 // About (P3.3, session 12): who, in about ten seconds, under Work. Every word server-rendered, no photo, and it holds
 // still. Since R10 (S18+S19) it ends on the facts: no availability line and no links.
 test("About without JavaScript: every word, no link, no photo, nothing hidden", async ({ browser }) => {
