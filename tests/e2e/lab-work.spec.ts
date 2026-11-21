@@ -409,7 +409,7 @@ for (const vp of [[1440, 900], [1024, 768], [390, 844], [320, 568]] as const) {
   });
 }
 
-test("structure: the hero's one h1, four product h3s under Work's h2, the sections' h2s, four carousels, and four empty hidden P4 demo slots", async ({ page }) => {
+test("structure: the hero's one h1, four product h3s under Work's h2, the sections' h2s, four carousels, and one P4 slot per panel as its last child: DeveloperOS's explainer, the other three empty and hidden", async ({ page }) => {
   await page.goto(ROUTE);
   await expect(page.locator("h1")).toHaveCount(1);
   await expect(page.locator(".wk__panel h3")).toHaveText(NAMES);
@@ -427,9 +427,110 @@ test("structure: the hero's one h1, four product h3s under Work's h2, the sectio
   await expect(page.getByRole("main").locator(".wk")).toHaveCount(1);
   for (const n of NAMES) await expect(page.getByRole("article", { name: n })).toHaveCount(1);
   for (const n of NAMES) await expect(page.getByRole("region", { name: `${n}: captures` })).toHaveCount(1);
-  const slots = await page.locator("[data-demo-slot]").evaluateAll((s) => s.map((e) => ({ id: e.getAttribute("data-demo-slot"), hidden: (e as HTMLElement).hidden, empty: e.childNodes.length === 0, shown: (e as HTMLElement).offsetParent !== null })));
-  expect(slots).toEqual(["poker", "aegis", "developeros", "gravity-flow"].map((id) => ({ id, hidden: true, empty: true, shown: false })));
+  // Tay, 2026-11-21, P4 plan decisions (docs/P4_PLAN.md, Q2 and §6): each slot is its panel's last child, a row of its
+  // own; it holds the explainer once P4 has built it (DeveloperOS, S30), and stays empty and hidden until then.
+  const slots = await page.locator("[data-demo-slot]").evaluateAll((s) => s.map((e) => ({ id: e.getAttribute("data-demo-slot"), hidden: (e as HTMLElement).hidden, empty: e.childNodes.length === 0, shown: (e as HTMLElement).offsetParent !== null, last: e.parentElement!.matches(".wk__panel") && e === e.parentElement!.lastElementChild })));
+  expect(slots).toEqual(["poker", "aegis", "developeros", "gravity-flow"].map((id) => id === "developeros"
+    ? { id, hidden: false, empty: false, shown: true, last: true }
+    : { id, hidden: true, empty: true, shown: false, last: true }));
 });
+
+// P4 (docs/P4_PLAN.md §3.3): DeveloperOS, cite or decline, in its panel's own row. Restored from the Product Plates
+// chapter's tests (product-plates-final:tests/e2e/chapters.spec.ts:181, :187 and :200), adapted to the panel: the
+// sequence and the refusal live in the slot, and the citation boxes on the carousel's first slide.
+// Tay, 2026-11-21, P4 plan decisions.
+const dos = (page: Page) => panel(page, "developeros");
+test("DeveloperOS: index → retrieve → evidence → cite, or decline, as a readable sequence", async ({ page }) => {
+  await page.goto(ROUTE);
+  await expect(dos(page).locator(".wk__dos-flow > li > b")).toHaveText(["Index", "Retrieve", "Evidence", "Cite", "Or decline"]);
+  await expect(dos(page).locator(".wk__dos-flow")).toContainText("declines before calling a model");
+});
+
+test("DeveloperOS: the refusal is real text, in the app's own words, shown once, not a picture of text", async ({ page }) => {
+  await page.goto(ROUTE);
+  const ui = dos(page).locator(".wk__dos-says");
+  await expect(ui).toContainText("I don't have enough indexed material to teach that. Try devos index <path>, give a file path, or rephrase the topic. (Not guessing.)");
+  // One refusal, not two: the Learning Center's notice above it is the same refusal on the same surface.
+  await expect(ui).not.toContainText("Not enough of your indexed code matched this.");
+  expect(await page.evaluate(() => document.body.innerText.split("I don't have enough indexed material").length - 1)).toBe(1);
+  // The placeholder reads as words to a screen reader: only its angle brackets are hidden.
+  expect(await ui.locator("code [aria-hidden=true]").allTextContents()).toEqual(["<", ">"]);
+  await expect(ui.locator("img")).toHaveCount(0);
+  await expect(ui.locator("code")).toHaveText("devos index <path>");
+});
+
+for (const vp of [[1440, 900], [390, 844]] as const) {
+  test(`DeveloperOS at ${vp[0]}px: each citation box sits on a file:line chip of the real capture, on the carousel's first slide (its phone crop below 640px)`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp);
+    const device = dos(page).locator('.wk__slide[data-offset="0"] .wk__device');
+    await device.scrollIntoViewIfNeeded();
+    await expect.poll(() => device.locator("img").evaluate((i) => (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0)).toBe(true);
+    const boxes = await device.evaluate((d) => {
+      const img = d.querySelector("img") as HTMLImageElement, ir = img.getBoundingClientRect(), phone = img.currentSrc.includes("dos-search-phone");
+      const H = phone ? 612 : 1027;
+      return { phone, b: [...d.querySelectorAll(".wk__mark")].map((c) => { const r = c.getBoundingClientRect(); return ((r.top + r.bottom) / 2 - ir.top) / ir.height * H; }) };
+    });
+    expect(boxes.phone).toBe(vp[0] < 640);
+    expect(boxes.b).toHaveLength(3);
+    // The chips' centres on the 1600×1027 capture (the phone crop starts at its top-left, so the pixels are shared).
+    for (const [i, c] of [195.5, 351.5, 507.5].entries()) expect(Math.abs(boxes.b[i] - c), `box ${i}`).toBeLessThan(6);
+    await ctx.close();
+  });
+}
+
+// New in S30 (docs/P4_PLAN.md §3.3, "the slot-row test"; Tay, 2026-11-21, P4 plan decisions).
+for (const vp of [[320, 568], [390, 844], [1024, 768], [1440, 900]] as const) {
+  test(`DeveloperOS at ${vp[0]}px: the explainer is the panel's own row under the first, on both columns from 1024px and after the carousel on phones; nothing in it takes focus`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp);
+    const r = await dos(page).evaluate((p) => {
+      const box = (s: string) => { const b = p.querySelector(s)!.getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width }; };
+      return { body: box(".wk__body"), stage: box(".wk__stage"), demo: box(".wk__demo"), rail: box(".wk__dos-rail"), refusal: box(".wk__dos-refusal"),
+        focusable: p.querySelectorAll(".wk__demo :is(a, button, input, select, textarea, [tabindex])").length };
+    });
+    const near = (a: number, b: number, what: string) => expect(Math.abs(a - b), `${vp[0]}: ${what}`).toBeLessThan(1);
+    expect(r.demo.top, "under the first row").toBeGreaterThanOrEqual(Math.max(r.body.bottom, r.stage.bottom));
+    if (vp[0] >= 1024) {
+      // Under both columns, on the first row's own column lines: the rail under the capture (DeveloperOS shows it on
+      // the left), the refusal under the words, side by side.
+      near(r.demo.left, r.stage.left, "the row starts at the capture's column"); near(r.demo.right, r.body.right, "and ends at the words' column");
+      near(r.rail.left, r.stage.left, "rail left"); near(r.rail.width, r.stage.width, "rail width");
+      near(r.refusal.left, r.body.left, "refusal left"); near(r.refusal.width, r.body.width, "refusal width");
+      near(r.rail.top, r.refusal.top, "side by side");
+    } else {
+      // One column: the words, the capture, then the rail and the refusal, each the column's full width.
+      expect(r.stage.top).toBeGreaterThanOrEqual(r.body.bottom);
+      expect(r.refusal.top).toBeGreaterThanOrEqual(r.rail.bottom);
+      near(r.demo.width, r.body.width, "full width"); near(r.refusal.width, r.body.width, "the refusal too");
+    }
+    expect(r.focusable).toBe(0);
+    await ctx.close();
+  });
+}
+
+// New in S30 (docs/P4_PLAN.md §3.3, "axe at 1440 and 390, with motion on and off"; Tay, 2026-11-21, P4 plan
+// decisions). The page-wide axe test below moves every carousel first; this one reads the panel with its marked
+// capture in front.
+for (const [label, vp, opts] of [
+  ["1440, motion on", [1440, 900], { reducedMotion: "no-preference" }],
+  ["390, motion on", [390, 844], { reducedMotion: "no-preference" }],
+  ["1440, reduced motion", [1440, 900], { reducedMotion: "reduce" }],
+  ["390, reduced motion", [390, 844], { reducedMotion: "reduce" }],
+] as const) {
+  test(`DeveloperOS, axe (WCAG 2.2 A/AA): no violations in the panel and its explainer, with the boxed capture in front — ${label}`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp, opts);
+    const front = dos(page).locator('.wk__slide[data-offset="0"]');
+    await front.scrollIntoViewIfNeeded();
+    await expect.poll(() => front.locator("img").evaluate((i) => (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0)).toBe(true);
+    await expect(front.locator('.wk__mark[aria-hidden="true"]')).toHaveCount(3);   // decoration: the alt text names the chips
+    await page.waitForTimeout(400);
+    await page.addScriptTag({ path: AXE });
+    const r = await page.evaluate(() => (window as unknown as { axe: { run: (c: unknown, o: unknown) => Promise<{ violations: { id: string; nodes: unknown[] }[]; incomplete: { id: string; nodes: unknown[] }[]; passes: unknown[] }> } })
+      .axe.run({ include: [["#work-developeros"]] }, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"] } }));
+    console.log(`axe developeros ${label}: violations ${r.violations.length}, passes ${r.passes.length}, incomplete ${r.incomplete.map((i) => `${i.id}×${i.nodes.length}`).join(", ") || "none"}`);
+    expect(r.violations.map((v) => `${v.id}×${v.nodes.length}`)).toEqual([]);
+    await ctx.close();
+  });
+}
 
 // About (P3.3, session 12): who, in about ten seconds, under Work. Every word server-rendered, no photo, and it holds
 // still. Since R10 (S18+S19) it ends on the facts: no availability line and no links.

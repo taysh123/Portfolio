@@ -5,7 +5,11 @@ import { panels, type Panel } from "./panels";
 import { Shot, ratioOf } from "./Shot";
 import { Reel } from "./Reel";
 import { MoreWork } from "./MoreWork";
+import { DosExplainer } from "./DosExplainer";
 import "./work.css";
+
+/** P4 (docs/P4_PLAN.md): each product's explainer, one per session, in Tay's order. Server components only. */
+const EXPLAINERS: Partial<Record<Panel["id"], React.ReactNode>> = { developeros: <DosExplainer /> };
 
 /** How wide a capture is drawn: phone captures at the device width, desktop windows across the stage; both narrower in
  *  a carousel, whose sides need the room (a window there is 80% of the stage, 86% below 640px: work.css). */
@@ -29,6 +33,9 @@ const sizesOf = (kind: Panel["kind"], reel: boolean) => kind === "phone"
  * Depth (R4): each panel's "Case study" button opens the site's existing case-study dialog (CaseStudyHost, which the
  * page mounts), lazily, by its `data-case-study`. Under the four panels, Two more (R5, MoreWork.tsx), each with its
  * own. The ids are the live page's (R7): `#work`, `#work-<id>`, `#more-work`.
+ *
+ * P4 (docs/P4_PLAN.md): under each panel's first row, its explainer, server-rendered and always shown (so far
+ * DeveloperOS's, DosExplainer.tsx). Its marks are drawn on the carousel's own first slide (panels.ts MARKS, Shot.tsx).
  *
  * Headings: under the hero's h1, the section's title is an h2 and each product an h3.
  */
@@ -63,9 +70,6 @@ export function Work() {
                   {dict.common.caseStudy}
                 </button>
               </div>
-              {/* P4: the "try it" demo mounts here, one per product. Empty and hidden until a real demo exists:
-                  no placeholder, no sample data (docs/CINEMATIC_SYSTEM.md, "Work slice"). */}
-              <div className="wk__demo" data-demo-slot={p.id} hidden />
             </div>
             <figure className="wk__stage" data-captures={p.gallery.length}>
               {/* No capture is a priority on this page: the hero fills the first screen, so every one is lazy. */}
@@ -77,6 +81,10 @@ export function Work() {
                   shots={p.gallery.map((g) => <Shot key={g.image} {...g} sizes={sizesOf(p.kind, true)} />)} />
               )}
             </figure>
+            {/* P4: the panel's explainer, in its own row under the words and the capture (under both columns from
+                1024px, after the capture on phones). A panel without one yet keeps the slot empty and hidden: no
+                placeholder, no sample data (docs/CINEMATIC_SYSTEM.md, "The P4 slot"). */}
+            <div className="wk__demo" data-demo-slot={p.id} hidden={!EXPLAINERS[p.id]}>{EXPLAINERS[p.id]}</div>
           </article>
         ))}
       </div>
