@@ -8,7 +8,7 @@
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import { projects, publicRepoUrl, PRIVATE_REPO_LABEL, PROJECT_GALLERIES } from "@/data/projects";
-import { flagships, moreWork, dosFlow, dosRefusal, dosRefusalCaption } from "@/data/work";
+import { flagships, moreWork, dosFlow, dosRefusal, dosRefusalCaption, aegisCopy, aegisTrace } from "@/data/work";
 import { IMAGES } from "@/data/images";
 import { LAB_IMAGES, captureOf } from "@/data/lab-images";
 import { dict } from "@/lib/dict";
@@ -246,10 +246,11 @@ describe("real captures: each project's gallery (data/projects.ts PROJECT_GALLER
 describe("structure", () => {
   it("one labelled P4 slot per panel, in its own row (the panel's last child): it holds the panel's explainer once P4 has built it, and stays empty and hidden until then, with no placeholder", () => {
     // Tay, 2026-11-21, P4 plan decisions (docs/P4_PLAN.md, Q2 and §6): the slot leaves the words column for a row of
-    // its own, after the capture. DeveloperOS's explainer is the first (S30); the other three stay empty and hidden.
+    // its own, after the capture. DeveloperOS's explainer is the first (S30), Aegis's the second (S31); the other two
+    // stay empty and hidden.
     expect(page).toMatch(/<\/figure>\n\s*\{\/\* P4: the panel's explainer, in its own row[\s\S]*?\*\/\}\n\s*<div className="wk__demo" data-demo-slot=\{p\.id\} hidden=\{!EXPLAINERS\[p\.id\]\}>\{EXPLAINERS\[p\.id\]\}<\/div>\n\s*<\/article>/);
     expect(page.match(/data-demo-slot/g)).toHaveLength(1);   // one per panel, from the map
-    expect(page).toMatch(/const EXPLAINERS: Partial<Record<Panel\["id"\], React\.ReactNode>> = \{ developeros: <DosExplainer \/> \};/);
+    expect(page).toMatch(/const EXPLAINERS: Partial<Record<Panel\["id"\], React\.ReactNode>> = \{ aegis: <AegisExplainer \/>, developeros: <DosExplainer \/> \};/);
   });
   it("the carousel and Stack's filter are the only client code under the hero: the sections and their data stay on the server", () => {
     for (const t of [page, more, data, shot, home]) expect(t).not.toMatch(/^["']use client["']|useEffect|<canvas|getContext/m);
@@ -322,6 +323,43 @@ describe("P4: DeveloperOS, cite or decline", () => {
     // "The carousel and Stack's filter are the only client code under the hero" (above) reads Work.tsx; this holds it here.
     expect(dos).not.toMatch(/^["']use client["']|useState|useEffect|data-reveal|<canvas|getContext/m);
     expect(code(dos)).not.toMatch(/<a |<button|<input|tabIndex|href=/);
+  });
+});
+
+// P4 (docs/P4_PLAN.md §3.2; Tay, 2026-11-21, P4 plan decisions): Aegis, one alert start to finish, in its panel's own row.
+describe("P4: Aegis, one alert start to finish", () => {
+  const aegis = read("components/sections/AegisExplainer.tsx");
+  it("every string is the site's own, imported from data/work.ts and lib/dict.ts, never typed; C1 and C2 in Tay's words; no AI claim", () => {
+    expect(aegis).toMatch(/^import \{ aegisCopy, aegisTrace \} from "@\/data\/work";\nimport \{ dict \} from "@\/lib\/dict";\n/);
+    expect(aegis).toMatch(/const step = \(s: Step\) => <><b>\{s\.name\}<\/b><span>\{s\.body\}<\/span><\/>;/);
+    expect(aegis).toMatch(/<figcaption id="wk-aegis-trace" className="wk__aegis-label">\{dict\.aegis\.traceTitle\}<\/figcaption>/);
+    expect(aegis).toMatch(/\{aegisTrace\.main\.map\(\(s\) => <li key=\{s\.k\} data-k=\{s\.k\}>\{step\(s\)\}<\/li>\)\}/);
+    expect(aegis).toMatch(/<span className="wk__aegis-then">\{dict\.aegis\.parallel\}<\/span>/);
+    expect(aegis).toMatch(/\{aegisTrace\.fork\.map\(\(s\) => <li key=\{s\.k\} data-k=\{s\.k\}>\{step\(s\)\}<\/li>\)\}/);
+    expect(aegis).toMatch(/<li data-k=\{aegisTrace\.end\.k\}>\{step\(aegisTrace\.end\)\}<\/li>/);
+    expect(aegis).toMatch(/<p className="wk__aegis-seam">\{aegisCopy\.seam\}<\/p>/);   // the shared-schema note stays (Tay)
+    // The markup types no words of its own, and no shown word is copied into the code.
+    const jsx = code(aegis.slice(aegis.indexOf("const step")));
+    expect([...jsx.matchAll(/>([^<>{}]+)</g)].map((m) => m[1].trim()).filter(Boolean)).toEqual([]);
+    const steps = [...aegisTrace.main, ...aegisTrace.fork, aegisTrace.end];
+    const shown = [dict.aegis.traceTitle, dict.aegis.parallel, ...steps.flatMap((s) => [s.name, s.body]), aegisCopy.seam];
+    for (const s of shown) expect(code(aegis)).not.toContain(s);
+    // The note beside the console doesn't come back (Q6), and its onScreen sentence is dropped (Tay).
+    expect(code(aegis)).not.toMatch(/aegisCopy\.(onScreen|label|row)/);
+    // C1 and C2, exactly as Tay approved them (docs/P4_PLAN.md, "Decisions").
+    expect(aegisTrace.fork[0].body).toBe("Severity, a per-technique MITRE weight (higher for techniques that are harder to detect), and one minus the rule's false-positive rate multiply into one score, clamped to 0–1.");
+    expect(aegisTrace.main[0].body).toBe("The agent signs the request body with an HMAC; the API verifies it in constant time (no replay protection yet).");
+    // No AI claim anywhere in the trace: Aegis's analysis is a deterministic mock, and the trace has no such step.
+    expect(shown.join(" ")).not.toMatch(/\bAI\b|\bLLM\b|artificial intelligence|machine learning|language model|GPT/i);
+  });
+  it("a server component that holds still: no client code, no reveal, nothing to focus, and no motion in its rules", () => {
+    // "The carousel and Stack's filter are the only client code under the hero" (above) reads Work.tsx and panels.ts
+    // (the ring); this holds the explainer itself.
+    expect(aegis).not.toMatch(/^["']use client["']|useState|useEffect|data-reveal|<canvas|getContext/m);
+    expect(code(aegis)).not.toMatch(/<a |<button|<input|tabIndex|href=/);
+    const rules = css.slice(css.indexOf("/* Aegis, one alert start to finish"), css.indexOf("/* ── Two more"));
+    expect(rules).toMatch(/\.wk__aegis-flow/);
+    expect(rules).not.toMatch(/transition|animation|@keyframes/);
   });
 });
 

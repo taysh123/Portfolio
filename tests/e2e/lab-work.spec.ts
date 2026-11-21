@@ -409,7 +409,7 @@ for (const vp of [[1440, 900], [1024, 768], [390, 844], [320, 568]] as const) {
   });
 }
 
-test("structure: the hero's one h1, four product h3s under Work's h2, the sections' h2s, four carousels, and one P4 slot per panel as its last child: DeveloperOS's explainer, the other three empty and hidden", async ({ page }) => {
+test("structure: the hero's one h1, four product h3s under Work's h2, the sections' h2s, four carousels, and one P4 slot per panel as its last child: Aegis's and DeveloperOS's explainers, the other two empty and hidden", async ({ page }) => {
   await page.goto(ROUTE);
   await expect(page.locator("h1")).toHaveCount(1);
   await expect(page.locator(".wk__panel h3")).toHaveText(NAMES);
@@ -428,9 +428,10 @@ test("structure: the hero's one h1, four product h3s under Work's h2, the sectio
   for (const n of NAMES) await expect(page.getByRole("article", { name: n })).toHaveCount(1);
   for (const n of NAMES) await expect(page.getByRole("region", { name: `${n}: captures` })).toHaveCount(1);
   // Tay, 2026-11-21, P4 plan decisions (docs/P4_PLAN.md, Q2 and §6): each slot is its panel's last child, a row of its
-  // own; it holds the explainer once P4 has built it (DeveloperOS, S30), and stays empty and hidden until then.
+  // own; it holds the explainer once P4 has built it (DeveloperOS, S30; Aegis, S31), and stays empty and hidden until
+  // then.
   const slots = await page.locator("[data-demo-slot]").evaluateAll((s) => s.map((e) => ({ id: e.getAttribute("data-demo-slot"), hidden: (e as HTMLElement).hidden, empty: e.childNodes.length === 0, shown: (e as HTMLElement).offsetParent !== null, last: e.parentElement!.matches(".wk__panel") && e === e.parentElement!.lastElementChild })));
-  expect(slots).toEqual(["poker", "aegis", "developeros", "gravity-flow"].map((id) => id === "developeros"
+  expect(slots).toEqual(["poker", "aegis", "developeros", "gravity-flow"].map((id) => id === "aegis" || id === "developeros"
     ? { id, hidden: false, empty: false, shown: true, last: true }
     : { id, hidden: true, empty: true, shown: false, last: true }));
 });
@@ -527,6 +528,171 @@ for (const [label, vp, opts] of [
     const r = await page.evaluate(() => (window as unknown as { axe: { run: (c: unknown, o: unknown) => Promise<{ violations: { id: string; nodes: unknown[] }[]; incomplete: { id: string; nodes: unknown[] }[]; passes: unknown[] }> } })
       .axe.run({ include: [["#work-developeros"]] }, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"] } }));
     console.log(`axe developeros ${label}: violations ${r.violations.length}, passes ${r.passes.length}, incomplete ${r.incomplete.map((i) => `${i.id}×${i.nodes.length}`).join(", ") || "none"}`);
+    expect(r.violations.map((v) => `${v.id}×${v.nodes.length}`)).toEqual([]);
+    await ctx.close();
+  });
+}
+
+// P4 (docs/P4_PLAN.md §3.2): Aegis, one alert start to finish, in its panel's own row. Restored from the Product Plates
+// chapter's tests (product-plates-final:tests/e2e/chapters.spec.ts:96, :107, :118 and :155), adapted to the panel: the
+// trace lives in the slot, and the ring on the carousel's first slide; the note beside the console doesn't come back
+// (Q6), so the row's words are checked where a reader gets them, in the capture's alt text.
+// Tay, 2026-11-21, P4 plan decisions.
+const aegis = (page: Page) => panel(page, "aegis");
+const rectOf = (page: Page, sel: string) => aegis(page).locator(sel).evaluate((e) => { const r = e.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom }; });
+test("Aegis: one alert, start to finish: ingest → normalise → detect, then the parallel fork, then live", async ({ page }) => {
+  await page.goto(ROUTE);
+  const trace = aegis(page).getByRole("figure", { name: "One alert, start to finish" }).locator(".wk__aegis-flow");
+  expect(await trace.locator(":scope > li").evaluateAll((ls) => ls.map((l) => l.querySelector(".wk__aegis-then")?.textContent ?? l.querySelector("b")?.textContent))).toEqual(
+    ["Ingest", "Normalise", "Detect", "Then, in parallel", "Live"]);
+  await expect(trace.locator(".wk__aegis-branches > li > b")).toHaveText(["Threat scoring", "Alert stream"]);
+  // In the explainer itself: the panel's tagline and chips already name both.
+  await expect(aegis(page).locator(".wk__demo")).toContainText("RabbitMQ");
+  await expect(aegis(page).locator(".wk__demo")).toContainText("PostgreSQL schema");
+  await expect(aegis(page)).not.toContainText(/open source/i);
+});
+
+test("Aegis, wide: the fork is drawn — both branches start on the main line's row, the alert stream and Live share the row below", async ({ browser }) => {
+  const { ctx, page } = await at(browser, [1440, 900]);
+  const box = async (k: string) => { const r = await rectOf(page, `[data-k="${k}"]`); return { top: Math.round(r.top), left: Math.round(r.left) }; };
+  const detect = await box("detect"), score = await box("score"), alert = await box("alert"), live = await box("live");
+  expect(score.top).toBe(detect.top);
+  expect(alert.top).toBeGreaterThan(score.top); expect(alert.left).toBe(score.left);
+  expect(live.top).toBe(alert.top); expect(live.left).toBeGreaterThan(alert.left);
+  await ctx.close();
+});
+
+for (const vp of [[1440, 900], [390, 844]] as const) {
+  test(`Aegis at ${vp[0]}px: the ring frames the real port-scan row on the carousel's first slide (its phone crop below 640px), and the Detect step says what it counted`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp);
+    const device = aegis(page).locator('.wk__slide[data-offset="0"] .wk__device');
+    await device.scrollIntoViewIfNeeded();
+    await expect.poll(() => device.locator("img").evaluate((i) => (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0)).toBe(true);
+    const r = await device.evaluate((d) => {
+      const img = d.querySelector("img") as HTMLImageElement, ir = img.getBoundingClientRect(), frame = d.getBoundingClientRect();
+      const phone = img.currentSrc.includes("aegis-alerts-phone");
+      // The row's card in the capture's pixels (left 528, 644–775 of 2160) mapped through the crop the browser picked
+      // (data/images.ts AEGIS_CROPS: desktop 492,612 1148×200; phone 500,612 1060×200).
+      const crop = phone ? { left: 500, width: 1060 } : { left: 492, width: 1148 };
+      const y = (v: number) => ir.top + ((v - 612) / 200) * ir.height, x = (v: number) => ir.left + ((v - crop.left) / crop.width) * ir.width;
+      const rings = [...d.querySelectorAll(".wk__mark")].map((m) => m.getBoundingClientRect());
+      return { phone, n: rings.length, ring: rings[0], rowTop: y(644), rowBottom: y(775), rowLeft: x(528), frameRight: frame.right, alt: img.alt };
+    });
+    expect(r.phone).toBe(vp[0] < 640);
+    expect(r.n).toBe(1);
+    expect(r.ring.top).toBeLessThanOrEqual(r.rowTop + 1); expect(r.ring.bottom).toBeGreaterThanOrEqual(r.rowBottom - 1);
+    expect(r.ring.bottom - r.ring.top).toBeLessThan((r.rowBottom - r.rowTop) * 1.4);
+    expect(r.ring.left).toBeLessThan(r.rowLeft);
+    // It runs past the frame's right edge, as the row's card does (the crop ends there, the row doesn't); the frame clips it.
+    expect(r.ring.right).toBeGreaterThan(r.frameRight);
+    // What a screen reader gets instead of the ring: the row's own words, in the capture's alt text.
+    expect(r.alt).toContain("Port scan detected from 10.10.10.2 (20 distinct ports in 60s)");
+    await expect(aegis(page).locator('[data-k="detect"]')).toContainText("fires when the estimate reaches 20");
+    await ctx.close();
+  });
+}
+
+// The tag's :155 checked the side-by-side fork at 390. The branches stack below 400px (Tay, 2026-11-21, P4 plan
+// decisions, settled in S31's review: 390–393px phones stack too), so the side-by-side fork is checked at 430, and the
+// stacked branches at 390 and 320.
+for (const [w, h, fork] of [[430, 932, "side by side"], [390, 844, "stacked"], [320, 568, "stacked"]] as const) {
+  test(`Aegis at ${w}px: the trace is a single column with the fork as two branches ${fork}, and Live follows the alert stream`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, [w, h]);
+    const xs = await aegis(page).locator(".wk__aegis-flow > li:not([data-k=live])").evaluateAll((ls) => ls.map((l) => Math.round(l.getBoundingClientRect().left)));
+    expect(new Set(xs).size).toBe(1);
+    const alert = await rectOf(page, '[data-k="alert"]'), score = await rectOf(page, '[data-k="score"]'), live = await rectOf(page, '[data-k="live"]');
+    if (fork === "side by side") {
+      const br = await aegis(page).locator(".wk__aegis-branches > li").evaluateAll((ls) => ls.map((l) => Math.round(l.getBoundingClientRect().top)));
+      expect(br[0]).toBe(br[1]);
+      // Live sits under the alert stream's branch (the right-hand one), not under threat scoring.
+      expect(alert.left).toBeGreaterThan(score.right);
+    } else {
+      // One column: the alert stream under threat scoring, on the same left edge.
+      expect(alert.top).toBeGreaterThanOrEqual(score.bottom);
+      expect(Math.abs(alert.left - score.left)).toBeLessThanOrEqual(1);
+    }
+    expect(Math.abs(live.left - alert.left)).toBeLessThanOrEqual(2);
+    expect(live.top).toBeGreaterThan(alert.bottom);
+    await ctx.close();
+  });
+}
+
+// New in S31 (docs/P4_PLAN.md §3.2, "at 320, the branches stack and Live follows the alert stream"; Tay, 2026-11-21,
+// P4 plan decisions: the stacked branches below about 400px, subject to his review of the screenshots).
+test("Aegis at 320px: the branches stack, threat scoring then the alert stream, still joined by the rail; Live follows the alert stream", async ({ browser }) => {
+  const { ctx, page } = await at(browser, [320, 568]);
+  const r = await aegis(page).evaluate((p) => {
+    const q = (s: string) => p.querySelector(s) as HTMLElement, rect = (s: string) => q(s).getBoundingClientRect();
+    const after = (s: string) => getComputedStyle(q(s), "::after");
+    // Where a pseudo-element's line sits, from its box's own edge and its computed offsets.
+    const fork = rect(".wk__aegis-fork"), rail = after(".wk__aegis-fork");
+    const tick = (s: string) => { const b = rect(s), a = after(s), edge = parseFloat(getComputedStyle(q(s)).borderTopWidth);
+      return { x: b.left + edge + parseFloat(a.left), y: b.top + edge + parseFloat(a.top), end: b.top + edge + parseFloat(a.top) + parseFloat(a.height) }; };
+    return { score: rect('[data-k="score"]'), alert: rect('[data-k="alert"]'), live: rect('[data-k="live"]'), then: rect(".wk__aegis-then"),
+      rail: { x: fork.left + parseFloat(rail.left), end: fork.top + parseFloat(rail.top) + parseFloat(rail.height) },
+      first: tick('[data-k="score"]'), second: tick('[data-k="alert"]') };
+  });
+  const near = (a: number, b: number, what: string) => expect(Math.abs(a - b), what).toBeLessThan(1.5);
+  // One column under the fork's label: the alert stream under threat scoring, on the same edges.
+  expect(r.alert.top).toBeGreaterThanOrEqual(r.score.bottom);
+  near(r.score.left, r.alert.left, "same left"); near(r.score.right, r.alert.right, "same right");
+  near(r.score.left, r.then.left, "under the label");
+  // The rail runs from the fork's node to threat scoring's line, and on (threat scoring's own line) to the alert
+  // stream's: both branches leave the same rail.
+  near(r.first.x, r.rail.x, "threat scoring meets the rail"); near(r.second.x, r.rail.x, "the alert stream meets it too");
+  near(r.rail.end, r.first.y, "the rail reaches threat scoring"); near(r.first.end, r.second.y + 1, "and carries on to the alert stream");
+  // Live under the alert stream, on its column.
+  expect(Math.abs(r.live.left - r.alert.left)).toBeLessThanOrEqual(2);
+  expect(r.live.top).toBeGreaterThan(r.alert.bottom);
+  await ctx.close();
+});
+
+// New in S31, beyond §3.2's list (for Tay to keep or drop): the plan retires the chapter's order test (:145) because
+// "the slot-row test replaces it", and S30's slot-row test reads DeveloperOS's panel only. This one reads Aegis's.
+for (const vp of [[320, 568], [390, 844], [1024, 768], [1440, 900]] as const) {
+  test(`Aegis at ${vp[0]}px: the explainer is the panel's own row under the first, across both columns from 1024px and after the carousel on phones; nothing in it takes focus`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp);
+    const r = await aegis(page).evaluate((p) => {
+      const box = (s: string) => { const b = p.querySelector(s)!.getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width }; };
+      return { body: box(".wk__body"), stage: box(".wk__stage"), demo: box(".wk__demo"), trace: box(".wk__aegis-trace"), seam: box(".wk__aegis-seam"),
+        focusable: p.querySelectorAll(".wk__demo :is(a, button, input, select, textarea, [tabindex])").length };
+    });
+    const near = (a: number, b: number, what: string) => expect(Math.abs(a - b), `${vp[0]}: ${what}`).toBeLessThan(1);
+    expect(r.demo.top, "under the first row").toBeGreaterThanOrEqual(Math.max(r.body.bottom, r.stage.bottom));
+    expect(r.seam.top, "the note under the trace").toBeGreaterThanOrEqual(r.trace.bottom);
+    if (vp[0] >= 1024) {
+      // Across both columns, on the first row's own column lines (Aegis shows its capture on the right).
+      near(r.trace.left, r.body.left, "the trace starts at the words' column"); near(r.trace.right, r.stage.right, "and ends at the capture's");
+      near(r.seam.left, r.body.left, "the note starts at the words' column");
+    } else {
+      // One column: the words, the capture, then the trace and the note, the trace the column's full width.
+      expect(r.stage.top).toBeGreaterThanOrEqual(r.body.bottom);
+      near(r.trace.width, r.body.width, "full width"); near(r.seam.left, r.body.left, "the note too");
+    }
+    expect(r.focusable).toBe(0);
+    await ctx.close();
+  });
+}
+
+// New in S31 (docs/P4_PLAN.md §3.2 and §6, axe at 1440 and 390 with motion on and reduced, as S30's; Tay, 2026-11-21,
+// P4 plan decisions). The panel and its explainer, with the ringed capture in front.
+for (const [label, vp, opts] of [
+  ["1440, motion on", [1440, 900], { reducedMotion: "no-preference" }],
+  ["390, motion on", [390, 844], { reducedMotion: "no-preference" }],
+  ["1440, reduced motion", [1440, 900], { reducedMotion: "reduce" }],
+  ["390, reduced motion", [390, 844], { reducedMotion: "reduce" }],
+] as const) {
+  test(`Aegis, axe (WCAG 2.2 A/AA): no violations in the panel and its explainer, with the ringed capture in front — ${label}`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp, opts);
+    const front = aegis(page).locator('.wk__slide[data-offset="0"]');
+    await front.scrollIntoViewIfNeeded();
+    await expect.poll(() => front.locator("img").evaluate((i) => (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0)).toBe(true);
+    await expect(front.locator('.wk__mark[aria-hidden="true"]')).toHaveCount(1);   // decoration: the alt text gives the row
+    await page.waitForTimeout(400);
+    await page.addScriptTag({ path: AXE });
+    const r = await page.evaluate(() => (window as unknown as { axe: { run: (c: unknown, o: unknown) => Promise<{ violations: { id: string; nodes: unknown[] }[]; incomplete: { id: string; nodes: unknown[] }[]; passes: unknown[] }> } })
+      .axe.run({ include: [["#work-aegis"]] }, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"] } }));
+    console.log(`axe aegis ${label}: violations ${r.violations.length}, passes ${r.passes.length}, incomplete ${r.incomplete.map((i) => `${i.id}×${i.nodes.length}`).join(", ") || "none"}`);
     expect(r.violations.map((v) => `${v.id}×${v.nodes.length}`)).toEqual([]);
     await ctx.close();
   });
