@@ -777,6 +777,55 @@ test("T Poker works with JavaScript off: choosing a step still brings its screen
   await ctx.close();
 });
 
+// New in S32 (docs/P4_PLAN.md §3.1, "the steps and the carousel stay in step both ways"; Tay, 2026-11-21, P4 plan
+// decisions).
+test("T Poker: the steps and the carousel stay in step both ways (a step, the arrows, a dot, the keyboard, a side capture, a swipe); the podium and the stats check no step; a step's move is not announced twice", async ({ browser }) => {
+  const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: "no-preference" });
+  const live = poker(page).locator('[aria-live="polite"]');
+  const both = async () => ({ front: await pokerFront(page), step: await pokerStep(page), captions: await pokerCaptions(page) });
+  // A step moves the carousel quietly: the step's caption describes the screen, so the carousel says nothing.
+  await poker(page).getByRole("radio", { name: "Settle up" }).check();
+  await expect.poll(both).toEqual({ front: 2, step: 2, captions: [2] });
+  await expect(live).toHaveText("");
+  // The arrows: on to the podium, past the steps: no step checked, no caption, and the carousel says so.
+  await poker(page).getByRole("button", { name: "Next capture" }).click();
+  await expect.poll(both).toEqual({ front: 3, step: -1, captions: [] });
+  await expect(live).toHaveText(/^T Poker: capture 4 of 5\./);
+  // A step, then back to the same capture with the arrows: announced again (the step cleared what was said).
+  await poker(page).getByRole("radio", { name: "Settle up" }).check();
+  await expect(live).toHaveText("");
+  await poker(page).getByRole("button", { name: "Next capture" }).click();
+  await expect(live).toHaveText(/^T Poker: capture 4 of 5\./);
+  // A dot: the stats, no step. Then the keyboard on the dots: Home, then ArrowRight.
+  await poker(page).locator('[role="tab"]').nth(4).click();
+  await expect.poll(both).toEqual({ front: 4, step: -1, captions: [] });
+  await poker(page).locator('[role="tab"]').nth(4).focus();
+  await page.keyboard.press("Home");
+  await expect.poll(both).toEqual({ front: 0, step: 0, captions: [0] });
+  await page.keyboard.press("ArrowRight");
+  await expect.poll(both).toEqual({ front: 1, step: 1, captions: [1] });
+  await expect(poker(page).locator('[role="tab"]').nth(1)).toBeFocused();                    // focus stays on the dots
+  // A side capture: the left neighbour of the live screen is the home screen.
+  await poker(page).locator('.wk__slide[data-offset="-1"]').click({ position: { x: 20, y: 200 } });
+  await expect.poll(both).toEqual({ front: 0, step: 0, captions: [0] });
+  // Previous wraps round to the stats: no step.
+  await poker(page).getByRole("button", { name: "Previous capture" }).click();
+  await expect.poll(both).toEqual({ front: 4, step: -1, captions: [] });
+  await ctx.close();
+  // A swipe, on a phone: the next capture, and its step.
+  const phone = await at(browser, [390, 844], { reducedMotion: "no-preference" });
+  const track = poker(phone.page).locator(".wk__track");
+  await track.scrollIntoViewIfNeeded();
+  const box = (await track.boundingBox())!;
+  const cdp = await phone.ctx.newCDPSession(phone.page);
+  const x = box.x + box.width / 2, y = box.y + box.height / 2;
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+  for (let k = 1; k <= 6; k++) await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: x - (140 * k) / 6, y }] });
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await expect.poll(async () => ({ front: await pokerFront(phone.page), step: await pokerStep(phone.page) })).toEqual({ front: 1, step: 1 });
+  await phone.ctx.close();
+});
+
 // About (P3.3, session 12): who, in about ten seconds, under Work. Every word server-rendered, no photo, and it holds
 // still. Since R10 (S18+S19) it ends on the facts: no availability line and no links.
 test("About without JavaScript: every word, no link, no photo, nothing hidden", async ({ browser }) => {
