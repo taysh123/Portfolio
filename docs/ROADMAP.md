@@ -12,7 +12,8 @@ true project facts, through a prototype-first sequence with an owner approval ga
 riskiest piece (the hero) in isolation against hard budgets, then build sections, motion, and case
 studies on a branch cut from production `main`. Release through a Vercel Preview and Tay's sign-off.
 
-**Owner / approver:** Tay (every gate). **Last updated:** 2026-11-21 (S32: P4's third explainer, T Poker, PR #30 for Tay's review. S31: P4's second
+**Owner / approver:** Tay (every gate). **Last updated:** 2026-11-21 (S33: Tay's copy pass, PR #31 for his review, with four more strings checked for his
+decision. S32: P4's third explainer, T Poker, PR #30 merged as `5427e45` after Tay's phone review. S31: P4's second
 explainer, Aegis, PR #29 merged as `d0e5e45` after Tay's phone review. S30: P4's first explainer, DeveloperOS, PR #28 merged as `7505b91` after Tay's phone review. S29: the P4 plan, `docs/P4_PLAN.md`, PR #27 merged as `57b9743`, approved by Tay with his decisions. S28:
 #24, PR #26 merged as `c29c0b1`. S27: #21, PR #25 merged as `5080de5`. S26: #19, Next 16.4.6, PR #24 merged as
 `ce818a0`. S25: #20, PR #23 merged as `7ebff9c`. S24: Concept A is live, PR #21 merged as `3a98d22`. Next: P4 (GRAVITY FLOW,
@@ -250,8 +251,12 @@ After an instant rollback, Vercel stops promoting new production deployments aut
 4. **#18:** the GRAVITY FLOW capture swap, a small PR whenever Tay provides the image.
 5. **P4**, the project demos, **before #22** (Tay, 2026-11-21, approving `docs/P4_PLAN.md`; this changes S24's order,
    "#18, #22, then P4"). One explainer per session: DeveloperOS (**S30, PR #28, merged as `7505b91`**), Aegis (**S31,
-   PR #29, merged as `d0e5e45`**), T Poker (**S32, PR #30**), then GRAVITY FLOW after #18.
+   PR #29, merged as `d0e5e45`**), T Poker (**S32, PR #30, merged as `5427e45`**), then GRAVITY FLOW after #18.
 6. **#22:** per-browser handling of the engine-specific tests.
+
+**Between P4's sessions (Tay, 2026-11-21): S33, his copy pass.** Eight strings in his exact words (PR #31, for his
+review), and four more checked against the projects' sources, proposed and not applied until he says yes
+(`docs/WORKLOG.md`, "Session 33").
 
 **Low priority (Tay, S25):** **#23**, Safari's focus return after a modal opened by a mouse click. **And (Tay, S31):**
 **#25**, VoiceOver on Safari and the site's styled lists.
@@ -259,7 +264,7 @@ After an instant rollback, Vercel stops promoting new production deployments aut
 **Later, a small separate PR (Tay, S27):** **#24**, dev-dependency audit hygiene. **Done in S28** (PR #26, merged as
 `c29c0b1`). The 15 lint and unit-test advisories left in the whole tree stay as they are (Tay, S28's close).
 
-### P4 (the project demos) · `IN PROGRESS` (plan approved by Tay on 2026-11-21; DeveloperOS and Aegis live, T Poker built in S32)
+### P4 (the project demos) · `IN PROGRESS` (plan approved by Tay on 2026-11-21; DeveloperOS, Aegis and T Poker live)
 
 Each panel's demo slot (`data-demo-slot`) is now its own row, the panel's last child: under both columns from 1024px,
 after the capture on phones (`docs/CINEMATIC_SYSTEM.md`, "The P4 slot"). An explainer mounts there; until then the slot
@@ -272,7 +277,7 @@ its top. The four explainers return in their panels, one per session, in his ord
 |---|---|---|
 | S30 | **DeveloperOS**, cite or decline | **Done:** PR #28, merged by Tay as `7505b91` (Production) after his phone review; he kept `10dd203` (`docs/WORKLOG.md`, "Session 30") |
 | S31 | **Aegis**, one alert start to finish | **Done:** PR #29, merged by Tay as `d0e5e45` (Production) after his phone review. C1 and C2 in his exact words; the ring on the carousel's first slide; the branches stack below 400px (his call in the review, so 390–393px phones stack too); `f8be0aa` kept (`docs/WORKLOG.md`, "Session 31") |
-| S32 | **T Poker**, the stepper (option A) | **Done**, for Tay's review: **PR #30**. The steps drive the carousel both ways; its no-JS change approved at S32's start; without JS the two step captures are fetched on load (browsers ignore `loading="lazy"` then), a cost Tay accepted; first-load JS +183 B (`docs/WORKLOG.md`, "Session 32") |
+| S32 | **T Poker**, the stepper (option A) | **Done:** PR #30, merged by Tay as `5427e45` (Production) after his phone review. The steps drive the carousel both ways; its no-JS change approved at S32's start; without JS the two step captures are fetched on load (browsers ignore `loading="lazy"` then), a cost Tay accepted; first-load JS +183 B (`docs/WORKLOG.md`, "Session 32") |
 | after #18 | **GRAVITY FLOW**, the marked frame | Numbered rings and a legend; waits for #18 |
 
 P4 goes before #22 (Tay, 2026-11-21).

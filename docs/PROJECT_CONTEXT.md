@@ -24,11 +24,12 @@ Tay is a Computer Science B.Sc. graduate (2026), based in Israel, looking for a 
 
 The current site intentionally does not name the academic institution. Do not add or guess an institution. Do not invent employment history, users, revenue, downloads, customers, production usage, performance figures, test counts, or project capabilities.
 
-The website's current central message is:
+The website's current central message (Concept A, live since 2026-11-20; the lede and the career message as of Tay's
+copy pass, 2026-11-21):
 
-- Headline: `I build software end to end.`
-- Supporting line: `Mobile apps, security systems, developer tools, and games—from interface to infrastructure.`
-- Career message: available for software-engineering roles, on-site, hybrid, or remote.
+- Headline: `Building software. Turning ideas into products.` (`siteMeta.headline`)
+- Supporting line: `I build end to end—mobile apps, security systems, developer tools and games, from the interface down to the infrastructure.` (`siteMeta.heroLead`)
+- Career message (Contact's lead, `availability.detail`): `I'm looking for a software engineering role—backend, full-stack, AI or security. On-site or hybrid in central Israel, or remote.`
 
 The site is English-only. The retired `/he` path redirects to `/`.
 

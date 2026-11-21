@@ -11,6 +11,132 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-21 — Session 33: Tay's copy pass, eight changes in his exact words; four more checked for his decision; PR #31 (Claude Code)
+
+**Scope (Tay's brief, 2026-11-21):** Part A, eight copy changes Tay approved word for word, in the source strings, with
+every copy-agreement rule kept (`data/projects.ts`, the assistant's prompt rules, metadata, the share card, `/privacy`).
+One commit for the copy; the tests that pin a changed string in their own commit, naming "Tay, 2026-11-21, copy pass".
+Before applying: check 4 and 5 against `docs/PROJECT_CONTEXT.md` and the Stack, and stop if a tool in 5 isn't on the
+Stack with a project. Part B: verify four more strings and propose words, **not applied** until Tay says yes. No merge,
+deploy, env or DNS change; no copy change beyond Part A.
+
+### 0. Preconditions (VL)
+- `git fetch`, `main` pulled: `main` = `origin/main` = Production = **`5427e45`**, the tree clean; the Production
+  deployment on that SHA (`7968401432`) is `success` (19:41:41Z). `npm ci` (Next 16.4.6). `copy/tay-pass-1` cut from it.
+- **PR #30 (S32, T Poker) is merged:** Tay merged it on 2026-11-21 at 19:41:17Z as `5427e45` (parents `d0e5e45` and
+  `b57e3ee`), after his phone review, which approved it. `feat/p4-tpoker` is gone, local and remote.
+- **S32's close check, on Production `5427e45`** (run at S32's close, recorded here): `/` at 390 and 1440 (Chromium,
+  through Cloudflare): 200, 0 console errors, 0 CSP violations, 0 failed requests, 0 responses ≥ 400; one canvas; the
+  h1; T Poker's, Aegis's and DeveloperOS's slots shown, GRAVITY FLOW's hidden; the legend "Walk through T Poker"; on
+  load the first screen, step and caption, "Settle up" brings the third, and Next goes on to the podium with no step and
+  no caption. The two stylesheets 44,021 B and 38,693 B, the local build's; `curl /` 200, 141,778 B.
+
+### 1. The checks before applying (VL)
+- **4, Contact's lead:** agrees with `docs/PROJECT_CONTEXT.md` §1 (software-engineering roles; on-site, hybrid or
+  remote) and the facts' "Based in Israel"; "central Israel" narrows that (Tay's own fact). The four kinds of role are
+  his preferences, and the work backs each: backend (T Poker's API, Aegis), full-stack (About's facts), AI
+  (DeveloperOS's local models), security (Aegis).
+- **5, About's body:** every tool it names was printed with the Stack's real mapping (`stackBlock.groups`, through a
+  scratch Vitest probe outside the repo). C#, ASP.NET Core, TypeScript, React, React Native / Expo, Python, SQL,
+  PostgreSQL, Redis, RabbitMQ / MassTransit, Docker and Ollama each light at least one flagship. **Java lights none:**
+  only Orders & Delivery uses it, and the Stack maps its tools to the four flagships (its Languages line does say "Java
+  runs Orders & Delivery"). As the brief says, I stopped and asked: **Tay kept Java** (2026-11-21).
+
+### 2. Part A, applied in one commit (`34976e6`)
+| # | Where | Now |
+|---|---|---|
+| 1 | `lib/dict.ts` `dos.flow` (the DeveloperOS rail's name) | "How DeveloperOS answers a question about your code" |
+| 2 | `data/work.ts` `dosRefusalCaption` | "When nothing in your code supports an answer, it says so instead of guessing. The app's actual message:" (the refusal itself unchanged) |
+| 3 | `lib/dict.ts` `aegis.traceTitle` | "How one port-scan alert moves through Aegis, start to finish" |
+| 4 | `data/socials.ts` `availability.detail` (Contact's lead) | "I'm looking for a software engineering role—backend, full-stack, AI or security. On-site or hybrid in central Israel, or remote." |
+| 5 | `data/about.ts` `body`, read whole by `aboutBlock.ts` | "I'm a Computer Science graduate who builds dependable software, from the first design to production. I work across the stack: C#/.NET and ASP.NET Core, TypeScript with React and React Native, Python, Java and SQL, with PostgreSQL, Redis, RabbitMQ and Docker behind them, and local models through Ollama." |
+| 6 | `data/about.ts` `facts[0]` | "B.Sc. in Computer Science (2026)" (no institution) |
+| 7 | `data/about.ts` `title` | "Solid foundations." / "Real products." |
+| 8 | `data/socials.ts` `siteMeta.heroLead` | "I build end to end—mobile apps, …" (the dash unspaced, like the rest of the site's) |
+
+- `body` replaces the Product Plates `paragraphs`: the page showed one sentence of each, and nothing else read them.
+- **Agreement:** the assistant's IDENTITY line now says he is "looking for a software engineering role (backend,
+  full-stack, AI or security): on-site or hybrid in central Israel, or remote" (`app/api/chat/route.ts`). The share
+  card shows the role, the h1 and the four names, never the lede: it is byte-identical to `main`'s (looked at). The meta
+  description is `siteMeta.tagline`, unchanged. `/privacy`, `data/projects.ts` and the JSON-LD name none of these.
+- Two comments that said the words were unchanged (`DosExplainer.tsx`, `aboutBlock.ts`) now name the copy pass.
+
+### 3. The tests, in their own commit (`cab5535`)
+- 13 unit tests in five files pinned the old strings (`about`, `content`, `site`, `lab-work`, `work`), and seven e2e
+  lines in two (`lab-work.spec.ts`, `page.spec.ts`). Each now pins Tay's words.
+- **Two change shape, not just words**, because the approved copy crosses them:
+  - `lab-work.test.ts`, About's "no year or number of its own": the degree's year is now the one number About shows. The
+    test pins exactly that, and still fails on any other digit.
+  - `work.test.ts` banned "it says so" in the refusal's caption (M10). Tay's caption uses it, so the test now pins the
+    caption word for word.
+- Each e2e edit is in place: `lab-work.spec.ts`'s line numbers are unchanged (ROADMAP #22 cites them).
+
+### 4. Measured against `main` (VL; each built right after deleting `.next`, served on :3411)
+- **`/`'s two stylesheets: byte-identical** (44,021 B and 38,693 B, the same names and hashes). Neither the new words
+  nor the comments reached Tailwind.
+- **First-load JS:** 187.24 → 187.26 KiB gzip over 9 scripts (budget 205.7). `Navbar.tsx`, a client component, imports
+  `data/socials.ts` whole, so two client chunks carry Contact's lead: +28 B raw each. That import was already there.
+- HTML: 141,498 → 141,796 B. The share card (`/opengraph-image`): byte-identical.
+
+### 5. Validation (VL)
+- `npm run typecheck` and `npm run lint`: clean. `npm test` (Git Bash): **231/231** in 18 files.
+- `npm run build` right after deleting `.next` (one retry for the Geist fetch), then `GROQ_API_KEY= npx playwright test`
+  (Chromium): **245/245** in 17 files, cold; **245/245** warm. The suite's own axe tests are among them.
+- **axe, a scratch pass on the final build** (WCAG 2.2 A/AA as the suite runs it, and once more with best-practice):
+  `/` walked to its end, at 1440 and 390, motion on and reduced, page-wide and on About, Contact and the two explainers
+  alone: **0 violations** in every run. Needs review (colour contrast axe can't decide): none is a changed string. They
+  are the h1's gradient, the hero's lede or T Poker's line, T Poker's three step labels, and at 1440 DeveloperOS's
+  Status label and first chip; at 390, DeveloperOS's Retrieve step and the app's refusal, partly covered by another
+  element (both unchanged text, in a slot whose height is unchanged, 643px). Whether that set equals `main`'s
+  exactly was not run (NC).
+- After this docs commit: rebuilt, and `/`'s two stylesheets compared again with `main`'s. `CLAUDE.md` and `claude/`
+  are Tailwind-scanned.
+
+### 6. Screenshots (for Tay; in the session's scratch only, the repo being public)
+About, Contact, DeveloperOS's and Aegis's explainers and the hero's lede, at 390 and 1440 (reduced motion), before and
+after. About reads cleanly at both widths; the rail's name and the refusal's caption fit at both.
+- **Wraps, not changed** (the layout is outside this pass): Contact's lead breaks at its hyphens, "full-" / "stack" at
+  1440; at 390 a line starts with the dash ("—backend") and "On-" / "site" splits. Aegis's title wraps at 390 with
+  "finish" alone on its second line.
+
+### 7. Part B: findings and proposed words (nothing applied)
+Checked against each project's source, its local clone first compared with GitHub's HEAD (Aegis `31a75aa`, DeveloperOS
+`de7346c`, Job Assistant `21e545c`, T Poker `aa354ee`: all equal).
+- **Stack, "Framer Motion"** (no project lit): it **is** used. This site's chat, accessibility and case-study panels
+  import it (lazy), and so does T Poker's marketing landing page (a separate Next.js site in the private T Poker
+  repository, four files). Aegis's frontend lists it in `package.json` but never imports it. So no removal by the
+  brief's test. Proposed: keep it, unchanged (`data/skills.ts` already notes "this site"). Tagging T Poker would mean
+  naming its landing page in T Poker's data, which the site doesn't present.
+- **Stack, "pytest"** (no project lit): **Job Assistant**. Its CI runs `pytest`, two test files import it, and its data
+  already lists it. Not DeveloperOS: its CI runs `python -m unittest discover -s tests -v`, its 18 test files use
+  `unittest`, and pytest is only an optional `dev` extra. Proposed tag: "Job Assistant". The Stack lights only the four
+  flagships, so the tag needs a small change in `stackBlock.ts`: the names (hover title and screen-reader text) may
+  include a Two more project, with the filter kept to the four. The same rule would tag Java and JavaFX "Orders &
+  Delivery". Proposed: pytest only, unless Tay wants those two as well.
+- **Job Assistant, "…before delivery"** (its `summary`): delivery is Telegram. The pipeline is collect → filter → dedup
+  → persist → deliver, and the delivery module is `telegram/`. Proposed, Tay's words: "Collects listings from seven
+  source adapters, then filters and deduplicates them before sending them to Telegram." (The sentence then says "them"
+  twice; "…before sending the results to Telegram" avoids that, if he prefers.) The summary also feeds the assistant's
+  prompt and the Stack's lens text; "Telegram" names no Stack tool, so no chip changes.
+- **Aegis, Status "Runs locally"**: the repository confirms Compose. Its README's "Run it in one step" is
+  `scripts/start.bat` / `start.ps1`, which "brings up the full stack with Docker Compose" (postgres, redis, rabbitmq,
+  api, frontend), and the source setup starts its infrastructure with `docker compose up -d`. Proposed: "Runs locally
+  (Docker Compose)" on **Aegis's panel only**. The words "Runs locally" are shared (`dict.status.local`), and Job
+  Assistant, which has a Dockerfile but no Compose file, shows them in its case study, so the shared string stays.
+
+### 8. Docs and the PR
+- **This docs commit:** this entry; `docs/PROJECT_CONTEXT.md` §1 (the live headline, lede and Contact's lead);
+  `docs/ROADMAP.md` (S32 merged; S33); `claude/START-HERE.md`; `CLAUDE.md` (Production `5427e45`, the suite's counts).
+- `copy/tay-pass-1` pushed; **PR #31**, ready for review, not merged.
+
+### Waiting on Tay
+- **His review of PR #31** (the Preview follows the push), then the merge.
+- **His answers on Part B** (§7); each yes is a small follow-up change in his words.
+- **Optional:** the wraps in §6.
+- **Then (his order):** #18 (when he has the image); GRAVITY FLOW's explainer; then #22. Low priority: #23 and #25.
+
+---
+
 ## 2026-11-21 — Session 32: P4, T Poker's explainer (the steps drive the carousel, option A) in its panel's own row; PR #30 (Claude Code)
 
 **Scope (Tay's brief):** `docs/P4_PLAN.md` §3.1, option A, under its "Decisions (Tay, 2026-11-21)", which approve this
