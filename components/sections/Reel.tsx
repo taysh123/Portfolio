@@ -31,8 +31,14 @@ const Arrow = () => (
  * - Every slide keeps its capture's box, mounted or not (`boxes`: each capture's ratio, and its phone crop's, from the
  *   server). So a gallery of mixed shapes (Aegis's alert row and its board) is as tall as its tallest capture from the
  *   first paint, with or without JS, and neither hydration nor a move shifts the page.
+ * - Steps (P4, T Poker only: `steps`, how many of the first captures have one): the panel's explainer is a radio group
+ *   of server HTML (`wk-<id>-steps`, PokerExplainer.tsx). Choosing a step brings its capture to the front, quietly (the
+ *   step's caption describes it, so the carousel doesn't announce it too); moving the carousel checks the step of the
+ *   capture in front, or none. Before hydration and without JS, the steps' captures are in the HTML as well, out of
+ *   layout until their step is chosen (work.css), so a step still brings its screen forward and nothing is fetched for
+ *   the others. Without `steps` (the other carousels) none of this renders or runs.
  */
-export function Reel({ id, name, shots, alts, boxes }: { id: string; name: string; shots: ReactNode[]; alts: string[]; boxes: { ratio: string; phone?: string }[] }) {
+export function Reel({ id, name, shots, alts, boxes, steps = 0 }: { id: string; name: string; shots: ReactNode[]; alts: string[]; boxes: { ratio: string; phone?: string }[]; steps?: number }) {
   const n = shots.length;
   const [active, setActive] = useState(0);
   const [said, setSaid] = useState("");
@@ -43,6 +49,7 @@ export function Reel({ id, name, shots, alts, boxes }: { id: string; name: strin
   const focusDot = useRef(false);
   const down = useRef<{ x: number; y: number } | null>(null);
   const swiped = useRef(false);
+  const synced = useRef(false);
 
   /** Where slide i sits relative to the front, circularly: 0 is in front, ±1 beside it, ±2 or more out of sight. */
   const offset = (i: number) => { let d = i - active; if (d > n / 2) d -= n; if (d < -n / 2) d += n; return d; };
@@ -55,6 +62,28 @@ export function Reel({ id, name, shots, alts, boxes }: { id: string; name: strin
   useEffect(() => {
     if (focusDot.current) { dots.current[active]?.focus(); focusDot.current = false; }
   }, [active]);
+
+  // Steps → carousel: a step chosen (a click, a tap, the arrow keys) brings its capture to the front. The carousel
+  // clears what it last said instead of announcing it, so its next move is announced even if the words repeat.
+  useEffect(() => {
+    const set = steps ? document.getElementById(`wk-${id}-steps`) : null;
+    if (!set) return;
+    const toStep = (k: number) => { focusDot.current = false; setActive(k); setSaid(""); };
+    const onChange = (e: Event) => toStep(Number((e.target as HTMLInputElement).value));
+    set.addEventListener("change", onChange);
+    // A step chosen before the carousel ran (or restored by the browser): start there.
+    const chosen = Number(set.querySelector<HTMLInputElement>("input:checked")?.value ?? 0);
+    if (chosen) toStep(chosen);
+    return () => set.removeEventListener("change", onChange);
+  }, [id, steps]);
+  // Carousel → steps: the step of the capture in front is checked; the captures past the steps check none. Setting
+  // `checked` fires no change event, so the two never loop. The first run is skipped: the server already checked the
+  // first step, and a step chosen before hydration must stand until the effect above has moved the carousel to it.
+  useEffect(() => {
+    if (!steps) return;
+    if (!synced.current) { synced.current = true; return; }
+    document.getElementById(`wk-${id}-steps`)?.querySelectorAll<HTMLInputElement>("input").forEach((r) => { r.checked = Number(r.value) === active; });
+  }, [id, steps, active]);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     const fromDot = (e.target as HTMLElement).getAttribute("role") === "tab";
@@ -78,11 +107,13 @@ export function Reel({ id, name, shots, alts, boxes }: { id: string; name: strin
         {shots.map((shot, i) => {
           const d = offset(i), front = i === active;
           const shown = front || (ready && !flat && Math.abs(d) === 1);
+          // A step's capture is in the HTML before the carousel runs, out of layout until its step is chosen (work.css).
+          const pre = !ready && i < steps;
           return (
             <div key={i} id={`wk-${id}-slide-${i}`} className="wk__slide" role="tabpanel" aria-roledescription="slide"
               aria-label={`${i + 1} of ${n}`} aria-hidden={front ? undefined : true} data-offset={String(Math.max(-2, Math.min(2, d)))}
-              data-shown={shown || undefined} onClick={front ? undefined : () => { if (!swiped.current) go(i); }}>
-              <div className="wk__device" style={{ "--wk-box": boxes[i].ratio, "--wk-box-phone": boxes[i].phone } as CSSProperties}>{shown && shot}</div>
+              data-shown={shown || undefined} data-step={i < steps ? i : undefined} onClick={front ? undefined : () => { if (!swiped.current) go(i); }}>
+              <div className="wk__device" style={{ "--wk-box": boxes[i].ratio, "--wk-box-phone": boxes[i].phone } as CSSProperties}>{(shown || pre) && shot}</div>
             </div>
           );
         })}

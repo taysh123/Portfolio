@@ -8,6 +8,7 @@ import { COUNT_WEBGL, PHONES } from "../support/page";
 import { privateRepoLeaks } from "../support/private-repo";
 import { namesAny } from "../support/institution";
 import { socials } from "../../data/socials";
+import { pokerSteps } from "../../data/work";
 
 const ROUTE = "/";
 const AXE = require.resolve("axe-core/axe.min.js");
@@ -75,23 +76,31 @@ test("no private repository leaks into what the browser gets", async ({ request 
   expect(html).not.toMatch(/href="\/lab/);
 });
 
-test("without JavaScript: every word and link, and each project's first real capture alone, with no dead controls", async ({ browser }) => {
+test("without JavaScript: every word and link, and each project's first real capture alone in view (T Poker's step captures out of layout until chosen), with no dead controls", async ({ browser }) => {
   const { ctx, page } = await at(browser, [1440, 900], { javaScriptEnabled: false });
   await expect(page.locator(".wk__name")).toHaveText(NAMES);
   for (const [i, el] of (await page.locator(".wk__panel").all()).entries()) {
     await expect(el.locator(".wk__line")).not.toBeEmpty();
     await expect(el.locator(".wk__status")).toContainText("Status");
     expect(await el.locator(".wk__chips li").count(), NAMES[i]).toBeGreaterThanOrEqual(2);
-    await expect(el.locator("img")).toHaveCount(1);                                   // the first capture only
-    await expect(el.locator("img")).toHaveAttribute("alt", /.{20,}/);
+    await expect(el.locator("img:visible")).toHaveCount(1);                           // the first capture only, in view
+    await expect(el.locator("img:visible")).toHaveAttribute("alt", /.{20,}/);
+    // Tay, 2026-11-21, P4 plan decisions, and his go at S32's start (docs/P4_PLAN.md §3.1, option A): T Poker's
+    // server output also carries its steps' two other captures, so a step still brings its screen forward without
+    // JavaScript. They stay out of layout until chosen; every other carousel's output is unchanged.
+    await expect(el.locator("img")).toHaveCount(i === 0 ? 3 : 1);
+    if (i === 0) expect(await el.locator(".wk__slide").evaluateAll((ss) => ss.map((s) => (s.querySelector("img") ? getComputedStyle(s).display : "empty"))))
+      .toEqual(["block", "none", "none", "empty", "empty"]);
     // R4: its case study is a script-driven dialog, so without JavaScript the button is not offered.
     await expect(el.locator(".case-study-trigger")).toHaveText("Case study");
     await expect(el.locator(".case-study-trigger")).toBeHidden();
   }
   await expect(page.locator(".case-study-trigger:visible")).toHaveCount(0);           // Two more's two as well
   await expect(page.locator(".case-study-trigger")).toHaveCount(6);
-  expect(await page.locator(".wk__panel img").evaluateAll((is) => is.map((i) => (i as HTMLImageElement).src.split("/").pop()!.replace(/-\d+\.\w+$/, ""))))
+  expect(await page.locator(".wk__panel img:visible").evaluateAll((is) => is.map((i) => (i as HTMLImageElement).src.split("/").pop()!.replace(/-\d+\.\w+$/, ""))))
     .toEqual(["poker-home", "aegis-alerts", "dos-search", "gf-gameplay"]);
+  expect(await page.locator(".wk__panel img:not(:visible)").evaluateAll((is) => is.map((i) => (i as HTMLImageElement).src.split("/").pop()!.replace(/-\d+\.\w+$/, ""))))
+    .toEqual(["poker-live", "poker-settle"]);
   // The carousels' controls would do nothing without script, so they are not shown.
   for (const c of await page.locator(".wk__controls").all()) expect(await c.evaluate((e) => getComputedStyle(e).visibility)).toBe("hidden");
   expect(await page.locator(".wk__lens").evaluate((e) => getComputedStyle(e).visibility)).toBe("hidden");   // Stack's filter
@@ -304,8 +313,10 @@ test("keyboard: every control under the hero in reading order, each with a solid
   const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: "no-preference" });
   // Start from the hero's last control, Featured work's GRAVITY FLOW, and walk to the end of Contact.
   await page.locator('.hxa__flink[data-featured="gravity-flow"]').focus();
+  // Tay, 2026-11-21, P4 plan decisions, and his yes at S32's start: T Poker's steps are one more stop, after its carousel
+  // (a radio group is one stop: the chosen step). Each radio is a clear box over its part, so it carries the ring itself.
   const order = [
-    "https://app.tpoker.app/", "Case study", "Previous capture", "Capture 1 of 5", "Next capture",
+    "https://app.tpoker.app/", "Case study", "Previous capture", "Capture 1 of 5", "Next capture", "radio: Start a game",
     "https://github.com/taysh123/aegis", "Case study", "Previous capture", "Capture 1 of 2", "Next capture",
     "https://github.com/taysh123/DeveloperOS", "Case study", "Previous capture", "Capture 1 of 4", "Next capture",
     "Case study", "Previous capture", "Capture 1 of 5", "Next capture",
@@ -319,7 +330,9 @@ test("keyboard: every control under the hero in reading order, each with a solid
       const e = document.activeElement as HTMLElement;
       await Promise.all(e.getAnimations().map((a) => a.finished));   // a ring that eases in is read once it has settled
       const cs = getComputedStyle(e);
-      return { at: e.getAttribute("href") ?? e.getAttribute("aria-label") ?? e.textContent ?? "", ring: `${cs.outlineStyle} ${cs.outlineWidth} ${cs.outlineColor}` };
+      // A radio is named by its label, less the step's number.
+      const radio = e instanceof HTMLInputElement && e.type === "radio" ? `radio: ${e.labels![0].textContent!.replace(/^\d/, "")}` : null;
+      return { at: e.getAttribute("href") ?? e.getAttribute("aria-label") ?? radio ?? e.textContent ?? "", ring: `${cs.outlineStyle} ${cs.outlineWidth} ${cs.outlineColor}` };
     }));
   }
   expect(seen.map((s) => s.at)).toEqual(order);
@@ -409,7 +422,7 @@ for (const vp of [[1440, 900], [1024, 768], [390, 844], [320, 568]] as const) {
   });
 }
 
-test("structure: the hero's one h1, four product h3s under Work's h2, the sections' h2s, four carousels, and one P4 slot per panel as its last child: Aegis's and DeveloperOS's explainers, the other two empty and hidden", async ({ page }) => {
+test("structure: the hero's one h1, four product h3s under Work's h2, the sections' h2s, four carousels, and one P4 slot per panel as its last child: T Poker's, Aegis's and DeveloperOS's explainers, GRAVITY FLOW's empty and hidden", async ({ page }) => {
   await page.goto(ROUTE);
   await expect(page.locator("h1")).toHaveCount(1);
   await expect(page.locator(".wk__panel h3")).toHaveText(NAMES);
@@ -428,10 +441,10 @@ test("structure: the hero's one h1, four product h3s under Work's h2, the sectio
   for (const n of NAMES) await expect(page.getByRole("article", { name: n })).toHaveCount(1);
   for (const n of NAMES) await expect(page.getByRole("region", { name: `${n}: captures` })).toHaveCount(1);
   // Tay, 2026-11-21, P4 plan decisions (docs/P4_PLAN.md, Q2 and §6): each slot is its panel's last child, a row of its
-  // own; it holds the explainer once P4 has built it (DeveloperOS, S30; Aegis, S31), and stays empty and hidden until
-  // then.
+  // own; it holds the explainer once P4 has built it (DeveloperOS, S30; Aegis, S31; T Poker, S32), and stays empty and
+  // hidden until then.
   const slots = await page.locator("[data-demo-slot]").evaluateAll((s) => s.map((e) => ({ id: e.getAttribute("data-demo-slot"), hidden: (e as HTMLElement).hidden, empty: e.childNodes.length === 0, shown: (e as HTMLElement).offsetParent !== null, last: e.parentElement!.matches(".wk__panel") && e === e.parentElement!.lastElementChild })));
-  expect(slots).toEqual(["poker", "aegis", "developeros", "gravity-flow"].map((id) => id === "aegis" || id === "developeros"
+  expect(slots).toEqual(["poker", "aegis", "developeros", "gravity-flow"].map((id) => id !== "gravity-flow"
     ? { id, hidden: false, empty: false, shown: true, last: true }
     : { id, hidden: true, empty: true, shown: false, last: true }));
 });
@@ -694,6 +707,265 @@ for (const [label, vp, opts] of [
       .axe.run({ include: [["#work-aegis"]] }, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"] } }));
     console.log(`axe aegis ${label}: violations ${r.violations.length}, passes ${r.passes.length}, incomplete ${r.incomplete.map((i) => `${i.id}×${i.nodes.length}`).join(", ") || "none"}`);
     expect(r.violations.map((v) => `${v.id}×${v.nodes.length}`)).toEqual([]);
+    await ctx.close();
+  });
+}
+
+// P4 (docs/P4_PLAN.md §3.1, option A): T Poker's steps drive its carousel, in the panel's own row. Restored from the
+// Product Plates chapter's tests (product-plates-final:tests/e2e/chapters.spec.ts:7, :20 and :40), adapted to the panel:
+// the steps live in the slot, and "front" is the carousel's front slide instead of a z-index. Step 1 is the default now,
+// because the carousel opens on the home screen. Tay, 2026-11-21, P4 plan decisions.
+const poker = (page: Page) => panel(page, "poker");
+/** The carousel's front slide, the checked step (-1 for none), and the captions on screen. */
+const pokerFront = (page: Page) => poker(page).locator(".wk__slide").evaluateAll((ss) => ss.findIndex((s) => s.getAttribute("data-offset") === "0"));
+const pokerStep = (page: Page) => poker(page).locator('input[name="wk-poker-step"]').evaluateAll((rs) => rs.findIndex((r) => (r as HTMLInputElement).checked));
+const pokerCaptions = (page: Page) => poker(page).locator(".wk__poker-cap").evaluateAll((cs) => cs.flatMap((c, i) => (getComputedStyle(c).visibility === "visible" ? [i] : [])));
+for (const vp of PHONES) {
+  test(`T Poker at ${vp[0]}px: the steps are three equal parts in one row, and no label spills out of its part`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp);
+    const parts = await poker(page).locator(".wk__poker-step").evaluateAll((ls) => ls.map((l) => { const r = l.getBoundingClientRect(); return { y: Math.round(r.y), w: Math.round(r.width) }; }));
+    expect(parts).toHaveLength(3);
+    expect(new Set(parts.map((p) => p.y)).size).toBe(1);
+    expect(Math.max(...parts.map((p) => p.w)) - Math.min(...parts.map((p) => p.w))).toBeLessThanOrEqual(1);
+    const spill = await poker(page).locator(".wk__poker-step span").evaluateAll((ss) => ss.filter((s) => s.scrollWidth > s.clientWidth + 1).length);
+    expect(spill).toBe(0);
+    await ctx.close();
+  });
+}
+
+test("T Poker: a radio group under its shown name; each step brings its real screen to the front of the carousel, is described by its caption, and the arrow keys move it", async ({ browser }) => {
+  const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: "no-preference" });
+  await expect(poker(page).getByRole("group", { name: "Walk through T Poker" })).toBeVisible();
+  await expect(poker(page).locator(".wk__poker-legend")).toBeVisible();                      // shown (Tay's decision)
+  expect(await pokerFront(page)).toBe(0);                                                     // the default: start a game
+  expect(await pokerStep(page)).toBe(0);
+  await expect(poker(page).getByRole("radio")).toHaveCount(3);
+  for (const [k, name] of [[1, "Run the tournament"], [2, "Settle up"], [0, "Start a game"]] as const) {
+    const r = poker(page).getByRole("radio", { name }); await r.check();
+    await expect.poll(() => pokerFront(page), name).toBe(k);
+    await expect(poker(page).locator(`.wk__poker-cap[data-step="${k}"]`)).toBeVisible();
+    expect(await r.getAttribute("aria-describedby")).toBe(`wk-poker-cap-${k}`);
+    await expect(r).toHaveAccessibleDescription(pokerSteps[k].caption);
+    // The screen in front is the real capture, with a real description.
+    await expect(poker(page).locator('.wk__slide[data-offset="0"] img')).toHaveAttribute("alt", /.{30,}/);
+  }
+  await poker(page).getByRole("radio", { name: "Run the tournament" }).check();
+  await poker(page).getByRole("radio", { name: "Run the tournament" }).focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(poker(page).getByRole("radio", { name: "Settle up" })).toBeChecked();
+  await expect(poker(page).getByRole("radio", { name: "Settle up" })).toBeFocused();
+  await expect.poll(() => pokerFront(page)).toBe(2);
+  await ctx.close();
+});
+
+test("T Poker works with JavaScript off: choosing a step still brings its screen to the front, flat, and its caption", async ({ browser }) => {
+  const { ctx, page } = await at(browser, [390, 844], { javaScriptEnabled: false });
+  /** The slides a reader can see: laid out and visible. */
+  const seen = () => poker(page).locator(".wk__slide").evaluateAll((ss) => ss.flatMap((s, i) => (getComputedStyle(s).display !== "none" && getComputedStyle(s).visibility === "visible" ? [i] : [])));
+  expect(await seen()).toEqual([0]);
+  expect(await pokerCaptions(page)).toEqual([0]);
+  for (const k of [2, 1, 0]) {
+    await poker(page).locator(`input[data-step="${k}"]`).check();
+    expect(await seen(), `step ${k + 1}`).toEqual([k]);
+    expect(await pokerCaptions(page), `step ${k + 1}`).toEqual([k]);
+    const s = poker(page).locator(`.wk__slide[data-step="${k}"]`);
+    expect(await s.evaluate((e) => getComputedStyle(e).transform), "flat").toBe("none");
+    expect(await s.evaluate((e) => getComputedStyle(e.querySelector(".wk__device")!, "::after").opacity), "not dimmed").toBe("0");
+    await expect.poll(() => s.locator("img").evaluate((i) => (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0)).toBe(true);
+  }
+  await expect(poker(page).locator(".case-study-trigger")).toBeHidden();                      // a dialog needs script: not offered
+  await ctx.close();
+});
+
+// New in S32 (docs/P4_PLAN.md §3.1, "the steps and the carousel stay in step both ways"; Tay, 2026-11-21, P4 plan
+// decisions).
+test("T Poker: the steps and the carousel stay in step both ways (a step, the arrows, a dot, the keyboard, a side capture, a swipe); the podium and the stats check no step; a step's move is not announced twice", async ({ browser }) => {
+  const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: "no-preference" });
+  const live = poker(page).locator('[aria-live="polite"]');
+  const both = async () => ({ front: await pokerFront(page), step: await pokerStep(page), captions: await pokerCaptions(page) });
+  // A step moves the carousel quietly: the step's caption describes the screen, so the carousel says nothing.
+  await poker(page).getByRole("radio", { name: "Settle up" }).check();
+  await expect.poll(both).toEqual({ front: 2, step: 2, captions: [2] });
+  await expect(live).toHaveText("");
+  // The arrows: on to the podium, past the steps: no step checked, no caption, and the carousel says so.
+  await poker(page).getByRole("button", { name: "Next capture" }).click();
+  await expect.poll(both).toEqual({ front: 3, step: -1, captions: [] });
+  await expect(live).toHaveText(/^T Poker: capture 4 of 5\./);
+  // A step, then back to the same capture with the arrows: announced again (the step cleared what was said).
+  await poker(page).getByRole("radio", { name: "Settle up" }).check();
+  await expect(live).toHaveText("");
+  await poker(page).getByRole("button", { name: "Next capture" }).click();
+  await expect(live).toHaveText(/^T Poker: capture 4 of 5\./);
+  // A dot: the stats, no step. Then the keyboard on the dots: Home, then ArrowRight.
+  await poker(page).locator('[role="tab"]').nth(4).click();
+  await expect.poll(both).toEqual({ front: 4, step: -1, captions: [] });
+  await poker(page).locator('[role="tab"]').nth(4).focus();
+  await page.keyboard.press("Home");
+  await expect.poll(both).toEqual({ front: 0, step: 0, captions: [0] });
+  await page.keyboard.press("ArrowRight");
+  await expect.poll(both).toEqual({ front: 1, step: 1, captions: [1] });
+  await expect(poker(page).locator('[role="tab"]').nth(1)).toBeFocused();                    // focus stays on the dots
+  // A side capture: the left neighbour of the live screen is the home screen.
+  await poker(page).locator('.wk__slide[data-offset="-1"]').click({ position: { x: 20, y: 200 } });
+  await expect.poll(both).toEqual({ front: 0, step: 0, captions: [0] });
+  // Previous wraps round to the stats: no step.
+  await poker(page).getByRole("button", { name: "Previous capture" }).click();
+  await expect.poll(both).toEqual({ front: 4, step: -1, captions: [] });
+  await ctx.close();
+  // A swipe, on a phone: the next capture, and its step.
+  const phone = await at(browser, [390, 844], { reducedMotion: "no-preference" });
+  const track = poker(phone.page).locator(".wk__track");
+  await track.scrollIntoViewIfNeeded();
+  const box = (await track.boundingBox())!;
+  const cdp = await phone.ctx.newCDPSession(phone.page);
+  const x = box.x + box.width / 2, y = box.y + box.height / 2;
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+  for (let k = 1; k <= 6; k++) await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: x - (140 * k) / 6, y }] });
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await expect.poll(async () => ({ front: await pokerFront(phone.page), step: await pokerStep(phone.page) })).toEqual({ front: 1, step: 1 });
+  await phone.ctx.close();
+});
+
+// New in S32 (docs/P4_PLAN.md §3.1, "the Tab order: the links, the carousel, then the steps as one stop"; Tay,
+// 2026-11-21, P4 plan decisions).
+for (const vp of [[1440, 900], [390, 844]] as const) {
+  test(`T Poker at ${vp[0]}px: Tab runs the links, the carousel's three stops, then the steps as one stop (the chosen step, or the first when none is), then on to Aegis`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp, { reducedMotion: "no-preference" });
+    const name = () => page.evaluate(() => {
+      const e = document.activeElement as HTMLElement;
+      if (e instanceof HTMLInputElement && e.type === "radio") return `radio: ${e.labels![0].textContent!.replace(/^\d/, "")}`;
+      return e.getAttribute("href") ?? e.getAttribute("aria-label") ?? e.textContent ?? "";
+    });
+    const walk = async (n: number, key = "Tab") => { const seen: string[] = []; for (let i = 0; i < n; i++) { await page.keyboard.press(key); seen.push(await name()); } return seen; };
+    await poker(page).locator("a[data-primary]").focus();
+    expect(await walk(6)).toEqual(["Case study", "Previous capture", "Capture 1 of 5", "Next capture", "radio: Start a game", "https://github.com/taysh123/aegis"]);
+    // Move the carousel to the settle-up screen: Tab now lands on that step, still one stop.
+    await poker(page).getByRole("button", { name: "Next capture" }).click();
+    await poker(page).getByRole("button", { name: "Next capture" }).click();
+    await expect.poll(() => pokerStep(page)).toBe(2);
+    expect(await walk(2)).toEqual(["radio: Settle up", "https://github.com/taysh123/aegis"]);
+    expect(await walk(2, "Shift+Tab")).toEqual(["radio: Settle up", "Next capture"]);
+    // On the podium no step is checked: the group is still one stop, its first step.
+    await poker(page).getByRole("button", { name: "Next capture" }).click();
+    await expect.poll(() => pokerStep(page)).toBe(-1);
+    expect(await walk(2)).toEqual(["radio: Start a game", "https://github.com/taysh123/aegis"]);
+    await ctx.close();
+  });
+}
+
+// New in S32 (docs/P4_PLAN.md §3.1, "reduced motion swaps at once"; Tay, 2026-11-21, P4 plan decisions).
+for (const [label, opts, cookie] of [["the OS setting", { reducedMotion: "reduce" as const }, false], ["the site's own switch", {}, true]] as const) {
+  test(`T Poker, reduced motion (${label}): a step swaps the carousel's capture at once, flat, one at a time; the steps don't ease`, async ({ browser, baseURL }) => {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, ...opts });
+    if (cookie) await ctx.addCookies([{ name: "a11y", value: encodeURIComponent(JSON.stringify({ reducedMotion: true, highContrast: false, largeText: false })), url: baseURL! }]);
+    const page = await ctx.newPage();
+    await page.goto(ROUTE, { waitUntil: "networkidle" });
+    for (const [k, name] of [[1, "Run the tournament"], [2, "Settle up"], [0, "Start a game"]] as const) {
+      await poker(page).getByRole("radio", { name }).check();
+      // Nothing eases, so once the step has moved the carousel its capture is already in place.
+      await expect.poll(() => pokerFront(page)).toBe(k);
+      const s = await slides(page, "poker");
+      expect(s.filter((x) => x.seen).length, `${name}: one capture shown`).toBe(1);
+      expect(s[k].seen, `${name}: its own`).toBe(true);
+      for (const x of s) expect(x.placed, "no turn").toBe("none");
+      for (const d of await poker(page).locator(".wk__slide, .wk__poker-step span").evaluateAll((es) => es.map((e) => getComputedStyle(e).transitionDuration)))
+        for (const one of d.split(",")) expect(parseFloat(one), "no easing").toBeLessThan(0.01);
+    }
+    await ctx.close();
+  });
+}
+
+// New in S32 (docs/P4_PLAN.md §3.1, "nothing extra is fetched on load, without JS too"; Tay, 2026-11-21, P4 plan
+// decisions). Without JavaScript the browser ignores loading="lazy" (the HTML spec), so the two step captures in T Poker's
+// server output arrive on load; Tay accepted that cost at S32. With JavaScript nothing extra arrives.
+test("T Poker: nothing extra is fetched. With JS, only its first capture before hydration, then the carousel's own neighbours, never a step's capture two away; without JS, only its two step captures beyond each panel's first", async ({ browser }) => {
+  const work = /\/work\/((?:poker|aegis|dos|gf)-[\w-]+?)-\d+\.(?:avif|webp)$/;
+  // With JS, the scripts held back 3 s (as on a slow phone), opened at T Poker.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "no-preference" });
+    await ctx.route(/\/_next\/static\/chunks\/.*\.js$/, async (r) => { await new Promise((res) => setTimeout(res, 3000)); await r.continue(); });
+    const page = await ctx.newPage();
+    const got = new Set<string>();
+    page.on("request", (r) => { const m = r.url().match(work); if (m) got.add(m[1]); });
+    await page.goto(`${ROUTE}#work-poker`, { waitUntil: "domcontentloaded" });
+    await expect.poll(() => got.has("poker-home")).toBe(true);
+    await page.waitForTimeout(800);
+    expect(await poker(page).locator(".wk__reel[data-ready]").count(), "still before hydration").toBe(0);
+    expect([...got].filter((n) => n.startsWith("poker-")), "before hydration: the first capture only").toEqual(["poker-home"]);
+    await expect(poker(page).locator(".wk__reel[data-ready]")).toHaveCount(1, { timeout: 20000 });
+    await page.waitForLoadState("networkidle");
+    // Main's set: the front and its two neighbours; the settle-up screen, two away, waits until it comes next.
+    expect([...got].filter((n) => n.startsWith("poker-")).sort(), "after hydration").toEqual(["poker-home", "poker-live", "poker-stats"]);
+    await ctx.close();
+  }
+  // Without JS: every panel's first capture, and T Poker's two step captures; never the podium or the stats.
+  for (const [vp, firsts] of [[[1440, 900], ["aegis-alerts", "dos-search", "gf-gameplay"]], [[390, 844], ["aegis-alerts-phone", "dos-search-phone", "gf-gameplay"]]] as const) {
+    const ctx = await browser.newContext({ viewport: { width: vp[0], height: vp[1] }, isMobile: vp[0] < 900, hasTouch: vp[0] < 900, javaScriptEnabled: false });
+    const page = await ctx.newPage();
+    const got = new Set<string>();
+    page.on("request", (r) => { const m = r.url().match(work); if (m) got.add(m[1]); });
+    await page.goto(ROUTE, { waitUntil: "networkidle" });
+    await scrollAll(page);
+    await page.waitForLoadState("networkidle");
+    expect([...got].sort(), `${vp[0]}, without JS`).toEqual([...firsts, "poker-home", "poker-live", "poker-settle"].sort());
+    await ctx.close();
+  }
+});
+
+// New in S32 (docs/P4_PLAN.md §3.1 and §6, axe at 1440 and 390 with motion on and reduced, as S30's and S31's; Tay,
+// 2026-11-21, P4 plan decisions). The panel and its steps, as it opens and with a step chosen from the keyboard.
+for (const [label, vp, opts] of [
+  ["1440, motion on", [1440, 900], { reducedMotion: "no-preference" }],
+  ["390, motion on", [390, 844], { reducedMotion: "no-preference" }],
+  ["1440, reduced motion", [1440, 900], { reducedMotion: "reduce" }],
+  ["390, reduced motion", [390, 844], { reducedMotion: "reduce" }],
+] as const) {
+  test(`T Poker, axe (WCAG 2.2 A/AA): no violations in the panel and its steps, as it opens and with a step chosen — ${label}`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp, opts);
+    await page.addScriptTag({ path: AXE });
+    const run = async (when: string) => {
+      const front = poker(page).locator('.wk__slide[data-offset="0"]');
+      await front.scrollIntoViewIfNeeded();
+      await expect.poll(() => front.locator("img").evaluate((i) => (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0)).toBe(true);
+      await page.waitForTimeout(500);
+      const r = await page.evaluate(() => (window as unknown as { axe: { run: (c: unknown, o: unknown) => Promise<{ violations: { id: string; nodes: unknown[] }[]; incomplete: { id: string; nodes: unknown[] }[]; passes: unknown[] }> } })
+        .axe.run({ include: [["#work-poker"]] }, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"] } }));
+      console.log(`axe poker ${label}, ${when}: violations ${r.violations.length}, passes ${r.passes.length}, incomplete ${r.incomplete.map((i) => `${i.id}×${i.nodes.length}`).join(", ") || "none"}`);
+      expect(r.violations.map((v) => `${v.id}×${v.nodes.length}`), when).toEqual([]);
+    };
+    await run("as it opens");
+    await poker(page).getByRole("radio", { name: "Start a game" }).focus();
+    await page.keyboard.press("ArrowRight");                                                    // Run the tournament, ringed
+    await expect.poll(() => pokerFront(page)).toBe(1);
+    await run("a step chosen");
+    await ctx.close();
+  });
+}
+
+// New in S32, as S30's and S31's (Tay's yes at S32's start; Tay, 2026-11-21, P4 plan decisions): T Poker's slot-row
+// geometry.
+for (const vp of [[320, 568], [390, 844], [1024, 768], [1440, 900]] as const) {
+  test(`T Poker at ${vp[0]}px: the steps are the panel's own row under the first, under the carousel's column from 1024px and after it on phones; their only stops are the three radios`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp);
+    const r = await poker(page).evaluate((p) => {
+      const box = (s: string) => { const b = p.querySelector(s)!.getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width }; };
+      return { body: box(".wk__body"), stage: box(".wk__stage"), demo: box(".wk__demo"), steps: box(".wk__poker"), track: box(".wk__poker-track"),
+        stops: [...p.querySelectorAll<HTMLInputElement>(".wk__demo :is(a, button, input, select, textarea, [tabindex])")].map((e) => `${e.type}:${e.name}`) };
+    });
+    const near = (a: number, b: number, what: string) => expect(Math.abs(a - b), `${vp[0]}: ${what}`).toBeLessThan(1);
+    expect(r.demo.top, "under the first row").toBeGreaterThanOrEqual(Math.max(r.body.bottom, r.stage.bottom));
+    if (vp[0] >= 1024) {
+      // Under the capture's column only (T Poker shows its capture on the left), on the first row's own column lines.
+      near(r.steps.left, r.stage.left, "the steps start at the capture's column"); near(r.steps.width, r.stage.width, "and are as wide");
+      expect(r.steps.right, "never under the words").toBeLessThan(r.body.left);
+    } else {
+      // One column: the words, the capture, then the steps, the column's full width.
+      expect(r.stage.top).toBeGreaterThanOrEqual(r.body.bottom);
+      near(r.steps.width, r.body.width, "full width");
+    }
+    // The track is centred under the carousel.
+    near((r.track.left + r.track.right) / 2, (r.stage.left + r.stage.right) / 2, "centred");
+    expect(r.stops).toEqual(["radio:wk-poker-step", "radio:wk-poker-step", "radio:wk-poker-step"]);   // one group: one Tab stop
     await ctx.close();
   });
 }

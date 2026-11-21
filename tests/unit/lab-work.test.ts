@@ -8,7 +8,7 @@
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import { projects, publicRepoUrl, PRIVATE_REPO_LABEL, PROJECT_GALLERIES } from "@/data/projects";
-import { flagships, moreWork, dosFlow, dosRefusal, dosRefusalCaption, aegisCopy, aegisTrace } from "@/data/work";
+import { flagships, moreWork, dosFlow, dosRefusal, dosRefusalCaption, aegisCopy, aegisTrace, pokerSteps } from "@/data/work";
 import { IMAGES } from "@/data/images";
 import { LAB_IMAGES, captureOf } from "@/data/lab-images";
 import { dict } from "@/lib/dict";
@@ -246,11 +246,11 @@ describe("real captures: each project's gallery (data/projects.ts PROJECT_GALLER
 describe("structure", () => {
   it("one labelled P4 slot per panel, in its own row (the panel's last child): it holds the panel's explainer once P4 has built it, and stays empty and hidden until then, with no placeholder", () => {
     // Tay, 2026-11-21, P4 plan decisions (docs/P4_PLAN.md, Q2 and §6): the slot leaves the words column for a row of
-    // its own, after the capture. DeveloperOS's explainer is the first (S30), Aegis's the second (S31); the other two
-    // stay empty and hidden.
+    // its own, after the capture. DeveloperOS's explainer is the first (S30), Aegis's the second (S31), T Poker's the
+    // third (S32); GRAVITY FLOW's stays empty and hidden.
     expect(page).toMatch(/<\/figure>\n\s*\{\/\* P4: the panel's explainer, in its own row[\s\S]*?\*\/\}\n\s*<div className="wk__demo" data-demo-slot=\{p\.id\} hidden=\{!EXPLAINERS\[p\.id\]\}>\{EXPLAINERS\[p\.id\]\}<\/div>\n\s*<\/article>/);
     expect(page.match(/data-demo-slot/g)).toHaveLength(1);   // one per panel, from the map
-    expect(page).toMatch(/const EXPLAINERS: Partial<Record<Panel\["id"\], React\.ReactNode>> = \{ aegis: <AegisExplainer \/>, developeros: <DosExplainer \/> \};/);
+    expect(page).toMatch(/const EXPLAINERS: Partial<Record<Panel\["id"\], React\.ReactNode>> = \{ poker: <PokerExplainer \/>, aegis: <AegisExplainer \/>, developeros: <DosExplainer \/> \};/);
   });
   it("the carousel and Stack's filter are the only client code under the hero: the sections and their data stay on the server", () => {
     for (const t of [page, more, data, shot, home]) expect(t).not.toMatch(/^["']use client["']|useEffect|<canvas|getContext/m);
@@ -275,10 +275,19 @@ describe("structure", () => {
     expect(reel).toMatch(/aria-live="polite"/);
     expect(code(reel)).not.toMatch(/setInterval|setTimeout|requestAnimationFrame|autoplay/i);
   });
-  it("no JS shows the first capture alone and hides the controls; reduced motion is a flat slider", () => {
+  it("no JS shows the first capture alone (a stepped carousel's step captures are in the HTML too, out of layout until chosen) and hides the controls; reduced motion is a flat slider", () => {
     expect(reel).toMatch(/useSyncExternalStore\(noop, \(\) => true, \(\) => false\)/);
     expect(reel).toMatch(/const shown = front \|\| \(ready && !flat && Math\.abs\(d\) === 1\);/);
-    expect(reel).toMatch(/<div className="wk__device" style=\{\{ "--wk-box": boxes\[i\]\.ratio, "--wk-box-phone": boxes\[i\]\.phone \} as CSSProperties\}>\{shown && shot\}<\/div>/);
+    // Tay, 2026-11-21, P4 plan decisions, and his go at S32's start (docs/P4_PLAN.md §3.1, option A): before the
+    // carousel runs, a stepped carousel (T Poker's only) also draws its steps' captures, so a step still brings its
+    // screen to the front without JS; they stay out of layout until their step is chosen.
+    expect(reel).toMatch(/const pre = !ready && i < steps;/);
+    expect(reel).toMatch(/data-step=\{i < steps \? i : undefined\}/);
+    expect(reel).toMatch(/<div className="wk__device" style=\{\{ "--wk-box": boxes\[i\]\.ratio, "--wk-box-phone": boxes\[i\]\.phone \} as CSSProperties\}>\{\(shown \|\| pre\) && shot\}<\/div>/);
+    expect(reel).toMatch(/steps = 0 \}/);   // none by default: every other carousel's output is unchanged
+    expect(page).toMatch(/const STEPS: Partial<Record<Panel\["id"\], number>> = \{ poker: 3 \};/);
+    expect(page).toMatch(/<Reel id=\{p\.id\} name=\{p\.name\} alts=\{p\.gallery\.map\(\(g\) => g\.alt\)\} steps=\{STEPS\[p\.id\]\}/);
+    expect(css).toMatch(/\.wk__reel:not\(\[data-ready\]\) \.wk__slide\[data-step\]:not\(\[data-offset="0"\]\) \{ display: none; \}/);
     expect(css).toMatch(/\.wk__reel:not\(\[data-ready\]\) \.wk__controls \{ visibility: hidden; \}/);
     expect(css).toMatch(/\.wk__slide:not\(\[data-shown\]\) \{ visibility: hidden; \}/);
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[^@]*\.wk__slide:not\(\[data-offset="0"\]\) \{ transform: none; visibility: hidden; \}/);
@@ -360,6 +369,37 @@ describe("P4: Aegis, one alert start to finish", () => {
     const rules = css.slice(css.indexOf("/* Aegis, one alert start to finish"), css.indexOf("/* ── Two more"));
     expect(rules).toMatch(/\.wk__aegis-flow/);
     expect(rules).not.toMatch(/transition|animation|@keyframes/);
+  });
+});
+
+// P4 (docs/P4_PLAN.md §3.1, option A; Tay, 2026-11-21, P4 plan decisions): T Poker's steps drive its carousel.
+describe("P4: T Poker, the stepper", () => {
+  const poker = read("components/sections/PokerExplainer.tsx");
+  it("every string is the site's own, imported from data/work.ts, lib/dict.ts and data/projects.ts, never typed", () => {
+    expect(poker).toMatch(/^import \{ projects \} from "@\/data\/projects";\nimport \{ pokerSteps \} from "@\/data\/work";\nimport \{ dict \} from "@\/lib\/dict";\nimport \{ fmt \} from "@\/lib\/fmt";\n/);
+    expect(poker).toMatch(/const name = projects\.find\(\(p\) => p\.id === "poker"\)!\.name;/);
+    expect(poker).toMatch(/<legend className="wk__poker-legend">\{fmt\(dict\.poker\.walk, \{ name \}\)\}<\/legend>/);
+    expect(poker).toMatch(/<span><i aria-hidden="true">\{k \+ 1\}<\/i>\{s\.label\}<\/span>/);
+    expect(poker).toMatch(/<p key=\{s\.label\} id=\{`wk-poker-cap-\$\{k\}`\} className="wk__poker-cap" data-step=\{k\}>\{s\.caption\}<\/p>/);
+    // The markup types no words of its own, and no shown word is copied into the code (an arrow's ">" is code, not markup).
+    const jsx = code(poker.slice(poker.indexOf("export function PokerExplainer"))).replace(/=>/g, "");
+    expect([...jsx.matchAll(/>([^<>{}]+)</g)].map((m) => m[1].trim()).filter(Boolean)).toEqual([]);
+    for (const s of [dict.poker.walk, ...pokerSteps.flatMap((p) => [p.label, p.caption])]) expect(code(poker)).not.toContain(s);
+    // The legend is shown, in these words (Tay's decision), and the three steps are the Product Plates stepper's.
+    expect(fmt(dict.poker.walk, { name: projects.find((p) => p.id === "poker")!.name })).toBe("Walk through T Poker");
+    expect(pokerSteps.map((s) => s.label)).toEqual(["Start a game", "Run the tournament", "Settle up"]);
+  });
+  it("a server component with no client code: three native radios, one group, each described by its caption; the coupling lives in the carousel", () => {
+    // "The carousel and Stack's filter are the only client code under the hero" (above) reads Work.tsx; this holds the
+    // explainer itself. Its only controls are the three radios: no link, no button, no tabindex.
+    expect(poker).not.toMatch(/^["']use client["']|useState|useEffect|useRef|onChange|onClick|data-reveal|<canvas|getContext/m);
+    expect(code(poker)).not.toMatch(/<a |<button|tabIndex|href=/);
+    expect(code(poker).match(/<input /g)).toHaveLength(1);   // one, mapped over the three steps
+    expect(poker).toMatch(/<input type="radio" name="wk-poker-step" value=\{k\} data-step=\{k\} defaultChecked=\{k === 0\} aria-describedby=\{`wk-poker-cap-\$\{k\}`\} \/>/);
+    expect(poker).toMatch(/<fieldset id="wk-poker-steps" className="wk__poker-steps">/);
+    // The carousel finds the group by that id and listens to it (Reel.tsx): the steps stay server HTML.
+    expect(reel).toMatch(/document\.getElementById\(`wk-\$\{id\}-steps`\)/);
+    expect(reel).toMatch(/addEventListener\("change", onChange\)/);
   });
 });
 

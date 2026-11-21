@@ -33,6 +33,14 @@ Tay approved the plan with these decisions. Where one differs from a recommendat
 - **The carousel's no-JS change** (its server output carries slides 2 and 3) gets a final look from Tay at S32's start,
   before it is built.
 - **The legend is visible:** "Walk through T Poker" (`dict.poker.walk`).
+- **At S32's start (Tay):** go on option A as described; yes to two test changes outside §3.1's list
+  (`lab-work.spec.ts:303`, the keyboard order, and `lab-work.test.ts:278`, the unit twin of the no-JS check) and to the
+  three S30/S31-pattern tests; the no-JS `aria-hidden` edge accepted.
+- **During S32, a correction to §3.1 (Tay accepted the cost):** "the browser fetches nothing for them" holds with
+  JavaScript only. Without it, browsers ignore `loading="lazy"` (the HTML spec), so the two step captures in the server
+  output are fetched on load: +15.7 KB at 1440, +25.3 KB at 390. With JS nothing extra is fetched, before hydration or
+  after. Tay chose that over a CSS-image way of drawing them, or option C. Built in S32 (`docs/WORKLOG.md`, "Session
+  32").
 
 **Aegis (§3.2)**
 - **Keep the ring.**

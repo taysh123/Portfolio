@@ -7,10 +7,14 @@ import { Reel } from "./Reel";
 import { MoreWork } from "./MoreWork";
 import { AegisExplainer } from "./AegisExplainer";
 import { DosExplainer } from "./DosExplainer";
+import { PokerExplainer } from "./PokerExplainer";
 import "./work.css";
 
 /** P4 (docs/P4_PLAN.md): each product's explainer, one per session, in Tay's order. Server components only. */
-const EXPLAINERS: Partial<Record<Panel["id"], React.ReactNode>> = { aegis: <AegisExplainer />, developeros: <DosExplainer /> };
+const EXPLAINERS: Partial<Record<Panel["id"], React.ReactNode>> = { poker: <PokerExplainer />, aegis: <AegisExplainer />, developeros: <DosExplainer /> };
+/** P4, T Poker (option A): how many of a panel's first captures have a step in its explainer. The steps drive its
+ *  carousel (Reel.tsx). */
+const STEPS: Partial<Record<Panel["id"], number>> = { poker: 3 };
 
 /** How wide a capture is drawn: phone captures at the device width, desktop windows across the stage; both narrower in
  *  a carousel, whose sides need the room (a window there is 80% of the stage, 86% below 640px: work.css). */
@@ -35,9 +39,9 @@ const sizesOf = (kind: Panel["kind"], reel: boolean) => kind === "phone"
  * page mounts), lazily, by its `data-case-study`. Under the four panels, Two more (R5, MoreWork.tsx), each with its
  * own. The ids are the live page's (R7): `#work`, `#work-<id>`, `#more-work`.
  *
- * P4 (docs/P4_PLAN.md): under each panel's first row, its explainer, server-rendered and always shown (so far
- * Aegis's, AegisExplainer.tsx, and DeveloperOS's, DosExplainer.tsx). Its marks are drawn on the carousel's own first
- * slide (panels.ts MARKS, Shot.tsx).
+ * P4 (docs/P4_PLAN.md): under each panel's first row, its explainer, server-rendered and always shown (so far T
+ * Poker's, PokerExplainer.tsx, whose steps drive its carousel; Aegis's, AegisExplainer.tsx; and DeveloperOS's,
+ * DosExplainer.tsx). Its marks are drawn on the carousel's own first slide (panels.ts MARKS, Shot.tsx).
  *
  * Headings: under the hero's h1, the section's title is an h2 and each product an h3.
  */
@@ -78,7 +82,7 @@ export function Work() {
               {p.gallery.length === 1 ? (
                 <div className="wk__device"><Shot {...p.gallery[0]} sizes={sizesOf(p.kind, false)} /></div>
               ) : (
-                <Reel id={p.id} name={p.name} alts={p.gallery.map((g) => g.alt)}
+                <Reel id={p.id} name={p.name} alts={p.gallery.map((g) => g.alt)} steps={STEPS[p.id]}
                   boxes={p.gallery.map((g) => ({ ratio: ratioOf(g.image), ...(g.phone ? { phone: ratioOf(g.phone) } : null) }))}
                   shots={p.gallery.map((g) => <Shot key={g.image} {...g} sizes={sizesOf(p.kind, true)} />)} />
               )}

@@ -243,6 +243,99 @@
   .wk__demo:not([hidden]) { grid-column: 1 / -1; grid-template-columns: subgrid; }
 }
 
+/* T Poker, the stepper (PokerExplainer.tsx; option A): three steps under the carousel's column, a native radio group
+   that drives the carousel (Reel.tsx). The track on glass with the edge, the chosen part in ink with a cyan underline,
+   the numbers faint, the caption in mist (Q5). Three equal parts at every width (a grid, never a wrapping row), one
+   line each where it fits and two where it doesn't. Each radio is a clear box over its part, so the layer's own focus
+   ring is drawn around the part. */
+.wk__poker { min-width: 0; }
+.wk__poker-steps { min-width: 0; margin: 0; padding: 0; border: 0; }
+.wk__poker-legend {
+  width: 100%;
+  padding: 0;
+  text-align: center;
+  font-size: var(--cine-text-label);
+  font-weight: var(--cine-weight-label);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-faint);
+}
+.wk__poker-track {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--cine-space-1);
+  width: min(100%, 36rem);
+  margin: var(--cine-space-3) auto 0;
+  padding: var(--cine-space-1);
+  border: 1px solid var(--cine-edge);
+  border-radius: var(--cine-radius-window);
+  background: var(--cine-glass-ink);
+}
+.wk__poker-step { position: relative; display: block; min-width: 0; }
+.wk__poker-step input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  appearance: none;
+  border: 0;
+  border-radius: var(--cine-radius-sm);
+  background: none;
+  cursor: pointer;
+}
+.wk .wk__poker-step input:focus-visible { outline-offset: 1px; }
+.wk__poker-step span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: var(--cine-control-h);
+  height: 100%;
+  padding: var(--cine-space-2);
+  border-radius: var(--cine-radius-sm);
+  text-align: center;
+  font-size: var(--cine-text-small);
+  font-weight: var(--cine-weight-label);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-mist);
+  transition: color var(--cine-dur-hover) var(--cine-ease), box-shadow var(--cine-dur-hover) var(--cine-ease);
+}
+.wk__poker-step i { font-style: normal; font-size: var(--cine-text-label-sm); color: var(--cine-faint); }
+@media (hover: hover) and (pointer: fine) { .wk__poker-step:hover span { color: var(--cine-ink); } }
+.wk__poker-step input:checked + span { color: var(--cine-ink); box-shadow: inset 0 -2px 0 var(--cine-cyan); }
+/* One caption shows, the chosen step's, in one shared cell so nothing shifts; none past the steps (the podium, the
+   stats). One rule per step: a selector list holding :has() takes its heaviest member's weight. Without :has(), the
+   first step's caption holds (the rule that hides it is then dropped). */
+.wk__poker-caps { display: grid; margin-top: var(--cine-space-3); }
+.wk__poker-cap {
+  grid-area: 1 / 1;
+  visibility: hidden;
+  max-width: 34em;
+  margin-inline: auto;
+  text-align: center;
+  font-size: var(--cine-text-small);
+  line-height: var(--cine-leading-lead);
+  color: var(--cine-mist);
+}
+.wk__poker-cap[data-step="0"] { visibility: visible; }
+.wk__poker:not(:has([data-step="0"]:checked)) .wk__poker-cap[data-step="0"] { visibility: hidden; }
+.wk__poker:has([data-step="1"]:checked) .wk__poker-cap[data-step="1"] { visibility: visible; }
+.wk__poker:has([data-step="2"]:checked) .wk__poker-cap[data-step="2"] { visibility: visible; }
+@media (prefers-reduced-motion: reduce) { .wk__poker-step span { transition: none; } }
+[data-reduced-motion="true"] .wk__poker-step span { transition: none; }
+/* Before the carousel runs (no JS, or not yet hydrated): the steps' captures are in the HTML (Reel.tsx, `steps`) but out
+   of layout, so nothing is fetched for them; choosing a step swaps its capture in front, flat, with no turn and no dim.
+   Once the carousel runs (data-ready) none of this applies: the steps move the carousel itself. */
+.wk__reel:not([data-ready]) .wk__slide[data-step]:not([data-offset="0"]) { display: none; }
+.wk__panel:has([data-step="1"]:checked) .wk__reel:not([data-ready]) .wk__slide[data-step="1"] { display: block; visibility: visible; transform: none; cursor: auto; }
+.wk__panel:has([data-step="1"]:checked) .wk__reel:not([data-ready]) .wk__slide[data-step="1"] .wk__device::after { opacity: 0; }
+.wk__panel:has([data-step="1"]:checked) .wk__reel:not([data-ready]) .wk__slide[data-offset="0"] { visibility: hidden; }
+.wk__panel:has([data-step="2"]:checked) .wk__reel:not([data-ready]) .wk__slide[data-step="2"] { display: block; visibility: visible; transform: none; cursor: auto; }
+.wk__panel:has([data-step="2"]:checked) .wk__reel:not([data-ready]) .wk__slide[data-step="2"] .wk__device::after { opacity: 0; }
+.wk__panel:has([data-step="2"]:checked) .wk__reel:not([data-ready]) .wk__slide[data-offset="0"] { visibility: hidden; }
+
 /* DeveloperOS, cite or decline (DosExplainer.tsx): the retrieval sequence under its name, a rail of five steps with
    the evidence and the citation in cyan and the decline in violet (Q5); then the refusal, the app's own words. The
    rail runs from each node to the next, so the nodes stay open on the sky. */
@@ -725,6 +818,8 @@
   /* A mark on a capture with a phone crop takes the crop's own shares (Shot.tsx). */
   .wk__mark { left: var(--wk-l-m, var(--wk-l)); top: var(--wk-t-m, var(--wk-t)); width: var(--wk-w-m, var(--wk-w)); height: var(--wk-h-m, var(--wk-h)); }
   .wk__dos-says { padding: var(--cine-space-3) var(--cine-space-4); }
+  /* T Poker's steps: at 320 a part is about 90px wide, so its label takes the room its padding left. */
+  .wk__poker-step span { padding-inline: var(--cine-space-1); font-size: var(--cine-text-label); }
   .wk__about-facts li { padding-block: var(--cine-space-2); }
   .wk__stack-group { gap: var(--cine-space-3); padding-block: var(--cine-space-4); }
   .wk__tbs-row, .wk__mw-row { padding-block: var(--cine-space-4); }
