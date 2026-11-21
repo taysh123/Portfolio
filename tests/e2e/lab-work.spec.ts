@@ -875,6 +875,43 @@ for (const [label, opts, cookie] of [["the OS setting", { reducedMotion: "reduce
   });
 }
 
+// New in S32 (docs/P4_PLAN.md §3.1, "nothing extra is fetched on load, without JS too"; Tay, 2026-11-21, P4 plan
+// decisions). Without JavaScript the browser ignores loading="lazy" (the HTML spec), so the two step captures in T Poker's
+// server output arrive on load; Tay accepted that cost at S32. With JavaScript nothing extra arrives.
+test("T Poker: nothing extra is fetched. With JS, only its first capture before hydration, then the carousel's own neighbours, never a step's capture two away; without JS, only its two step captures beyond each panel's first", async ({ browser }) => {
+  const work = /\/work\/((?:poker|aegis|dos|gf)-[\w-]+?)-\d+\.(?:avif|webp)$/;
+  // With JS, the scripts held back 3 s (as on a slow phone), opened at T Poker.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "no-preference" });
+    await ctx.route(/\/_next\/static\/chunks\/.*\.js$/, async (r) => { await new Promise((res) => setTimeout(res, 3000)); await r.continue(); });
+    const page = await ctx.newPage();
+    const got = new Set<string>();
+    page.on("request", (r) => { const m = r.url().match(work); if (m) got.add(m[1]); });
+    await page.goto(`${ROUTE}#work-poker`, { waitUntil: "domcontentloaded" });
+    await expect.poll(() => got.has("poker-home")).toBe(true);
+    await page.waitForTimeout(800);
+    expect(await poker(page).locator(".wk__reel[data-ready]").count(), "still before hydration").toBe(0);
+    expect([...got].filter((n) => n.startsWith("poker-")), "before hydration: the first capture only").toEqual(["poker-home"]);
+    await expect(poker(page).locator(".wk__reel[data-ready]")).toHaveCount(1, { timeout: 20000 });
+    await page.waitForLoadState("networkidle");
+    // Main's set: the front and its two neighbours; the settle-up screen, two away, waits until it comes next.
+    expect([...got].filter((n) => n.startsWith("poker-")).sort(), "after hydration").toEqual(["poker-home", "poker-live", "poker-stats"]);
+    await ctx.close();
+  }
+  // Without JS: every panel's first capture, and T Poker's two step captures; never the podium or the stats.
+  for (const [vp, firsts] of [[[1440, 900], ["aegis-alerts", "dos-search", "gf-gameplay"]], [[390, 844], ["aegis-alerts-phone", "dos-search-phone", "gf-gameplay"]]] as const) {
+    const ctx = await browser.newContext({ viewport: { width: vp[0], height: vp[1] }, isMobile: vp[0] < 900, hasTouch: vp[0] < 900, javaScriptEnabled: false });
+    const page = await ctx.newPage();
+    const got = new Set<string>();
+    page.on("request", (r) => { const m = r.url().match(work); if (m) got.add(m[1]); });
+    await page.goto(ROUTE, { waitUntil: "networkidle" });
+    await scrollAll(page);
+    await page.waitForLoadState("networkidle");
+    expect([...got].sort(), `${vp[0]}, without JS`).toEqual([...firsts, "poker-home", "poker-live", "poker-settle"].sort());
+    await ctx.close();
+  }
+});
+
 // About (P3.3, session 12): who, in about ten seconds, under Work. Every word server-rendered, no photo, and it holds
 // still. Since R10 (S18+S19) it ends on the facts: no availability line and no links.
 test("About without JavaScript: every word, no link, no photo, nothing hidden", async ({ browser }) => {
