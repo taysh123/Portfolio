@@ -314,7 +314,7 @@
    scoring and the alert stream take each alert in parallel), then the live feed; then the note on the shared schema.
    The Product Plates trace's two layouts (product-plates-final:components/work/aegis.css) in the layer's tokens (Q5):
    rails hairline, nodes faint, the Detect node and its segment of the line cyan, the branch boxes on glass with the edge.
-   Below 1024px, a rail, with the fork's branches side by side and Live under the alert stream; at 389px and below the
+   Below 1024px, a rail, with the fork's branches side by side and Live under the alert stream; below 400px the
    branches stack, still on the rail; from 1024px, five columns under both of the panel's, the line drawn forking. */
 .wk__aegis-trace { margin: 0; }
 .wk__aegis-label, .wk__aegis-then {
@@ -379,10 +379,11 @@
   .wk__aegis-flow > [data-k="live"] { margin-left: calc(var(--cine-space-6) + (100% - var(--cine-space-6)) / 2 + var(--cine-space-3) / 2); }
   .wk__aegis-flow > [data-k="live"]::after { content: ""; position: absolute; left: 50%; top: calc(-1px - var(--cine-space-5)); width: 1px; height: var(--cine-space-5); background: var(--cine-hair); }
 }
-/* The narrowest phones: side by side, a branch box would be about 125px wide. The branches stack, threat scoring then
-   the alert stream, and the rail runs on from the fork's node to meet each on a short line, so the two still read as
-   one fork; Live stays under the alert stream. The rail is 4px in from the list's edge: 25px left of a box's padding. */
-@media (max-width: 389px) {
+/* Below 400px (Tay), most phones: side by side, a branch box would leave about 100 to 130px for text, and the threat
+   score's sentence would wrap to ten lines or more. The branches stack, threat scoring then the alert stream, and the
+   rail runs on from the fork's node to meet each on a short line, so the two still read as one fork; Live stays under
+   the alert stream. The rail is 4px in from the list's edge: 25px left of a box's padding. 399.98px, as 1023.98 above. */
+@media (max-width: 399.98px) {
   .wk__aegis-branches { grid-template-columns: minmax(0, 1fr); }
   .wk__aegis-flow > [data-k="live"] { margin-left: var(--cine-space-6); }
   /* From the fork's node down to the first branch's line (its label's height, the gap, a box's edge and the line's
