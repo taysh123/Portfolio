@@ -11,6 +11,183 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-21 — Session 32: P4, T Poker's explainer (the steps drive the carousel, option A) in its panel's own row; PR #30 (Claude Code)
+
+**Scope (Tay's brief):** `docs/P4_PLAN.md` §3.1, option A, under its "Decisions (Tay, 2026-11-21)", which approve this
+session's test changes (each in its own commit naming "Tay, 2026-11-21, P4 plan decisions"). S30's and S31's pattern
+reused. Phase 1 stopped for his go before any code. The legend shown ("Walk through T Poker", `dict.poker.walk`); every
+string imported; colours only from the Q5 mapping. Stop if first-load JS grows by more than 1 KiB. No merge, deploy,
+env or DNS change; no new dependency, capture or copy change. Push and a PR, ready for review.
+
+### 0. Preconditions (VL)
+- `git fetch`, `main` pulled: `main` = `origin/main` = Production = **`d0e5e45`**, the tree clean; the latest Production
+  deployment (`7967338835`) is `success` on that SHA (18:11:29Z). `npm ci` (Next 16.4.6). `feat/p4-tpoker` cut from it.
+- **PR #29 (S31, Aegis) is merged:** Tay merged it on 2026-11-21 at 18:11:02Z as `d0e5e45` (parents `7505b91` and
+  `49c91fd`), after his phone review, which approved it. `feat/p4-aegis` is gone, local and remote.
+- **S31's close check, on Production `d0e5e45`:** `/` at 390 and 1440 (Chromium, through Cloudflare): 200, 0 console
+  errors, 0 CSP violations, 0 failed requests, 0 responses ≥ 400; one canvas; the h1; Aegis's and DeveloperOS's slots
+  shown, T Poker's and GRAVITY FLOW's hidden; Aegis's ring and DeveloperOS's three boxes; C1 live; the wide fork at
+  1440 and the stacked branches at 390. The two stylesheets 44,021 B and 35,407 B, the local build's.
+
+### 1. Phase 1, for Tay's go (VL)
+- **What would change:** the carousel (`Reel.tsx`) gains a `steps` prop, T Poker's alone (3). Before hydration and
+  without JS, T Poker's slides 2 and 3 carry their pictures too, out of layout until their step is chosen; after
+  hydration the carousel is today's. With `steps` at 0 nothing new renders or runs, so the other three carousels are
+  untouched (proved in §5). The sync both ways, the quiet announcement, and a step chosen before hydration: §3.
+- **Two scratch probes** (a static page in Playwright 1.62.1's three engines):
+  - **Tab and a radio group:** Chromium and Firefox run link, button, the group (one stop, the chosen radio), text
+    field, link. **WebKit** runs button, the group (one stop), text field: it skips links only (S25's model), reaches
+    the group, and the arrows move and check. Not testable here: Safari on a Mac with default settings likely skips
+    radios as it skips buttons (NC); Option+Tab reaches them. Not a P4 blocker.
+  - **A lazy `<picture>` in a `display: none` slide is not fetched until it is shown,** in all three engines. That probe
+    ran with JavaScript on; §2 corrects what it was taken to show.
+- **Tay's answers:** go on option A as described. Yes to two test changes outside §3.1's list,
+  `lab-work.spec.ts:303` (the keyboard order gains one stop) and `lab-work.test.ts:278` (the unit twin of the no-JS
+  check, which pinned `{shown && shot}`), and to the three S30/S31-pattern tests (the slot-row geometry, the strings
+  imported, no client code in the explainer). **The no-JS `aria-hidden` edge is accepted:** without JS, a step's capture
+  shown in front keeps its slide's `aria-hidden` (the server can't change it), so a screen reader gets the step's
+  caption, which says the same thing, but not the alt text.
+
+### 2. A correction during the build, and Tay's ruling (VL)
+- **Found on the first build:** without JavaScript, T Poker's panel fetched `poker-live` and `poker-settle` on load.
+  **The HTML spec turns lazy loading off when scripting is disabled**, so every `<img>` in the HTML is fetched,
+  `display: none` or not. Re-checked in Chromium, Firefox and WebKit with JS off: the same in all three. A CSS image
+  applied only by a step's `:has(:checked)` rule is fetched only when chosen, in all three.
+- **The cost, for no-JS visitors only:** +15.7 KB at 1440 (the two 320w AVIFs) and +25.3 KB at 390 (the 480w AVIFs at
+  device scale 2); WebKit takes the larger WebP. **With JS nothing extra is fetched:** with the scripts held back 2.5 s,
+  only `poker-home` before hydration, then `poker-live` and `poker-stats` (the neighbours, as on `main`), at 390 and 1440.
+- **Tay's ruling: accept the cost** and keep the approved design (real `<picture>`s, with their alt text and every
+  width), rather than drawing the no-JS swap as a CSS image or falling back to option C. The approved "nothing extra is
+  fetched on load, without JS too" test checks that instead: with JS nothing extra, before hydration or after; without
+  JS, only those two captures beyond `main`'s set. `docs/P4_PLAN.md`'s Decisions record it.
+
+### 3. What was built (`d766719`)
+- **`components/sections/PokerExplainer.tsx`**, a server component: a fieldset whose legend is shown, "Walk through T
+  Poker" (`fmt(dict.poker.walk, { name })`, the name from `data/projects.ts`); three native radios (`pokerSteps`'
+  labels; step 1 checked, because the carousel opens on the home screen), each described by its caption; the three
+  captions in one shared grid cell. One Tab stop; the arrow keys move and check. Without JS, CSS shows the chosen step's
+  caption.
+- **`Reel.tsx`:** the `steps` prop.
+  - **Steps → carousel:** one `change` listener on the group (`wk-<id>-steps`) brings that capture to the front, and
+    empties the live region instead of announcing it (the caption describes it; emptying lets the next carousel move be
+    announced even if its words repeat).
+  - **Carousel → steps:** whenever the front changes, the step of the capture in front is checked, and none for the
+    podium and the stats. Setting `checked` fires no change event, so the two never loop. The first run is skipped (the
+    server already checked step 1), and at hydration the carousel starts on a step chosen before it ran.
+  - **Before hydration and without JS:** `pre = !ready && i < steps` also draws the steps' captures; their slides carry
+    `data-step`. (Phase 1 called it `data-pre`; `data-step` matches the radios' and captions' attribute.)
+- **`Work.tsx`:** `EXPLAINERS` gains `poker`; `STEPS = { poker: 3 }` goes to T Poker's carousel only.
+- **`work.css`,** layer tokens only (Q5): the track on `--cine-glass-ink` with `--cine-edge`; the chosen part in ink
+  with a 2px cyan underline, the others mist (ink on hover, over `--cine-dur-hover`, none with reduced motion), the
+  numbers faint, the caption mist. Each radio is a clear box over its part (`appearance: none`), so the layer's own ring,
+  and high contrast's white one, draw round the part. Before the carousel runs, one `:has(:checked)` rule per step
+  swaps its capture in front, flat and undimmed (never a selector list holding `:has()`). Below 640px the parts' labels
+  take the room their padding left (at 320 each part is 87.3px wide).
+
+### 4. Tests (each in its own commit; approval: Tay, 2026-11-21, P4 plan decisions, and his answers at S32's start)
+| Commit | Change | Where |
+|---|---|---|
+| `64c2487` | Changed: the unit slot test (`EXPLAINERS` maps `poker`, `aegis` and `developeros`) | `tests/unit/lab-work.test.ts:247` |
+| `a30e5b7` | Changed (Tay's yes at S32's start): the unit twin of the no-JS check: `{(shown \|\| pre) && shot}`, `data-step`, `steps` defaulting to 0, `STEPS = { poker: 3 }`, and the rule keeping the step captures out of layout | `lab-work.test.ts:278` |
+| `48c55cd` | New (S30/S31 pattern): every string imported, never typed; the legend reads "Walk through T Poker" | `lab-work.test.ts` |
+| `f2b0460` | New (S30/S31 pattern): a server component with no client code; three radios in one named group; the carousel finds the group by its id | `lab-work.test.ts` |
+| `6a98fb1` | Changed: the e2e slot test (T Poker's, Aegis's and DeveloperOS's shown; GRAVITY FLOW's empty, hidden, unrendered) | `tests/e2e/lab-work.spec.ts:425` |
+| `d84729a` | Changed (§3.1's "no-JS carousel check"): each panel still shows its first capture alone; T Poker's output also holds `poker-live` and `poker-settle`, out of layout | `lab-work.spec.ts:79` |
+| `937d82e` | Changed (Tay's yes at S32's start): the keyboard order under the hero gains "Start a game" after T Poker's carousel. The ring is read as before, from the focused radio itself (it carries the layer's ring), so the read from a sibling described in Phase 1 wasn't needed | `lab-work.spec.ts:312` |
+| `37f2b05` | Restored, adapted: the tag's `chapters.spec.ts` `:7` ×4 (three equal parts in one row at 320, 360, 390 and 430, no label spilling), `:20` (the group under its shown name; each step brings its screen to the front of the carousel, is described by its caption; ArrowRight moves and checks) and `:40` (JS off: each step swaps its screen in, flat, with its caption) | `lab-work.spec.ts`, after Aegis's |
+| `51c324c` | New: the sync both ways: a step, the arrows, a dot, the keyboard on the dots, a side capture, a swipe; the podium and the stats check no step; a step's move leaves the live region empty, and the next carousel move is announced again | `lab-work.spec.ts:782` |
+| `9fa5681` | New: the Tab order at 1440 and 390: the links, the carousel's three stops, the steps as one stop (the chosen one, or the first when none is), then Aegis; Shift+Tab back. Replaces the retired "T Poker on desktop" `:70` ×2 | `lab-work.spec.ts:832` |
+| `fa1118e` | New: reduced motion (the OS setting and the site's switch): a step swaps the capture at once, one shown, no turn, no transition on the slides or the steps | `lab-work.spec.ts` |
+| `90d7c45` | New (as ruled in §2): with JS, nothing extra before or after hydration; without JS, only the two step captures beyond each panel's first | `lab-work.spec.ts` |
+| `fb471de` | New: axe on the panel and its steps, as it opens and with a step chosen from the keyboard, at 1440 and 390, motion on and reduced | `lab-work.spec.ts` |
+| `c7fa6d6` | New (S30/S31 pattern): T Poker's slot-row geometry at 320, 390, 1024 and 1440: under the capture's column from 1024px, after the carousel on phones, the track centred; its only controls the three radios | `lab-work.spec.ts` |
+
+- **Before any test changed,** the existing suites on the new code: unit 227/229 and Playwright 222/225. The failures
+  were exactly the approved ones: the two unit tests (`:247`, `:278`) and the three e2e tests (`:78`, `:303`, `:412`).
+  Nothing else needed a change; `chrome.spec.ts`'s Tab walk passed as it was.
+- **Each new, restored and changed test ran against `main`'s build first** (a scratch config on `:3402`; the unit file in
+  `main`'s scratch worktree, with an empty `PokerExplainer.tsx` so it loads): all fail there and pass on the branch.
+  The one exception is by design: the fetch test's with-JS half also passes on `main`, because it checks that nothing
+  extra is fetched; its no-JS half fails there by exactly the two accepted captures.
+- Retired for good, as the plan lists: "T Poker on desktop" (`chapters.spec.ts:70` ×2). `tests/unit/work.test.ts`'s T
+  Poker cases are unchanged and pass.
+- Tests added above them moved the lines ROADMAP #22 cites: `:260` → `:269`, `:303` → `:312`, `:338` → `:351`,
+  `:833` → `:1105`, `:957` → `:1229` (#22's row says so).
+
+### 5. Measured against `main`, on the same machine (VL)
+`main` = `d0e5e45` built in a scratch worktree (its own `npm ci`) and served on `:3402`; this branch on `:3401`. Every
+probe ran the two interleaved, on an otherwise idle machine.
+
+| | `main` `d0e5e45` | This branch |
+|---|---|---|
+| First-load JS (`budget.spec.ts`'s algorithm) | 187.06 KiB gzip, 9 scripts | **187.24 KiB (+183 B)**, 9 scripts: only the carousel's chunk changed (9,333 → 9,516 B gzip); the other 8 byte for byte. Under the brief's 1 KiB stop |
+| HTML `/` | 136,944 B (gzip -9 26,313 B) | **141,498 B** (+4,554 B; gzip -9 27,123 B, +810 B); budget 568 KB |
+| The other three panels' server HTML, and the rest of `#work` | | **byte-identical** to `main`'s; T Poker's article holds 3 `<picture>`s (1 on `main`) and 3 stepped slides |
+| The site's shared sheet (Tailwind) | 44,021 B | **44,021 B: the same file** (name and SHA-256) |
+| The layer's sheet | 35,407 B (gzip -9 6,260 B) | **38,693 B** (+3,286 B; gzip -9 6,698 B, +438 B) |
+| Lighthouse 13.6.0 mobile, two batches of 5 interleaved runs (the second with the branch first) | Perf median 100 (one 99), A11y, BP, SEO 100; FCP and LCP median **1,062 ms**; TBT 49 ms; CLS 0 | Perf median **100** (one 99, one 96); 100, 100, 100; FCP and LCP median **1,063 ms**; TBT 50 ms; CLS **0** |
+| LCP element (Lighthouse) | the hero's h1 | the hero's h1 |
+| Phone LCP at 4× CPU, 412×823, a fresh context per load, three rounds of 15 interleaved pairs | rounds 612 / 620 / 564 ms; pooled median **608 ms** (384–800), mean 611 | rounds 584 / 604 / 528 ms; pooled median **592 ms** (388–840), mean 578 |
+| The same at 390×844, 15 pairs | median 544 ms, mean 546 | median 556 ms, mean 531 |
+| CLS while scrolling the whole page (120px steps; 7 sizes from 320×568 to 1440×900; motion on and reduced) | from the chat launcher only, 0.0032–0.0122; anything else 0 | from the chat launcher only; anything else **0** at all 14 settings |
+| axe (WCAG 2.2 A/AA) | 0 violations | **0** in the new panel test (8 runs) and the page-wide test |
+| The Tab walk, skip link to the footer's last link | 52 stops at 1440, 47 at 390 | **53 and 48**: the one new stop is the steps ("Start a game"), and `main`'s order is kept |
+| Work captures requested on a load with JS (412×823 and 1440×900) | 5 and 8 | **identical** |
+
+- **The 96:** one branch run in the first batch had TBT 224 ms (every other run on both builds: 23–102 ms). The second
+  batch, run branch first, gave 100 on all five. Noise, not a trend: TBT medians 49 and 50 ms over ten runs each.
+- **Phone LCP at 4× CPU:** at 412, −33 ms in means (standard error 21), medians −16; at 390, −15 (standard error 37),
+  medians +12. Within the noise. The h1 is the LCP element in all 120 loads.
+- **The launcher's own CLS** is identical at 11 of 14 settings. At 1440 it doubles (0.0039 → 0.0076, 0.0048 → 0.0097),
+  and at 768 with motion on it is +0.0002. Traced shift by shift: the launcher unfolds its label again at the very end
+  of the page. The branch's page is 186px taller, so the probe's last 120px step now lands 5px from the bottom, where
+  `main`'s stopped 59px short. Scrolled right to the bottom, `main` shows the same second shift. The same single
+  source, as in S30 and S31; nothing under the hero shifts.
+- **axe's needs-review** in the panel: 6 colour-contrast nodes (7 at 390, one of them `main`'s own: the tagline's
+  "partially obscured"). Each part's clear radio overlaps its label (`bgOverlap`), and the one-digit numbers are too
+  short to judge (`shortTextContent`). Measured instead on the rendered background, with the text hidden and
+  transitions off (the lightest pixel behind any of the steps' text, 11,15,23): ink 17.1:1, mist 9.4:1, faint 7.3:1.
+- **The first row is unchanged:** each panel's words and stage keep their boxes relative to the panel at 320, 390, 1024
+  and 1440, on both builds. The panels after T Poker start lower by the new row: +212px at 320, +191 at 390, +205 to
+  +206 at 1024, +185 to +186 at 1440 (sub-pixel rounding).
+
+### 6. Validation (VL)
+- `npm run typecheck` and `npm run lint`: clean.
+- `npm test` (Git Bash): **231/231** in 18 files (229 + the two new unit tests; the other two changed in place).
+- `npm run build` right after deleting `.next`, then `GROQ_API_KEY= npx playwright test` (Chromium): **245/245** in 17
+  files, cold; **245/245** warm. (225 + 6 restored + 1 sync + 2 Tab + 2 reduced motion + 1 fetch + 4 axe + 4 slot-row;
+  three tests changed in place.)
+- After this docs commit: rebuilt, and `/`'s two stylesheets compared again with `main`'s (§5 held). `CLAUDE.md` and
+  `claude/` are Tailwind-scanned.
+
+### 7. Screenshots (for Tay; in the session's scratch only, the repo being public)
+The T Poker panel, its first row and the steps, at 320, 390, 1024 and 1440 (phones at device scale 2; the site's
+header and the chat launcher hidden in the stills).
+
+### 8. Notes for Tay's review
+- **The no-JS fetch** (§2): accepted by Tay; recorded here, in `docs/P4_PLAN.md`'s Decisions and in
+  `docs/CINEMATIC_SYSTEM.md`.
+- **The ring is the radio's own:** each radio is a clear box over its part, so the layer's ring (and high contrast's)
+  draws round the part. That kept `:303`'s change to the new stop and its name.
+- **The engines (NC):** the new tests ran on Chromium only, as the suite does. By construction, the sync test's swipe
+  uses CDP touch (Chromium-only), and the Tab-order test ends on a link, which Safari's Tab skips. Both are listed under
+  #22.
+- **Safari on a Mac** (NC, Phase 1): if its default Tab skips radios as it skips buttons, Option+Tab still reaches the
+  steps, and a click or tap always does.
+
+### 9. Docs and the PR
+- **This docs commit:** this entry; `docs/P4_PLAN.md` (Tay's answers at S32's start and the §2 ruling, in its
+  Decisions); `docs/ROADMAP.md` (S31 merged, S32 done for review, #22's moved lines and the new tests' engines);
+  `docs/CINEMATIC_SYSTEM.md` ("The P4 slot", the carousel's steps, the file map); `claude/START-HERE.md`; `CLAUDE.md`
+  (Production `d0e5e45`, the order, the suite's counts).
+- `feat/p4-tpoker` pushed; **PR #30**, ready for review, not merged.
+
+### Waiting on Tay
+- **His phone review of PR #30**, then the merge. The Preview follows the push.
+- **Then (his order):** #18 (when he has the image); GRAVITY FLOW's explainer; then #22. Low priority: #23 and #25.
+
+---
+
 ## 2026-11-21 — Session 31: P4, Aegis's explainer (one alert, start to finish) in its panel's own row; PR #29 (Claude Code)
 
 **Scope (Tay's brief):** `docs/P4_PLAN.md` §3.2, under its "Decisions (Tay, 2026-11-21)", which approve this session's

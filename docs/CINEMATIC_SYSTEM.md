@@ -24,7 +24,7 @@ was invented: the hero is its first consumer. After the extraction, its computed
 | `app/page.tsx` | Its only importer, so only `/` loads it (`/privacy`, the 404 and the error page never do) |
 | `components/sections/hero.css`, `Hero.tsx` | The reference consumer: the hero's own geometry, every shared value read from the layer |
 | `components/sections/Constellation.tsx` | The reference live element: the loop contract below, in code |
-| `components/sections/` (Work, `panels.ts`, `Reel`, `Shot`, `AegisExplainer`, `DosExplainer`, `MoreWork`, About, Stack, `StackFilter`, ThinkBuildShip, Contact, `work.css`) | The second consumer: Work (with P4's explainers, "The P4 slot"), Two more and the sections below them |
+| `components/sections/` (Work, `panels.ts`, `Reel`, `Shot`, `PokerExplainer`, `AegisExplainer`, `DosExplainer`, `MoreWork`, About, Stack, `StackFilter`, ThinkBuildShip, Contact, `work.css`) | The second consumer: Work (with P4's explainers, "The P4 slot"), Two more and the sections below them |
 | `components/layout/Navbar.tsx`, `Logo.tsx`, `AvailabilityPill.tsx` | The header, in its own `.cine` root (R2) |
 | `tests/unit/lab-hero-a.test.ts`, `lab-work.test.ts` | Pin the scope, the contrast floors, the token integrity and every string's source |
 | `tests/e2e/lab-hero-a.spec.ts`, `lab-work.spec.ts` | Pin the behaviour: budget, axe, no-JS, reduced motion, pause, the carousels, Stack's filter |
@@ -163,13 +163,21 @@ checks each against its source:
 The DeveloperOS alt text names three file-and-line chips that `components/work/DeveloperOSChapter.tsx` does not export.
 The slice keeps a copy, and the test holds it equal.
 
-**The P4 slot** (updated in S31; the plan: `docs/P4_PLAN.md`, approved by Tay on 2026-11-21). Each panel's P4
+**The P4 slot** (updated in S32; the plan: `docs/P4_PLAN.md`, approved by Tay on 2026-11-21). Each panel's P4
 explainer mounts in its slot: `<div className="wk__demo" data-demo-slot="<id>">`, labelled by a comment in `Work.tsx`.
 - **Where (Q2):** the slot is the panel's last child, a row of its own under the first. From 1024px it spans both
   columns as a subgrid on the panel's own column lines (only its row gap is set, so it keeps the panel's column gap);
   on phones it follows the capture. The first row (the words and the capture) is unchanged.
-- **What fills it:** `Work.tsx`'s `EXPLAINERS` map, one server component per panel. T Poker's and GRAVITY FLOW's slots
-  stay empty and hidden until their session: no placeholder, no sample data, no "coming soon".
+- **What fills it:** `Work.tsx`'s `EXPLAINERS` map, one server component per panel. GRAVITY FLOW's slot stays empty and
+  hidden until its session (after #18): no placeholder, no sample data, no "coming soon".
+  - **T Poker** (S32, `PokerExplainer.tsx`, option A): the steps drive the carousel (see "Steps" under the carousel
+    below). A fieldset under its shown legend, "Walk through T Poker" (`dict.poker.walk`): three native radios (one Tab
+    stop; the arrow keys move and check), each described by its caption, and the captions in one shared grid cell, the
+    chosen step's shown (none when the carousel shows the podium or the stats). Under the capture's column from 1024px
+    (T Poker's is the left one), after the carousel on phones; the track centred under the carousel, three equal parts
+    at every width, one line each where it fits and two where it doesn't (the tag's rule). Each radio is a clear box
+    over its part (`appearance: none`, `inset: 0`), so the layer's own focus ring draws round the part, and high
+    contrast's white ring with it.
   - **Aegis** (S31, `AegisExplainer.tsx`): a figure captioned "One alert, start to finish" around an ordered list
     (Ingest, Normalise, Detect; "Then, in parallel" with the two branches as a nested list; Live), then the shared-schema
     note. From 1024px the trace runs across both columns as the tag's five-column line, drawn forking after Detect;
@@ -189,13 +197,16 @@ explainer mounts in its slot: `<div className="wk__demo" data-demo-slot="<id>">`
   clips it. No dim around it (it would be a new value).
 - **Colours (Q5), no new value:** rails `--cine-hair`; plain nodes `--cine-faint`; Evidence, Cite, Aegis's Detect node
   and its segment of the line, and every mark `--cine-cyan`; Decline `--cine-violet`; boxes (the refusal, Aegis's
-  branches and Live on phones) on `--cine-glass-ink` with `--cine-edge`; names, bodies and labels in ink, mist and
-  faint. The code chip uses the site's monospace stack, written out in `work.css`: reading `--font-mono` there would
+  branches and Live on phones, T Poker's step track) on `--cine-glass-ink` with `--cine-edge`; names, bodies and labels
+  in ink, mist and faint. T Poker: the chosen step in ink with a 2px `--cine-cyan` underline (the plate's was gold), the
+  others mist (ink on hover, over `--cine-dur-hover`, gone with reduced motion), the numbers faint, the caption mist. The code chip uses the site's monospace stack, written out in `work.css`: reading `--font-mono` there would
   make Tailwind emit that variable into the site's shared sheet (it is `@theme inline`).
 - **Tests:** `lab-work.test.ts` (the slot's row and the `EXPLAINERS` map; each explainer's strings imported, never
-  typed; each a still server component) and `lab-work.spec.ts` (the four slots; DeveloperOS's sequence, refusal and
-  boxes; Aegis's sequence, wide fork, ring, 390 fork and 320 stacking; each explainer's slot-row geometry at 320, 390,
-  1024 and 1440; axe on each panel with its marked capture in front).
+  typed; each a server component with no client code; the carousel's `steps` and its no-JS rule) and `lab-work.spec.ts`
+  (the four slots; DeveloperOS's sequence, refusal and boxes; Aegis's sequence, wide fork, ring, 390 fork and 320
+  stacking; T Poker's equal parts at four phone widths, the radio group driving the carousel, no-JS steps, the sync both
+  ways, the Tab order, reduced motion and what is fetched; each explainer's slot-row geometry at 320, 390, 1024 and 1440;
+  axe on each panel).
 
 **Behaviour:**
 - **Opening:** one reveal (eyebrow, the title settling, the lede). The panels hold still.
@@ -265,7 +276,31 @@ explainer mounts in its slot: `<div className="wk__demo" data-demo-slot="<id>">`
 - Arrows, Home and End move between captures, and focus follows the dot. A sideways swipe works on touch (vertical
   swipes still scroll), and clicking a side capture brings it forward.
 - A polite live region announces each change the reader makes. It never moves on its own.
-- **No JS:** each project's first capture alone, and no controls.
+- **No JS:** each project's first capture alone, and no controls. T Poker's carousel also carries its steps' two other
+  captures (below).
+- **Steps (P4, S32; T Poker only, Tay's option A):** `Reel`'s `steps` prop (`Work.tsx`'s `STEPS`, `{ poker: 3 }`) says
+  how many of the first captures have a step in the panel's explainer, a server-rendered radio group
+  (`wk-<id>-steps`, `PokerExplainer.tsx`). A carousel without it renders and runs exactly as before (the other three
+  panels' server HTML is byte-identical to `main`'s before S32).
+  - **Steps → carousel:** one `change` listener on the group brings that capture to the front. The carousel then
+    empties its live region instead of announcing the move: the step's caption, the radio's description, says it, and
+    emptying (not keeping the old words) lets the next carousel move be announced even if its words repeat.
+  - **Carousel → steps:** whenever the front changes (the dots, the arrows, Home and End, a swipe, a side capture), the
+    step of the capture in front is checked, and none for the podium and the stats. Setting `checked` fires no change
+    event, so the two never loop. The first run is skipped, and at hydration the carousel starts on a step chosen before
+    it ran (or restored by the browser).
+  - **Before hydration and without JS:** the steps' captures are in the HTML too (`data-step` on their slides), out of
+    layout (`display: none`) until their step is chosen; then one `:has(:checked)` rule per step swaps that capture in
+    front, flat and undimmed (`work.css`; one rule per step, never a selector list holding `:has()`). Once the carousel
+    runs (`data-ready`) none of it applies. All five T Poker captures are 640 × 1387, so the track's height is the same
+    either way.
+  - **What that fetches** (measured in S32): with JS, nothing extra. A lazy image out of layout is never fetched before
+    hydration (Chromium, Firefox and WebKit), and after it the carousel mounts its usual front and two neighbours.
+    **Without JS, browsers ignore `loading="lazy"`** (the HTML spec turns lazy loading off when scripting is), so the
+    two step captures are fetched on load: +15.7 KB at 1440 and +25.3 KB at 390 (AVIF; WebKit takes the larger WebP).
+    **Tay accepted that cost (S32)** rather than a second, CSS-image way of drawing them, or option C.
+  - **Accepted edge (Tay, S32):** without JS, a step's capture shown in front keeps its slide's `aria-hidden` (the
+    server can't change it), so a screen reader gets the step's caption, which says the same, but not the alt text.
 - **Reduced motion:** a flat slider, one capture at a time, no turn, no movement.
 - **Lazy:** a neighbour mounts only after hydration and only one step from the front; every capture but the page's
   first is `loading="lazy"`.
