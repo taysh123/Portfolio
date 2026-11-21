@@ -606,6 +606,36 @@ test("Aegis at 390px: the trace is a single column with the fork as two branches
   await ctx.close();
 });
 
+// New in S31 (docs/P4_PLAN.md §3.2, "at 320, the branches stack and Live follows the alert stream"; Tay, 2026-11-21,
+// P4 plan decisions: the stacked branches below about 400px, subject to his review of the screenshots).
+test("Aegis at 320px: the branches stack, threat scoring then the alert stream, still joined by the rail; Live follows the alert stream", async ({ browser }) => {
+  const { ctx, page } = await at(browser, [320, 568]);
+  const r = await aegis(page).evaluate((p) => {
+    const q = (s: string) => p.querySelector(s) as HTMLElement, rect = (s: string) => q(s).getBoundingClientRect();
+    const after = (s: string) => getComputedStyle(q(s), "::after");
+    // Where a pseudo-element's line sits, from its box's own edge and its computed offsets.
+    const fork = rect(".wk__aegis-fork"), rail = after(".wk__aegis-fork");
+    const tick = (s: string) => { const b = rect(s), a = after(s), edge = parseFloat(getComputedStyle(q(s)).borderTopWidth);
+      return { x: b.left + edge + parseFloat(a.left), y: b.top + edge + parseFloat(a.top), end: b.top + edge + parseFloat(a.top) + parseFloat(a.height) }; };
+    return { score: rect('[data-k="score"]'), alert: rect('[data-k="alert"]'), live: rect('[data-k="live"]'), then: rect(".wk__aegis-then"),
+      rail: { x: fork.left + parseFloat(rail.left), end: fork.top + parseFloat(rail.top) + parseFloat(rail.height) },
+      first: tick('[data-k="score"]'), second: tick('[data-k="alert"]') };
+  });
+  const near = (a: number, b: number, what: string) => expect(Math.abs(a - b), what).toBeLessThan(1.5);
+  // One column under the fork's label: the alert stream under threat scoring, on the same edges.
+  expect(r.alert.top).toBeGreaterThanOrEqual(r.score.bottom);
+  near(r.score.left, r.alert.left, "same left"); near(r.score.right, r.alert.right, "same right");
+  near(r.score.left, r.then.left, "under the label");
+  // The rail runs from the fork's node to threat scoring's line, and on (threat scoring's own line) to the alert
+  // stream's: both branches leave the same rail.
+  near(r.first.x, r.rail.x, "threat scoring meets the rail"); near(r.second.x, r.rail.x, "the alert stream meets it too");
+  near(r.rail.end, r.first.y, "the rail reaches threat scoring"); near(r.first.end, r.second.y + 1, "and carries on to the alert stream");
+  // Live under the alert stream, on its column.
+  expect(Math.abs(r.live.left - r.alert.left)).toBeLessThanOrEqual(2);
+  expect(r.live.top).toBeGreaterThan(r.alert.bottom);
+  await ctx.close();
+});
+
 // About (P3.3, session 12): who, in about ten seconds, under Work. Every word server-rendered, no photo, and it holds
 // still. Since R10 (S18+S19) it ends on the facts: no availability line and no links.
 test("About without JavaScript: every word, no link, no photo, nothing hidden", async ({ browser }) => {
