@@ -11,6 +11,188 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-21 — Session 31: P4, Aegis's explainer (one alert, start to finish) in its panel's own row; PR #29 (Claude Code)
+
+**Scope (Tay's brief):** `docs/P4_PLAN.md` §3.2, under its "Decisions (Tay, 2026-11-21)", which approve this session's
+test changes (each in its own commit naming "Tay, 2026-11-21, P4 plan decisions"). S30's pattern reused: the slot's
+row, a mark on a carousel slide, the colour mapping, the measuring routine. Copy: C1 and C2 only, in his exact words;
+the shared-schema note kept; the `onScreen` sentence dropped; no AI claim. Push and a PR, ready for review. No merge.
+
+### 0. Preconditions (VL)
+- `git fetch`, `main` pulled: `main` = `origin/main` = Production = **`7505b91`**, the tree clean; the latest Production
+  deployment (`7958178535`) is `success` on that SHA. `npm ci` (Next 16.4.6). `feat/p4-aegis` cut from it.
+- **PR #28 (S30, DeveloperOS) is merged:** Tay merged it on 2026-11-21 at 03:56Z as `7505b91` (parents `57b9743` and
+  `84a7ddf`), after his phone review, and kept `10dd203` (the still-server-component test). S30's close check put
+  Production on `7505b91` with the DeveloperOS explainer live. `feat/p4-developeros` is gone, local and remote.
+- **Production, re-checked read-only in S31:** `/` through Cloudflare with a browser `Accept` header answers 200
+  (132,570 B). In Chromium at 390 and 1440: 200, one canvas, the h1, DeveloperOS's five steps and its three citation
+  boxes, the other three slots hidden; 0 console errors, 0 CSP violations, 0 failed requests.
+
+### 1. Step 1, re-verified against Aegis's public repository (VL, read-only `gh api`)
+`main` is **`31a75aa`** (its last push, 2026-09-26). Every line of the trace matches the code; nothing to stop for.
+- **Ingest:** `AgentHmacAuthenticationHandler.cs:46` computes an HMAC-SHA256 over the request body's bytes; `:52–53`
+  compares it with the header's in constant time (`CryptographicOperations.FixedTimeEquals`, after a length check). The
+  handler reads only the HMAC header: no timestamp, no nonce, so C2's "no replay protection yet" holds.
+- **Normalise:** `IngestionService.cs:26` validates each event on arrival (FluentValidation, `RawEventValidator`);
+  `NormalizationConsumer.cs:127` builds the canonical `NormalizedEvent` and `:131` publishes it; MassTransit over
+  RabbitMQ (`Program.cs:98–155`).
+- **Detect:** `PortScanDetector.cs:87–88`, `Threshold = 20`, `WindowSeconds = 60`; `:103` a fixed bucket (Unix time ÷
+  60); `:106–107` the Redis HyperLogLog (`RedisWindowStateStore.cs:29, 34`, `HyperLogLogAdd` and `HyperLogLogLength`);
+  `:109` returns nothing below 20, so the rule fires when the estimate reaches 20.
+- **The fork:** `DetectionConsumer.cs:55–56` publishes each detection once, through `RabbitMqAlertPublisher` (deduplicated
+  by fingerprint, then one `AlertGeneratedMessage`). Two receive endpoints consume that message, `alerts.score`
+  (`ThreatScoringConsumer`) and `alerts.stream` (`AlertStreamConsumer`): two queues, so the two run in parallel.
+- **Threat score:** `ThreatScore.cs:8–9`, raw = (severity ÷ 100) × MITRE factor × (1 − false-positive rate), then
+  clamped to 0–1. `ThreatScoreCalculator.cs:143`: harder to detect, higher score; the factor is averaged over an
+  alert's techniques (the port scan has one, T1046).
+- **Alert stream:** `AlertStreamConsumer.cs:190` sends to the hub's all-alerts group, which every connection joins on
+  connect (`AlertHub.cs:38`).
+- **The note:** the message contracts live in the shared kernel; `Program.cs` composes the modules in process; the
+  Detection, ThreatScoring and Alerts DbContexts all map the same `alerts` table in one schema.
+
+### 2. The copy (`d72061c`; Tay, 2026-11-21, P4 plan decisions)
+- **C1**, Threat scoring: "Severity, a per-technique MITRE weight (higher for techniques that are harder to detect), and
+  one minus the rule's false-positive rate multiply into one score, clamped to 0–1."
+- **C2**, Ingest: "The agent signs the request body with an HMAC; the API verifies it in constant time (no replay
+  protection yet)."
+- Both compared programmatically with the Decisions section's quoted words: equal. No other copy change.
+  `tests/unit/work.test.ts` (unchanged) passes: its numbers and terms still hold. `data/projects.ts` and the chat's
+  rules already said both.
+- **The `onScreen` sentence** stays in `data/work.ts` and is not shown (a ruling, §8).
+
+### 3. What was built (`18ce853`)
+- **`components/sections/AegisExplainer.tsx`**, a server component: a figure captioned "One alert, start to finish"
+  (`dict.aegis.traceTitle`) around an ordered list. Ingest, Normalise, Detect; then "Then, in parallel"
+  (`dict.aegis.parallel`) with the two branches as a nested list; then Live. Then the shared-schema note
+  (`aegisCopy.seam`). A screen reader hears the order and the branching; the rail, the nodes and the ring are
+  decoration.
+- **`Work.tsx`:** `EXPLAINERS` gains `aegis`. T Poker's and GRAVITY FLOW's slots stay empty and hidden.
+- **The ring (`panels.ts`, `ringOn`):** the port-scan row's measured card (`AEGIS_ROW`) on each crop (`AEGIS_CROPS`),
+  8px out on the capture and 6px on the phone crop, running 12px past the frame's right edge, as the tag drew it. It is
+  a `.wk__mark` on the carousel's first slide: cyan, hidden from screen readers (the alt text carries the row's words).
+- **Styles (`work.css`, `.wk__aegis-*`), layer tokens only:**
+  - **From 1024px:** the tag's five columns across both of the panel's, the line drawn forking after Detect. Threat
+    scoring carries straight on; the alert stream turns down and continues to Live.
+  - **Below 1024px:** a rail (Ingest, Normalise, Detect, the fork's node), then the two branches side by side in boxes,
+    and Live under the alert stream, joined by a short line.
+  - **At 389px and below:** the branches stack, threat scoring then the alert stream. The rail runs on from the fork's
+    node and meets each branch on a short line at its name, so the two still read as one fork. Live stays under the
+    alert stream.
+  - **Colours (Q5):** rails `--cine-hair`; nodes `--cine-faint`; the Detect node and its segment of the line, and the
+    ring, `--cine-cyan`; boxes on `--cine-glass-ink` with `--cine-edge`; names ink, bodies mist, labels faint.
+- **Two catches, fixed before the commit** (both selector specificity, both seen on the first screenshots): on phones,
+  Detect's segment lost to the generic rail rule and drew grey; from 1024px, the branches' nodes stayed on the fork's
+  vertical line instead of 16px in. Checked by computed style after the fix.
+
+### 4. Tests (each in its own commit; approval: Tay, 2026-11-21, P4 plan decisions)
+| Commit | Change | Where |
+|---|---|---|
+| `b1be03a` | Changed: the unit slot test (`EXPLAINERS` maps `aegis` and `developeros`) | `tests/unit/lab-work.test.ts:247` |
+| `9346100` | Changed: the e2e slot test (Aegis's and DeveloperOS's shown with their explainers; the other two empty, hidden, unrendered) | `tests/e2e/lab-work.spec.ts:412` |
+| `a091d66` | Restored, adapted: the tag's `chapters.spec.ts` `:96` (the order and both branches; RabbitMQ and the PostgreSQL schema inside the explainer; never "open source"), `:107` (the wide fork at 1440), `:118` ×2 (the ring on the port-scan row at 1440 and 390, the phone crop below 640, running past the frame; the row's words in the alt text) and `:155` (390: one column, the branches side by side, Live under the alert stream) | `lab-work.spec.ts`, after DeveloperOS's |
+| `1099a48` | New: at 320 the branches stack, the rail meets each, Live follows the alert stream | `lab-work.spec.ts` |
+| `e5c7dba` | New: axe on the panel and its explainer, the ringed capture in front, at 1440 and 390, motion on and reduced | `lab-work.spec.ts` |
+| `95df4cf` | New: every string imported from `data/work.ts` and `lib/dict.ts`, never typed; the console note and `onScreen` never shown; C1 and C2 pinned in Tay's words; no AI claim | `lab-work.test.ts` |
+| `4ffbfee` | New: the explainer stays a still server component (no client code, no reveal, nothing to focus, no motion in its rules), as S30's `10dd203` | `lab-work.test.ts` |
+| `f8be0aa` | **New, beyond §3.2's list (for Tay to keep or drop):** Aegis's slot-row geometry at 320, 390, 1024 and 1440. The plan retires the tag's `:145` because "the slot-row test replaces it", and S30's slot-row test reads DeveloperOS only | `lab-work.spec.ts` |
+
+- Before any test changed, the existing suites on the new code: unit 226/227 and Playwright 208/209, the two failures
+  the two slot tests (on the approved list). No other existing test needed a change.
+- Each new and restored test was run against `main`'s build first (a scratch config on `:3402`, and `main`'s scratch
+  worktree for the unit tests): all fail there, all pass on the branch.
+- Retired for good, as the plan lists: the tag's `chapters.spec.ts:145` (the chapter's order).
+- `tests/unit/work.test.ts`'s Aegis cases are unchanged and pass.
+- Tests added above them moved three lines that ROADMAP #22 cites: `lab-work.spec.ts:667` is now `:822` (twice in
+  #22's row: the WebKit item still read `:566`, the line before S30), and `:791` is now `:946`.
+
+### 5. Measured against `main`, on the same machine (VL)
+`main` = `7505b91` built in a scratch worktree (its own `npm ci`) and served on `:3402`; this branch on `:3401`. Every
+probe ran the two interleaved, on an otherwise idle machine.
+
+| | `main` `7505b91` | This branch |
+|---|---|---|
+| First-load JS (`budget.spec.ts`'s algorithm) | 187.06 KiB gzip, 9 scripts | **187.06 KiB**: the same 9 chunks, byte for byte (SHA-256) |
+| HTML `/` | 132,290 B (gzip -9 24,682 B) | **136,944 B** (+4,654 B; gzip -9 26,314 B, +1,632 B); budget 568 KB |
+| The site's shared sheet (Tailwind) | 44,021 B | **44,021 B: the same file** (name and SHA-256) |
+| The layer's sheet | 31,255 B (gzip -9 5,671 B) | **35,401 B** (+4,146 B; gzip -9 6,253 B, +582 B). A rule-level diff: 37 new rules, all `.wk__aegis-*`; none removed or changed. The review's hardening (`689b619`, §8) makes it 35,404 B |
+| Lighthouse 13.6.0 mobile, median of 5 (interleaved run by run) | Perf 100 (all 5), A11y 100, BP 100, SEO 100; FCP 1,060, **LCP 1,060 ms**, TBT 30 ms, CLS 0, SI 1,364 ms | Perf **100** (all 5), 100, 100, 100; FCP 1,058, **LCP 1,058 ms**, TBT 37 ms, CLS **0**, SI 1,245 ms |
+| LCP element (Lighthouse) | the hero's h1 | the hero's h1 |
+| Phone LCP at 4× CPU (CDP throttling, 412×823, a fresh context per load; three rounds of 15 interleaved pairs) | rounds 420 / 448 / 436 ms; pooled median **436 ms** (372–648) | rounds 448 / 452 / 436 ms; pooled median **448 ms** (308–680) |
+| The same, a second batch (run while a read-only reviewer worked on the machine: higher and noisier for both) | rounds 604 / 548 / 544 ms; pooled median **556 ms** (400–1,128) | rounds 596 / 624 / 556 ms; pooled median **560 ms** (408–904) |
+| CLS while scrolling the whole page (120px steps; 7 sizes from 320×568 to 1440×900; motion on and reduced) | 0.0061–0.0244, all from the chat launcher folding its label | **identical** at 13 of 14 settings; at 360×740 with motion on, 0.0108 against 0.0107 to 0.0108 over three repeats each: the launcher's own fold, the same single source |
+| axe (WCAG 2.2 A/AA) | 0 violations (the page-wide test) | 0 violations: the page-wide test, and the new panel test (1440 and 390, motion on and reduced; nothing for review) |
+| The Tab walk, skip link to the footer's last link | 51 stops at 1440, 46 at 390 | **the same 51 and 46, in the same order**; none inside an explainer |
+
+- **Phone LCP at 4× CPU:** in the first (clean) batch the means are 439 and 449 ms (+10 ms; the standard error of that
+  difference is 10 ms), and the medians differ by +12 ms. A second batch, to firm that up, gave means of 605 and 605 ms
+  (+0 ms, standard error 29) and medians +4 ms. Within the noise: no regression shows beyond it. The h1 is the LCP
+  element in all 180 loads.
+- **Lighthouse's total bytes fall** (345,599 → 296,279 B): at 412×823 `main` fetches DeveloperOS's three captures during
+  the load (`dos-search-phone`, `dos-learning`, `dos-dashboard`, 51.6 KB); the new row pushes that panel past the
+  lazy-load distance, so they arrive when the reader nears it (S30 saw the same with GRAVITY FLOW's).
+- **The first row is unchanged.** Each panel's words and stage keep their boxes relative to the panel at 320, 390, 1024
+  and 1440, on both builds. The panels after Aegis start lower by the new row (+464px at 1440, +562 at 1024, +990 at
+  390, +1,056 at 320). Aegis's capture now carries the ring, by design.
+- (S30's Tab walk counted 52 and 47; this probe ends at the footer's last link, "Back to top", and counts the same way
+  on both builds.)
+
+### 6. Validation (VL)
+- `npm run typecheck` and `npm run lint`: clean.
+- `npm test` (Git Bash): **229/229** in 18 files (227 + the two new unit tests; the slot test changed in place).
+- `npm run build` right after deleting `.next`, then `GROQ_API_KEY= npx playwright test` (Chromium): **223/223** in 17
+  files, cold; **223/223** warm. (209 + 5 restored + 1 at 320 + 4 axe + 4 slot-row; the slot test changed in place.)
+- These ran on the final tree, `689b619`. The §5 measurements ran on `f8be0aa`, before the review's 3-byte hardening,
+  which changes nothing at whole-pixel widths.
+- After this docs commit: rebuilt, and `/`'s two stylesheets compared again (§5 holds on the final tree).
+
+### 7. Screenshots (for Tay; in the session's scratch only, the repo being public)
+The Aegis panel, its first row and the new row, at 320, 390, 1024 and 1440 (phones at device scale 2; the site's header
+and the chat launcher hidden in the stills).
+
+### 8. Rulings (for Tay's review)
+- **`onScreen`, dropped:** not rendered, and left in `data/work.ts`. The brief allows no other copy change, and
+  `work.test.ts` (unchanged, not on the approved list) reads it.
+- **No dim around the ring:** the tag's ring darkened the capture around it with a colour of its own; Q5 allows no new
+  value. The ring is S30's mark, in cyan.
+- **The stacking breakpoint is 389px**, the page's narrowest-phones query. "Below about 400px" would include 390, where
+  the approved `:155` restore holds the branches side by side.
+- **`:96` reads RabbitMQ and the PostgreSQL schema inside the explainer:** the panel's tagline and chips already name
+  both, so a panel-wide check would pass without the trace.
+- **`:118`'s note check reads the alt text:** the note beside the console doesn't come back (Q6); the row's words reach
+  a reader through the capture's alt text.
+
+**The final review** (a fresh-context reviewer, read-only, on the whole branch) found nothing Critical or Important.
+It hand-checked the selector order at every breakpoint, the connectors' arithmetic at 320, and C1 and C2 byte for byte.
+Its notes:
+- **Fixed, as hardening (`689b619`):** the phone block ended at `max-width: 1023px` and the wide one starts at
+  `min-width: 1024px`. A fractional width between them (some browsers under zoom) would get neither, and the base alone
+  draws no rail. Not reproducible here: Chromium and Firefox snap a frame's width to whole CSS pixels at device scale 1
+  and 2. The block now ends at 1023.98px; nothing changes at whole-pixel widths.
+- **For Tay (not changed):**
+  - **The 390 layout.** At 390 and 393, most iPhones, each branch box has about 129px for text, and C1 wraps to about
+    ten lines. The approved `:155` restore holds the branches side by side at 390; stacking there would need his
+    approval to change it. The 390 and 320 screenshots sit side by side for that call.
+  - **VoiceOver and lists.** Preflight's `list-style: none` makes Safari drop list semantics, so VoiceOver reads the
+    trace in order but doesn't say "list". `role="list"` would restore that; the DeveloperOS rail and the site's other
+    lists share the pattern, so it is a site-wide call.
+  - The 320 test measures where the connectors sit, not that they are drawn; `aegisCopy`'s comment in `data/work.ts`
+    still says the label and line show beside the capture; the extra slot-row test could drop 320 and its focus count
+    (the unit test holds that).
+
+### 9. Docs and the PR
+- **This docs commit:** this entry; `docs/ROADMAP.md` (S30 done and merged, S31 done for review, #22's moved lines);
+  `docs/CINEMATIC_SYSTEM.md` ("The P4 slot", the file map); `claude/START-HERE.md`; `CLAUDE.md` (Production `7505b91`,
+  the order, the suite's counts).
+- `feat/p4-aegis` pushed; **PR #29**, ready for review, not merged.
+
+### Waiting on Tay
+- **Review PR #29** on its Preview: the Aegis panel at 320, 390, 1024 and 1440 (the stacked branches at 320 are his to
+  approve on the screenshots), the measurements, and the test commits, including `f8be0aa` (keep or drop).
+- **Then (his order):** S32, T Poker (the carousel's no-JS change gets his final look first); #18; GRAVITY FLOW; then
+  #22. Low priority: #23.
+
+---
+
 ## 2026-11-21 — Session 30: P4, DeveloperOS's explainer (cite, or decline) in its panel's new row; PR #28 (Claude Code)
 
 **Scope (Tay's brief):** `docs/P4_PLAN.md` §8, under its "Decisions (Tay, 2026-11-21)", which approve this session's
