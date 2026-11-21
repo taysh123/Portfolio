@@ -75,23 +75,31 @@ test("no private repository leaks into what the browser gets", async ({ request 
   expect(html).not.toMatch(/href="\/lab/);
 });
 
-test("without JavaScript: every word and link, and each project's first real capture alone, with no dead controls", async ({ browser }) => {
+test("without JavaScript: every word and link, and each project's first real capture alone in view (T Poker's step captures out of layout until chosen), with no dead controls", async ({ browser }) => {
   const { ctx, page } = await at(browser, [1440, 900], { javaScriptEnabled: false });
   await expect(page.locator(".wk__name")).toHaveText(NAMES);
   for (const [i, el] of (await page.locator(".wk__panel").all()).entries()) {
     await expect(el.locator(".wk__line")).not.toBeEmpty();
     await expect(el.locator(".wk__status")).toContainText("Status");
     expect(await el.locator(".wk__chips li").count(), NAMES[i]).toBeGreaterThanOrEqual(2);
-    await expect(el.locator("img")).toHaveCount(1);                                   // the first capture only
-    await expect(el.locator("img")).toHaveAttribute("alt", /.{20,}/);
+    await expect(el.locator("img:visible")).toHaveCount(1);                           // the first capture only, in view
+    await expect(el.locator("img:visible")).toHaveAttribute("alt", /.{20,}/);
+    // Tay, 2026-11-21, P4 plan decisions, and his go at S32's start (docs/P4_PLAN.md §3.1, option A): T Poker's
+    // server output also carries its steps' two other captures, so a step still brings its screen forward without
+    // JavaScript. They stay out of layout until chosen; every other carousel's output is unchanged.
+    await expect(el.locator("img")).toHaveCount(i === 0 ? 3 : 1);
+    if (i === 0) expect(await el.locator(".wk__slide").evaluateAll((ss) => ss.map((s) => (s.querySelector("img") ? getComputedStyle(s).display : "empty"))))
+      .toEqual(["block", "none", "none", "empty", "empty"]);
     // R4: its case study is a script-driven dialog, so without JavaScript the button is not offered.
     await expect(el.locator(".case-study-trigger")).toHaveText("Case study");
     await expect(el.locator(".case-study-trigger")).toBeHidden();
   }
   await expect(page.locator(".case-study-trigger:visible")).toHaveCount(0);           // Two more's two as well
   await expect(page.locator(".case-study-trigger")).toHaveCount(6);
-  expect(await page.locator(".wk__panel img").evaluateAll((is) => is.map((i) => (i as HTMLImageElement).src.split("/").pop()!.replace(/-\d+\.\w+$/, ""))))
+  expect(await page.locator(".wk__panel img:visible").evaluateAll((is) => is.map((i) => (i as HTMLImageElement).src.split("/").pop()!.replace(/-\d+\.\w+$/, ""))))
     .toEqual(["poker-home", "aegis-alerts", "dos-search", "gf-gameplay"]);
+  expect(await page.locator(".wk__panel img:not(:visible)").evaluateAll((is) => is.map((i) => (i as HTMLImageElement).src.split("/").pop()!.replace(/-\d+\.\w+$/, ""))))
+    .toEqual(["poker-live", "poker-settle"]);
   // The carousels' controls would do nothing without script, so they are not shown.
   for (const c of await page.locator(".wk__controls").all()) expect(await c.evaluate((e) => getComputedStyle(e).visibility)).toBe("hidden");
   expect(await page.locator(".wk__lens").evaluate((e) => getComputedStyle(e).visibility)).toBe("hidden");   // Stack's filter
