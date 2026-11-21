@@ -318,6 +318,11 @@ describe("P4: DeveloperOS, cite or decline", () => {
     for (const s of [dict.dos.flow, ...dosFlow.map((f) => f.body), dosRefusalCaption.body, dosRefusal.message]) expect(dos).not.toContain(s);
     expect(dict.dos.flow).toBe("From your files to an answer, as implemented");   // the rail's name, shown (Tay's decision)
   });
+  it("a server component that holds still: no client code, no reveal, nothing to focus", () => {
+    // "The carousel and Stack's filter are the only client code under the hero" (above) reads Work.tsx; this holds it here.
+    expect(dos).not.toMatch(/^["']use client["']|useState|useEffect|data-reveal|<canvas|getContext/m);
+    expect(code(dos)).not.toMatch(/<a |<button|<input|tabIndex|href=/);
+  });
 });
 
 describe("inside the cinematic layer", () => {
