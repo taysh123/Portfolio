@@ -2,6 +2,7 @@ import { projects, publicRepoUrl, PROJECT_GALLERIES, type Project } from "@/data
 import { flagships, type WorldKey } from "@/data/work";
 import { indexStateKey } from "@/data/proof";
 import { captureOf, type CaptureName } from "@/data/lab-images";
+import { AEGIS_CROPS, AEGIS_ROW } from "@/data/images";
 import { dict } from "@/lib/dict";
 import { fmt } from "@/lib/fmt";
 
@@ -96,9 +97,21 @@ function boxOn(name: CaptureName, x: number, y: number, w: number, h: number): B
   const c = captureOf(name), pct = (v: number, of: number) => `${((v / of) * 100).toFixed(2)}%`;
   return { l: pct(x, c.w), t: pct(y, c.h), w: pct(w, c.w), h: pct(h, c.h) };
 }
-/** P4: the marks drawn on a capture, by the server, inside its carousel slide. DeveloperOS's search capture: a citation
- *  box on each of its first three file:line chips, framed 4px out on every side, as the Product Plates chapter drew them. */
+/** Aegis's ring on one of its alert-row crops: the port-scan row's measured card (data/images.ts AEGIS_ROW, in the
+ *  3840×2160 capture's pixels), `pad` out, mapped onto the crop (AEGIS_CROPS) the capture was cut with. It runs 12px past
+ *  the frame's right edge, as the row's card does (the crop ends there, the row doesn't), and the frame clips it. The
+ *  Product Plates chapter's own geometry (product-plates-final:components/work/AegisChapter.tsx, `box`). */
+function ringOn(name: CaptureName, crop: { left: number; top: number; width: number; height: number }, pad: number): Box {
+  const x = AEGIS_ROW.left - pad - crop.left;
+  const b = boxOn(name, x, AEGIS_ROW.top - pad - crop.top, crop.width - x, AEGIS_ROW.bottom - AEGIS_ROW.top + 2 * pad);
+  return { ...b, w: `calc(${b.w} + 12px)` };
+}
+/** P4: the marks drawn on a capture, by the server, inside its carousel slide. Aegis's alert row: the ring around the
+ *  port-scan row, 8px out on the capture and 6px on its phone crop, as the Product Plates chapter drew it. DeveloperOS's
+ *  search capture: a citation box on each of its first three file:line chips, framed 4px out on every side, as the
+ *  Product Plates chapter drew them. */
 const MARKS: Partial<Record<CaptureName, Mark[]>> = {
+  "aegis-alerts": [{ box: ringOn("aegis-alerts", AEGIS_CROPS.desktop, 8), phone: ringOn("aegis-alerts-phone", AEGIS_CROPS.phone, 6) }],
   "dos-search": DOS_CHIP_BOXES.map(({ x, y, w, h }) => ({
     box: boxOn("dos-search", x - 4, y - 4, w + 8, h + 8),
     phone: boxOn("dos-search-phone", x - 4, y - 4, w + 8, h + 8),

@@ -5,11 +5,12 @@ import { panels, type Panel } from "./panels";
 import { Shot, ratioOf } from "./Shot";
 import { Reel } from "./Reel";
 import { MoreWork } from "./MoreWork";
+import { AegisExplainer } from "./AegisExplainer";
 import { DosExplainer } from "./DosExplainer";
 import "./work.css";
 
 /** P4 (docs/P4_PLAN.md): each product's explainer, one per session, in Tay's order. Server components only. */
-const EXPLAINERS: Partial<Record<Panel["id"], React.ReactNode>> = { developeros: <DosExplainer /> };
+const EXPLAINERS: Partial<Record<Panel["id"], React.ReactNode>> = { aegis: <AegisExplainer />, developeros: <DosExplainer /> };
 
 /** How wide a capture is drawn: phone captures at the device width, desktop windows across the stage; both narrower in
  *  a carousel, whose sides need the room (a window there is 80% of the stage, 86% below 640px: work.css). */
@@ -35,7 +36,8 @@ const sizesOf = (kind: Panel["kind"], reel: boolean) => kind === "phone"
  * own. The ids are the live page's (R7): `#work`, `#work-<id>`, `#more-work`.
  *
  * P4 (docs/P4_PLAN.md): under each panel's first row, its explainer, server-rendered and always shown (so far
- * DeveloperOS's, DosExplainer.tsx). Its marks are drawn on the carousel's own first slide (panels.ts MARKS, Shot.tsx).
+ * Aegis's, AegisExplainer.tsx, and DeveloperOS's, DosExplainer.tsx). Its marks are drawn on the carousel's own first
+ * slide (panels.ts MARKS, Shot.tsx).
  *
  * Headings: under the hero's h1, the section's title is an h2 and each product an h3.
  */

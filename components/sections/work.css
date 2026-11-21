@@ -310,6 +310,111 @@
   white-space: nowrap;
 }
 
+/* Aegis, one alert start to finish (AegisExplainer.tsx): ingest, normalise, detect, then the fork the code has (threat
+   scoring and the alert stream take each alert in parallel), then the live feed; then the note on the shared schema.
+   The Product Plates trace's two layouts (product-plates-final:components/work/aegis.css) in the layer's tokens (Q5):
+   rails hairline, nodes faint, the Detect node and its segment of the line cyan, the branch boxes on glass with the edge.
+   Below 1024px, a rail, with the fork's branches side by side and Live under the alert stream; at 389px and below the
+   branches stack, still on the rail; from 1024px, five columns under both of the panel's, the line drawn forking. */
+.wk__aegis-trace { margin: 0; }
+.wk__aegis-label, .wk__aegis-then {
+  display: block;
+  font-size: var(--cine-text-label);
+  font-weight: var(--cine-weight-label);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-faint);
+}
+.wk__aegis-flow li { position: relative; }
+.wk__aegis-flow b {
+  display: block;
+  font-size: var(--cine-text-body);
+  font-weight: var(--cine-weight-control);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-ink);
+}
+.wk__aegis-flow [data-k] > span {
+  display: block;
+  margin-top: var(--cine-space-1);
+  max-width: 36rem;
+  font-size: var(--cine-text-small);
+  line-height: var(--cine-leading-label);
+  color: var(--cine-mist);
+}
+.wk__aegis-flow [data-k]::before, .wk__aegis-fork::before {
+  content: "";
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid var(--cine-faint);
+  border-radius: var(--cine-radius-pill);
+}
+.wk__aegis-flow [data-k="detect"]::before { border-color: var(--cine-cyan); background: var(--cine-cyan); }
+.wk__aegis-seam {
+  max-width: 44rem;
+  padding-top: var(--cine-space-4);
+  border-top: 1px solid var(--cine-hair);
+  font-size: var(--cine-text-small);
+  line-height: var(--cine-leading-lead);
+  color: var(--cine-mist);
+}
+@media (max-width: 1023px) {
+  .wk__aegis-flow { display: grid; row-gap: var(--cine-space-5); margin-top: var(--cine-space-4); }
+  .wk__aegis-flow > li:not([data-k="live"]) { padding-left: var(--cine-space-6); }
+  .wk__aegis-flow > [data-k]::before { left: 0; top: 7px; }
+  .wk__aegis-fork::before { left: 0; top: 5px; }
+  /* Each main step's rail runs from its node to the next one (the fork's node sits 2px higher, beside a smaller label). */
+  .wk__aegis-flow > :is([data-k="ingest"], [data-k="normalise"], [data-k="detect"])::after { content: ""; position: absolute; left: 4px; top: 16px; bottom: calc(-7px - var(--cine-space-5)); width: 1px; background: var(--cine-hair); }
+  .wk__aegis-flow > [data-k="detect"]::after { bottom: calc(-5px - var(--cine-space-5)); background: var(--cine-cyan); }
+  .wk__aegis-branches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--cine-space-3); margin-top: var(--cine-space-2); }
+  .wk__aegis-branches > li, .wk__aegis-flow > [data-k="live"] {
+    padding: var(--cine-space-3);
+    border: 1px solid var(--cine-edge);
+    border-radius: var(--cine-radius-window);
+    background: var(--cine-glass-ink);
+  }
+  .wk__aegis-branches > li::before, .wk__aegis-flow > [data-k="live"]::before { display: none; }
+  /* Live sits under the alert stream's branch (the right-hand one), joined to it by a short line. */
+  .wk__aegis-flow > [data-k="live"] { margin-left: calc(var(--cine-space-6) + (100% - var(--cine-space-6)) / 2 + var(--cine-space-3) / 2); }
+  .wk__aegis-flow > [data-k="live"]::after { content: ""; position: absolute; left: 50%; top: calc(-1px - var(--cine-space-5)); width: 1px; height: var(--cine-space-5); background: var(--cine-hair); }
+}
+/* The narrowest phones: side by side, a branch box would be about 125px wide. The branches stack, threat scoring then
+   the alert stream, and the rail runs on from the fork's node to meet each on a short line, so the two still read as
+   one fork; Live stays under the alert stream. The rail is 4px in from the list's edge: 25px left of a box's padding. */
+@media (max-width: 389px) {
+  .wk__aegis-branches { grid-template-columns: minmax(0, 1fr); }
+  .wk__aegis-flow > [data-k="live"] { margin-left: var(--cine-space-6); }
+  /* From the fork's node down to the first branch's line (its label's height, the gap, a box's edge and the line's
+     depth in the box, less the node). */
+  .wk__aegis-fork::after { content: ""; position: absolute; left: 4px; top: 14px; width: 1px; height: calc(var(--cine-leading-label) * var(--cine-text-label) + var(--cine-space-2) + 10px); background: var(--cine-hair); }
+  /* Each branch meets the rail level with its name; the first carries the rail on down to the second's line (two box
+     edges, the gap, and that line's depth in its box). */
+  .wk__aegis-branches > li::after { content: ""; position: absolute; left: -25px; top: calc(var(--cine-space-3) + 11px); width: 25px; border-top: 1px solid var(--cine-hair); }
+  .wk__aegis-branches > li:first-child::after { bottom: calc(-14px - 2 * var(--cine-space-3)); border-left: 1px solid var(--cine-hair); }
+}
+@media (min-width: 1024px) {
+  .wk__aegis-trace, .wk__aegis-seam { grid-column: 1 / -1; }
+  .wk__aegis-flow {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.12fr) minmax(0, 1fr);
+    row-gap: var(--cine-space-5);
+    margin-top: var(--cine-space-7);
+  }
+  .wk__aegis-flow > [data-k] { grid-row: 1; padding: var(--cine-space-5) var(--cine-space-5) 0 0; border-top: 1px solid var(--cine-hair); }
+  .wk__aegis-flow [data-k]::before { left: 0; top: -5px; }
+  .wk__aegis-flow > [data-k="detect"] { border-top-color: var(--cine-cyan); }
+  /* The fork's column holds both branches on two subgrid rows, and Live sits on the lower branch's row. */
+  .wk__aegis-fork { grid-column: 4; grid-row: 1 / span 2; display: grid; grid-template-rows: subgrid; }
+  .wk__aegis-fork::before { display: none; }
+  .wk__aegis-then { position: absolute; top: calc(-1 * var(--cine-space-6)); left: var(--cine-space-4); }
+  .wk__aegis-branches { grid-row: 1 / span 2; display: grid; grid-template-rows: subgrid; }
+  .wk__aegis-branches > li { padding: var(--cine-space-5) var(--cine-space-5) 0 var(--cine-space-4); border-top: 1px solid var(--cine-hair); }
+  .wk__aegis-branches > [data-k]::before { left: var(--cine-space-4); }
+  /* The split: from the main line a vertical drops to the lower branch (the row gap included), so the line visibly
+     forks: threat scoring carries straight on, the alert stream turns down and continues to Live. */
+  .wk__aegis-branches > li:first-child::after { content: ""; position: absolute; left: 0; top: -1px; width: 1px; height: calc(100% + var(--cine-space-5) + 2px); background: var(--cine-hair); }
+  .wk__aegis-flow > [data-k="live"] { grid-column: 5; grid-row: 2; }
+}
+
 /* ── Two more (R5, MoreWork.tsx): the two smaller systems, under the four panels and after a hairline. The live title
    alone, then two ruled rows on About's grid: from 1024px the name and its context take the words share, the summary
    and the links the capture's; stacked below. It holds still. ── */
