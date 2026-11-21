@@ -275,10 +275,19 @@ describe("structure", () => {
     expect(reel).toMatch(/aria-live="polite"/);
     expect(code(reel)).not.toMatch(/setInterval|setTimeout|requestAnimationFrame|autoplay/i);
   });
-  it("no JS shows the first capture alone and hides the controls; reduced motion is a flat slider", () => {
+  it("no JS shows the first capture alone (a stepped carousel's step captures are in the HTML too, out of layout until chosen) and hides the controls; reduced motion is a flat slider", () => {
     expect(reel).toMatch(/useSyncExternalStore\(noop, \(\) => true, \(\) => false\)/);
     expect(reel).toMatch(/const shown = front \|\| \(ready && !flat && Math\.abs\(d\) === 1\);/);
-    expect(reel).toMatch(/<div className="wk__device" style=\{\{ "--wk-box": boxes\[i\]\.ratio, "--wk-box-phone": boxes\[i\]\.phone \} as CSSProperties\}>\{shown && shot\}<\/div>/);
+    // Tay, 2026-11-21, P4 plan decisions, and his go at S32's start (docs/P4_PLAN.md §3.1, option A): before the
+    // carousel runs, a stepped carousel (T Poker's only) also draws its steps' captures, so a step still brings its
+    // screen to the front without JS; they stay out of layout until their step is chosen.
+    expect(reel).toMatch(/const pre = !ready && i < steps;/);
+    expect(reel).toMatch(/data-step=\{i < steps \? i : undefined\}/);
+    expect(reel).toMatch(/<div className="wk__device" style=\{\{ "--wk-box": boxes\[i\]\.ratio, "--wk-box-phone": boxes\[i\]\.phone \} as CSSProperties\}>\{\(shown \|\| pre\) && shot\}<\/div>/);
+    expect(reel).toMatch(/steps = 0 \}/);   // none by default: every other carousel's output is unchanged
+    expect(page).toMatch(/const STEPS: Partial<Record<Panel\["id"\], number>> = \{ poker: 3 \};/);
+    expect(page).toMatch(/<Reel id=\{p\.id\} name=\{p\.name\} alts=\{p\.gallery\.map\(\(g\) => g\.alt\)\} steps=\{STEPS\[p\.id\]\}/);
+    expect(css).toMatch(/\.wk__reel:not\(\[data-ready\]\) \.wk__slide\[data-step\]:not\(\[data-offset="0"\]\) \{ display: none; \}/);
     expect(css).toMatch(/\.wk__reel:not\(\[data-ready\]\) \.wk__controls \{ visibility: hidden; \}/);
     expect(css).toMatch(/\.wk__slide:not\(\[data-shown\]\) \{ visibility: hidden; \}/);
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[^@]*\.wk__slide:not\(\[data-offset="0"\]\) \{ transform: none; visibility: hidden; \}/);
