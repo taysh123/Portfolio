@@ -44,7 +44,11 @@ export const pokerSteps = [
   { label: "Settle up", caption: "End-of-night settlement: who pays whom, exact to the cent." },
 ] as const;
 
-/** Aegis: the label and line beside the capture (the highlighted row, transcribed), and the honest note on coupling. */
+/** Aegis's notes, from the Product Plates chapter. Only `seam`, the honest note on coupling, is on the page: under the
+ *  trace (components/sections/AegisExplainer.tsx). The note beside the old console doesn't come back (docs/P4_PLAN.md,
+ *  Q6), so `label`, `row` and `onScreen` are not shown (Tay kept them in the data); the row's words reach a reader
+ *  through the capture's alt text (`dict.aegis.alt`). tests/unit/work.test.ts still ties `row` and `onScreen` to
+ *  Aegis's data. */
 export const aegisCopy = {
   label: "Port-scan detection",
   row: "Port scan detected from 10.10.10.2 (20 distinct ports in 60s)",
