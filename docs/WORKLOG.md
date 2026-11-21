@@ -11,7 +11,139 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-21 — Session 30: P4, DeveloperOS's explainer (cite, or decline) in its panel's new row; PR #28 (Claude Code)
+
+**Scope (Tay's brief):** `docs/P4_PLAN.md` §8, under its "Decisions (Tay, 2026-11-21)", which approve this session's
+test changes (each in its own commit naming "Tay, 2026-11-21, P4 plan decisions"). The rail's name shown
+(`dict.dos.flow`); every string imported; colours only from the Q5 mapping; no new dependency, capture or copy. Push and
+a PR, ready for review. No merge.
+
+### 0. Preconditions (VL)
+- `git fetch`, `main` pulled: `main` = `origin/main` = Production = **`57b9743`**, the tree clean; the latest Production
+  deployment (`7957556750`) is `success` on that SHA. `npm ci` (Next 16.4.6). `feat/p4-developeros` cut from it.
+- **PR #27 (the P4 plan) is merged:** Tay merged it as `57b9743` (parents `c29c0b1` and `4ce8f74`). S29's close-out
+  checked Production: `/` at 390 and 1440 answered 200 with 0 console errors, 0 page errors and 0 CSP violations; one
+  canvas; the h1; all four demo slots hidden. `docs/p4-plan` is deleted, local and remote.
+- **The plan is approved** (Tay, 2026-11-21), with his decisions at the top of `docs/P4_PLAN.md`. **The new order:** P4
+  before #22 (this changes S24's "#18, #22, then P4"). P4 runs DeveloperOS (S30), Aegis, T Poker, then GRAVITY FLOW
+  after #18. This entry's docs commit sets that order in `docs/ROADMAP.md`, `claude/START-HERE.md` and `CLAUDE.md`.
+
+### 1. Step 1, re-verified against DeveloperOS's public repository (VL, read-only `gh api`)
+- **HEAD:** `main` is still **`de7346c`** (GitHub's compare `de7346c...main`: identical, 0 ahead, 0 behind).
+- **The two decline paths:** `devos/modules/qa.py:119–124` (`answer`) and `devos/modules/learning.py:89–100` (`learn`,
+  the decline at 98–100) both return the refusal when retrieval finds no chunks, before `provider.complete` is called.
+- **The refusal:** `learning.py:30–33`, `INSUFFICIENT_MSG`, joins to `dosRefusal.message` exactly, backticks included.
+- **`devos learn` prints the same** (the caption's claim holds): `devos/commands/learn_cmd.py` calls `learning.learn`,
+  then `print_answer` (`ask_cmd.py:11–20`), which prints `ans.text` unchanged, and no sources when there are none. One
+  edge, not a contradiction: before `devos init` the command prints its own setup line ("Nothing indexed yet - run
+  `devos index <path>` first.") instead; the caption speaks of the case where nothing in the index matches.
+
+### 2. What was built (`fdc42cb`)
+- **The slot's row (Q2).** In `components/sections/Work.tsx` the slot left the words column for the article's last
+  child. From 1024px it spans both columns as a **subgrid**, on the panel's own column lines; on phones it follows the
+  capture. `EXPLAINERS` maps a panel to its server component; T Poker's, Aegis's and GRAVITY FLOW's slots stay empty
+  and hidden.
+- **The explainer** (`components/sections/DosExplainer.tsx`, a server component): the rail from `dosFlow` under its shown
+  name (`dict.dos.flow`, an `<ol>` labelled by it), then the refusal as a `<figure>`: the caption from
+  `dosRefusalCaption`, the app's words from `dosRefusal`, both through the tag's `withCode` (restored: only the
+  placeholder's angle brackets are hidden from screen readers). From 1024px the rail sits under the capture's column and
+  the refusal under the words'.
+- **The citation boxes (Q3).** `panels.ts` keeps the tag's measured `CHIPS` as `DOS_CHIP_BOXES` (`DOS_CHIPS`, the
+  alt text's labels, now derives from it), and `MARKS` turns them into boxes framed 4px out, in shares of the capture
+  and of its phone crop. `Shot.tsx` draws a gallery entry's marks beside its picture, so they sit inside the slide's
+  device frame: they move, turn and dim with the slide, need no JavaScript, and leave the carousel untouched. The
+  slide's frame was already positioned (its dim layer's context): no new rule was needed for that.
+- **Styles** (`work.css`): only layer tokens and the Q5 mapping. Rails `--cine-hair` (drawn node to node, so the nodes
+  stay open on the sky); plain nodes `--cine-faint`; Evidence, Cite and the boxes `--cine-cyan`; Decline
+  `--cine-violet`; the refusal on `--cine-glass-ink` with `--cine-edge`; names ink, bodies mist, the rail's name faint.
+- **Two catches, fixed before the first commit:**
+  - **A Tailwind change that was not a class.** The code chip first read `var(--font-mono)`. That variable lives in
+    `app/globals.css`'s `@theme inline` block, so Tailwind never emits it (the `/privacy` utility inlines its value);
+    reading it from `work.css` made Tailwind add it to the site's shared sheet (+69 B, every page). The chip now names
+    the same system stack in `work.css`, and the shared sheet is byte-identical to `main`'s.
+  - **A subgrid's `gap` replaces the parent's column gap.** With `gap` set on the slot, its columns came out 11px off the
+    first row's at 1024. Only `row-gap` is set now, and the slot-row test holds the columns equal.
+
+### 3. Tests (each in its own commit; approval: Tay, 2026-11-21, P4 plan decisions)
+| Commit | Change | Where |
+|---|---|---|
+| `1162aa7` | Changed: the unit slot test (the slot is the panel's last child; it holds the explainer once built, empty and hidden until then) | `tests/unit/lab-work.test.ts:247` |
+| `7831588` | Changed: the e2e slot test (each slot the panel's last child; DeveloperOS's shown with its explainer, the other three empty, hidden, unrendered) | `tests/e2e/lab-work.spec.ts:412` (the slot lines were `:430–431`) |
+| `54a7f2c` | Restored, adapted: the tag's `chapters.spec.ts` `:181` (the sequence), `:187` (the refusal, real text, shown once) and `:200` ×2 (each box on its chip at 1440 and 390, the phone crop below 640) | `lab-work.spec.ts`, after the structure test |
+| `f5e9115` | New: the slot-row test at 320, 390, 1024 and 1440 (under the first row; on the first row's column lines from 1024; after the capture on phones; nothing focusable) | `lab-work.spec.ts` |
+| `857b5f4` | New: every string imported from `data/work.ts` and `lib/dict.ts`, never typed | `lab-work.test.ts` |
+| `ea6696b` | New: axe on the panel and its explainer with the boxed capture in front, at 1440 and 390, motion on and reduced | `lab-work.spec.ts` |
+| `10dd203` | **New, beyond §3.3's list (for Tay to keep or drop):** the explainer stays a still server component (no client code, no reveal, nothing to focus) | `lab-work.test.ts` |
+
+- Retired for good, as the plan lists: the tag's `chapters.spec.ts:213` (the chapter's reading order; the slot-row test
+  replaces it) and the "Released · v1.0.0" link test (only the chapter had that link).
+- `tests/unit/work.test.ts`'s DeveloperOS cases are unchanged and pass.
+- Tests added above them moved two lines that ROADMAP #22 cites: `lab-work.spec.ts:566` is now `:667`, `:690` is now
+  `:791` (#22's row says so).
+
+### 4. Measured against `main`, on the same machine (VL)
+`main` = `57b9743` built in a scratch worktree (its own `npm ci`) and served on `:3402`; this branch on `:3401`. Every
+probe ran the two interleaved, on an otherwise idle machine.
+
+| | `main` `57b9743` | This branch |
+|---|---|---|
+| First-load JS (`budget.spec.ts`'s algorithm) | 187.06 KiB gzip, 9 scripts | **187.06 KiB**: the same 9 chunks, byte for byte (SHA-256) |
+| HTML `/` | 127,422 B | **132,290 B** (+4,868 B; gzip -9 23,163 → about 24,680 B); budget 568 KB |
+| The site's shared sheet (Tailwind) | 44,021 B | **44,021 B: the same file** (name and SHA-256) |
+| The layer's sheet | 28,727 B (gzip -9 5,248 B) | **31,255 B** (+2,528 B; gzip -9 5,671 B, +423 B). A rule-level diff: only the new rules, none removed or changed |
+| Lighthouse 13.6.0 mobile, median of 5 (interleaved run by run) | Perf 100, A11y 100, BP 100, SEO 100; FCP 1,063, **LCP 1,063 ms**, TBT 21 ms, CLS 0, SI 1,262 ms | Perf **100**, 100, 100, 100; FCP 1,061, **LCP 1,061 ms**, TBT 18 ms, CLS **0**, SI 1,296 ms |
+| LCP element (Lighthouse) | the hero's h1 | the hero's h1 |
+| Phone LCP at 4× CPU (CDP throttling, 412×823, a fresh context per load; three rounds of 15 interleaved pairs) | rounds 420 / 404 / 412 ms; pooled median **416 ms** (308–536) | rounds 424 / 420 / 412 ms; pooled median **412 ms** (320–640) |
+| CLS while scrolling the whole page (120px steps; 7 sizes from 320×568 to 1440×900; motion on and reduced) | 0.0076–0.0244, all from the chat launcher folding its label | **identical, value for value**, the same single source |
+| axe (WCAG 2.2 A/AA) | 0 violations (the page-wide test, S28's suite) | 0 violations: the page-wide test (4 runs) and the new panel test (1440 and 390, motion on and reduced) |
+| The Tab walk, skip link to footer | 52 stops at 1440, 47 at 390 | **the same 52 and 47, in the same order** |
+
+- **LCP at 4× CPU:** the pooled means are 414 and 430 ms (+16 ms; the standard error of that difference is 12 ms, and
+  the branch's mean carries one 640 ms run); the medians differ by −4 ms. Within the noise. The h1 is the LCP element in
+  all 90 loads.
+- **Lighthouse's total bytes fall** (375,150 → 345,599 B): at 412×823 `main` fetches three GRAVITY FLOW captures during
+  the load (`gf-gameplay`, `gf-boss`, `gf-win`, 31.5 KB); the new row pushes that panel past the lazy-load distance, so
+  they arrive when the reader nears it. The document itself is +1.5 KB on the wire.
+- **The first row is unchanged.** Each panel's words and stage keep their boxes relative to the panel at 320, 390, 1024
+  and 1440. Pixel for pixel (the section's sky and glows, which stretch with the page, and the chat launcher hidden in
+  both; the citation boxes hidden on the branch), T Poker's, Aegis's and DeveloperOS's first rows are identical at all
+  four widths. GRAVITY FLOW's differ only because the panel now starts lower, at a different sub-pixel offset
+  (3173.047px against 2737.750px at 1024, for example): at 320, where the two fractions nearly match, 57 pixels differ.
+- **axe's needs-review** at 1440 with motion on: the "Status" label and the first chip in DeveloperOS's words column,
+  the same two on `main`. Nothing in the explainer.
+
+### 5. Validation (VL)
+- `npm run typecheck` and `npm run lint`: clean.
+- `npm test` (Git Bash): **227/227** in 18 files (225 + the two new unit tests; the slot test changed in place).
+- `npm run build` right after deleting `.next`, then `GROQ_API_KEY= npx playwright test` (Chromium): **209/209** in 17
+  files, cold; **209/209** warm. (197 + 4 restored + 4 slot-row + 4 axe; the slot test changed in place.)
+- Before any e2e test changed, the existing suite on the new code: 196/197, the one failure the old slot test (on the
+  approved list). No other existing test needed a change.
+- After this docs commit: rebuilt, and `/`'s two stylesheets compared again with `main`'s (§4 holds on the final tree).
+
+### 6. Screenshots (for Tay; in the session's scratch only, the repo being public)
+The DeveloperOS panel, its first row and the new row, at 320, 390, 1024 and 1440 (phones at device scale 2).
+
+### 7. Docs and the PR
+- **This docs commit:** this entry; `docs/ROADMAP.md` (P4 in progress, the new order, #22's moved lines);
+  `docs/CINEMATIC_SYSTEM.md` ("The P4 slot", rewritten; the file map); `claude/START-HERE.md`; `CLAUDE.md` (Production
+  `57b9743`, the order, the suite's counts).
+- `feat/p4-developeros` pushed; **PR #28**, ready for review, not merged.
+
+### Waiting on Tay
+- **Review PR #28** on its Preview: the DeveloperOS panel at 320, 390, 1024 and 1440 (screenshots in the session's
+  scratch only, the repo being public), the measurements, and the test commits, including `10dd203` (keep or drop).
+- **Then (his order):** S31, Aegis (C1 and C2 approved; the stacked branches below about 400px for his review on
+  screenshots); S32, T Poker (the carousel's no-JS change gets his final look first); #18; GRAVITY FLOW; then #22. Low
+  priority: #23.
+
+---
+
 ## 2026-11-21 — Session 29: the P4 plan (`docs/P4_PLAN.md`), for Tay's approval; docs only (Claude Code)
+
+> **Merged** by Tay on 2026-11-21 at 02:57:35Z as `57b9743`; Production since 02:57:55Z, and S29's production check
+> passed (Session 30, §0). **Approved** by Tay the same day, with his decisions at the top of `docs/P4_PLAN.md`; P4 now
+> goes before #22.
 
 **Scope (Tay's brief):** P4 planning, read-only on code: a written plan for the four explainers (the T Poker stepper,
 the Aegis trace, DeveloperOS's cite-or-decline and GRAVITY FLOW's marked frame) in Concept A, with a recommended order

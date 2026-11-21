@@ -18,12 +18,13 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
      more, About, Stack, Think · Build · Ship, Contact.
    - Tay reopened **D1** for it (2026-11-18). **D2 is still not reopened, so no WebGL.**
    - The Product Plates site it replaced is tagged **`product-plates-final`** (`443a1f9`).
-2. **Next, in this order (Tay, S24):** backlog #20 (F2, Safari's focus in the sheets: **done in S25, PR #23, merged as
-   `7ebff9c`**), #19 (Next 16.4.6: **done in S26, PR #24, merged as `ce818a0`**), #21 (F1, Firefox's scroll padding: **done in
-   S27, PR #25, merged as `5080de5`**), #18
-   (the GRAVITY FLOW capture swap), #22 (per-browser tests); then **P4**, the project demos. Low priority: #23 (S25).
-   #24 (dev-dependency audit hygiene, S27): **done in S28, PR #26, merged as `c29c0b1`**. `docs/ROADMAP.md` has each.
-   **P4's plan:** `docs/P4_PLAN.md` (S29, PR #27, for Tay's approval).
+2. **Next, in this order (Tay, 2026-11-21): P4, then #22.** P4 runs one explainer per session: DeveloperOS (S30, PR
+   #28, for Tay's review), Aegis, T Poker, then GRAVITY FLOW after #18 (the GRAVITY FLOW capture swap, whenever Tay has
+   the image). Then #22 (per-browser tests). Low priority: #23 (S25). **P4's plan:** `docs/P4_PLAN.md` (S29, PR #27,
+   merged as `57b9743`), **approved by Tay on 2026-11-21**, with his decisions at its top. `docs/ROADMAP.md` has each.
+   - Done from S24's order: #20 (F2, Safari's focus in the sheets: S25, PR #23, merged as `7ebff9c`), #19 (Next
+     16.4.6: S26, PR #24, merged as `ce818a0`), #21 (F1, Firefox's scroll padding: S27, PR #25, merged as `5080de5`),
+     #24 (dev-dependency audit hygiene: S28, PR #26, merged as `c29c0b1`).
 3. **The Concept A prototype, on `proto/hero-a-cinematic`: the frozen record.** Draft PR #18, never merged, never
    deleted (R1).
 4. **The release track (session 16 to S24, done).** Concept A replaced the live `/` as soon as possible, because Tay is
@@ -431,10 +432,21 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - The client build output is byte-identical to `main`'s: first-load JS 187.06 KiB, the same stylesheets and scripts,
     the same headers. Unit 225/225, Chromium 197/197 cold and warm.
   - Detail: `docs/WORKLOG.md`, "Session 28 (#24)".
-- **S29 (2026-11-21): the P4 plan, docs only, for Tay's approval: PR #27**, from `docs/p4-plan`.
-  - `docs/P4_PLAN.md`: the four explainers return in their panels, one per session. Recommended order: DeveloperOS
-    (S30), Aegis, T Poker, then GRAVITY FLOW (after #18). Its §9 lists every decision and test change for Tay.
+- **S29 (2026-11-21): the P4 plan, docs only: PR #27**, from `docs/p4-plan`, **merged by Tay as `57b9743`**
+  (Production; S29's close-out checked `/` at 390 and 1440). Tay approved the plan the same day, with his decisions
+  recorded at the top of `docs/P4_PLAN.md`.
+  - `docs/P4_PLAN.md`: the four explainers return in their panels, one per session, in Tay's order: DeveloperOS (S30),
+    Aegis, T Poker, then GRAVITY FLOW (after #18). P4 goes before #22.
   - Detail: `docs/WORKLOG.md`, "Session 29".
+- **S30 (2026-11-21): P4, DeveloperOS's explainer: PR #28**, from `feat/p4-developeros`, for Tay's review.
+  - Each panel's P4 slot is now its own row, under the words and the capture: under both columns from 1024px, after the
+    capture on phones. The first row is unchanged.
+  - DeveloperOS's slot holds its explainer: the five-step rail under its name ("From your files to an answer, as
+    implemented"), then the app's refusal as real text. The three file:line chips are boxed on the carousel's first
+    slide, drawn by the server. The other three slots stay empty and hidden.
+  - First-load JS unchanged (the same chunks); the site's shared stylesheet unchanged; the layer's sheet +2.5 KB.
+  - Test changes, each in its own commit, approved in the plan's decisions; one extra unit test in its own commit, for
+    Tay to keep or drop. Detail: `docs/WORKLOG.md`, "Session 30".
 - **The release track (P5/P6) is done.** Next, in this order (Tay, S24), each a PR on `main`:
   1. **#20:** F2, Safari's focus leaving the menu sheet or the chat for one Tab; the fix goes in the shared focus trap.
      **Done in S25** (PR #23, merged as `7ebff9c`).
@@ -443,16 +455,19 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   3. **#21:** F1, Firefox ignoring the bottom scroll padding for controls already on screen. **Done in S27** (PR #25,
      merged as `5080de5`).
   4. **#18:** the GRAVITY FLOW capture swap, whenever Tay provides the image.
-  5. **#22:** per-browser handling of the engine-specific tests.
-  6. Then **P4**, the project demos (`docs/ROADMAP.md`, P4, with the restore record). **The plan:** `docs/P4_PLAN.md`
-     (S29, for Tay's approval).
+  5. **P4**, the project demos, **before #22** (Tay, 2026-11-21): `docs/P4_PLAN.md`, approved. One explainer per
+     session: DeveloperOS (**S30, PR #28**), Aegis, T Poker, then GRAVITY FLOW after #18 (`docs/ROADMAP.md`, P4, with
+     the restore record).
+  6. **#22:** per-browser handling of the engine-specific tests.
   - Low priority (Tay, S25): **#23**, Safari's focus return after a modal opened by a mouse click.
   - Later, a small separate PR (Tay, S27): **#24**, dev-dependency audit hygiene. **Done in S28** (PR #26, merged as
     `c29c0b1`).
 
-## Open PRs / branches (S29, 2026-11-21; verified with `gh` and `git ls-remote`)
-- **PR #27** (`docs/p4-plan` → `main`), the P4 plan: **open, ready for review**, for Tay to merge. Docs only. After the
-  merge: delete the branch once `git merge-base --is-ancestor` confirms it.
+## Open PRs / branches (S30, 2026-11-21; verified with `gh` and `git ls-remote`)
+- **PR #28** (`feat/p4-developeros` → `main`), P4's DeveloperOS explainer: **open, ready for review**, for Tay to merge.
+  After the merge: delete the branch once `git merge-base --is-ancestor` confirms it.
+- **PR #27** (`docs/p4-plan` → `main`), the P4 plan: **merged** by Tay on 2026-11-21 as `57b9743`; the branch is
+  deleted, local and remote.
 - **PR #26** (`chore/dev-audit` → `main`), backlog #24: **merged** by Tay on 2026-11-21 as `c29c0b1`; the branch is
   deleted, local and remote.
 - **PR #25** (`fix/f1-launcher-focus` → `main`), backlog #21: **merged** by Tay on 2026-11-20 as `5080de5`; the branch
@@ -464,7 +479,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 - **PR #21** (`release/concept-a` → `main`), "Release: Concept A": **merged** by Tay on 2026-11-20 as `3a98d22`.
 - **PR #22** (`docs/s24-release-closeout` → `main`), the S24 close-out: **merged** by Tay on 2026-11-20 as `2cc324c`.
 - **Deleted after their merges**, local and remote: `release/concept-a` (tip `5ea8d57`),
-  `docs/s24-release-closeout`, `fix/f2-focus-trap`, `chore/next-16-4-6`, `fix/f1-launcher-focus` and `chore/dev-audit`.
+  `docs/s24-release-closeout`, `fix/f2-focus-trap`, `chore/next-16-4-6`, `fix/f1-launcher-focus`, `chore/dev-audit` and
+  `docs/p4-plan`.
 - **Kept:** `proto/hero-a-cinematic` (tip `92b08fd`, local and remote; **draft PR #18**): not merged, by design. R1
   keeps it frozen as the record ("never merge, never delete"), so deleting it would also need R1 changed.
 - **Tag `product-plates-final`** (`8f0a96a`) on `443a1f9`, pushed in S17: the rollback and P4 restore point (R6, R15).
@@ -478,15 +494,16 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Review PR #27, the P4 plan** (`docs/P4_PLAN.md`): its decisions in §9 (Q1–Q7, the Aegis copy C1–C3, the options
-  per explainer, the order and S30's scope). Merging it records the plan; building starts only with S30's brief.
+- **Review PR #28, DeveloperOS's explainer** (S30), on its Preview: the panel at 320, 390, 1024 and 1440, the
+  measurements and the test changes in its body. Merging it ships the first P4 explainer. Then S31: Aegis.
 - **Optional, on a Mac:** Playwright's WebKit can't reproduce Option+Tab, or Safari with macOS keyboard navigation off.
   Desktop Safari on production (PR #23 is live) would confirm both (the menu at a narrow width, the chat sheet, a case study).
 - **His manual steps after the release, if not done yet:**
   - Refresh the share card in LinkedIn's Post Inspector (https://www.linkedin.com/post-inspector/).
   - A reindex request for `https://tayshofer.dev/` if he uses Google Search Console.
 - **`proto/hero-a-cinematic`** stays (R1: never delete) unless he changes R1.
-- **Then #18** (when he has the image) and **#22**, each in a new session.
+- **Then, each in a new session:** P4's Aegis (S31; C1 and C2 are already approved) and T Poker (S32; the carousel's
+  no-JS change gets his final look at its start), #18 (when he has the image), GRAVITY FLOW's explainer, then #22.
 - **The GRAVITY FLOW image** for the capture swap (ROADMAP #18), whenever he has it.
 - **Optional, on `main`:** the site's chat launcher folds its label as the page scrolls. That is 0.0076 CLS on `/` at
   1440 and 390 (measured in session 11), well inside "good". Untouched.

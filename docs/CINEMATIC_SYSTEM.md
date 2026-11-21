@@ -24,7 +24,7 @@ was invented: the hero is its first consumer. After the extraction, its computed
 | `app/page.tsx` | Its only importer, so only `/` loads it (`/privacy`, the 404 and the error page never do) |
 | `components/sections/hero.css`, `Hero.tsx` | The reference consumer: the hero's own geometry, every shared value read from the layer |
 | `components/sections/Constellation.tsx` | The reference live element: the loop contract below, in code |
-| `components/sections/` (Work, `panels.ts`, `Reel`, `Shot`, `MoreWork`, About, Stack, `StackFilter`, ThinkBuildShip, Contact, `work.css`) | The second consumer: Work, Two more and the sections below them |
+| `components/sections/` (Work, `panels.ts`, `Reel`, `Shot`, `DosExplainer`, `MoreWork`, About, Stack, `StackFilter`, ThinkBuildShip, Contact, `work.css`) | The second consumer: Work (with P4's explainers, "The P4 slot"), Two more and the sections below them |
 | `components/layout/Navbar.tsx`, `Logo.tsx`, `AvailabilityPill.tsx` | The header, in its own `.cine` root (R2) |
 | `tests/unit/lab-hero-a.test.ts`, `lab-work.test.ts` | Pin the scope, the contrast floors, the token integrity and every string's source |
 | `tests/e2e/lab-hero-a.spec.ts`, `lab-work.spec.ts` | Pin the behaviour: budget, axe, no-JS, reduced motion, pause, the carousels, Stack's filter |
@@ -163,10 +163,27 @@ checks each against its source:
 The DeveloperOS alt text names three file-and-line chips that `components/work/DeveloperOSChapter.tsx` does not export.
 The slice keeps a copy, and the test holds it equal.
 
-**The P4 slot.** Each panel holds `<div className="wk__demo" data-demo-slot="<id>" hidden />`, labelled by a comment in
-`page.tsx`. A future "try it" demo mounts there.
-- Until then the slot stays empty and hidden: no placeholder, no sample data, no "coming soon".
-- The tests require all four to be empty, hidden and not rendered.
+**The P4 slot** (updated in S30; the plan: `docs/P4_PLAN.md`, approved by Tay on 2026-11-21). Each panel's P4
+explainer mounts in its slot: `<div className="wk__demo" data-demo-slot="<id>">`, labelled by a comment in `Work.tsx`.
+- **Where (Q2):** the slot is the panel's last child, a row of its own under the first. From 1024px it spans both
+  columns as a subgrid on the panel's own column lines (only its row gap is set, so it keeps the panel's column gap);
+  on phones it follows the capture. The first row (the words and the capture) is unchanged.
+- **What fills it:** `Work.tsx`'s `EXPLAINERS` map, one server component per panel. **DeveloperOS** (S30,
+  `DosExplainer.tsx`): the rail under the capture's column, the refusal under the words'. The other three slots stay
+  empty and hidden until their session: no placeholder, no sample data, no "coming soon".
+- **Marks on a capture (Q3):** a gallery entry's `marks` (`panels.ts`, `MARKS`) are drawn by `Shot.tsx` on the server,
+  inside the capture's device frame. The slide's frame is already positioned (its dim layer's context), so a mark moves,
+  turns and dims with its slide, and costs no JavaScript; the carousel is unchanged. Each mark is placed in shares of
+  the capture, and of its phone crop below 640px (`--wk-l`, `--wk-t`, `--wk-w`, `--wk-h`, and their `-m` twins), and is
+  hidden from screen readers (the alt text names what it marks). DeveloperOS's three citation boxes are the tag's
+  measured `CHIPS` (`DOS_CHIP_BOXES`), framed 4px out.
+- **Colours (Q5), no new value:** rails `--cine-hair`; plain nodes `--cine-faint`; Evidence, Cite and the citation boxes
+  `--cine-cyan`; Decline `--cine-violet`; boxes on `--cine-glass-ink` with `--cine-edge`; names, bodies and labels in
+  ink, mist and faint. The code chip uses the site's monospace stack, written out in `work.css`: reading `--font-mono`
+  there would make Tailwind emit that variable into the site's shared sheet (it is `@theme inline`).
+- **Tests:** `lab-work.test.ts` (the slot's row and the `EXPLAINERS` map; DeveloperOS's strings imported, never typed;
+  a still server component) and `lab-work.spec.ts` (the four slots; DeveloperOS's sequence, refusal and boxes; the
+  slot-row geometry at 320, 390, 1024 and 1440; axe with the boxed capture in front).
 
 **Behaviour:**
 - **Opening:** one reveal (eyebrow, the title settling, the lede). The panels hold still.
