@@ -636,6 +636,30 @@ test("Aegis at 320px: the branches stack, threat scoring then the alert stream, 
   await ctx.close();
 });
 
+// New in S31 (docs/P4_PLAN.md §3.2 and §6, axe at 1440 and 390 with motion on and reduced, as S30's; Tay, 2026-11-21,
+// P4 plan decisions). The panel and its explainer, with the ringed capture in front.
+for (const [label, vp, opts] of [
+  ["1440, motion on", [1440, 900], { reducedMotion: "no-preference" }],
+  ["390, motion on", [390, 844], { reducedMotion: "no-preference" }],
+  ["1440, reduced motion", [1440, 900], { reducedMotion: "reduce" }],
+  ["390, reduced motion", [390, 844], { reducedMotion: "reduce" }],
+] as const) {
+  test(`Aegis, axe (WCAG 2.2 A/AA): no violations in the panel and its explainer, with the ringed capture in front — ${label}`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp, opts);
+    const front = aegis(page).locator('.wk__slide[data-offset="0"]');
+    await front.scrollIntoViewIfNeeded();
+    await expect.poll(() => front.locator("img").evaluate((i) => (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0)).toBe(true);
+    await expect(front.locator('.wk__mark[aria-hidden="true"]')).toHaveCount(1);   // decoration: the alt text gives the row
+    await page.waitForTimeout(400);
+    await page.addScriptTag({ path: AXE });
+    const r = await page.evaluate(() => (window as unknown as { axe: { run: (c: unknown, o: unknown) => Promise<{ violations: { id: string; nodes: unknown[] }[]; incomplete: { id: string; nodes: unknown[] }[]; passes: unknown[] }> } })
+      .axe.run({ include: [["#work-aegis"]] }, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"] } }));
+    console.log(`axe aegis ${label}: violations ${r.violations.length}, passes ${r.passes.length}, incomplete ${r.incomplete.map((i) => `${i.id}×${i.nodes.length}`).join(", ") || "none"}`);
+    expect(r.violations.map((v) => `${v.id}×${v.nodes.length}`)).toEqual([]);
+    await ctx.close();
+  });
+}
+
 // About (P3.3, session 12): who, in about ten seconds, under Work. Every word server-rendered, no photo, and it holds
 // still. Since R10 (S18+S19) it ends on the facts: no availability line and no links.
 test("About without JavaScript: every word, no link, no photo, nothing hidden", async ({ browser }) => {
