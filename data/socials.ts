@@ -33,9 +33,10 @@ export const siteMeta = {
   headlineLines: HEADLINE,
   /** The same h1 as one line of text: the social card's alt, and what a reader hears. */
   headline: HEADLINE.join(" "),
-  /** The hero's lede (Concept A, R8): the range, in the four kinds of product the Featured work below it names. */
+  /** The hero's lede (Concept A, R8): the range, in the four kinds of product the Featured work below it names. Its
+   *  dash is unspaced, like the rest of the site's (Tay's copy pass, 2026-11-21). */
   heroLead:
-    "I build end to end — mobile apps, security systems, developer tools and games, from the interface down to the infrastructure.",
+    "I build end to end—mobile apps, security systems, developer tools and games, from the interface down to the infrastructure.",
   /** The meta description and social-card line (≤ 160 characters). */
   tagline:
     "Software engineer building products across interfaces, systems and interactive experiences—each one designed, built and tested end to end.",
@@ -52,6 +53,7 @@ export const legalName = "שופר טאי";
 export const availability = {
   open: true,
   label: "Available for software engineering roles",
+  /** Contact's lead (Tay's copy pass, 2026-11-21); the assistant's prompt says the same (app/api/chat/route.ts). */
   detail:
-    "I'm looking for a software engineering opportunity that fits my skills—on-site, hybrid, or remote.",
+    "I'm looking for a software engineering role—backend, full-stack, AI or security. On-site or hybrid in central Israel, or remote.",
 } as const;

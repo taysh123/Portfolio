@@ -80,9 +80,9 @@ export const dosFlow = [
   { k: "decline", name: "Or decline", body: "If nothing in the index matches, DeveloperOS declines before calling a model." },
 ] as const;
 
-/** DeveloperOS: what the refusal looks like (the five steps above already say when it happens). */
+/** DeveloperOS: what the refusal looks like, introduced in a sentence (Tay's copy pass, 2026-11-21). */
 export const dosRefusalCaption = {
-  body: "The Learning Center's refusal, word for word (`devos learn` prints the same in a terminal):",
+  body: "When nothing in your code supports an answer, it says so instead of guessing. The app's actual message:",
 };
 
 /** GRAVITY FLOW: scope and state, from the project's data. */

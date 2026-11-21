@@ -20,9 +20,9 @@ function withCode(text: string) {
  * (shown, Tay's decision); then the refusal, as the app's own words in HTML text, because declining is the other half of answering from
  * evidence. The search capture's file:line chips are boxed on the carousel's first slide (panels.ts MARKS).
  *
- * Every word is the site's own (data/work.ts, lib/dict.ts), unchanged since product-plates-final; tests/unit/work.test.ts
- * holds it to DeveloperOS's data. A server component: nothing is focusable, nothing moves, and without JavaScript it is
- * the same.
+ * Every word is the site's own (data/work.ts, lib/dict.ts); the rail's name and the refusal's caption are from Tay's copy
+ * pass (2026-11-21). tests/unit/work.test.ts holds it to DeveloperOS's data. A server component: nothing is focusable,
+ * nothing moves, and without JavaScript it is the same.
  */
 export function DosExplainer() {
   return (

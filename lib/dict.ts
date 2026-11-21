@@ -24,13 +24,13 @@ const server = {
   aegis: {
     bar: "Aegis · Alerts · Live",
     alt: "One row of the Aegis Alerts page, live: “Port scan detected from 10.10.10.2 (20 distinct ports in 60s)”, severity 65, medium, from temporal at 10.10.10.2",
-    traceTitle: "One alert, start to finish",
+    traceTitle: "How one port-scan alert moves through Aegis, start to finish",
     parallel: "Then, in parallel",
   },
   dos: {
     bar: "DeveloperOS · Search your code",
     alt: "DeveloperOS searching your own code for “ollama provider”: each result cites a file and line range — {chips} and more",
-    flow: "From your files to an answer, as implemented",
+    flow: "How DeveloperOS answers a question about your code",
   },
   gf: {
     marks: { well: "Your gravity well", star: "The star", home: "Home" },
