@@ -478,6 +478,35 @@ for (const vp of [[1440, 900], [390, 844]] as const) {
   });
 }
 
+// New in S30 (docs/P4_PLAN.md §3.3, "the slot-row test"; Tay, 2026-11-21, P4 plan decisions).
+for (const vp of [[320, 568], [390, 844], [1024, 768], [1440, 900]] as const) {
+  test(`DeveloperOS at ${vp[0]}px: the explainer is the panel's own row under the first, on both columns from 1024px and after the carousel on phones; nothing in it takes focus`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp);
+    const r = await dos(page).evaluate((p) => {
+      const box = (s: string) => { const b = p.querySelector(s)!.getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width }; };
+      return { body: box(".wk__body"), stage: box(".wk__stage"), demo: box(".wk__demo"), rail: box(".wk__dos-rail"), refusal: box(".wk__dos-refusal"),
+        focusable: p.querySelectorAll(".wk__demo :is(a, button, input, select, textarea, [tabindex])").length };
+    });
+    const near = (a: number, b: number, what: string) => expect(Math.abs(a - b), `${vp[0]}: ${what}`).toBeLessThan(1);
+    expect(r.demo.top, "under the first row").toBeGreaterThanOrEqual(Math.max(r.body.bottom, r.stage.bottom));
+    if (vp[0] >= 1024) {
+      // Under both columns, on the first row's own column lines: the rail under the capture (DeveloperOS shows it on
+      // the left), the refusal under the words, side by side.
+      near(r.demo.left, r.stage.left, "the row starts at the capture's column"); near(r.demo.right, r.body.right, "and ends at the words' column");
+      near(r.rail.left, r.stage.left, "rail left"); near(r.rail.width, r.stage.width, "rail width");
+      near(r.refusal.left, r.body.left, "refusal left"); near(r.refusal.width, r.body.width, "refusal width");
+      near(r.rail.top, r.refusal.top, "side by side");
+    } else {
+      // One column: the words, the capture, then the rail and the refusal, each the column's full width.
+      expect(r.stage.top).toBeGreaterThanOrEqual(r.body.bottom);
+      expect(r.refusal.top).toBeGreaterThanOrEqual(r.rail.bottom);
+      near(r.demo.width, r.body.width, "full width"); near(r.refusal.width, r.body.width, "the refusal too");
+    }
+    expect(r.focusable).toBe(0);
+    await ctx.close();
+  });
+}
+
 // About (P3.3, session 12): who, in about ten seconds, under Work. Every word server-rendered, no photo, and it holds
 // still. Since R10 (S18+S19) it ends on the facts: no availability line and no links.
 test("About without JavaScript: every word, no link, no photo, nothing hidden", async ({ browser }) => {
