@@ -20,7 +20,7 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
    - The Product Plates site it replaced is tagged **`product-plates-final`** (`443a1f9`).
 2. **Next, in this order (Tay, 2026-11-21): P4, then #22.** P4 runs one explainer per session: DeveloperOS (S30, PR
    #28, merged as `7505b91`, live), Aegis (S31, PR #29, for Tay's review), T Poker, then GRAVITY FLOW after #18 (the
-   GRAVITY FLOW capture swap, whenever Tay has the image). Then #22 (per-browser tests). Low priority: #23 (S25). **P4's plan:** `docs/P4_PLAN.md` (S29, PR #27,
+   GRAVITY FLOW capture swap, whenever Tay has the image). Then #22 (per-browser tests). Low priority: #23 (S25) and #25 (S31). **P4's plan:** `docs/P4_PLAN.md` (S29, PR #27,
    merged as `57b9743`), **approved by Tay on 2026-11-21**, with his decisions at its top. `docs/ROADMAP.md` has each.
    - Done from S24's order: #20 (F2, Safari's focus in the sheets: S25, PR #23, merged as `7ebff9c`), #19 (Next
      16.4.6: S26, PR #24, merged as `ce818a0`), #21 (F1, Firefox's scroll padding: S27, PR #25, merged as `5080de5`),
@@ -455,11 +455,14 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - The copy: C1 and C2 only, in Tay's exact words (`data/work.ts`, their own commit). The shared-schema note stays;
     the `onScreen` sentence is not shown. No AI claim.
   - Aegis's slot holds "One alert, start to finish": a five-column line that forks after Detect from 1024px; a rail
-    with the branches side by side below it; the branches stacked at 389px and below. The port-scan row is ringed in
-    cyan on the carousel's first slide, drawn by the server.
+    with the branches side by side below it; the branches stacked below 400px (Tay's call in the review, so 390–393px
+    phones stack too). The port-scan row is ringed in cyan on the carousel's first slide, drawn by the server.
   - First-load JS unchanged (the same chunks); the site's shared stylesheet unchanged; the layer's sheet +4.1 KB.
   - Test changes, each in its own commit, approved in the plan's decisions; one extra e2e test (Aegis's slot row) in
-    its own commit, for Tay to keep or drop. Detail: `docs/WORKLOG.md`, "Session 31".
+    its own commit, **kept by Tay**. Detail: `docs/WORKLOG.md`, "Session 31".
+  - Tay's review round: the branches stack below 400px (the restored `:155` now checks side by side at 430, stacked at
+    390 and 320); `aegisCopy`'s comment fixed; the ring without darkening and the unused `onScreen` string kept; new
+    low-priority backlog #25 (VoiceOver and the site's styled lists).
 - **The release track (P5/P6) is done.** Next, in this order (Tay, S24), each a PR on `main`:
   1. **#20:** F2, Safari's focus leaving the menu sheet or the chat for one Tab; the fix goes in the shared focus trap.
      **Done in S25** (PR #23, merged as `7ebff9c`).
@@ -472,7 +475,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
      session: DeveloperOS (**S30, PR #28, merged as `7505b91`**), Aegis (**S31, PR #29**), T Poker, then GRAVITY FLOW
      after #18 (`docs/ROADMAP.md`, P4, with the restore record).
   6. **#22:** per-browser handling of the engine-specific tests.
-  - Low priority (Tay, S25): **#23**, Safari's focus return after a modal opened by a mouse click.
+  - Low priority (Tay, S25): **#23**, Safari's focus return after a modal opened by a mouse click. And (Tay, S31)
+    **#25**, VoiceOver on Safari doesn't announce the site's styled lists as lists (consider `role="list"`).
   - Later, a small separate PR (Tay, S27): **#24**, dev-dependency audit hygiene. **Done in S28** (PR #26, merged as
     `c29c0b1`).
 
@@ -509,10 +513,9 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Review PR #29, Aegis's explainer** (S31), on its Preview: the panel at 320, 390, 1024 and 1440 (the stacked
-  branches at 320 are his to approve on the screenshots, which are in the session's scratch only), the measurements and
-  the test changes in its body, including the extra slot-row test (keep or drop). Merging it ships the second P4
-  explainer. Then S32: T Poker.
+- **Review PR #29, Aegis's explainer** (S31), on his phone and its Preview, after his review round (the branches
+  stack below 400px; new screenshots at 320 and 390 in the session's scratch only). Then he merges it, which ships the
+  second P4 explainer. Then S32: T Poker.
 - **Optional, on a Mac:** Playwright's WebKit can't reproduce Option+Tab, or Safari with macOS keyboard navigation off.
   Desktop Safari on production (PR #23 is live) would confirm both (the menu at a narrow width, the chat sheet, a case study).
 - **His manual steps after the release, if not done yet:**

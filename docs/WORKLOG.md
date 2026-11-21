@@ -75,7 +75,8 @@ the shared-schema note kept; the `onScreen` sentence dropped; no AI claim. Push 
     scoring carries straight on; the alert stream turns down and continues to Live.
   - **Below 1024px:** a rail (Ingest, Normalise, Detect, the fork's node), then the two branches side by side in boxes,
     and Live under the alert stream, joined by a short line.
-  - **At 389px and below:** the branches stack, threat scoring then the alert stream. The rail runs on from the fork's
+  - **Below 400px** (at first 389px and below; Tay's review round moved it, §10): the branches stack, threat scoring
+    then the alert stream. The rail runs on from the fork's
     node and meets each branch on a short line at its name, so the two still read as one fork. Live stays under the
     alert stream.
   - **Colours (Q5):** rails `--cine-hair`; nodes `--cine-faint`; the Detect node and its segment of the line, and the
@@ -89,12 +90,13 @@ the shared-schema note kept; the `onScreen` sentence dropped; no AI claim. Push 
 |---|---|---|
 | `b1be03a` | Changed: the unit slot test (`EXPLAINERS` maps `aegis` and `developeros`) | `tests/unit/lab-work.test.ts:247` |
 | `9346100` | Changed: the e2e slot test (Aegis's and DeveloperOS's shown with their explainers; the other two empty, hidden, unrendered) | `tests/e2e/lab-work.spec.ts:412` |
-| `a091d66` | Restored, adapted: the tag's `chapters.spec.ts` `:96` (the order and both branches; RabbitMQ and the PostgreSQL schema inside the explainer; never "open source"), `:107` (the wide fork at 1440), `:118` ×2 (the ring on the port-scan row at 1440 and 390, the phone crop below 640, running past the frame; the row's words in the alt text) and `:155` (390: one column, the branches side by side, Live under the alert stream) | `lab-work.spec.ts`, after DeveloperOS's |
+| `a091d66` | Restored, adapted: the tag's `chapters.spec.ts` `:96` (the order and both branches; RabbitMQ and the PostgreSQL schema inside the explainer; never "open source"), `:107` (the wide fork at 1440), `:118` ×2 (the ring on the port-scan row at 1440 and 390, the phone crop below 640, running past the frame; the row's words in the alt text) and `:155` (390: one column, the branches side by side, Live under the alert stream; adapted in §10) | `lab-work.spec.ts`, after DeveloperOS's |
 | `1099a48` | New: at 320 the branches stack, the rail meets each, Live follows the alert stream | `lab-work.spec.ts` |
 | `e5c7dba` | New: axe on the panel and its explainer, the ringed capture in front, at 1440 and 390, motion on and reduced | `lab-work.spec.ts` |
 | `95df4cf` | New: every string imported from `data/work.ts` and `lib/dict.ts`, never typed; the console note and `onScreen` never shown; C1 and C2 pinned in Tay's words; no AI claim | `lab-work.test.ts` |
 | `4ffbfee` | New: the explainer stays a still server component (no client code, no reveal, nothing to focus, no motion in its rules), as S30's `10dd203` | `lab-work.test.ts` |
-| `f8be0aa` | **New, beyond §3.2's list (for Tay to keep or drop):** Aegis's slot-row geometry at 320, 390, 1024 and 1440. The plan retires the tag's `:145` because "the slot-row test replaces it", and S30's slot-row test reads DeveloperOS only | `lab-work.spec.ts` |
+| `f8be0aa` | **New, beyond §3.2's list; kept by Tay:** Aegis's slot-row geometry at 320, 390, 1024 and 1440. The plan retires the tag's `:145` because "the slot-row test replaces it", and S30's slot-row test reads DeveloperOS only | `lab-work.spec.ts` |
+| `75d1238` | Adapted in Tay's review round (§10): the restored `:155` checks the side-by-side fork at 430, and the stacked branches at 390 and 320, Live under the alert stream at all three | `lab-work.spec.ts` |
 
 - Before any test changed, the existing suites on the new code: unit 226/227 and Playwright 208/209, the two failures
   the two slot tests (on the approved list). No other existing test needed a change.
@@ -102,8 +104,8 @@ the shared-schema note kept; the `onScreen` sentence dropped; no AI claim. Push 
   worktree for the unit tests): all fail there, all pass on the branch.
 - Retired for good, as the plan lists: the tag's `chapters.spec.ts:145` (the chapter's order).
 - `tests/unit/work.test.ts`'s Aegis cases are unchanged and pass.
-- Tests added above them moved three lines that ROADMAP #22 cites: `lab-work.spec.ts:667` is now `:822` (twice in
-  #22's row: the WebKit item still read `:566`, the line before S30), and `:791` is now `:946`.
+- Tests added above them moved three lines that ROADMAP #22 cites: `lab-work.spec.ts:667` is now `:833` (twice in
+  #22's row: the WebKit item still read `:566`, the line before S30), and `:791` is now `:957`.
 
 ### 5. Measured against `main`, on the same machine (VL)
 `main` = `7505b91` built in a scratch worktree (its own `npm ci`) and served on `:3402`; this branch on `:3401`. Every
@@ -141,21 +143,21 @@ probe ran the two interleaved, on an otherwise idle machine.
 - `npm test` (Git Bash): **229/229** in 18 files (227 + the two new unit tests; the slot test changed in place).
 - `npm run build` right after deleting `.next`, then `GROQ_API_KEY= npx playwright test` (Chromium): **223/223** in 17
   files, cold; **223/223** warm. (209 + 5 restored + 1 at 320 + 4 axe + 4 slot-row; the slot test changed in place.)
-- These ran on the final tree, `689b619`. The §5 measurements ran on `f8be0aa`, before the review's 3-byte hardening,
-  which changes nothing at whole-pixel widths.
-- After this docs commit: rebuilt, and `/`'s two stylesheets compared again (§5 holds on the final tree).
+- These ran on `689b619`. The §5 measurements ran on `f8be0aa`, before the review's 3-byte hardening, which changes
+  nothing at whole-pixel widths. Tay's review round re-ran both on its final tree (§10).
+- After the docs commit: rebuilt, and `/`'s two stylesheets compared again (§5 held).
 
 ### 7. Screenshots (for Tay; in the session's scratch only, the repo being public)
 The Aegis panel, its first row and the new row, at 320, 390, 1024 and 1440 (phones at device scale 2; the site's header
 and the chat launcher hidden in the stills).
 
-### 8. Rulings (for Tay's review)
+### 8. Rulings (for Tay's review; his answers in §10)
 - **`onScreen`, dropped:** not rendered, and left in `data/work.ts`. The brief allows no other copy change, and
-  `work.test.ts` (unchanged, not on the approved list) reads it.
+  `work.test.ts` (unchanged, not on the approved list) reads it. **Kept by Tay.**
 - **No dim around the ring:** the tag's ring darkened the capture around it with a colour of its own; Q5 allows no new
-  value. The ring is S30's mark, in cyan.
-- **The stacking breakpoint is 389px**, the page's narrowest-phones query. "Below about 400px" would include 390, where
-  the approved `:155` restore holds the branches side by side.
+  value. The ring is S30's mark, in cyan. **Kept by Tay.**
+- **The stacking breakpoint was 389px**, the page's narrowest-phones query: "below about 400px" would include 390, where
+  the approved `:155` restore held the branches side by side. **Tay: below 400px**, with `:155` adapted (§10).
 - **`:96` reads RabbitMQ and the PostgreSQL schema inside the explainer:** the panel's tagline and chips already name
   both, so a panel-wide check would pass without the trace.
 - **`:118`'s note check reads the alt text:** the note beside the console doesn't come back (Q6); the row's words reach
@@ -168,28 +170,70 @@ Its notes:
   `min-width: 1024px`. A fractional width between them (some browsers under zoom) would get neither, and the base alone
   draws no rail. Not reproducible here: Chromium and Firefox snap a frame's width to whole CSS pixels at device scale 1
   and 2. The block now ends at 1023.98px; nothing changes at whole-pixel widths.
-- **For Tay (not changed):**
-  - **The 390 layout.** At 390 and 393, most iPhones, each branch box has about 129px for text, and C1 wraps to about
-    ten lines. The approved `:155` restore holds the branches side by side at 390; stacking there would need his
-    approval to change it. The 390 and 320 screenshots sit side by side for that call.
+- **For Tay** (his answers in §10):
+  - **The 390 layout.** At 390 and 393, most iPhones, each branch box had about 129px for text, and C1 wrapped to about
+    ten lines; the approved `:155` restore held the branches side by side at 390. **Tay: stack below 400px.**
   - **VoiceOver and lists.** Preflight's `list-style: none` makes Safari drop list semantics, so VoiceOver reads the
     trace in order but doesn't say "list". `role="list"` would restore that; the DeveloperOS rail and the site's other
-    lists share the pattern, so it is a site-wide call.
-  - The 320 test measures where the connectors sit, not that they are drawn; `aegisCopy`'s comment in `data/work.ts`
-    still says the label and line show beside the capture; the extra slot-row test could drop 320 and its focus count
-    (the unit test holds that).
+    lists share the pattern. **Tay: backlog #25, low priority, site-wide.**
+  - `aegisCopy`'s comment in `data/work.ts` still said the label and line show beside the capture. **Fixed (§10).**
+  - Not changed: the 320 test measures where the connectors sit, not that they are drawn; the extra slot-row test could
+    drop 320 and its focus count (the unit test holds that). **Tay kept `f8be0aa` as it is.**
 
 ### 9. Docs and the PR
 - **This docs commit:** this entry; `docs/ROADMAP.md` (S30 done and merged, S31 done for review, #22's moved lines);
   `docs/CINEMATIC_SYSTEM.md` ("The P4 slot", the file map); `claude/START-HERE.md`; `CLAUDE.md` (Production `7505b91`,
   the order, the suite's counts).
 - `feat/p4-aegis` pushed; **PR #29**, ready for review, not merged.
+- A second docs commit, after Tay's review round (§10), updates this entry, `docs/ROADMAP.md` (S31's row, #25, #22's
+  lines again), `docs/CINEMATIC_SYSTEM.md`, `claude/START-HERE.md` and `CLAUDE.md`. The first docs commit (`442f646`)
+  was already pushed, so it stays as it is: no force-push.
+
+### 10. Tay's review round (S31, before his phone review)
+**His decisions:**
+- **Stack the branches below 400px**, as approved, so 390–393px phones get the stacked layout.
+- **Adapt the restored `:155`** to that geometry: side by side at 430, stacked at 390 and 320 (part of the approved P4
+  test changes).
+- **Fix `aegisCopy`'s comment.**
+- **Keep** `f8be0aa`, the ring without darkening, and the unused `onScreen` string.
+- **Log #25**, low priority: VoiceOver on Safari doesn't announce the site's styled lists as lists (site-wide; consider
+  `role="list"`).
+
+**The commits:**
+| Commit | Change |
+|---|---|
+| `37280b6` | The stacking block moves from `max-width: 389px` to `399.98px` (as the phone block's 1023.98px). At 390 each branch box is now 322px wide, and C1 takes six lines instead of about ten |
+| `75d1238` | Test, adapted (Tay, 2026-11-21, P4 plan decisions): `:155` checks one column with the fork side by side at 430, and stacked at 390 and 320 (the alert stream under threat scoring, on the same edge), Live under the alert stream at all three. Run first on the build with the old breakpoint: 430 and 320 passed, **390 failed** (the branches side by side); after the change, all three pass |
+| `011e62d` | `aegisCopy`'s comment says what is on the page: only `seam`, under the trace; `label`, `row` and `onScreen` stay in the data, not shown; the row's words reach a reader through the capture's alt text. A comment only, no copy change |
+
+**Validation, on the final tree (`011e62d`):**
+- typecheck and lint clean; `npm test` **229/229**.
+- The build after deleting `.next` (its first try failed fetching Geist from Google Fonts, the known network blip; the
+  retry passed). Then Playwright **225/225** in 17 files, cold, and **225/225** warm (223 + 2: `:155` now runs at three
+  widths). axe on the Aegis panel: 0 violations at 1440 and 390 (now stacked), motion on and reduced.
+
+**Re-measured against `main` (`7505b91`), interleaved, same machine:**
+- **First-load JS:** 187.06 KiB, the same 9 chunks byte for byte.
+- **HTML `/`:** 136,944 B, unchanged by the round (+4,654 B against `main`'s 132,290).
+- **Stylesheets:** the site's shared sheet is `main`'s exact file (44,021 B). The layer's is 35,407 B (gzip -9
+  6,260 B): +3 B for `399.98px`. The comment in `data/work.ts`, which Tailwind scans, adds nothing.
+- **Phone LCP at 4× CPU, 412×823, 45 loads each** (412 is above the new breakpoint, so this is the side-by-side
+  layout, as before):
+  - `main`: rounds 484 / 540 / 592 ms, pooled median 528 ms (400–700), mean 538.
+  - The branch: rounds 552 / 548 / 536 ms, pooled median 548 ms (332–748), mean 555.
+  - +17 ms in means, standard error 20; medians +20.
+- **The same at 390×844, the stacked layout, 15 loads each:** medians 504 and 508 ms, means 511 and 530 ms (+19,
+  standard error 45).
+- **Across the three 412 batches,** weighted by their variances: about +10 ms, standard error about 9. Within the noise.
+  If any of it is real, it is the extra layout before the first paint that the plan expected (§3.2: "Measure it"). The
+  h1 is the LCP element in every one of the 285 loads.
+
+**Screenshots (scratch only):** the Aegis panel at 320 and 390 with the stacked branches, and 1024 and 1440 unchanged.
 
 ### Waiting on Tay
-- **Review PR #29** on its Preview: the Aegis panel at 320, 390, 1024 and 1440 (the stacked branches at 320 are his to
-  approve on the screenshots), the measurements, and the test commits, including `f8be0aa` (keep or drop).
+- **His phone review of PR #29**, then the merge. The Preview follows the push.
 - **Then (his order):** S32, T Poker (the carousel's no-JS change gets his final look first); #18; GRAVITY FLOW; then
-  #22. Low priority: #23.
+  #22. Low priority: #23 and #25.
 
 ---
 

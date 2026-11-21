@@ -173,9 +173,10 @@ explainer mounts in its slot: `<div className="wk__demo" data-demo-slot="<id>">`
   - **Aegis** (S31, `AegisExplainer.tsx`): a figure captioned "One alert, start to finish" around an ordered list
     (Ingest, Normalise, Detect; "Then, in parallel" with the two branches as a nested list; Live), then the shared-schema
     note. From 1024px the trace runs across both columns as the tag's five-column line, drawn forking after Detect;
-    below 1024px it is a rail with the two branches side by side in boxes and Live under the alert stream; at 389px and
-    below the branches stack, and the rail runs on from the fork's node to meet each branch on a short line. The note
-    sits under the trace, at the words' column.
+    below 1024px it is a rail with the two branches side by side in boxes and Live under the alert stream; below 400px
+    the branches stack (Tay, S31), and the rail runs on from the fork's node to meet each branch on a short line. The
+    note sits under the trace, at the words' column. The two phone blocks end at 1023.98px and 399.98px, so a
+    fractional width under zoom still falls in one of them.
   - **DeveloperOS** (S30, `DosExplainer.tsx`): the rail under the capture's column, the refusal under the words'.
 - **Marks on a capture (Q3):** a gallery entry's `marks` (`panels.ts`, `MARKS`) are drawn by `Shot.tsx` on the server,
   inside the capture's device frame. The slide's frame is already positioned (its dim layer's context), so a mark moves,
