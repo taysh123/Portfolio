@@ -912,6 +912,36 @@ test("T Poker: nothing extra is fetched. With JS, only its first capture before 
   }
 });
 
+// New in S32 (docs/P4_PLAN.md §3.1 and §6, axe at 1440 and 390 with motion on and reduced, as S30's and S31's; Tay,
+// 2026-11-21, P4 plan decisions). The panel and its steps, as it opens and with a step chosen from the keyboard.
+for (const [label, vp, opts] of [
+  ["1440, motion on", [1440, 900], { reducedMotion: "no-preference" }],
+  ["390, motion on", [390, 844], { reducedMotion: "no-preference" }],
+  ["1440, reduced motion", [1440, 900], { reducedMotion: "reduce" }],
+  ["390, reduced motion", [390, 844], { reducedMotion: "reduce" }],
+] as const) {
+  test(`T Poker, axe (WCAG 2.2 A/AA): no violations in the panel and its steps, as it opens and with a step chosen — ${label}`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp, opts);
+    await page.addScriptTag({ path: AXE });
+    const run = async (when: string) => {
+      const front = poker(page).locator('.wk__slide[data-offset="0"]');
+      await front.scrollIntoViewIfNeeded();
+      await expect.poll(() => front.locator("img").evaluate((i) => (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0)).toBe(true);
+      await page.waitForTimeout(500);
+      const r = await page.evaluate(() => (window as unknown as { axe: { run: (c: unknown, o: unknown) => Promise<{ violations: { id: string; nodes: unknown[] }[]; incomplete: { id: string; nodes: unknown[] }[]; passes: unknown[] }> } })
+        .axe.run({ include: [["#work-poker"]] }, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"] } }));
+      console.log(`axe poker ${label}, ${when}: violations ${r.violations.length}, passes ${r.passes.length}, incomplete ${r.incomplete.map((i) => `${i.id}×${i.nodes.length}`).join(", ") || "none"}`);
+      expect(r.violations.map((v) => `${v.id}×${v.nodes.length}`), when).toEqual([]);
+    };
+    await run("as it opens");
+    await poker(page).getByRole("radio", { name: "Start a game" }).focus();
+    await page.keyboard.press("ArrowRight");                                                    // Run the tournament, ringed
+    await expect.poll(() => pokerFront(page)).toBe(1);
+    await run("a step chosen");
+    await ctx.close();
+  });
+}
+
 // About (P3.3, session 12): who, in about ten seconds, under Work. Every word server-rendered, no photo, and it holds
 // still. Since R10 (S18+S19) it ends on the facts: no availability line and no links.
 test("About without JavaScript: every word, no link, no photo, nothing hidden", async ({ browser }) => {
