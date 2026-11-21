@@ -8,7 +8,7 @@
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import { projects, publicRepoUrl, PRIVATE_REPO_LABEL, PROJECT_GALLERIES } from "@/data/projects";
-import { flagships, moreWork, dosFlow, dosRefusal, dosRefusalCaption, aegisCopy, aegisTrace } from "@/data/work";
+import { flagships, moreWork, dosFlow, dosRefusal, dosRefusalCaption, aegisCopy, aegisTrace, pokerSteps } from "@/data/work";
 import { IMAGES } from "@/data/images";
 import { LAB_IMAGES, captureOf } from "@/data/lab-images";
 import { dict } from "@/lib/dict";
@@ -369,6 +369,25 @@ describe("P4: Aegis, one alert start to finish", () => {
     const rules = css.slice(css.indexOf("/* Aegis, one alert start to finish"), css.indexOf("/* ── Two more"));
     expect(rules).toMatch(/\.wk__aegis-flow/);
     expect(rules).not.toMatch(/transition|animation|@keyframes/);
+  });
+});
+
+// P4 (docs/P4_PLAN.md §3.1, option A; Tay, 2026-11-21, P4 plan decisions): T Poker's steps drive its carousel.
+describe("P4: T Poker, the stepper", () => {
+  const poker = read("components/sections/PokerExplainer.tsx");
+  it("every string is the site's own, imported from data/work.ts, lib/dict.ts and data/projects.ts, never typed", () => {
+    expect(poker).toMatch(/^import \{ projects \} from "@\/data\/projects";\nimport \{ pokerSteps \} from "@\/data\/work";\nimport \{ dict \} from "@\/lib\/dict";\nimport \{ fmt \} from "@\/lib\/fmt";\n/);
+    expect(poker).toMatch(/const name = projects\.find\(\(p\) => p\.id === "poker"\)!\.name;/);
+    expect(poker).toMatch(/<legend className="wk__poker-legend">\{fmt\(dict\.poker\.walk, \{ name \}\)\}<\/legend>/);
+    expect(poker).toMatch(/<span><i aria-hidden="true">\{k \+ 1\}<\/i>\{s\.label\}<\/span>/);
+    expect(poker).toMatch(/<p key=\{s\.label\} id=\{`wk-poker-cap-\$\{k\}`\} className="wk__poker-cap" data-step=\{k\}>\{s\.caption\}<\/p>/);
+    // The markup types no words of its own, and no shown word is copied into the code (an arrow's ">" is code, not markup).
+    const jsx = code(poker.slice(poker.indexOf("export function PokerExplainer"))).replace(/=>/g, "");
+    expect([...jsx.matchAll(/>([^<>{}]+)</g)].map((m) => m[1].trim()).filter(Boolean)).toEqual([]);
+    for (const s of [dict.poker.walk, ...pokerSteps.flatMap((p) => [p.label, p.caption])]) expect(code(poker)).not.toContain(s);
+    // The legend is shown, in these words (Tay's decision), and the three steps are the Product Plates stepper's.
+    expect(fmt(dict.poker.walk, { name: projects.find((p) => p.id === "poker")!.name })).toBe("Walk through T Poker");
+    expect(pokerSteps.map((s) => s.label)).toEqual(["Start a game", "Run the tournament", "Settle up"]);
   });
 });
 
