@@ -435,6 +435,49 @@ test("structure: the hero's one h1, four product h3s under Work's h2, the sectio
     : { id, hidden: true, empty: true, shown: false, last: true }));
 });
 
+// P4 (docs/P4_PLAN.md §3.3): DeveloperOS, cite or decline, in its panel's own row. Restored from the Product Plates
+// chapter's tests (product-plates-final:tests/e2e/chapters.spec.ts:181, :187 and :200), adapted to the panel: the
+// sequence and the refusal live in the slot, and the citation boxes on the carousel's first slide.
+// Tay, 2026-11-21, P4 plan decisions.
+const dos = (page: Page) => panel(page, "developeros");
+test("DeveloperOS: index → retrieve → evidence → cite, or decline, as a readable sequence", async ({ page }) => {
+  await page.goto(ROUTE);
+  await expect(dos(page).locator(".wk__dos-flow > li > b")).toHaveText(["Index", "Retrieve", "Evidence", "Cite", "Or decline"]);
+  await expect(dos(page).locator(".wk__dos-flow")).toContainText("declines before calling a model");
+});
+
+test("DeveloperOS: the refusal is real text, in the app's own words, shown once, not a picture of text", async ({ page }) => {
+  await page.goto(ROUTE);
+  const ui = dos(page).locator(".wk__dos-says");
+  await expect(ui).toContainText("I don't have enough indexed material to teach that. Try devos index <path>, give a file path, or rephrase the topic. (Not guessing.)");
+  // One refusal, not two: the Learning Center's notice above it is the same refusal on the same surface.
+  await expect(ui).not.toContainText("Not enough of your indexed code matched this.");
+  expect(await page.evaluate(() => document.body.innerText.split("I don't have enough indexed material").length - 1)).toBe(1);
+  // The placeholder reads as words to a screen reader: only its angle brackets are hidden.
+  expect(await ui.locator("code [aria-hidden=true]").allTextContents()).toEqual(["<", ">"]);
+  await expect(ui.locator("img")).toHaveCount(0);
+  await expect(ui.locator("code")).toHaveText("devos index <path>");
+});
+
+for (const vp of [[1440, 900], [390, 844]] as const) {
+  test(`DeveloperOS at ${vp[0]}px: each citation box sits on a file:line chip of the real capture, on the carousel's first slide (its phone crop below 640px)`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp);
+    const device = dos(page).locator('.wk__slide[data-offset="0"] .wk__device');
+    await device.scrollIntoViewIfNeeded();
+    await expect.poll(() => device.locator("img").evaluate((i) => (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0)).toBe(true);
+    const boxes = await device.evaluate((d) => {
+      const img = d.querySelector("img") as HTMLImageElement, ir = img.getBoundingClientRect(), phone = img.currentSrc.includes("dos-search-phone");
+      const H = phone ? 612 : 1027;
+      return { phone, b: [...d.querySelectorAll(".wk__mark")].map((c) => { const r = c.getBoundingClientRect(); return ((r.top + r.bottom) / 2 - ir.top) / ir.height * H; }) };
+    });
+    expect(boxes.phone).toBe(vp[0] < 640);
+    expect(boxes.b).toHaveLength(3);
+    // The chips' centres on the 1600×1027 capture (the phone crop starts at its top-left, so the pixels are shared).
+    for (const [i, c] of [195.5, 351.5, 507.5].entries()) expect(Math.abs(boxes.b[i] - c), `box ${i}`).toBeLessThan(6);
+    await ctx.close();
+  });
+}
+
 // About (P3.3, session 12): who, in about ten seconds, under Work. Every word server-rendered, no photo, and it holds
 // still. Since R10 (S18+S19) it ends on the facts: no availability line and no links.
 test("About without JavaScript: every word, no link, no photo, nothing hidden", async ({ browser }) => {
