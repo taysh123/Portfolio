@@ -636,6 +636,33 @@ test("Aegis at 320px: the branches stack, threat scoring then the alert stream, 
   await ctx.close();
 });
 
+// New in S31, beyond §3.2's list (for Tay to keep or drop): the plan retires the chapter's order test (:145) because
+// "the slot-row test replaces it", and S30's slot-row test reads DeveloperOS's panel only. This one reads Aegis's.
+for (const vp of [[320, 568], [390, 844], [1024, 768], [1440, 900]] as const) {
+  test(`Aegis at ${vp[0]}px: the explainer is the panel's own row under the first, across both columns from 1024px and after the carousel on phones; nothing in it takes focus`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp);
+    const r = await aegis(page).evaluate((p) => {
+      const box = (s: string) => { const b = p.querySelector(s)!.getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width }; };
+      return { body: box(".wk__body"), stage: box(".wk__stage"), demo: box(".wk__demo"), trace: box(".wk__aegis-trace"), seam: box(".wk__aegis-seam"),
+        focusable: p.querySelectorAll(".wk__demo :is(a, button, input, select, textarea, [tabindex])").length };
+    });
+    const near = (a: number, b: number, what: string) => expect(Math.abs(a - b), `${vp[0]}: ${what}`).toBeLessThan(1);
+    expect(r.demo.top, "under the first row").toBeGreaterThanOrEqual(Math.max(r.body.bottom, r.stage.bottom));
+    expect(r.seam.top, "the note under the trace").toBeGreaterThanOrEqual(r.trace.bottom);
+    if (vp[0] >= 1024) {
+      // Across both columns, on the first row's own column lines (Aegis shows its capture on the right).
+      near(r.trace.left, r.body.left, "the trace starts at the words' column"); near(r.trace.right, r.stage.right, "and ends at the capture's");
+      near(r.seam.left, r.body.left, "the note starts at the words' column");
+    } else {
+      // One column: the words, the capture, then the trace and the note, the trace the column's full width.
+      expect(r.stage.top).toBeGreaterThanOrEqual(r.body.bottom);
+      near(r.trace.width, r.body.width, "full width"); near(r.seam.left, r.body.left, "the note too");
+    }
+    expect(r.focusable).toBe(0);
+    await ctx.close();
+  });
+}
+
 // New in S31 (docs/P4_PLAN.md §3.2 and §6, axe at 1440 and 390 with motion on and reduced, as S30's; Tay, 2026-11-21,
 // P4 plan decisions). The panel and its explainer, with the ringed capture in front.
 for (const [label, vp, opts] of [
