@@ -8,6 +8,7 @@ import { COUNT_WEBGL, PHONES } from "../support/page";
 import { privateRepoLeaks } from "../support/private-repo";
 import { namesAny } from "../support/institution";
 import { socials } from "../../data/socials";
+import { pokerSteps } from "../../data/work";
 
 const ROUTE = "/";
 const AXE = require.resolve("axe-core/axe.min.js");
@@ -709,6 +710,72 @@ for (const [label, vp, opts] of [
     await ctx.close();
   });
 }
+
+// P4 (docs/P4_PLAN.md §3.1, option A): T Poker's steps drive its carousel, in the panel's own row. Restored from the
+// Product Plates chapter's tests (product-plates-final:tests/e2e/chapters.spec.ts:7, :20 and :40), adapted to the panel:
+// the steps live in the slot, and "front" is the carousel's front slide instead of a z-index. Step 1 is the default now,
+// because the carousel opens on the home screen. Tay, 2026-11-21, P4 plan decisions.
+const poker = (page: Page) => panel(page, "poker");
+/** The carousel's front slide, the checked step (-1 for none), and the captions on screen. */
+const pokerFront = (page: Page) => poker(page).locator(".wk__slide").evaluateAll((ss) => ss.findIndex((s) => s.getAttribute("data-offset") === "0"));
+const pokerStep = (page: Page) => poker(page).locator('input[name="wk-poker-step"]').evaluateAll((rs) => rs.findIndex((r) => (r as HTMLInputElement).checked));
+const pokerCaptions = (page: Page) => poker(page).locator(".wk__poker-cap").evaluateAll((cs) => cs.flatMap((c, i) => (getComputedStyle(c).visibility === "visible" ? [i] : [])));
+for (const vp of PHONES) {
+  test(`T Poker at ${vp[0]}px: the steps are three equal parts in one row, and no label spills out of its part`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp);
+    const parts = await poker(page).locator(".wk__poker-step").evaluateAll((ls) => ls.map((l) => { const r = l.getBoundingClientRect(); return { y: Math.round(r.y), w: Math.round(r.width) }; }));
+    expect(parts).toHaveLength(3);
+    expect(new Set(parts.map((p) => p.y)).size).toBe(1);
+    expect(Math.max(...parts.map((p) => p.w)) - Math.min(...parts.map((p) => p.w))).toBeLessThanOrEqual(1);
+    const spill = await poker(page).locator(".wk__poker-step span").evaluateAll((ss) => ss.filter((s) => s.scrollWidth > s.clientWidth + 1).length);
+    expect(spill).toBe(0);
+    await ctx.close();
+  });
+}
+
+test("T Poker: a radio group under its shown name; each step brings its real screen to the front of the carousel, is described by its caption, and the arrow keys move it", async ({ browser }) => {
+  const { ctx, page } = await at(browser, [1440, 900], { reducedMotion: "no-preference" });
+  await expect(poker(page).getByRole("group", { name: "Walk through T Poker" })).toBeVisible();
+  await expect(poker(page).locator(".wk__poker-legend")).toBeVisible();                      // shown (Tay's decision)
+  expect(await pokerFront(page)).toBe(0);                                                     // the default: start a game
+  expect(await pokerStep(page)).toBe(0);
+  await expect(poker(page).getByRole("radio")).toHaveCount(3);
+  for (const [k, name] of [[1, "Run the tournament"], [2, "Settle up"], [0, "Start a game"]] as const) {
+    const r = poker(page).getByRole("radio", { name }); await r.check();
+    await expect.poll(() => pokerFront(page), name).toBe(k);
+    await expect(poker(page).locator(`.wk__poker-cap[data-step="${k}"]`)).toBeVisible();
+    expect(await r.getAttribute("aria-describedby")).toBe(`wk-poker-cap-${k}`);
+    await expect(r).toHaveAccessibleDescription(pokerSteps[k].caption);
+    // The screen in front is the real capture, with a real description.
+    await expect(poker(page).locator('.wk__slide[data-offset="0"] img')).toHaveAttribute("alt", /.{30,}/);
+  }
+  await poker(page).getByRole("radio", { name: "Run the tournament" }).check();
+  await poker(page).getByRole("radio", { name: "Run the tournament" }).focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(poker(page).getByRole("radio", { name: "Settle up" })).toBeChecked();
+  await expect(poker(page).getByRole("radio", { name: "Settle up" })).toBeFocused();
+  await expect.poll(() => pokerFront(page)).toBe(2);
+  await ctx.close();
+});
+
+test("T Poker works with JavaScript off: choosing a step still brings its screen to the front, flat, and its caption", async ({ browser }) => {
+  const { ctx, page } = await at(browser, [390, 844], { javaScriptEnabled: false });
+  /** The slides a reader can see: laid out and visible. */
+  const seen = () => poker(page).locator(".wk__slide").evaluateAll((ss) => ss.flatMap((s, i) => (getComputedStyle(s).display !== "none" && getComputedStyle(s).visibility === "visible" ? [i] : [])));
+  expect(await seen()).toEqual([0]);
+  expect(await pokerCaptions(page)).toEqual([0]);
+  for (const k of [2, 1, 0]) {
+    await poker(page).locator(`input[data-step="${k}"]`).check();
+    expect(await seen(), `step ${k + 1}`).toEqual([k]);
+    expect(await pokerCaptions(page), `step ${k + 1}`).toEqual([k]);
+    const s = poker(page).locator(`.wk__slide[data-step="${k}"]`);
+    expect(await s.evaluate((e) => getComputedStyle(e).transform), "flat").toBe("none");
+    expect(await s.evaluate((e) => getComputedStyle(e.querySelector(".wk__device")!, "::after").opacity), "not dimmed").toBe("0");
+    await expect.poll(() => s.locator("img").evaluate((i) => (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0)).toBe(true);
+  }
+  await expect(poker(page).locator(".case-study-trigger")).toBeHidden();                      // a dialog needs script: not offered
+  await ctx.close();
+});
 
 // About (P3.3, session 12): who, in about ten seconds, under Work. Every word server-rendered, no photo, and it holds
 // still. Since R10 (S18+S19) it ends on the facts: no availability line and no links.
