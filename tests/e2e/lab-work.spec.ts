@@ -409,7 +409,7 @@ for (const vp of [[1440, 900], [1024, 768], [390, 844], [320, 568]] as const) {
   });
 }
 
-test("structure: the hero's one h1, four product h3s under Work's h2, the sections' h2s, four carousels, and one P4 slot per panel as its last child: Aegis's and DeveloperOS's explainers, the other two empty and hidden", async ({ page }) => {
+test("structure: the hero's one h1, four product h3s under Work's h2, the sections' h2s, four carousels, and one P4 slot per panel as its last child: T Poker's, Aegis's and DeveloperOS's explainers, GRAVITY FLOW's empty and hidden", async ({ page }) => {
   await page.goto(ROUTE);
   await expect(page.locator("h1")).toHaveCount(1);
   await expect(page.locator(".wk__panel h3")).toHaveText(NAMES);
@@ -428,10 +428,10 @@ test("structure: the hero's one h1, four product h3s under Work's h2, the sectio
   for (const n of NAMES) await expect(page.getByRole("article", { name: n })).toHaveCount(1);
   for (const n of NAMES) await expect(page.getByRole("region", { name: `${n}: captures` })).toHaveCount(1);
   // Tay, 2026-11-21, P4 plan decisions (docs/P4_PLAN.md, Q2 and §6): each slot is its panel's last child, a row of its
-  // own; it holds the explainer once P4 has built it (DeveloperOS, S30; Aegis, S31), and stays empty and hidden until
-  // then.
+  // own; it holds the explainer once P4 has built it (DeveloperOS, S30; Aegis, S31; T Poker, S32), and stays empty and
+  // hidden until then.
   const slots = await page.locator("[data-demo-slot]").evaluateAll((s) => s.map((e) => ({ id: e.getAttribute("data-demo-slot"), hidden: (e as HTMLElement).hidden, empty: e.childNodes.length === 0, shown: (e as HTMLElement).offsetParent !== null, last: e.parentElement!.matches(".wk__panel") && e === e.parentElement!.lastElementChild })));
-  expect(slots).toEqual(["poker", "aegis", "developeros", "gravity-flow"].map((id) => id === "aegis" || id === "developeros"
+  expect(slots).toEqual(["poker", "aegis", "developeros", "gravity-flow"].map((id) => id !== "gravity-flow"
     ? { id, hidden: false, empty: false, shown: true, last: true }
     : { id, hidden: true, empty: true, shown: false, last: true }));
 });
