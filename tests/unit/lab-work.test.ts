@@ -246,10 +246,11 @@ describe("real captures: each project's gallery (data/projects.ts PROJECT_GALLER
 describe("structure", () => {
   it("one labelled P4 slot per panel, in its own row (the panel's last child): it holds the panel's explainer once P4 has built it, and stays empty and hidden until then, with no placeholder", () => {
     // Tay, 2026-11-21, P4 plan decisions (docs/P4_PLAN.md, Q2 and §6): the slot leaves the words column for a row of
-    // its own, after the capture. DeveloperOS's explainer is the first (S30); the other three stay empty and hidden.
+    // its own, after the capture. DeveloperOS's explainer is the first (S30), Aegis's the second (S31); the other two
+    // stay empty and hidden.
     expect(page).toMatch(/<\/figure>\n\s*\{\/\* P4: the panel's explainer, in its own row[\s\S]*?\*\/\}\n\s*<div className="wk__demo" data-demo-slot=\{p\.id\} hidden=\{!EXPLAINERS\[p\.id\]\}>\{EXPLAINERS\[p\.id\]\}<\/div>\n\s*<\/article>/);
     expect(page.match(/data-demo-slot/g)).toHaveLength(1);   // one per panel, from the map
-    expect(page).toMatch(/const EXPLAINERS: Partial<Record<Panel\["id"\], React\.ReactNode>> = \{ developeros: <DosExplainer \/> \};/);
+    expect(page).toMatch(/const EXPLAINERS: Partial<Record<Panel\["id"\], React\.ReactNode>> = \{ aegis: <AegisExplainer \/>, developeros: <DosExplainer \/> \};/);
   });
   it("the carousel and Stack's filter are the only client code under the hero: the sections and their data stay on the server", () => {
     for (const t of [page, more, data, shot, home]) expect(t).not.toMatch(/^["']use client["']|useEffect|<canvas|getContext/m);
