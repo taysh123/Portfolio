@@ -8,7 +8,7 @@
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import { projects, publicRepoUrl, PRIVATE_REPO_LABEL, PROJECT_GALLERIES } from "@/data/projects";
-import { flagships, moreWork } from "@/data/work";
+import { flagships, moreWork, dosFlow, dosRefusal, dosRefusalCaption } from "@/data/work";
 import { IMAGES } from "@/data/images";
 import { LAB_IMAGES, captureOf } from "@/data/lab-images";
 import { dict } from "@/lib/dict";
@@ -300,6 +300,23 @@ describe("structure", () => {
     expect(css).toMatch(/\.wk__panel:is\(:hover, :focus-within, :active\) \.wk__stage \{\s*translate: 0 var\(--cine-lift\);/);
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*\.wk__panel:is\(:hover, :focus-within, :active\) \.wk__stage \{ translate: none; \}/);
     expect(css).toMatch(/\[data-reduced-motion="true"\] \.wk__panel:is\(:hover, :focus-within, :active\) \.wk__stage \{ translate: none; \}/);
+  });
+});
+
+// P4 (docs/P4_PLAN.md §3.3; Tay, 2026-11-21, P4 plan decisions): DeveloperOS, cite or decline, in its panel's own row.
+describe("P4: DeveloperOS, cite or decline", () => {
+  const dos = read("components/sections/DosExplainer.tsx");
+  it("every string is the site's own, imported from data/work.ts and lib/dict.ts, never typed", () => {
+    expect(dos).toMatch(/^import \{ dosFlow, dosRefusal, dosRefusalCaption \} from "@\/data\/work";\nimport \{ dict \} from "@\/lib\/dict";\n/);
+    expect(dos).toMatch(/<p id="wk-dos-flow" className="wk__dos-label">\{dict\.dos\.flow\}<\/p>\s*<ol className="wk__dos-flow" aria-labelledby="wk-dos-flow">/);
+    expect(dos).toMatch(/\{dosFlow\.map\(\(s\) => <li key=\{s\.k\} data-k=\{s\.k\}><b>\{s\.name\}<\/b><span>\{s\.body\}<\/span><\/li>\)\}/);
+    expect(dos).toMatch(/<figcaption>\{withCode\(dosRefusalCaption\.body\)\}<\/figcaption>/);
+    expect(dos).toMatch(/<p>\{withCode\(dosRefusal\.message\)\}<\/p>/);
+    // The markup types no words of its own, and no shown sentence is copied into the source.
+    const jsx = code(dos.slice(dos.indexOf("export function DosExplainer")));
+    expect([...jsx.matchAll(/>([^<>{}]+)</g)].map((m) => m[1].trim()).filter(Boolean)).toEqual([]);
+    for (const s of [dict.dos.flow, ...dosFlow.map((f) => f.body), dosRefusalCaption.body, dosRefusal.message]) expect(dos).not.toContain(s);
+    expect(dict.dos.flow).toBe("From your files to an answer, as implemented");   // the rail's name, shown (Tay's decision)
   });
 });
 
