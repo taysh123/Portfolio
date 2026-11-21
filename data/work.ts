@@ -56,12 +56,12 @@ export const aegisCopy = {
  *  in parallel (the fork). `detect` is the step the highlighted row on the real capture comes from. */
 export const aegisTrace = {
   main: [
-    { k: "ingest", name: "Ingest", body: "The agent signs the request body with an HMAC; the API verifies it in constant time." },
+    { k: "ingest", name: "Ingest", body: "The agent signs the request body with an HMAC; the API verifies it in constant time (no replay protection yet)." },
     { k: "normalise", name: "Normalise", body: "Events are validated on arrival, normalised into one canonical shape, and passed on over MassTransit and RabbitMQ." },
     { k: "detect", name: "Detect", body: "A Redis HyperLogLog estimates distinct ports per source in fixed 60-second windows; the port-scan rule fires when the estimate reaches 20." },
   ],
   fork: [
-    { k: "score", name: "Threat scoring", body: "Severity, a per-technique MITRE weight (higher for techniques that are harder to detect), and the rule's false-positive rate multiply into one 0–1 score." },
+    { k: "score", name: "Threat scoring", body: "Severity, a per-technique MITRE weight (higher for techniques that are harder to detect), and one minus the rule's false-positive rate multiply into one score, clamped to 0–1." },
     { k: "alert", name: "Alert stream", body: "The alert is broadcast over SignalR to every connected analyst dashboard." },
   ],
   end: { k: "live", name: "Live", body: "It appears in the analyst's live feed—the highlighted row above." },
