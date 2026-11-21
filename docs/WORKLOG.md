@@ -11,7 +11,85 @@ changed, and what is waiting on Tay.
 
 ---
 
+## 2026-11-21 — Session 29: the P4 plan (`docs/P4_PLAN.md`), for Tay's approval; docs only (Claude Code)
+
+**Scope (Tay's brief):** P4 planning, read-only on code: a written plan for the four explainers (the T Poker stepper,
+the Aegis trace, DeveloperOS's cite-or-decline and GRAVITY FLOW's marked frame) in Concept A, with a recommended order
+and the first session's scope. In the same docs commit: #26 merged, and Tay's decision on the 15 advisories. Push and a
+PR, ready for review. No merge.
+
+### 0. Preconditions (VL)
+- `git fetch`, `main` pulled: `main` = `origin/main` = Production = **`c29c0b1`**, the tree clean; the only open PR is
+  #18 (the prototype, a draft). `docs/p4-plan` cut from it (`--no-track`).
+- **PR #26 (#24) is merged:** Tay merged it at 2026-11-21 01:00:20Z as `c29c0b1` (parents `5080de5` and `5f11002`; the
+  tree is the PR head's). Its Production deployment (`7956201043`) was `success` at 01:00:45Z. `chore/dev-audit` is
+  gone, local and remote.
+- **S28's production check** (its close-out, Chromium through Cloudflare): `/` at 390 and 1440 answered 200 with 0
+  console errors, 0 page errors, 0 CSP violations, 0 failed requests and no response of 400 or more; one canvas; the h1.
+  The CSP header was unchanged.
+- **Tay's decision at S28's close:** the 15 advisories left in the whole tree (lint and unit-test tooling: `eslint`,
+  `eslint-config-next`, `vitest`) stay as they are. `npm audit fix` would change 56 packages and add one. Not a backlog
+  item.
+
+### 1. What was read (VL)
+- `CLAUDE.md`, `claude/START-HERE.md`, `docs/ROADMAP.md` (P4 and its restore record), `docs/CINEMATIC_SYSTEM.md` (the
+  Work slice, the galleries and the carousel), `docs/CREATIVE_DIRECTION.md`, `docs/PROJECT_CONTEXT.md`.
+- The four explainers at the tag, with `git show product-plates-final:<path>` (nothing checked out): the components,
+  their stylesheets, the shared `Work.tsx`, `work.css` and `lib/content.ts`, and the retired tests in
+  `tests/e2e/chapters.spec.ts`.
+- On `main`: `components/sections/Work.tsx`, `panels.ts`, `Shot.tsx`, `Reel.tsx`, `work.css`; the case-study host and
+  panel; `lib/useFocusTrap.ts`; the slot's tests; the Tab walk in `chrome.spec.ts`; `tests/unit/work.test.ts`.
+
+### 2. Findings the plan rests on (VL)
+- **The explainers' copy never left `main`.** `data/work.ts`, `lib/dict.ts`, `data/images.ts` and `lib/content.ts` are
+  byte-identical to the tag, and `tests/unit/work.test.ts` still checks that copy against `data/projects.ts`. The
+  release removed only the components, their stylesheets and their e2e tests.
+- **All four were server components with no client code.** The T Poker stepper's movement was pure CSS.
+- **Every capture they used is already in its panel's carousel** (T Poker slides 1–3; Aegis, DeveloperOS and GRAVITY
+  FLOW slide 1). An explainer with its own copy of a capture would show it twice in one panel.
+- **The carousel's slides are server-rendered pictures in a clipping frame,** so a mark drawn inside a slide costs no
+  JavaScript and moves with it. Before hydration, and without JS, only the first slide is mounted.
+- **The S25 focus trap** walks every visible input in a modal, so a radio group would be three Tab stops there.
+- **One Aegis line is imprecise:** the threat-scoring step says the rule's false-positive rate multiplies into the
+  score; `data/projects.ts:257` has `(1 − false-positive rate)`. The plan proposes exact words (C1) for Tay.
+- **DeveloperOS, checked against its public repository at `de7346c`** (read-only `gh api`): the refusal is word for word
+  `devos/modules/learning.py:30–33`, and both the Q&A and the Learning Center decline when retrieval returns no chunks,
+  before the provider is called (`devos/modules/qa.py:119–124`, `learning.py:96–100`).
+- **GRAVITY FLOW's marks** are read off `gf-gameplay`, and #18 swaps one GRAVITY FLOW capture: the explainer waits for
+  #18.
+- **Baseline:** production `/` (a read-only `curl` through Cloudflare): HTML 127,702 B; stylesheets 44,021 B and 28,727
+  B raw (9,889 B and 5,258 B at gzip -9).
+
+### 3. The plan (`docs/P4_PLAN.md`)
+- Each explainer goes in its own panel's slot, always shown and server-rendered. The slot becomes a new row of the panel
+  (under both columns from 1024px; after the capture on phones), so the approved first row stays pixel-identical. The
+  dialog is unchanged.
+- No capture is new or shown twice: the marks go on the carousel's own slide. Colours map to the layer's tokens, with no
+  new value.
+- Estimated cost for all four: first-load JS at most +0.5 KiB (only T Poker's steps, which drive its carousel), CSS
+  about 2.5–3.5 KB gzip, HTML about +15–18 KB. All below the fold; each session measures.
+- **Recommended order:** DeveloperOS (S30), Aegis, T Poker, GRAVITY FLOW (after #18). §9 of the plan lists every
+  decision and test change for Tay.
+
+### 4. Docs and the PR
+- **This docs commit:** `docs/P4_PLAN.md` (new); this entry, plus one line in S28's entry recording its merge;
+  `docs/ROADMAP.md` (#24 merged, the 15 advisories, P4's plan); `claude/START-HERE.md`; `CLAUDE.md` (Production
+  `c29c0b1`, the backlog line).
+- No code, test or guard changed.
+- `docs/p4-plan` pushed; **PR #27**, ready for review, not merged.
+
+### Waiting on Tay
+- **Review PR #27** (`docs/p4-plan`): the P4 plan, and its decisions in §9 (Q1–Q7, C1–C3, the options per explainer,
+  the order and S30's scope). Merging it records the plan; building starts only with S30's brief.
+- **Next (Tay's order):** #18 (whenever Tay has the image), #22, then P4 (S30, DeveloperOS, once the plan is approved).
+  Low priority: #23.
+
+---
+
 ## 2026-11-21 — Session 28 (#24): dev-dependency audit hygiene; PR #26 (Claude Code)
+
+> **Merged** by Tay on 2026-11-21 at 01:00:20Z as `c29c0b1`; Production since 01:00:45Z, and S28's production check
+> passed (Session 29, §0). Tay leaves the 15 lint and unit-test advisories as they are (S28's close).
 
 **Scope (Tay's brief, #24; he approved these dependency changes and nothing else):**
 1. Baseline: `npm audit` (the whole tree and `--omit=dev`), `npm ls source-map-js baseline-browser-mapping sharp`;

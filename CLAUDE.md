@@ -7,8 +7,8 @@ Detailed material lives in `docs/`; this file stays short and points to it.
 M0 (audit + decisions) closed 2026-11-18. **Concept A is live on `main` since 2026-11-20** (PR #21, merge `3a98d22`;
 S24 verified production). It replaced the Product Plates site (the M1 core, moves A–E; tagged `product-plates-final`);
 **Move F is retired** (R14). The release track is done: decisions R1–R15 in `docs/RESEARCH_AND_DECISIONS.md`, sessions
-S17–S24 in `docs/ROADMAP.md` ("Concept A: P4–P6"). Next: backlog #24 (dev-dependency audit, done in S28, PR #26), #18,
-#22, then P4; #23 is low priority. #19, #20 and #21 are merged (PRs #24, #23 and #25). Tay reopened **D1**
+S17–S24 in `docs/ROADMAP.md` ("Concept A: P4–P6"). Next: #18, #22, then P4 (its plan: `docs/P4_PLAN.md`, S29, PR #27,
+for Tay's approval); #23 is low priority. #19, #20, #21 and #24 are merged (PRs #24, #23, #25 and #26). Tay reopened **D1**
 for Concept A on 2026-11-18. **D2 is still not reopened, so no WebGL**, anywhere. Keep refining this file with
 verified facts only.
 
@@ -24,7 +24,7 @@ Read before working: `docs/PROJECT_CONTEXT.md` (verified facts, stack, projects,
 
 ## Where production code is (verified 2026-11-20)
 - **`main` is the source of truth.** Production = GitHub `taysh123/Portfolio` `main`; every merge deploys
-  via Vercel's GitHub integration (last verified: **`5080de5`**, 2026-11-20, PR #25, in S27's close-out; Next 16.4.6
+  via Vercel's GitHub integration (last verified: **`c29c0b1`**, 2026-11-21, PR #26, in S28's close-out; Next 16.4.6
   since PR #24; the Concept A release is PR #21, `3a98d22`). Cloudflare
   proxies the domain in front of Vercel (N7 in `docs/RESEARCH_AND_DECISIONS.md`). Its Web Analytics and Email Address
   Obfuscation are off (Tay, 2026-11-18), and E2E can't see the edge, so check the live page with a browser `Accept`

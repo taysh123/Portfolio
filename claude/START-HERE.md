@@ -22,7 +22,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
    `7ebff9c`**), #19 (Next 16.4.6: **done in S26, PR #24, merged as `ce818a0`**), #21 (F1, Firefox's scroll padding: **done in
    S27, PR #25, merged as `5080de5`**), #18
    (the GRAVITY FLOW capture swap), #22 (per-browser tests); then **P4**, the project demos. Low priority: #23 (S25).
-   #24 (dev-dependency audit hygiene, S27): **done in S28, PR #26 for Tay's merge**. `docs/ROADMAP.md` has each.
+   #24 (dev-dependency audit hygiene, S27): **done in S28, PR #26, merged as `c29c0b1`**. `docs/ROADMAP.md` has each.
+   **P4's plan:** `docs/P4_PLAN.md` (S29, PR #27, for Tay's approval).
 3. **The Concept A prototype, on `proto/hero-a-cinematic`: the frozen record.** Draft PR #18, never merged, never
    deleted (R1).
 4. **The release track (session 16 to S24, done).** Concept A replaced the live `/` as soon as possible, because Tay is
@@ -52,10 +53,10 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - The six security headers are exactly as before the merge.
   - One 2D canvas, `aria-hidden`, and zero WebGL contexts. 0 console errors at 390 and 1440.
 - **Production** = GitHub `taysh123/Portfolio` **`main`**, the source of truth.
-  - Deployed **`5080de5`**: PR #25 (#21, F1), 2026-11-20 23:37Z (verified in S27's close-out: 0 console errors, 0 CSP
-    violations and 0 failed requests at 390 and 1440, and in Firefox at 390 the GRAVITY FLOW link settles clear of
-    the chat launcher). Before it, `ce818a0` (PR #24, Next 16.4.6), `7ebff9c` (PR #23, the shared focus trap),
-    `2cc324c` (PR #22, docs) and the release, `3a98d22` (PR #21, 2026-11-20 02:53Z).
+  - Deployed **`c29c0b1`**: PR #26 (#24, the dev-dependency audit), 2026-11-21 01:00Z (verified in S28's close-out: 0
+    console errors, 0 CSP violations and 0 failed requests at 390 and 1440). Before it, `5080de5` (PR #25, F1),
+    `ce818a0` (PR #24, Next 16.4.6), `7ebff9c` (PR #23, the shared focus trap), `2cc324c` (PR #22, docs) and the
+    release, `3a98d22` (PR #21, 2026-11-20 02:53Z).
   - **Rollback**, if ever needed:
     - Vercel's Instant Rollback to `443a1f9`'s deployment.
     - Then a `git revert -m 1 3a98d22` PR.
@@ -419,15 +420,21 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `chrome.spec.ts:268` at 390 still fails in Firefox: it reads the instant after the press. Tay added it to #22's
     Firefox list (S27 close).
   - Detail: `docs/WORKLOG.md`, "Session 27 (#21)".
-- **S28 (#24) is done (2026-11-21), for Tay's review: PR #26**, from `chore/dev-audit`.
+- **S28 (#24) is done (2026-11-21): PR #26, merged by Tay as `c29c0b1`** (Production since 01:00Z; its production
+  check passed).
   - `source-map-js` 1.2.1 → 1.2.4 and `baseline-browser-mapping` 2.10.32 → 2.11.39: lockfile only, the newest inside
     their declared ranges. The project's dev `sharp` `^0.34.5` → `^0.35.5`, now one copy shared with Next (the same
     0.35.5 Next already had). Nothing else moved.
   - `npm audit --omit=dev`: 0 (was 2). The whole tree: 15 (was 18), all lint and unit-test tooling (`eslint`,
-    `eslint-config-next`, `vitest`); `npm audit fix` would change 56 packages and add one, so they stay (Tay's call).
+    `eslint-config-next`, `vitest`); `npm audit fix` would change 56 packages and add one. **Tay leaves them as they
+    are** (S28's close).
   - The client build output is byte-identical to `main`'s: first-load JS 187.06 KiB, the same stylesheets and scripts,
     the same headers. Unit 225/225, Chromium 197/197 cold and warm.
   - Detail: `docs/WORKLOG.md`, "Session 28 (#24)".
+- **S29 (2026-11-21): the P4 plan, docs only, for Tay's approval: PR #27**, from `docs/p4-plan`.
+  - `docs/P4_PLAN.md`: the four explainers return in their panels, one per session. Recommended order: DeveloperOS
+    (S30), Aegis, T Poker, then GRAVITY FLOW (after #18). Its §9 lists every decision and test change for Tay.
+  - Detail: `docs/WORKLOG.md`, "Session 29".
 - **The release track (P5/P6) is done.** Next, in this order (Tay, S24), each a PR on `main`:
   1. **#20:** F2, Safari's focus leaving the menu sheet or the chat for one Tab; the fix goes in the shared focus trap.
      **Done in S25** (PR #23, merged as `7ebff9c`).
@@ -437,13 +444,17 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
      merged as `5080de5`).
   4. **#18:** the GRAVITY FLOW capture swap, whenever Tay provides the image.
   5. **#22:** per-browser handling of the engine-specific tests.
-  6. Then **P4**, the project demos (`docs/ROADMAP.md`, P4, with the restore record).
+  6. Then **P4**, the project demos (`docs/ROADMAP.md`, P4, with the restore record). **The plan:** `docs/P4_PLAN.md`
+     (S29, for Tay's approval).
   - Low priority (Tay, S25): **#23**, Safari's focus return after a modal opened by a mouse click.
-  - Later, a small separate PR (Tay, S27): **#24**, dev-dependency audit hygiene. **Done in S28** (PR #26).
+  - Later, a small separate PR (Tay, S27): **#24**, dev-dependency audit hygiene. **Done in S28** (PR #26, merged as
+    `c29c0b1`).
 
-## Open PRs / branches (S28, 2026-11-21; verified with `gh` and `git ls-remote`)
-- **PR #26** (`chore/dev-audit` → `main`), backlog #24: **open, ready for review**, for Tay to merge. After the merge:
-  delete the branch once `git merge-base --is-ancestor` confirms it.
+## Open PRs / branches (S29, 2026-11-21; verified with `gh` and `git ls-remote`)
+- **PR #27** (`docs/p4-plan` → `main`), the P4 plan: **open, ready for review**, for Tay to merge. Docs only. After the
+  merge: delete the branch once `git merge-base --is-ancestor` confirms it.
+- **PR #26** (`chore/dev-audit` → `main`), backlog #24: **merged** by Tay on 2026-11-21 as `c29c0b1`; the branch is
+  deleted, local and remote.
 - **PR #25** (`fix/f1-launcher-focus` → `main`), backlog #21: **merged** by Tay on 2026-11-20 as `5080de5`; the branch
   is deleted, local and remote.
 - **PR #24** (`chore/next-16-4-6` → `main`), backlog #19: **merged** by Tay on 2026-11-20 as `ce818a0`; the branch is
@@ -453,7 +464,7 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 - **PR #21** (`release/concept-a` → `main`), "Release: Concept A": **merged** by Tay on 2026-11-20 as `3a98d22`.
 - **PR #22** (`docs/s24-release-closeout` → `main`), the S24 close-out: **merged** by Tay on 2026-11-20 as `2cc324c`.
 - **Deleted after their merges**, local and remote: `release/concept-a` (tip `5ea8d57`),
-  `docs/s24-release-closeout`, `fix/f2-focus-trap`, `chore/next-16-4-6` and `fix/f1-launcher-focus`.
+  `docs/s24-release-closeout`, `fix/f2-focus-trap`, `chore/next-16-4-6`, `fix/f1-launcher-focus` and `chore/dev-audit`.
 - **Kept:** `proto/hero-a-cinematic` (tip `92b08fd`, local and remote; **draft PR #18**): not merged, by design. R1
   keeps it frozen as the record ("never merge, never delete"), so deleting it would also need R1 changed.
 - **Tag `product-plates-final`** (`8f0a96a`) on `443a1f9`, pushed in S17: the rollback and P4 restore point (R6, R15).
@@ -467,12 +478,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Review and merge PR #26** (#24, the dev-dependency audit). Then the close-out: delete `chore/dev-audit` after the
-  ancestor check, confirm `main` is clean, the merge's Production deployment is `success`, and `/` has 0 console
-  errors and 0 CSP violations at 390 and 1440.
-- **His call, later:** the 15 advisories left in the whole tree are lint and unit-test tooling only (`eslint`,
-  `eslint-config-next`, `vitest`). `npm audit fix` (no `--force`) would clear them, but it changes 56 packages and adds
-  one, Tailwind's `postcss` and `vitest` among them (`docs/WORKLOG.md`, "Session 28 (#24)" §5).
+- **Review PR #27, the P4 plan** (`docs/P4_PLAN.md`): its decisions in §9 (Q1–Q7, the Aegis copy C1–C3, the options
+  per explainer, the order and S30's scope). Merging it records the plan; building starts only with S30's brief.
 - **Optional, on a Mac:** Playwright's WebKit can't reproduce Option+Tab, or Safari with macOS keyboard navigation off.
   Desktop Safari on production (PR #23 is live) would confirm both (the menu at a narrow width, the chat sheet, a case study).
 - **His manual steps after the release, if not done yet:**
