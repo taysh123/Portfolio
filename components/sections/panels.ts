@@ -127,12 +127,16 @@ function galleryOf(id: WorldKey): Slide[] {
   });
 }
 
+/** How a panel says its project runs locally, where its repository says more than the shared label: Aegis's one-step
+ *  start is Docker Compose (Tay, 2026-11-24, copy pass B). */
+const LOCAL_STATE: Partial<Record<string, string>> = { aegis: dict.aegis.state };
+
 /** The state, as the live hero's index reads it, except where that would repeat the link beside it: Aegis's index
- *  state is "Source on GitHub", so its own status ("Runs locally") is shown instead. DeveloperOS adds its version,
- *  from its own data. */
+ *  state is "Source on GitHub", so how it runs is shown instead. DeveloperOS adds its version, from its own data. */
 function stateOf(p: Project): string {
   const key = indexStateKey(p);
-  const state = key === "source" ? dict.status[p.status] : dict.status[key];
+  const own = (p.status === "local" && LOCAL_STATE[p.id]) || dict.status[p.status];
+  const state = key === "source" ? own : dict.status[key];
   const version = p.status === "released" ? p.context.match(/\bv\d+\.\d+\.\d+\b/)?.[0] : undefined;
   return version ? `${state} · ${version}` : state;
 }
