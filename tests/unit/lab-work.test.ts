@@ -116,7 +116,7 @@ describe("Two more (R5): the live block's words, each with its case study", () =
     expect(dict.more.title).toBe("Two more");
     expect(more).toMatch(/<h2 id="more-work-title" className="wk__mw-title">\{dict\.more\.title\}<\/h2>/);
     expect(moreWork.map((m) => m.id)).toEqual(["job-assistant", "orders-delivery"]);
-    expect(more).toMatch(/\{p\.name\}[\s\S]*\{p\.context\}[\s\S]*\{p\.summary\}/);
+    expect(more).toMatch(/\{p\.name\}[\s\S]*\{p\.context\}[\s\S]*\{held\(p\.summary\)\}/);   // held(): lib/held.tsx (Tay, 2026-11-24, copy pass B)
   });
   it("a public repository is a link that says it opens a new tab; a private one is the site's plain label; each has a case study", () => {
     expect(more).toMatch(/<a href=\{repo\} target="_blank" rel="noopener noreferrer" className="wk__go">\s*\{dict\.common\.source\}<ArrowUpRightIcon size=\{15\} \/><span className="sr-only">\{dict\.common\.newTab\}<\/span>/);
@@ -344,13 +344,13 @@ describe("P4: Aegis, one alert start to finish", () => {
   const aegis = read("components/sections/AegisExplainer.tsx");
   it("every string is the site's own, imported from data/work.ts and lib/dict.ts, never typed; C1 and C2 in Tay's words; no AI claim", () => {
     expect(aegis).toMatch(/^import \{ aegisCopy, aegisTrace \} from "@\/data\/work";\nimport \{ dict \} from "@\/lib\/dict";\n/);
-    expect(aegis).toMatch(/const step = \(s: Step\) => <><b>\{s\.name\}<\/b><span>\{s\.body\}<\/span><\/>;/);
+    expect(aegis).toMatch(/const step = \(s: Step\) => <><b>\{s\.name\}<\/b><span>\{held\(s\.body\)\}<\/span><\/>;/);   // held(): lib/held.tsx (Tay, 2026-11-24, copy pass B)
     expect(aegis).toMatch(/<figcaption id="wk-aegis-trace" className="wk__aegis-label">\{dict\.aegis\.traceTitle\}<\/figcaption>/);
     expect(aegis).toMatch(/\{aegisTrace\.main\.map\(\(s\) => <li key=\{s\.k\} data-k=\{s\.k\}>\{step\(s\)\}<\/li>\)\}/);
     expect(aegis).toMatch(/<span className="wk__aegis-then">\{dict\.aegis\.parallel\}<\/span>/);
     expect(aegis).toMatch(/\{aegisTrace\.fork\.map\(\(s\) => <li key=\{s\.k\} data-k=\{s\.k\}>\{step\(s\)\}<\/li>\)\}/);
     expect(aegis).toMatch(/<li data-k=\{aegisTrace\.end\.k\}>\{step\(aegisTrace\.end\)\}<\/li>/);
-    expect(aegis).toMatch(/<p className="wk__aegis-seam">\{aegisCopy\.seam\}<\/p>/);   // the shared-schema note stays (Tay)
+    expect(aegis).toMatch(/<p className="wk__aegis-seam">\{held\(aegisCopy\.seam\)\}<\/p>/);   // the shared-schema note stays (Tay)
     // The markup types no words of its own, and no shown word is copied into the code.
     const jsx = code(aegis.slice(aegis.indexOf("const step")));
     expect([...jsx.matchAll(/>([^<>{}]+)</g)].map((m) => m[1].trim()).filter(Boolean)).toEqual([]);
@@ -384,7 +384,7 @@ describe("P4: T Poker, the stepper", () => {
     expect(poker).toMatch(/const name = projects\.find\(\(p\) => p\.id === "poker"\)!\.name;/);
     expect(poker).toMatch(/<legend className="wk__poker-legend">\{fmt\(dict\.poker\.walk, \{ name \}\)\}<\/legend>/);
     expect(poker).toMatch(/<span><i aria-hidden="true">\{k \+ 1\}<\/i>\{s\.label\}<\/span>/);
-    expect(poker).toMatch(/<p key=\{s\.label\} id=\{`wk-poker-cap-\$\{k\}`\} className="wk__poker-cap" data-step=\{k\}>\{s\.caption\}<\/p>/);
+    expect(poker).toMatch(/<p key=\{s\.label\} id=\{`wk-poker-cap-\$\{k\}`\} className="wk__poker-cap" data-step=\{k\}>\{held\(s\.caption\)\}<\/p>/);   // held(): lib/held.tsx (Tay, 2026-11-24, copy pass B)
     // The markup types no words of its own, and no shown word is copied into the code (an arrow's ">" is code, not markup).
     const jsx = code(poker.slice(poker.indexOf("export function PokerExplainer"))).replace(/=>/g, "");
     expect([...jsx.matchAll(/>([^<>{}]+)</g)].map((m) => m[1].trim()).filter(Boolean)).toEqual([]);
@@ -719,7 +719,7 @@ describe("Think · Build · Ship (P3.5): the live section's words, with evidence
     // The live structure: an ordered list of rows, each word an h3 with the live screen-reader colon.
     expect(block).toMatch(/<ol className="wk__tbs-rows">/);
     expect(block).toMatch(/<h3 className="wk__tbs-word">\{r\.word\}<span className="sr-only">:<\/span><\/h3>/);
-    expect(block).toMatch(/<span className="wk__tbs-project">\{e\.name\}<\/span>\{e\.rest\}/);
+    expect(block).toMatch(/<span className="wk__tbs-project">\{e\.name\}<\/span>\{held\(e\.rest\)\}/);
   });
   it("adds no token and no motion; the rows sit on About's and Stack's grid from 1024px", () => {
     const rules = css.slice(css.indexOf("/* ── Think · Build · Ship (P3.5"), css.indexOf("/* ── Contact (P3.6"));

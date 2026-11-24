@@ -3,6 +3,7 @@ import { projects, publicRepoUrl, repoLabel } from "@/data/projects";
 import { PrivateRepoLabel } from "@/components/ui/PrivateRepoLabel";
 import { ArrowUpRightIcon } from "@/components/ui/icons";
 import { dict } from "@/lib/dict";
+import { held } from "@/lib/held";
 
 /**
  * Two more (R5): the two smaller systems under the four panels, in the layer, compact. The live block's words exactly
@@ -27,7 +28,7 @@ export function MoreWork() {
                 <p className="wk__mw-context">{p.context}</p>
               </div>
               <div>
-                <p className="wk__mw-summary">{p.summary}</p>
+                <p className="wk__mw-summary">{held(p.summary)}</p>
                 <div className="wk__links wk__mw-links">
                   {repo ? (
                     <a href={repo} target="_blank" rel="noopener noreferrer" className="wk__go">

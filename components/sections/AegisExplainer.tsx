@@ -1,8 +1,9 @@
 import { aegisCopy, aegisTrace } from "@/data/work";
 import { dict } from "@/lib/dict";
+import { held } from "@/lib/held";
 
 type Step = { k: string; name: string; body: string };
-const step = (s: Step) => <><b>{s.name}</b><span>{s.body}</span></>;
+const step = (s: Step) => <><b>{s.name}</b><span>{held(s.body)}</span></>;
 
 /**
  * Aegis, one alert start to finish (P4, docs/P4_PLAN.md §3.2): the panel's explainer, in its own row under the words
@@ -32,7 +33,7 @@ export function AegisExplainer() {
           <li data-k={aegisTrace.end.k}>{step(aegisTrace.end)}</li>
         </ol>
       </figure>
-      <p className="wk__aegis-seam">{aegisCopy.seam}</p>
+      <p className="wk__aegis-seam">{held(aegisCopy.seam)}</p>
     </>
   );
 }

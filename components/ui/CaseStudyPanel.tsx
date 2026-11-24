@@ -16,6 +16,7 @@ import { publicRepoUrl, type Project, type ProjectMedia } from "@/data/projects"
 import { repoLabel } from "@/data/projects";
 import { clientDict as t } from "@/lib/dict-client";
 import { fmt } from "@/lib/fmt";
+import { held } from "@/lib/held";
 
 /**
  * The case study, as a full product presentation.
@@ -141,7 +142,7 @@ export function CaseStudyPanel({
               {/* ── The pitch ────────────────────────────────────────── */}
               <div className="flex flex-wrap items-center gap-2.5">
                 <StatusChip status={project.status} label={t.status[project.status]} />
-                <span className="text-[0.9375rem] text-fg-subtle">{project.context}</span>
+                <span className="text-[0.9375rem] text-fg-subtle">{held(project.context)}</span>
               </div>
 
               <h2
@@ -152,9 +153,9 @@ export function CaseStudyPanel({
                 {project.name}
               </h2>
               <p className="mt-4 max-w-[38em] leading-relaxed text-fg-muted" style={{ fontSize: "var(--text-lead)" }}>
-                {project.tagline}
+                {held(project.tagline)}
               </p>
-              <p className="mt-5 max-w-[42em] leading-relaxed text-fg-muted">{project.description}</p>
+              <p className="mt-5 max-w-[42em] leading-relaxed text-fg-muted">{held(project.description)}</p>
 
               {/* ── The facts: one quiet line, not tiles ─────────────── */}
               {project.metrics.length > 0 && (
@@ -228,7 +229,7 @@ export function CaseStudyPanel({
                               className={project.media?.fit === "contain" ? "object-contain p-4" : "object-cover object-top"}
                             />
                           </div>
-                          <figcaption className="mt-2.5 text-[0.875rem] leading-relaxed text-fg-subtle">{shot.alt}</figcaption>
+                          <figcaption className="mt-2.5 text-[0.875rem] leading-relaxed text-fg-subtle">{held(shot.alt)}</figcaption>
                         </figure>
                       </li>
                       );
@@ -241,12 +242,12 @@ export function CaseStudyPanel({
               <div className="mt-16 grid gap-x-14 gap-y-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                 <Block title={t.cs.problem}>
                   <p className="leading-relaxed text-fg-muted">
-                    {project.caseStudy.problem}
+                    {held(project.caseStudy.problem)}
                   </p>
                 </Block>
                 <Block title={t.cs.architecture}>
                   <p className="leading-relaxed text-fg-muted">
-                    {project.caseStudy.architecture}
+                    {held(project.caseStudy.architecture)}
                   </p>
                 </Block>
               </div>
@@ -256,8 +257,8 @@ export function CaseStudyPanel({
                 <ul className="border-t border-line">
                   {project.caseStudy.decisions.map((d) => (
                     <li key={d.title} className="grid gap-2 border-b border-line py-5 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] md:gap-8">
-                      <h4 className="text-[1rem] font-semibold text-fg">{d.title}</h4>
-                      <p className="text-[0.9375rem] leading-relaxed text-fg-muted">{d.body}</p>
+                      <h4 className="text-[1rem] font-semibold text-fg">{held(d.title)}</h4>
+                      <p className="text-[0.9375rem] leading-relaxed text-fg-muted">{held(d.body)}</p>
                     </li>
                   ))}
                 </ul>
@@ -275,7 +276,7 @@ export function CaseStudyPanel({
               {project.caseStudy.honestNote && (
                 <Block title={t.cs.honest} className="mt-14">
                   <p className="max-w-[46em] border-l-2 border-line-strong pl-5 leading-relaxed text-fg-muted">
-                    {project.caseStudy.honestNote}
+                    {held(project.caseStudy.honestNote)}
                   </p>
                 </Block>
               )}
@@ -371,7 +372,7 @@ function List({ items, marker }: { items: string[]; marker: "accent" | "subtle" 
               background: marker === "accent" ? "var(--accent)" : "var(--fg-subtle)",
             }}
           />
-          <span className="text-[0.9375rem] leading-relaxed text-fg-muted">{item}</span>
+          <span className="text-[0.9375rem] leading-relaxed text-fg-muted">{held(item)}</span>
         </li>
       ))}
     </ul>

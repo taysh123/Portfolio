@@ -25,6 +25,7 @@ was invented: the hero is its first consumer. After the extraction, its computed
 | `components/sections/hero.css`, `Hero.tsx` | The reference consumer: the hero's own geometry, every shared value read from the layer |
 | `components/sections/Constellation.tsx` | The reference live element: the loop contract below, in code |
 | `components/sections/` (Work, `panels.ts`, `Reel`, `Shot`, `PokerExplainer`, `AegisExplainer`, `DosExplainer`, `MoreWork`, About, Stack, `StackFilter`, ThinkBuildShip, Contact, `work.css`) | The second consumer: Work (with P4's explainers, "The P4 slot"), Two more and the sections below them |
+| `lib/held.tsx` | No line starts with an em dash, site-wide (S33, Tay): render prose as `held(text)`. An e2e test fails on any dash a reader can see that isn't tied |
 | `components/layout/Navbar.tsx`, `Logo.tsx`, `AvailabilityPill.tsx` | The header, in its own `.cine` root (R2) |
 | `tests/unit/lab-hero-a.test.ts`, `lab-work.test.ts` | Pin the scope, the contrast floors, the token integrity and every string's source |
 | `tests/e2e/lab-hero-a.spec.ts`, `lab-work.spec.ts` | Pin the behaviour: budget, axe, no-JS, reduced motion, pause, the carousels, Stack's filter |
