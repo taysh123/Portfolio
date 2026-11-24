@@ -104,7 +104,7 @@ Do not claim cross-device sync on reconnect unless verified in the actual code. 
 
 ### 4.2 Aegis — security operations platform
 
-**Status:** Runs locally; source is public.  
+**Status:** Runs locally (Docker Compose; its panel says so since Tay's copy pass B, 2026-11-24); source is public.  
 **Repository:** https://github.com/taysh123/aegis
 
 A self-hosted SOC-style platform with a modular-monolith architecture and an event ingestion/detection/alerting pipeline.

@@ -484,9 +484,11 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
     Tay kept it.
   - The tests that pinned the old words changed in their own commit. `/`'s stylesheets and the share card are
     byte-identical to `main`'s; first-load JS +0.02 KiB.
-  - Part B, four more strings, checked against the projects' sources and proposed, **not applied** until Tay says yes:
-    Framer Motion (used: keep), pytest (Job Assistant's), Job Assistant's "delivery" (Telegram), Aegis's status (Docker
-    Compose, on its panel only). Detail: `docs/WORKLOG.md`, "Session 33".
+  - **Part B, applied on Tay's yes (2026-11-24):** on the Stack, Framer Motion names T Poker, pytest Job Assistant, Java
+    and JavaFX Orders & Delivery (the filter keeps to the four flagships); Job Assistant's summary says "before sending
+    the results to Telegram"; Aegis's panel alone says "Runs locally (Docker Compose)". Three line wraps fixed, in
+    Contact's lead and the Aegis trace's title, with a new e2e test. Detail and the corrections to the first report:
+    `docs/WORKLOG.md`, "Session 33".
 - **The release track (P5/P6) is done.** Next, in this order (Tay, S24), each a PR on `main`:
   1. **#20:** F2, Safari's focus leaving the menu sheet or the chat for one Tab; the fix goes in the shared focus trap.
      **Done in S25** (PR #23, merged as `7ebff9c`).
@@ -542,10 +544,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Review PR #31, his copy pass** (S33), on its Preview (screenshots at 390 and 1440 in the session's scratch only).
-  Then he merges it.
-- **Answer Part B** (`docs/WORKLOG.md`, "Session 33" §7): Framer Motion, pytest, Job Assistant's "delivery" and
-  Aegis's status. Nothing there is applied until he says yes. Optional: the wraps in §6.
+- **Review PR #31, his copy pass with Part B** (S33), on his phone and its Preview (screenshots at 390 and 1440 in the
+  session's scratch only). Then he merges it.
 - **Optional, on a Mac:** Playwright's WebKit can't reproduce Option+Tab, or Safari with macOS keyboard navigation off.
   Desktop Safari on production (PR #23 is live) would confirm both (the menu at a narrow width, the chat sheet, a case study).
 - **His manual steps after the release, if not done yet:**

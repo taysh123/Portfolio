@@ -11,7 +11,12 @@ changed, and what is waiting on Tay.
 
 ---
 
-## 2026-11-21 — Session 33: Tay's copy pass, eight changes in his exact words; four more checked for his decision; PR #31 (Claude Code)
+## 2026-11-21 to 2026-11-24 — Session 33: Tay's copy pass, eight changes in his exact words; four more checked, then applied on his yes (2026-11-24), with three line wraps; PR #31 (Claude Code)
+
+> **Corrected on 2026-11-24** (the first report of this entry and of the PR said otherwise): eight e2e lines, not seven
+> (§3); the first "cold" Playwright run was not quite cold (§5); axe's needs-review list does hold a changed string, the
+> hero's lede (§5); T Poker's landing page imports Framer Motion in six files, not four (§7); ".NET" is not a Stack
+> label of its own (§1).
 
 **Scope (Tay's brief, 2026-11-21):** Part A, eight copy changes Tay approved word for word, in the source strings, with
 every copy-agreement rule kept (`data/projects.ts`, the assistant's prompt rules, metadata, the share card, `/privacy`).
@@ -38,7 +43,8 @@ deploy, env or DNS change; no copy change beyond Part A.
   (DeveloperOS's local models), security (Aegis).
 - **5, About's body:** every tool it names was printed with the Stack's real mapping (`stackBlock.groups`, through a
   scratch Vitest probe outside the repo). C#, ASP.NET Core, TypeScript, React, React Native / Expo, Python, SQL,
-  PostgreSQL, Redis, RabbitMQ / MassTransit, Docker and Ollama each light at least one flagship. **Java lights none:**
+  PostgreSQL, Redis, RabbitMQ / MassTransit, Docker and Ollama each light at least one flagship. (".NET" has no label of
+  its own there: "C#/.NET" was counted as C#, beside ASP.NET Core, and Tay wasn't told so until 2026-11-24.) **Java lights none:**
   only Orders & Delivery uses it, and the Stack maps its tools to the four flagships (its Languages line does say "Java
   runs Orders & Delivery"). As the brief says, I stopped and asked: **Tay kept Java** (2026-11-21).
 
@@ -62,8 +68,8 @@ deploy, env or DNS change; no copy change beyond Part A.
 - Two comments that said the words were unchanged (`DosExplainer.tsx`, `aboutBlock.ts`) now name the copy pass.
 
 ### 3. The tests, in their own commit (`cab5535`)
-- 13 unit tests in five files pinned the old strings (`about`, `content`, `site`, `lab-work`, `work`), and seven e2e
-  lines in two (`lab-work.spec.ts`, `page.spec.ts`). Each now pins Tay's words.
+- 13 unit tests in five files pinned the old strings (`about`, `content`, `site`, `lab-work`, `work`), and eight e2e
+  lines in two (seven in `lab-work.spec.ts`, one in `page.spec.ts`). Each now pins Tay's words.
 - **Two change shape, not just words**, because the approved copy crosses them:
   - `lab-work.test.ts`, About's "no year or number of its own": the degree's year is now the one number About shows. The
     test pins exactly that, and still fails on any other digit.
@@ -81,30 +87,31 @@ deploy, env or DNS change; no copy change beyond Part A.
 ### 5. Validation (VL)
 - `npm run typecheck` and `npm run lint`: clean. `npm test` (Git Bash): **231/231** in 18 files.
 - `npm run build` right after deleting `.next` (one retry for the Geist fetch), then `GROQ_API_KEY= npx playwright test`
-  (Chromium): **245/245** in 17 files, cold; **245/245** warm. The suite's own axe tests are among them.
+  (Chromium): **245/245** in 17 files, twice. The first run was reported as cold, but that build had already been served
+  for the measurements and screenshots; §9's is a true cold run. The suite's own axe tests are among them.
 - **axe, a scratch pass on the final build** (WCAG 2.2 A/AA as the suite runs it, and once more with best-practice):
   `/` walked to its end, at 1440 and 390, motion on and reduced, page-wide and on About, Contact and the two explainers
-  alone: **0 violations** in every run. Needs review (colour contrast axe can't decide): none is a changed string. They
-  are the h1's gradient, the hero's lede or T Poker's line, T Poker's three step labels, and at 1440 DeveloperOS's
-  Status label and first chip; at 390, DeveloperOS's Retrieve step and the app's refusal, partly covered by another
-  element (both unchanged text, in a slot whose height is unchanged, 643px). Whether that set equals `main`'s
-  exactly was not run (NC).
+  alone: **0 violations** in every run. Needs review (colour contrast axe can't decide): the h1's gradient, the hero's
+  lede (1440; a changed string, which the first report denied) or T Poker's line (390), T Poker's three step labels, at
+  1440 DeveloperOS's Status label and first chip, and at 390 its Retrieve step and the app's refusal. §9 compares the
+  set with `main`'s: the hero's lede was already in it.
 - After this docs commit: rebuilt, and `/`'s two stylesheets compared again with `main`'s. `CLAUDE.md` and `claude/`
   are Tailwind-scanned.
 
 ### 6. Screenshots (for Tay; in the session's scratch only, the repo being public)
 About, Contact, DeveloperOS's and Aegis's explainers and the hero's lede, at 390 and 1440 (reduced motion), before and
 after. About reads cleanly at both widths; the rail's name and the refusal's caption fit at both.
-- **Wraps, not changed** (the layout is outside this pass): Contact's lead breaks at its hyphens, "full-" / "stack" at
+- **Wraps, not changed here** (fixed in §9 on Tay's word): Contact's lead breaks at its hyphens, "full-" / "stack" at
   1440; at 390 a line starts with the dash ("—backend") and "On-" / "site" splits. Aegis's title wraps at 390 with
   "finish" alone on its second line.
 
-### 7. Part B: findings and proposed words (nothing applied)
+### 7. Part B: findings and proposed words (2026-11-21; applied in §9)
 Checked against each project's source, its local clone first compared with GitHub's HEAD (Aegis `31a75aa`, DeveloperOS
 `de7346c`, Job Assistant `21e545c`, T Poker `aa354ee`: all equal).
 - **Stack, "Framer Motion"** (no project lit): it **is** used. This site's chat, accessibility and case-study panels
   import it (lazy), and so does T Poker's marketing landing page (a separate Next.js site in the private T Poker
-  repository, four files). Aegis's frontend lists it in `package.json` but never imports it. So no removal by the
+  repository, six files; the first search left out paths containing "lock", so it read four). Aegis's frontend lists it
+  in `package.json` but never imports it (searched again at `HEAD` with no such filter). So no removal by the
   brief's test. Proposed: keep it, unchanged (`data/skills.ts` already notes "this site"). Tagging T Poker would mean
   naming its landing page in T Poker's data, which the site doesn't present.
 - **Stack, "pytest"** (no project lit): **Job Assistant**. Its CI runs `pytest`, two test files import it, and its data
@@ -129,10 +136,47 @@ Checked against each project's source, its local clone first compared with GitHu
   `docs/ROADMAP.md` (S32 merged; S33); `claude/START-HERE.md`; `CLAUDE.md` (Production `5427e45`, the suite's counts).
 - `copy/tay-pass-1` pushed; **PR #31**, ready for review, not merged.
 
+### 9. Part B applied, and the three wraps (2026-11-24, Tay's decisions) (VL)
+**Tay's decisions:** Framer Motion kept and tagged "T Poker", and removed from Aegis wherever it names it; pytest tagged
+"Job Assistant", and by the same rule Java and JavaFX "Orders & Delivery"; "…before sending the results to Telegram.";
+"Runs locally (Docker Compose)" on Aegis's panel only; and the three wraps of §6 fixed, in the layer's CSS or markup.
+Production was still `5427e45`, and every source repository at the commit §7 names.
+
+- **Aegis and Framer Motion:** nothing to remove. No entry, sentence or chip of Aegis's names it, in `data/`, on the
+  page or in the README; the one mention is `data/skills.ts`'s comment recording that it was taken off on 2026-10-13. A
+  test now holds Aegis's data to that.
+- **Copy (`58d31fa`):** Job Assistant's `summary`; `dict.aegis.state`. The source agrees: its pipeline filters, drops the
+  jobs it has seen, stores, and only then sends, to Telegram alone.
+- **The Stack (`6453e13`):** a tool no flagship uses names the Two more project whose text names it, in its hover title
+  and screen-reader text: exactly pytest, Java and JavaFX. The filter keeps to the four, and a tool a flagship uses
+  still names flagships only (Python, SQL, SQLite / FTS5, Docker and GitHub Actions don't gain Job Assistant). Framer
+  Motion's project is stated in `stackBlock.ts` (`STATED_ROWS`), as Security's rows are, because T Poker's data presents
+  its app, not its landing page. T Poker's filter goes from 18 to 19 tools.
+- **Aegis's panel (`d106c5f`):** `panels.ts` `LOCAL_STATE`, read only while its status is `local`.
+- **The wraps (`afbaff6`):** in Contact's lead, spans round "full-stack,", "On-site" and "role—" (the text unchanged) and
+  one rule; the Aegis title wraps in even lines. Read from the glyphs at 320, 390, 1024 and 1440, and at every even width
+  from 320 to 1600: no split at a hyphen, no line starting with the dash, no lone last word (before: 438, 9 and 18
+  widths). At 320 and 390 the lead takes four lines, not three, and ends on "or remote.", as at 1024 and 1440.
+- **Tests (`a911944`, `eb40954`, "Tay, 2026-11-24, copy pass B"):** five unit tests and two e2e lines (in place) follow the
+  decisions; a new e2e test reads the line breaks at the four widths (+4), seen failing at all four with the fix taken
+  out. It sits at the end of `lab-work.spec.ts`, so no line number moves. `a51e89b` corrects a comment in `data/about.ts`
+  (".NET").
+- **Against `main`, both built fresh:** the site's shared stylesheet byte-identical (44,021 B); the layer 38,693 →
+  38,770 B (the two rules); first-load JS 187.24 → 187.26 KiB, as §4; HTML 141,498 → 142,882 B; the share card
+  byte-identical. Measured with the docs edits in the tree (`CLAUDE.md` and `claude/` are Tailwind-scanned).
+- **Validation:** typecheck and lint clean; unit **231/231**; Playwright (Chromium) **249/249** cold (a fresh build,
+  nothing served before it) and **249/249** warm. axe, the scratch pass of §5 with the Stack and the Aegis panel added:
+  **0 violations** in 32 runs, on `main`'s build and on this one. The needs-review nodes are a subset of `main`'s (36 of
+  40; the four gone are the refusal's caption and the Retrieve step, at 390).
+- **Screenshots** (scratch only): Contact, About, the Stack (All, and T Poker pressed), the Aegis panel and Two more, at
+  390 and 1440.
+- **Seen, not changed:** at 1440 the Aegis trace's Live step has a line starting "—the highlighted row above."; it wraps
+  so on `main` too.
+- **For the phone review:** the tags are a hover title and screen-reader text, so on a phone only Framer Motion's shows,
+  under the T Poker filter.
+
 ### Waiting on Tay
-- **His review of PR #31** (the Preview follows the push), then the merge.
-- **His answers on Part B** (§7); each yes is a small follow-up change in his words.
-- **Optional:** the wraps in §6.
+- **His phone review of PR #31** (the Preview follows the push), then the merge.
 - **Then (his order):** #18 (when he has the image); GRAVITY FLOW's explainer; then #22. Low priority: #23 and #25.
 
 ---

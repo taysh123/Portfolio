@@ -9,7 +9,7 @@ S24 verified production). It replaced the Product Plates site (the M1 core, move
 **Move F is retired** (R14). The release track is done: decisions R1–R15 in `docs/RESEARCH_AND_DECISIONS.md`, sessions
 S17–S24 in `docs/ROADMAP.md` ("Concept A: P4–P6"). Next: **P4 before #22** (Tay, 2026-11-21): the plan,
 `docs/P4_PLAN.md`, is approved (S29, PR #27, merged as `57b9743`); one explainer per session, in this order: DeveloperOS
-(S30, PR #28, merged as `7505b91`), Aegis (S31, PR #29, merged as `d0e5e45`), T Poker (S32, PR #30, merged as `5427e45`), then GRAVITY FLOW after #18. S33: Tay's copy pass (PR #31, for his review; its Part B awaits his answers). Then #22; #23 and #25 are low priority. #19, #20,
+(S30, PR #28, merged as `7505b91`), Aegis (S31, PR #29, merged as `d0e5e45`), T Poker (S32, PR #30, merged as `5427e45`), then GRAVITY FLOW after #18. S33: Tay's copy pass (PR #31, Part B included, for his review). Then #22; #23 and #25 are low priority. #19, #20,
 #21 and #24 are merged (PRs #24, #23, #25 and #26). Tay reopened **D1**
 for Concept A on 2026-11-18. **D2 is still not reopened, so no WebGL**, anywhere. Keep refining this file with
 verified facts only.
@@ -179,7 +179,7 @@ Verified gotchas (2026-11-18):
   its `node` child holding the port: check `Get-NetTCPConnection -LocalPort <port> -State Listen` and stop that PID.
 - The Windows-only `tests/unit/site.test.ts:78` failure (N6) is fixed (`b4d5c73`, PR #7). On `main` since the
   release (`3a98d22`): 225/225 unit tests in 18 files, and Playwright 187/187 in 15 files on Chromium (S23, right after
-  deleting `.next`). #20 (PR #23) adds `focus-trap.spec.ts`: 193/193 in 16 files (S25). S26, Next 16.4.6: 225/225 and 193/193, cold and warm. S27 adds `launcher-focus.spec.ts`: 197/197 in 17 files. S28 (dependencies only): 225/225 and 197/197, cold and warm. S30 (P4, DeveloperOS): 227/227, and 209/209 in 17 files, cold and warm. S31 (P4, Aegis): 229/229, and 225/225 in 17 files, cold and warm. S32 (P4, T Poker): 231/231, and 245/245 in 17 files, cold and warm. S33 (copy pass): 231/231, and 245/245, cold and warm. Run `npm test` from Git Bash: a test shells out `git grep … || true`, and cmd.exe (PowerShell's
+  deleting `.next`). #20 (PR #23) adds `focus-trap.spec.ts`: 193/193 in 16 files (S25). S26, Next 16.4.6: 225/225 and 193/193, cold and warm. S27 adds `launcher-focus.spec.ts`: 197/197 in 17 files. S28 (dependencies only): 225/225 and 197/197, cold and warm. S30 (P4, DeveloperOS): 227/227, and 209/209 in 17 files, cold and warm. S31 (P4, Aegis): 229/229, and 225/225 in 17 files, cold and warm. S32 (P4, T Poker): 231/231, and 245/245 in 17 files, cold and warm. S33 (copy pass, Part B): 231/231, and 249/249 in 17 files, cold and warm. Run `npm test` from Git Bash: a test shells out `git grep … || true`, and cmd.exe (PowerShell's
   child shell) has no `true`, so it fails there spuriously.
 - **The suite's config runs Chromium only.** S23 ran WebKit and Firefox from scratch configs, and the engine-specific
   failures are listed in `docs/WORKLOG.md` ("Session 23" close-out). Per-browser handling is backlog #22.

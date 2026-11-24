@@ -12,8 +12,7 @@ true project facts, through a prototype-first sequence with an owner approval ga
 riskiest piece (the hero) in isolation against hard budgets, then build sections, motion, and case
 studies on a branch cut from production `main`. Release through a Vercel Preview and Tay's sign-off.
 
-**Owner / approver:** Tay (every gate). **Last updated:** 2026-11-21 (S33: Tay's copy pass, PR #31 for his review, with four more strings checked for his
-decision. S32: P4's third explainer, T Poker, PR #30 merged as `5427e45` after Tay's phone review. S31: P4's second
+**Owner / approver:** Tay (every gate). **Last updated:** 2026-11-24 (S33: Tay's copy pass, PR #31 for his review, its Part B applied on his yes. S32: P4's third explainer, T Poker, PR #30 merged as `5427e45` after Tay's phone review. S31: P4's second
 explainer, Aegis, PR #29 merged as `d0e5e45` after Tay's phone review. S30: P4's first explainer, DeveloperOS, PR #28 merged as `7505b91` after Tay's phone review. S29: the P4 plan, `docs/P4_PLAN.md`, PR #27 merged as `57b9743`, approved by Tay with his decisions. S28:
 #24, PR #26 merged as `c29c0b1`. S27: #21, PR #25 merged as `5080de5`. S26: #19, Next 16.4.6, PR #24 merged as
 `ce818a0`. S25: #20, PR #23 merged as `7ebff9c`. S24: Concept A is live, PR #21 merged as `3a98d22`. Next: P4 (GRAVITY FLOW,
@@ -254,8 +253,8 @@ After an instant rollback, Vercel stops promoting new production deployments aut
    PR #29, merged as `d0e5e45`**), T Poker (**S32, PR #30, merged as `5427e45`**), then GRAVITY FLOW after #18.
 6. **#22:** per-browser handling of the engine-specific tests.
 
-**Between P4's sessions (Tay, 2026-11-21): S33, his copy pass.** Eight strings in his exact words (PR #31, for his
-review), and four more checked against the projects' sources, proposed and not applied until he says yes
+**Between P4's sessions (Tay, 2026-11-21 to 2026-11-24): S33, his copy pass.** Eight strings in his exact words (PR
+#31, for his review); four more checked against the projects' sources and applied on his yes; three line wraps fixed
 (`docs/WORKLOG.md`, "Session 33").
 
 **Low priority (Tay, S25):** **#23**, Safari's focus return after a modal opened by a mouse click. **And (Tay, S31):**
