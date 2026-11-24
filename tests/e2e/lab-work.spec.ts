@@ -1483,8 +1483,26 @@ const linesOf = (page: Page, sel: string) => page.locator(sel).evaluate((el) => 
   return [...out, cur.trim()];
 });
 const bare = (s: string) => s.replaceAll(" ", "");
+/** Every em dash drawn inside `scope`: the words round it, whether a line starts with it now, and whether it is tied (in
+ *  an element that doesn't break its lines, after another character), so that no line can start with it at any width. */
+const dashesOf = (page: Page, scope: string) => page.locator(scope).first().evaluate((root) => {
+  const out: { text: string; starts: boolean; tied: boolean }[] = [];
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), box = (n: Text, i: number) => { const r = document.createRange(); r.setStart(n, i); r.setEnd(n, i + 1); return r.getClientRects()[0]; };
+  let prev: Text | null = null;
+  for (let n = w.nextNode() as Text | null; n; n = w.nextNode() as Text | null) {
+    for (let i = n.data.indexOf("—"); i >= 0; i = n.data.indexOf("—", i + 1)) {
+      const d = box(n, i), hidden = n.parentElement!.closest(".sr-only, script, style");
+      if (hidden || !d || d.width < 2) continue;
+      const p = i > 0 ? box(n, i - 1) : prev ? box(prev, prev.length - 1) : undefined;
+      const el = n.parentElement!, run = getComputedStyle(el).whiteSpace === "nowrap" ? el : null;
+      out.push({ text: (n.data.slice(Math.max(0, i - 24), i + 18)).trim(), starts: !!p && d.top - p.top > 6, tied: !!run && /\S\s?—/.test(run.textContent!) });
+    }
+    if (n.data.trim()) prev = n;
+  }
+  return out;
+});
 for (const vp of [[320, 568], [390, 844], [1024, 768], [1440, 900]] as const) {
-  test(`line breaks at ${vp[0]}: Contact's lead splits no word at its hyphen and starts no line with the dash; the Aegis title leaves no word alone, and its Live step starts no line with its dash`, async ({ browser }) => {
+  test(`line breaks at ${vp[0]}: Contact's lead splits no word at its hyphen and starts no line with the dash; the Aegis title leaves no word alone, and no line on the page starts with an em dash`, async ({ browser }) => {
     const { ctx, page } = await at(browser, vp, { reducedMotion: "reduce" });
     const lead = await linesOf(page, ".wk__contact-lead"), title = await linesOf(page, ".wk__aegis-label");
     expect(bare(lead.join(""))).toBe(bare("I'm looking for a software engineering role—backend, full-stack, AI or security. On-site or hybrid in central Israel, or remote."));
@@ -1493,8 +1511,48 @@ for (const vp of [[320, 568], [390, 844], [1024, 768], [1440, 900]] as const) {
     expect(title.filter((l) => l.endsWith("-") || l.split(" ").length < 2)).toEqual([]);
     const live = await linesOf(page, '.wk__aegis-flow [data-k="live"] > span');
     expect(bare(live.join(""))).toBe(bare("It appears in the analyst's live feed—the highlighted row above."));
-    expect(live.filter((l) => l.startsWith("—"))).toEqual([]);
+    const dashes = await dashesOf(page, "body");
+    expect(dashes.length, "every em dash on the page").toBeGreaterThanOrEqual(9);
+    expect(dashes.filter((d) => d.starts).map((d) => d.text)).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(vp[0]);
     await ctx.close();
   });
 }
+
+// New in S33 (Tay, 2026-11-24, copy pass B): one mechanism, site-wide (lib/held.tsx). Every em dash a reader can see is
+// tied to the character before it, on the page, in the six case studies, in the chat and on /privacy.
+const untied = (ds: { text: string; tied: boolean }[]) => ds.filter((d) => !d.tied).map((d) => d.text);
+test("no line can start with an em dash at any width: every one is tied, on the page, in the case studies, the chat and /privacy", async ({ browser }) => {
+  const { ctx, page, errors } = await at(browser, [1440, 900], { reducedMotion: "reduce" });
+  const onPage = await dashesOf(page, "body");
+  expect(onPage.length).toBeGreaterThanOrEqual(9);
+  expect(untied(onPage)).toEqual([]);
+  let inStudies = 0;
+  for (const id of ["poker", "aegis", "developeros", "gravity-flow", "job-assistant", "orders-delivery"]) {
+    await page.locator(`button[data-case-study='${id}']`).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toHaveCSS("opacity", "1");
+    const ds = await dashesOf(page, "[role=dialog]");
+    inStudies += ds.length;
+    expect(untied(ds), id).toEqual([]);
+    expect(ds.filter((d) => d.starts).map((d) => d.text), id).toEqual([]);
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+  }
+  expect(inStudies).toBeGreaterThan(20);
+  const reply = "It is a modular monolith—one host — and the modules share a schema.";
+  await page.route("**/api/chat", (r) => r.fulfill({ json: { message: reply } }));
+  await page.locator("[data-chat-launcher]").click();
+  const chat = page.getByRole("dialog", { name: "Ask Tay AI" });
+  await chat.getByRole("textbox").fill("Aegis—what is it?"); await page.keyboard.press("Enter");
+  await expect(chat.locator("[data-chat-latest]")).toHaveText(reply);
+  const inChat = await dashesOf(page, "[data-chat-transcript]");
+  expect(inChat).toHaveLength(3);
+  expect(untied(inChat)).toEqual([]);
+  expect(errors).toEqual([]);
+  await page.goto("/privacy");
+  const onPrivacy = await dashesOf(page, "body");
+  expect(onPrivacy).toHaveLength(4);
+  expect(untied(onPrivacy)).toEqual([]);
+  await ctx.close();
+});
