@@ -55,9 +55,9 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - The six security headers are exactly as before the merge.
   - One 2D canvas, `aria-hidden`, and zero WebGL contexts. 0 console errors at 390 and 1440.
 - **Production** = GitHub `taysh123/Portfolio` **`main`**, the source of truth.
-  - Deployed **`5427e45`**: PR #30 (P4's T Poker explainer), 2026-11-21 19:41Z (checked at S32's close: 0 console
-    errors, 0 CSP violations, 0 failed requests at 390 and 1440; T Poker's steps drive its carousel live, and the
-    stylesheets are the local build's). Before it, `d0e5e45` (PR #29, P4's Aegis explainer), `7505b91` (PR #28, P4's DeveloperOS explainer), `57b9743` (PR #27, the P4 plan), `c29c0b1` (PR #26, #24's audit), `5080de5` (PR #25, F1),
+  - Deployed **`2d0bcde`**: PR #31 (Tay's copy pass), 2026-11-24 10:31Z (checked then: 0 console errors, 0 CSP
+    violations, 0 failed requests at 390 and 1440; every Part A and Part B string live, and the stylesheets are the local
+    build's). Before it, `5427e45` (PR #30, P4's T Poker explainer), `d0e5e45` (PR #29, P4's Aegis explainer), `7505b91` (PR #28, P4's DeveloperOS explainer), `57b9743` (PR #27, the P4 plan), `c29c0b1` (PR #26, #24's audit), `5080de5` (PR #25, F1),
     `ce818a0` (PR #24, Next 16.4.6), `7ebff9c` (PR #23, the shared focus trap), `2cc324c` (PR #22, docs) and the
     release, `3a98d22` (PR #21, 2026-11-20 02:53Z).
   - **Rollback**, if ever needed:
@@ -476,7 +476,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - First-load JS +183 B gzip (the carousel's chunk only); the other three panels' server HTML byte-identical to
     `main`'s; the site's shared stylesheet unchanged. Test changes, each in its own commit, approved in the plan's
     decisions and at the session's start. Detail: `docs/WORKLOG.md`, "Session 32".
-- **S33 (2026-11-21): Tay's copy pass: PR #31**, from `copy/tay-pass-1`, for Tay's review.
+- **S33 (2026-11-21 to 2026-11-24): Tay's copy pass: PR #31**, from `copy/tay-pass-1`, **merged by Tay as `2d0bcde`**
+  (Production); his phone review, on Production, **approved** it.
   - Eight strings in his exact words, one commit: DeveloperOS's rail name and refusal caption, Aegis's trace title,
     Contact's lead, About's title, body and degree year (no institution), and the hero lede's unspaced dash. The
     assistant's prompt says the same as Contact's lead.
@@ -489,6 +490,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
     the results to Telegram"; Aegis's panel alone says "Runs locally (Docker Compose)". Three line wraps fixed, in
     Contact's lead and the Aegis trace's title, with a new e2e test. Detail and the corrections to the first report:
     `docs/WORKLOG.md`, "Session 33".
+  - **PR #32**, from `fix/aegis-live-dash`, for Tay's review: no line of the site starts with an em dash, by one
+    mechanism (`lib/held.tsx`) on every surface; the text word for word; no stylesheet grows ("Session 33" §10).
 - **The release track (P5/P6) is done.** Next, in this order (Tay, S24), each a PR on `main`:
   1. **#20:** F2, Safari's focus leaving the menu sheet or the chat for one Tab; the fix goes in the shared focus trap.
      **Done in S25** (PR #23, merged as `7ebff9c`).
@@ -507,9 +510,11 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - Later, a small separate PR (Tay, S27): **#24**, dev-dependency audit hygiene. **Done in S28** (PR #26, merged as
     `c29c0b1`).
 
-## Open PRs / branches (S33, 2026-11-21; verified with `gh` and `git ls-remote`)
-- **PR #31** (`copy/tay-pass-1` → `main`), Tay's copy pass: **open, ready for review**, for Tay to merge. After the
-  merge: delete the branch once `git merge-base --is-ancestor` confirms it.
+## Open PRs / branches (S33, 2026-11-24; verified with `gh` and `git ls-remote`)
+- **PR #32** (`fix/aegis-live-dash` → `main`), the em dash mechanism and these docs: **open, ready for review**, for Tay to
+  merge. After the merge: delete the branch once `git merge-base --is-ancestor` confirms it.
+- **PR #31** (`copy/tay-pass-1` → `main`), Tay's copy pass: **merged** by Tay on 2026-11-24 as `2d0bcde`; the branch is
+  deleted, local and remote.
 - **PR #30** (`feat/p4-tpoker` → `main`), P4's T Poker explainer: **merged** by Tay on 2026-11-21 as `5427e45`; the
   branch is deleted, local and remote.
 - **PR #29** (`feat/p4-aegis` → `main`), P4's Aegis explainer: **merged** by Tay on 2026-11-21 as `d0e5e45`; the
@@ -530,7 +535,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 - **PR #22** (`docs/s24-release-closeout` → `main`), the S24 close-out: **merged** by Tay on 2026-11-20 as `2cc324c`.
 - **Deleted after their merges**, local and remote: `release/concept-a` (tip `5ea8d57`),
   `docs/s24-release-closeout`, `fix/f2-focus-trap`, `chore/next-16-4-6`, `fix/f1-launcher-focus`, `chore/dev-audit`,
-  `docs/p4-plan`, `feat/p4-developeros`, `feat/p4-aegis` and `feat/p4-tpoker`.
+  `docs/p4-plan`, `feat/p4-developeros`, `feat/p4-aegis`, `feat/p4-tpoker` and
+  `copy/tay-pass-1`.
 - **Kept:** `proto/hero-a-cinematic` (tip `92b08fd`, local and remote; **draft PR #18**): not merged, by design. R1
   keeps it frozen as the record ("never merge, never delete"), so deleting it would also need R1 changed.
 - **Tag `product-plates-final`** (`8f0a96a`) on `443a1f9`, pushed in S17: the rollback and P4 restore point (R6, R15).
@@ -544,8 +550,7 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Review PR #31, his copy pass with Part B** (S33), on his phone and its Preview (screenshots at 390 and 1440 in the
-  session's scratch only). Then he merges it.
+- **Review PR #32** (S33, the em dash mechanism), on its Preview. Then he merges it.
 - **Optional, on a Mac:** Playwright's WebKit can't reproduce Option+Tab, or Safari with macOS keyboard navigation off.
   Desktop Safari on production (PR #23 is live) would confirm both (the menu at a narrow width, the chat sheet, a case study).
 - **His manual steps after the release, if not done yet:**

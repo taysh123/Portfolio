@@ -175,8 +175,46 @@ Production was still `5427e45`, and every source repository at the commit §7 na
 - **For the phone review:** the tags are a hover title and screen-reader text, so on a phone only Framer Motion's shows,
   under the T Poker filter.
 
+### 10. After the merge: the production check, and no line starts with an em dash (2026-11-24, PR #32) (VL)
+- **PR #31 is merged:** by Tay, on 2026-11-24 at 10:31:21Z, as `2d0bcde` (parents `5427e45` and `33f5e41`; its tree is the
+  PR head's). Production deployment `8025194128`, `success` at 10:31:51Z. `copy/tay-pass-1` is deleted, local and remote,
+  after the ancestor check. Tay: ".NET" counted as C# is fine.
+- **The production check, on `2d0bcde`:** `/` at 390 and 1440 (Chromium, through Cloudflare): 200, 0 console errors, 0 CSP
+  violations, 0 failed requests, 0 responses ≥ 400; one canvas, 2D, no WebGL; T Poker's, Aegis's and DeveloperOS's slots
+  shown, GRAVITY FLOW's hidden; every Part A and Part B string live, the four tags, "Showing the 19 tools T Poker uses.";
+  `index, follow`; no sideways overflow. The two stylesheets 44,021 B and 38,770 B, the local build's. `curl /` 200, 143,162
+  B, with the CSP, HSTS, `nosniff`, frame, referrer and permissions headers; `/lab` 404.
+- **Tay's phone review of #31, on Production: approved** (2026-11-24).
+- **The Live step missed that merge.** Tay asked for its fix on #31, then merged before it was pushed, so it stayed on
+  `fix/aegis-live-dash` (`ffb4bfc`, `5d83eb5`). His brief then: extend it to one site-wide mechanism, word for word,
+  with the docs owed here, as a small PR.
+- **The finding behind it:** on `main`, a line could start with an em dash at 50 places, at some even width from 320 to
+  1600. Six on `/` (184 width hits: the five of my table and the Live step); 39 in the case-study dialogs, one in a chat
+  with a dash in it, four on `/privacy`. My table had covered `/` only.
+- **No CSS property alone stops it** in Chromium or Firefox (12 tried); one does in WebKit only. A span that keeps to one
+  line does in all three.
+- **The mechanism (`6df565e`): `lib/held.tsx`.** `held(text)` returns a text with no dash as it is, and otherwise ties each
+  dash to the word before it; `Held` does the same for prose written in JSX (`/privacy`), and `writeHeld` for the chat's
+  streaming reply. The sections, the six case studies, the chat and `/privacy` render their prose through it. It uses the
+  rule the buttons already put in the shared sheet, so the Aegis-only rule of `ffb4bfc` went. Contact's lead keeps its
+  own rule for its hyphenated words.
+- **Tests (`663dce5`, "Tay, 2026-11-24, copy pass B"):** the line-break test reads every dash on the page at 320, 390, 1024
+  and 1440; a new e2e test fails on any dash a reader can see that isn't tied, on the page, in the six case studies, in the
+  chat and on `/privacy`, so it holds at every width (seen failing on the old build, naming the seven); a new unit file,
+  `held.test.ts`, holds the text word for word over every string in the projects' data; four markup pins follow.
+- **Against `main` (`2d0bcde`, both built fresh):**
+  - every even width from 320 to 1600, on all nine surfaces: **0** lines start with a dash, and no sideways overflow (nor at
+    320 with the root text doubled). Firefox on `/`: 0. Each surface's text: **word for word** the same;
+  - **both stylesheets byte-identical** (44,021 B and 38,770 B). First-load JS 187.26 → 187.27 KiB: two chunks renamed, their
+    sizes the same. The lazily loaded chunks +378 B gzip in all. HTML 142,882 → 144,067 B. The share card byte-identical;
+  - axe: **0 violations** in 44 runs on `/` on each build, and on `/privacy`. Needs review: `main`'s 36 nodes and the hero's
+    lede at 390, twice (motion on and reduced). It is asked about because its own new span sits inside it; the box and the
+    colour are the same, and the span passes at 9.92, the lede's ratio on `main`.
+- **Validation:** typecheck and lint clean; unit **237/237** in 19 files; Playwright (Chromium) **250/250** in
+  17 files, cold (a fresh build, nothing served before it) and warm, with these docs in the tree.
+
 ### Waiting on Tay
-- **His phone review of PR #31** (the Preview follows the push), then the merge.
+- **His review of PR #32** (the Preview follows the push), then the merge.
 - **Then (his order):** #18 (when he has the image); GRAVITY FLOW's explainer; then #22. Low priority: #23 and #25.
 
 ---
