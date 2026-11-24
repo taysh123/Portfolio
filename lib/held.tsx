@@ -2,8 +2,9 @@ import { Children, type ReactNode } from "react";
 
 /**
  * No line of the site starts with an em dash (Tay, 2026-11-24, copy pass B). Browsers may break a line before one, and no
- * CSS property alone stops that (tried in Chromium and Firefox), so each dash is tied to the word before it. This is the
- * one mechanism, for every surface: the sections, the case studies, the chat and /privacy render their prose through it.
+ * CSS property alone stops that in Chromium or Firefox (12 tried; one works in WebKit only), so each dash is tied to the
+ * word before it. This is the one mechanism, for every surface: the sections, the case studies, the chat and /privacy
+ * render their prose through it.
  * Only spans are added: the text stays word for word. tests/unit/held.test.ts holds that; tests/e2e/lab-work.spec.ts
  * fails on any dash a reader can see that isn't tied.
  */
