@@ -344,7 +344,7 @@ describe("P4: Aegis, one alert start to finish", () => {
   const aegis = read("components/sections/AegisExplainer.tsx");
   it("every string is the site's own, imported from data/work.ts and lib/dict.ts, never typed; C1 and C2 in Tay's words; no AI claim", () => {
     expect(aegis).toMatch(/^import \{ aegisCopy, aegisTrace \} from "@\/data\/work";\nimport \{ dict \} from "@\/lib\/dict";\n/);
-    expect(aegis).toMatch(/const step = \(s: Step\) => <><b>\{s\.name\}<\/b><span>\{s\.body\}<\/span><\/>;/);
+    expect(aegis).toMatch(/const step = \(s: Step\) => <><b>\{s\.name\}<\/b><span>\{held\(s\.body\)\}<\/span><\/>;/);   // held(): only spans round its pieces (Tay, 2026-11-24, copy pass B)
     expect(aegis).toMatch(/<figcaption id="wk-aegis-trace" className="wk__aegis-label">\{dict\.aegis\.traceTitle\}<\/figcaption>/);
     expect(aegis).toMatch(/\{aegisTrace\.main\.map\(\(s\) => <li key=\{s\.k\} data-k=\{s\.k\}>\{step\(s\)\}<\/li>\)\}/);
     expect(aegis).toMatch(/<span className="wk__aegis-then">\{dict\.aegis\.parallel\}<\/span>/);

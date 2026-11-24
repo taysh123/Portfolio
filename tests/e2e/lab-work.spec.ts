@@ -1484,13 +1484,16 @@ const linesOf = (page: Page, sel: string) => page.locator(sel).evaluate((el) => 
 });
 const bare = (s: string) => s.replaceAll(" ", "");
 for (const vp of [[320, 568], [390, 844], [1024, 768], [1440, 900]] as const) {
-  test(`line breaks at ${vp[0]}: Contact's lead splits no word at its hyphen and starts no line with the dash; the Aegis title leaves no word alone`, async ({ browser }) => {
+  test(`line breaks at ${vp[0]}: Contact's lead splits no word at its hyphen and starts no line with the dash; the Aegis title leaves no word alone, and its Live step starts no line with its dash`, async ({ browser }) => {
     const { ctx, page } = await at(browser, vp, { reducedMotion: "reduce" });
     const lead = await linesOf(page, ".wk__contact-lead"), title = await linesOf(page, ".wk__aegis-label");
     expect(bare(lead.join(""))).toBe(bare("I'm looking for a software engineering role—backend, full-stack, AI or security. On-site or hybrid in central Israel, or remote."));
     expect(lead.filter((l) => l.startsWith("—") || l.endsWith("-"))).toEqual([]);
     expect(bare(title.join(""))).toBe(bare("How one port-scan alert moves through Aegis, start to finish"));
     expect(title.filter((l) => l.endsWith("-") || l.split(" ").length < 2)).toEqual([]);
+    const live = await linesOf(page, '.wk__aegis-flow [data-k="live"] > span');
+    expect(bare(live.join(""))).toBe(bare("It appears in the analyst's live feed—the highlighted row above."));
+    expect(live.filter((l) => l.startsWith("—"))).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(vp[0]);
     await ctx.close();
   });
