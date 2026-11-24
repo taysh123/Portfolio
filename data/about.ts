@@ -2,7 +2,8 @@
  *  so they are not repeated. Tay's copy pass (2026-11-21) set the title, the body and the degree's year. */
 export const about = {
   title: ["Solid foundations.", "Real products."] as [string, string],
-  /** Two sentences: who, then what with. Every tool it names is on the Stack (data/skills.ts). */
+  /** Two sentences: who, then what with. Every tool it names is on the Stack (data/skills.ts); .NET is there as C# and
+   *  ASP.NET Core. */
   body: "I'm a Computer Science graduate who builds dependable software, from the first design to production. I work across the stack: C#/.NET and ASP.NET Core, TypeScript with React and React Native, Python, Java and SQL, with PostgreSQL, Redis, RabbitMQ and Docker behind them, and local models through Ollama.",
   /** One quiet line of facts, not stat tiles. The degree and its year alone: the site names no institution (the owner's
    *  decision). */
