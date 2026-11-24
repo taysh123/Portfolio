@@ -5,6 +5,7 @@ import type { Content } from "@/lib/content";
 import { FEATURED_KIND } from "./featured";
 import { Constellation } from "./Constellation";
 import "./hero.css";
+import { held } from "@/lib/held";
 
 /**
  * The hero (Concept A, the locked hero: D1 reopened by Tay, 2026-11-18; D2 not reopened, so no WebGL). The page's
@@ -43,7 +44,7 @@ export function Hero({ c }: { c: Content }) {
             <span className="cine-duotone-text">{siteMeta.headlineLines[1]}</span>
           </h1>
           <p className="hxa__lede" data-reveal>
-            {siteMeta.heroLead}
+            {held(siteMeta.heroLead)}
           </p>
           <div className="hxa__ctas" data-reveal>
             <a href="#work" className="hxa__btn hxa__btn--primary">

@@ -4,6 +4,7 @@ import { TextLink } from "@/components/ui/TextLink";
 import { ArrowLeftIcon } from "@/components/ui/icons";
 import { socials, siteMeta } from "@/data/socials";
 import { A11Y_COOKIE } from "@/lib/theme";
+import { Held } from "@/lib/held";
 
 export const metadata: Metadata = {
   title: "Privacy",
@@ -60,10 +61,12 @@ export default function Privacy() {
             model and can be wrong.
           </p>
           <p>
-            The site doesn&apos;t save the conversation: it exists only in the open page and is gone when you close or
-            reload it. To limit abuse — five questions a minute, and no immediate repeats — the server keeps your IP
-            address and a one-way fingerprint of your latest question in its working memory. Entries older than a few
-            minutes are cleared as new questions arrive, and none are written to disk or logged.
+            <Held>
+              The site doesn&apos;t save the conversation: it exists only in the open page and is gone when you close or
+              reload it. To limit abuse — five questions a minute, and no immediate repeats — the server keeps your IP
+              address and a one-way fingerprint of your latest question in its working memory. Entries older than a few
+              minutes are cleared as new questions arrive, and none are written to disk or logged.
+            </Held>
           </p>
           <p>
             Groq&apos;s documentation says it doesn&apos;t retain inference requests by default, apart from
@@ -75,9 +78,11 @@ export default function Privacy() {
 
         <Section title="Hosting and logs">
           <p>
-            The site is hosted on Vercel. As with any web host, Vercel&apos;s infrastructure processes ordinary request
-            information — such as your IP address, the approximate location derived from it, your browser and the page
-            requested — to deliver the site and keep it secure, and may keep it in short-lived logs:{" "}
+            <Held>
+              The site is hosted on Vercel. As with any web host, Vercel&apos;s infrastructure processes ordinary request
+              information — such as your IP address, the approximate location derived from it, your browser and the page
+              requested — to deliver the site and keep it secure, and may keep it in short-lived logs:{" "}
+            </Held>
             <ExtLink href={VERCEL_PRIVACY}>Vercel&apos;s privacy notice</ExtLink>. Requests reach Vercel through
             Cloudflare, which sits in front of the site as its network proxy and processes information about that traffic,
             such as your IP address:{" "}

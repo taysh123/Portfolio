@@ -13,6 +13,7 @@ import { clientDict as t } from "@/lib/dict-client";
 import { socials } from "@/data/socials";
 import { fmt } from "@/lib/fmt";
 import { cn } from "@/lib/cn";
+import { held, writeHeld } from "@/lib/held";
 
 type Message = { id: string; role: "user" | "assistant"; text: string };
 
@@ -71,7 +72,7 @@ export function ChatPanel() {
         let i = 0;
         const step = () => {
           i += 2;
-          node.textContent = text.slice(0, i);
+          writeHeld(node, text.slice(0, i));
           const el = scrollRef.current;
           if (el) el.scrollTop = el.scrollHeight;
           if (i < text.length) {
@@ -163,7 +164,7 @@ export function ChatPanel() {
               {messages.map((m) =>
                 m === live ? null : (
                   <Bubble key={m.id} role={m.role}>
-                    {m.text}
+                    {held(m.text)}
                   </Bubble>
                 ),
               )}
@@ -171,7 +172,7 @@ export function ChatPanel() {
               <div role="status" aria-live="polite" data-chat-latest>
                 {live && (
                   <Bubble key={live.id} role="assistant">
-                    {live.text}
+                    {held(live.text)}
                   </Bubble>
                 )}
               </div>

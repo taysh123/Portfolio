@@ -1,10 +1,12 @@
+import { Fragment } from "react";
 import { ArrowUpRightIcon } from "@/components/ui/icons";
 import { dict } from "@/lib/dict";
 import { contactBlock as c } from "./contactBlock";
+import { held } from "@/lib/held";
 
-/** The lead's pieces that stay on one line: a hyphenated word, and a word with the dash that follows it, so no line
- *  starts with the dash. Only spans are added; the text is the site's own (Tay, 2026-11-24, copy pass B). */
-const whole = (text: string) => text.split(/(\S+—|\S+-\S+)/).map((t, i) => (i % 2 ? <span key={i}>{t}</span> : t));
+/** The lead, with its hyphenated words on one line; its dash is tied as everywhere (lib/held.tsx). Only spans are added;
+ *  the text is the site's own (Tay, 2026-11-24, copy pass B). */
+const whole = (text: string) => text.split(/(\S+-\S+)/).map((t, i) => (i % 2 ? <span key={i}>{t}</span> : <Fragment key={i}>{held(t)}</Fragment>));
 
 /**
  * Contact (P3.6), under Think · Build · Ship: the page's conclusion, as the live section has it. The live title on one

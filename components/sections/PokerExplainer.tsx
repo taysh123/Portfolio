@@ -2,6 +2,7 @@ import { projects } from "@/data/projects";
 import { pokerSteps } from "@/data/work";
 import { dict } from "@/lib/dict";
 import { fmt } from "@/lib/fmt";
+import { held } from "@/lib/held";
 
 /**
  * T Poker, the stepper (P4, docs/P4_PLAN.md §3.1, option A): the panel's explainer, in its own row under the capture's
@@ -32,7 +33,7 @@ export function PokerExplainer() {
       </fieldset>
       {/* One caption shows, the chosen step's; all three stay in the page as the steps' descriptions. */}
       <div className="wk__poker-caps">
-        {pokerSteps.map((s, k) => <p key={s.label} id={`wk-poker-cap-${k}`} className="wk__poker-cap" data-step={k}>{s.caption}</p>)}
+        {pokerSteps.map((s, k) => <p key={s.label} id={`wk-poker-cap-${k}`} className="wk__poker-cap" data-step={k}>{held(s.caption)}</p>)}
       </div>
     </div>
   );

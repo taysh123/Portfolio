@@ -435,8 +435,6 @@
   line-height: var(--cine-leading-label);
   color: var(--cine-mist);
 }
-/* A step's word with its dash stays on one line (AegisExplainer.tsx). */
-.wk__aegis-flow [data-k] > span > span { white-space: nowrap; }
 .wk__aegis-flow [data-k]::before, .wk__aegis-fork::before {
   content: "";
   position: absolute;
@@ -597,7 +595,7 @@
   line-height: var(--cine-leading-lead);
   color: var(--cine-mist);
 }
-/* The lead's hyphenated words, and a word with its dash, stay on one line (Contact.tsx). */
+/* The lead's hyphenated words stay on one line (Contact.tsx), and so does a word with its dash (lib/held.tsx). */
 .wk__contact-lead span { white-space: nowrap; }
 /* The four facts: a quiet two-by-two list, each on its own hairline (one column on phones). */
 .wk__about-facts { margin-top: var(--cine-space-5); max-width: 36rem; display: grid; grid-template-columns: minmax(0, 1fr); }

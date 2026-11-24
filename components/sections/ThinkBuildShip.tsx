@@ -1,4 +1,5 @@
 import { tbsBlock as t } from "./tbsBlock";
+import { held } from "@/lib/held";
 
 /**
  * Think · Build · Ship (P3.5), under Stack: the live section's three principles, each with its evidence from the four
@@ -21,10 +22,10 @@ export function ThinkBuildShip() {
               <p className="wk__tbs-line">{r.line}</p>
             </div>
             <div className="wk__tbs-body">
-              <p className="wk__tbs-summary">{r.summary}</p>
+              <p className="wk__tbs-summary">{held(r.summary)}</p>
               {r.evidence.map((e) => (
                 <p key={e.name} className="wk__tbs-example" data-project={e.name}>
-                  <span className="wk__tbs-project">{e.name}</span>{e.rest}
+                  <span className="wk__tbs-project">{e.name}</span>{held(e.rest)}
                 </p>
               ))}
             </div>
