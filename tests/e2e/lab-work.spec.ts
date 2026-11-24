@@ -1111,7 +1111,7 @@ test("Stack's filter: a project shows only its tools, filled, and no empty group
   const groupsShown = () => stack(page).locator(".wk__stack-group").evaluateAll((gs) => gs.filter((g) => getComputedStyle(g).display !== "none").map((g) => g.getAttribute("data-group")));
   expect(await pressed()).toEqual(["true", "false", "false", "false", "false"]);
   for (const [i, [id, name, n, groups]] of ([
-    ["poker", "T Poker", 18, ["languages", "interface", "service", "security", "data", "delivery"]],
+    ["poker", "T Poker", 19, ["languages", "interface", "service", "security", "data", "delivery"]],
     ["aegis", "Aegis", 19, ["languages", "interface", "service", "security", "data", "delivery"]],
     ["developeros", "DeveloperOS", 9, ["languages", "interface", "security", "data", "delivery"]],
     ["gravity-flow", "GRAVITY FLOW", 6, ["languages", "interface", "delivery"]],
@@ -1128,7 +1128,7 @@ test("Stack's filter: a project shows only its tools, filled, and no empty group
     await expect(stack(page).locator(".wk__lens-status")).toHaveText(`Showing the ${n} tools ${name} uses.`);
     await expect(stack(page).locator(".wk__lens-status")).toHaveAttribute("aria-live", "polite");
     // The tools no flagship uses show under All only.
-    for (const label of ["Java", "JavaFX", "C", "C++", "pytest", "Framer Motion", "Playwright", "Git"]) expect(tools.find((t) => t.label === label)!.shown, label).toBe(false);
+    for (const label of ["Java", "JavaFX", "C", "C++", "pytest", "Playwright", "Git"]) expect(tools.find((t) => t.label === label)!.shown, label).toBe(false);
   }
   // The status sits above the groups, at the lead size, in ink.
   const status = await stack(page).locator(".wk__lens-status").evaluate((e) => ({ size: parseFloat(getComputedStyle(e).fontSize), color: getComputedStyle(e).color, bottom: e.getBoundingClientRect().bottom }));
@@ -1465,6 +1465,32 @@ for (const vp of [[1440, 900], [1100, 800], [1024, 768], [390, 844], [320, 568]]
     const launcher = (await page.locator("[data-chat-launcher]").boundingBox())!;
     for (const box of [...await contact(page).locator("a").evaluateAll((as) => as.map((a) => a.getBoundingClientRect().toJSON() as DOMRect)),
       (await contact(page).locator(".wk__contact-resume").boundingBox())!]) expect(box.y + box.height).toBeLessThanOrEqual(launcher.y);
+    await ctx.close();
+  });
+}
+
+// New in S33 (Tay, 2026-11-24, copy pass B): Contact's lead keeps "full-stack", "On-site" and a word with its dash whole, and the Aegis trace's
+// title leaves no word alone on its last line. Lines are read from the glyphs, as a reader sees them.
+const linesOf = (page: Page, sel: string) => page.locator(sel).evaluate((el) => {
+  const out: string[] = [], w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  let top: number | null = null, cur = "";
+  for (let n = w.nextNode() as Text | null; n; n = w.nextNode() as Text | null) for (let i = 0; i < n.length; i++) {
+    const r = document.createRange(); r.setStart(n, i); r.setEnd(n, i + 1);
+    const b = r.getClientRects()[0];
+    if (b && b.width) { if (top !== null && b.top - top > 6) { out.push(cur.trim()); cur = ""; top = b.top; } top ??= b.top; }
+    cur += n.data[i];
+  }
+  return [...out, cur.trim()];
+});
+for (const vp of [[320, 568], [390, 844], [1024, 768], [1440, 900]] as const) {
+  test(`line breaks at ${vp[0]}: Contact's lead splits no word at its hyphen and starts no line with the dash; the Aegis title leaves no word alone`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp, { reducedMotion: "reduce" });
+    const lead = await linesOf(page, ".wk__contact-lead"), title = await linesOf(page, ".wk__aegis-label");
+    expect(lead.join(" ")).toBe("I'm looking for a software engineering role—backend, full-stack, AI or security. On-site or hybrid in central Israel, or remote.");
+    expect(lead.filter((l) => l.startsWith("—") || l.endsWith("-"))).toEqual([]);
+    expect(title.join(" ")).toBe("How one port-scan alert moves through Aegis, start to finish");
+    expect(title.filter((l) => l.endsWith("-") || l.split(" ").length < 2)).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(vp[0]);
     await ctx.close();
   });
 }
