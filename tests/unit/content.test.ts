@@ -18,8 +18,9 @@ describe("content truth", () => {
   });
   it("headline and hero lead are the Concept A hero's (R8)", () => {
     expect(siteMeta.headline).toBe("Building software. Turning ideas into products.");
-    // R8: the hero's lede, word for word; the page, the social card and the tests read it from siteMeta.
-    expect(siteMeta.heroLead).toBe("I build end to end — mobile apps, security systems, developer tools and games, from the interface down to the infrastructure.");
+    // R8: the hero's lede, word for word; the page, the social card and the tests read it from siteMeta. Its dash is
+    // unspaced, like the rest of the site's (Tay, 2026-11-21, copy pass).
+    expect(siteMeta.heroLead).toBe("I build end to end—mobile apps, security systems, developer tools and games, from the interface down to the infrastructure.");
     expect(siteMeta.role).toBe("Software Engineer");
     expect(siteMeta.tagline.length).toBeLessThanOrEqual(160);
   });

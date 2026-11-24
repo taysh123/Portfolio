@@ -430,7 +430,7 @@ test("structure: the hero's one h1, four product h3s under Work's h2, the sectio
   // Work, Two more (R5), About, Stack, Think · Build · Ship and Contact.
   await expect(page.locator(".wk h2")).toHaveCount(6);
   await expect(page.getByRole("region", { name: "Two more" }).locator("h3")).toHaveText(["Job Assistant", "Orders & Delivery"]);
-  await expect(page.getByRole("region", { name: "Engineer by training. Builder by nature." }).locator("h2")).toHaveCount(1);
+  await expect(page.getByRole("region", { name: "Solid foundations. Real products." }).locator("h2")).toHaveCount(1);   // Tay, 2026-11-21, copy pass
   await expect(page.getByRole("region", { name: "Tools behind the work." }).locator("h2")).toHaveCount(1);
   await expect(page.getByRole("region", { name: "Tools behind the work." }).locator("h3")).toHaveCount(STACK_GROUPS.length);
   await expect(page.getByRole("region", { name: "Think. Build. Ship." }).locator("h2")).toHaveCount(1);
@@ -555,7 +555,7 @@ const aegis = (page: Page) => panel(page, "aegis");
 const rectOf = (page: Page, sel: string) => aegis(page).locator(sel).evaluate((e) => { const r = e.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom }; });
 test("Aegis: one alert, start to finish: ingest → normalise → detect, then the parallel fork, then live", async ({ page }) => {
   await page.goto(ROUTE);
-  const trace = aegis(page).getByRole("figure", { name: "One alert, start to finish" }).locator(".wk__aegis-flow");
+  const trace = aegis(page).getByRole("figure", { name: "How one port-scan alert moves through Aegis, start to finish" }).locator(".wk__aegis-flow");   // its title: Tay, 2026-11-21, copy pass
   expect(await trace.locator(":scope > li").evaluateAll((ls) => ls.map((l) => l.querySelector(".wk__aegis-then")?.textContent ?? l.querySelector("b")?.textContent))).toEqual(
     ["Ingest", "Normalise", "Detect", "Then, in parallel", "Live"]);
   await expect(trace.locator(".wk__aegis-branches > li > b")).toHaveText(["Threat scoring", "Alert stream"]);
@@ -975,10 +975,10 @@ for (const vp of [[320, 568], [390, 844], [1024, 768], [1440, 900]] as const) {
 test("About without JavaScript: every word, no link, no photo, nothing hidden", async ({ browser }) => {
   const { ctx, page } = await at(browser, [1440, 900], { javaScriptEnabled: false });
   const ab = page.locator("[data-about]");
-  await expect(ab.locator("h2")).toHaveText("Engineer by training. Builder by nature.");
+  await expect(ab.locator("h2")).toHaveText("Solid foundations. Real products.");   // title, lede, facts: Tay, 2026-11-21, copy pass
   await expect(ab.locator(".wk__about-eyebrow")).toHaveText("About");
-  await expect(ab.locator(".wk__about-lede")).toHaveText("I'm a Computer Science graduate who enjoys turning complex ideas into useful, dependable software. Today, I work with C#/.NET, TypeScript, and Python, taking projects from an initial idea to working software.");
-  await expect(ab.locator(".wk__about-facts li")).toHaveText(["B.Sc. in Computer Science", "Full-stack: web, mobile, and backend", "Based in Israel", "Working in English and Hebrew"]);
+  await expect(ab.locator(".wk__about-lede")).toHaveText("I'm a Computer Science graduate who builds dependable software, from the first design to production. I work across the stack: C#/.NET and ASP.NET Core, TypeScript with React and React Native, Python, Java and SQL, with PostgreSQL, Redis, RabbitMQ and Docker behind them, and local models through Ollama.");
+  await expect(ab.locator(".wk__about-facts li")).toHaveText(["B.Sc. in Computer Science (2026)", "Full-stack: web, mobile, and backend", "Based in Israel", "Working in English and Hebrew"]);
   await expect(ab.locator(".wk__about-open")).toHaveCount(0);
   await expect(ab.locator("img, picture, canvas, video, figcaption, svg:not([aria-hidden='true'])")).toHaveCount(0);
   await expect(ab.locator("a, button")).toHaveCount(0);
@@ -989,7 +989,7 @@ test("About without JavaScript: every word, no link, no photo, nothing hidden", 
 // Ported in S20 from lower.spec.ts (the Product Plates About, retired).
 test("About: the four live facts; no institution anywhere in the served page; the rejected render gone in every form", async ({ page }) => {
   await page.goto(ROUTE);
-  await expect(page.locator("#about .wk__about-facts li")).toHaveText(["B.Sc. in Computer Science", "Full-stack: web, mobile, and backend", "Based in Israel", "Working in English and Hebrew"]);
+  await expect(page.locator("#about .wk__about-facts li")).toHaveText(["B.Sc. in Computer Science (2026)", "Full-stack: web, mobile, and backend", "Based in Israel", "Working in English and Hebrew"]);   // Tay, 2026-11-21, copy pass
   // No institution anywhere in the served page: copy, alt text, metadata, Open Graph or JSON-LD.
   expect(namesAny(await page.content())).toBe(false);
   expect(await page.content()).not.toMatch(/Where the work happens|A 3D render, built in code|about-studio/);
@@ -1111,7 +1111,7 @@ test("Stack's filter: a project shows only its tools, filled, and no empty group
   const groupsShown = () => stack(page).locator(".wk__stack-group").evaluateAll((gs) => gs.filter((g) => getComputedStyle(g).display !== "none").map((g) => g.getAttribute("data-group")));
   expect(await pressed()).toEqual(["true", "false", "false", "false", "false"]);
   for (const [i, [id, name, n, groups]] of ([
-    ["poker", "T Poker", 18, ["languages", "interface", "service", "security", "data", "delivery"]],
+    ["poker", "T Poker", 19, ["languages", "interface", "service", "security", "data", "delivery"]],
     ["aegis", "Aegis", 19, ["languages", "interface", "service", "security", "data", "delivery"]],
     ["developeros", "DeveloperOS", 9, ["languages", "interface", "security", "data", "delivery"]],
     ["gravity-flow", "GRAVITY FLOW", 6, ["languages", "interface", "delivery"]],
@@ -1128,7 +1128,7 @@ test("Stack's filter: a project shows only its tools, filled, and no empty group
     await expect(stack(page).locator(".wk__lens-status")).toHaveText(`Showing the ${n} tools ${name} uses.`);
     await expect(stack(page).locator(".wk__lens-status")).toHaveAttribute("aria-live", "polite");
     // The tools no flagship uses show under All only.
-    for (const label of ["Java", "JavaFX", "C", "C++", "pytest", "Framer Motion", "Playwright", "Git"]) expect(tools.find((t) => t.label === label)!.shown, label).toBe(false);
+    for (const label of ["Java", "JavaFX", "C", "C++", "pytest", "Playwright", "Git"]) expect(tools.find((t) => t.label === label)!.shown, label).toBe(false);
   }
   // The status sits above the groups, at the lead size, in ink.
   const status = await stack(page).locator(".wk__lens-status").evaluate((e) => ({ size: parseFloat(getComputedStyle(e).fontSize), color: getComputedStyle(e).color, bottom: e.getBoundingClientRect().bottom }));
@@ -1369,7 +1369,7 @@ test("Contact without JavaScript: the eyebrow, the live title and lead, the four
   const { ctx, page } = await at(browser, [1440, 900], { javaScriptEnabled: false });
   await expect(contact(page).locator(".wk__contact-eyebrow")).toHaveText("Contact");
   await expect(contact(page).locator("h2")).toHaveText("Let's build something people use.");
-  await expect(contact(page).locator(".wk__contact-lead")).toHaveText("I'm looking for a software engineering opportunity that fits my skills—on-site, hybrid, or remote.");
+  await expect(contact(page).locator(".wk__contact-lead")).toHaveText("I'm looking for a software engineering role—backend, full-stack, AI or security. On-site or hybrid in central Israel, or remote.");   // Tay, 2026-11-21, copy pass
   const links = contact(page).locator("a");
   await expect(links).toHaveCount(CONTACT_LINKS.length);
   for (const [i, [href, name]] of CONTACT_LINKS.entries()) {
@@ -1465,6 +1465,33 @@ for (const vp of [[1440, 900], [1100, 800], [1024, 768], [390, 844], [320, 568]]
     const launcher = (await page.locator("[data-chat-launcher]").boundingBox())!;
     for (const box of [...await contact(page).locator("a").evaluateAll((as) => as.map((a) => a.getBoundingClientRect().toJSON() as DOMRect)),
       (await contact(page).locator(".wk__contact-resume").boundingBox())!]) expect(box.y + box.height).toBeLessThanOrEqual(launcher.y);
+    await ctx.close();
+  });
+}
+
+// New in S33 (Tay, 2026-11-24, copy pass B): Contact's lead keeps "full-stack", "On-site" and a word with its dash whole, and the Aegis trace's
+// title leaves no word alone on its last line. Lines are read from the glyphs, as a reader sees them.
+const linesOf = (page: Page, sel: string) => page.locator(sel).evaluate((el) => {
+  const out: string[] = [], w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  let top: number | null = null, cur = "";
+  for (let n = w.nextNode() as Text | null; n; n = w.nextNode() as Text | null) for (let i = 0; i < n.length; i++) {
+    const r = document.createRange(); r.setStart(n, i); r.setEnd(n, i + 1);
+    const b = r.getClientRects()[0];
+    if (b && b.width) { if (top !== null && b.top - top > 6) { out.push(cur.trim()); cur = ""; top = b.top; } top ??= b.top; }
+    cur += n.data[i];
+  }
+  return [...out, cur.trim()];
+});
+const bare = (s: string) => s.replaceAll(" ", "");
+for (const vp of [[320, 568], [390, 844], [1024, 768], [1440, 900]] as const) {
+  test(`line breaks at ${vp[0]}: Contact's lead splits no word at its hyphen and starts no line with the dash; the Aegis title leaves no word alone`, async ({ browser }) => {
+    const { ctx, page } = await at(browser, vp, { reducedMotion: "reduce" });
+    const lead = await linesOf(page, ".wk__contact-lead"), title = await linesOf(page, ".wk__aegis-label");
+    expect(bare(lead.join(""))).toBe(bare("I'm looking for a software engineering role—backend, full-stack, AI or security. On-site or hybrid in central Israel, or remote."));
+    expect(lead.filter((l) => l.startsWith("—") || l.endsWith("-"))).toEqual([]);
+    expect(bare(title.join(""))).toBe(bare("How one port-scan alert moves through Aegis, start to finish"));
+    expect(title.filter((l) => l.endsWith("-") || l.split(" ").length < 2)).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(vp[0]);
     await ctx.close();
   });
 }

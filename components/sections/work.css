@@ -417,6 +417,8 @@
   line-height: var(--cine-leading-label);
   color: var(--cine-faint);
 }
+/* The trace's title wraps on phones: in even lines, so no word is left alone on the last. */
+.wk__aegis-label { text-wrap: balance; }
 .wk__aegis-flow li { position: relative; }
 .wk__aegis-flow b {
   display: block;
@@ -593,6 +595,8 @@
   line-height: var(--cine-leading-lead);
   color: var(--cine-mist);
 }
+/* The lead's hyphenated words, and a word with its dash, stay on one line (Contact.tsx). */
+.wk__contact-lead span { white-space: nowrap; }
 /* The four facts: a quiet two-by-two list, each on its own hairline (one column on phones). */
 .wk__about-facts { margin-top: var(--cine-space-5); max-width: 36rem; display: grid; grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 640px) {

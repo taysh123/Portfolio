@@ -12,7 +12,7 @@ test("landmarks and heading outline: one h1, then each section as an h2 and each
   for (let i = 1; i < outline.length; i++) expect(outline[i] - outline[i - 1], `h${outline[i - 1]} → h${outline[i]} at ${i}`).toBeLessThanOrEqual(1);
   expect(await page.locator("main h2").allTextContents()).toEqual([
     "Featured work", "Four projects, built end to end.", "Two more",
-    "Engineer by training. Builder by nature.", "Tools behind the work.", "Think. Build. Ship.", "Let's build something people use."]);
+    "Solid foundations. Real products.", "Tools behind the work.", "Think. Build. Ship.", "Let's build something people use."]);   // About: Tay, 2026-11-21, copy pass
 });
 
 test("no eyebrow, no chapter numbers, no metric tiles, no tracked monospace labels on the page", async ({ page }) => {

@@ -93,7 +93,8 @@ describe("DeveloperOS: evidence, then cite or decline", () => {
   it("the refusal is the app's own text, shown once (the Learning Center's notice above it is the same refusal)", () => {
     expect(dosRefusal.message).toBe("I don't have enough indexed material to teach that. Try `devos index <path>`, give a file path, or rephrase the topic. (Not guessing.)");
     expect(Object.keys(dosRefusal)).toEqual(["message"]);
-    expect(JSON.stringify(dosRefusalCaption)).not.toMatch(/it says so/);
+    // The caption introduces it in Tay's words (2026-11-21, copy pass); it no longer bans "it says so".
+    expect(dosRefusalCaption.body).toBe("When nothing in your code supports an answer, it says so instead of guessing. The app's actual message:");
   });
 });
 

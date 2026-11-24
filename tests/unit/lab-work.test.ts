@@ -14,7 +14,7 @@ import { LAB_IMAGES, captureOf } from "@/data/lab-images";
 import { dict } from "@/lib/dict";
 import { panels, DOS_CHIPS, PHONE_CROP } from "@/components/sections/panels";
 import { aboutBlock } from "@/components/sections/aboutBlock";
-import { stackBlock, SECURITY_ROWS, SECURITY_EVIDENCE } from "@/components/sections/stackBlock";
+import { stackBlock, SECURITY_ROWS, STATED_ROWS, SECURITY_EVIDENCE } from "@/components/sections/stackBlock";
 import { tbsBlock, DOS_EVIDENCE } from "@/components/sections/tbsBlock";
 import { contactBlock } from "@/components/sections/contactBlock";
 import { pillars } from "@/data/approach";
@@ -53,7 +53,10 @@ describe("honest content", () => {
   });
   it("each state is the site's own status string (DeveloperOS adds the version its own data states)", () => {
     expect(Object.fromEntries(panels.map((p) => [p.id, p.state]))).toEqual({
-      poker: dict.status.stores, aegis: dict.status.local, developeros: `${dict.status.released} · v1.0.0`, "gravity-flow": dict.status.rc });
+      poker: dict.status.stores, aegis: dict.aegis.state, developeros: `${dict.status.released} · v1.0.0`, "gravity-flow": dict.status.rc });
+    // Aegis's panel says how it runs; the shared label stays, for the case studies (Tay, 2026-11-24, copy pass B).
+    expect([dict.aegis.state, dict.status.local]).toEqual(["Runs locally (Docker Compose)", "Runs locally"]);
+    expect([project("aegis").status, project("job-assistant").status]).toEqual(["local", "local"]);
     expect(project("developeros").context).toContain("v1.0.0");
     expect(project("gravity-flow").status).toBe("rc");   // a release candidate: never "live" or "published"
   });
@@ -326,7 +329,8 @@ describe("P4: DeveloperOS, cite or decline", () => {
     const jsx = code(dos.slice(dos.indexOf("export function DosExplainer")));
     expect([...jsx.matchAll(/>([^<>{}]+)</g)].map((m) => m[1].trim()).filter(Boolean)).toEqual([]);
     for (const s of [dict.dos.flow, ...dosFlow.map((f) => f.body), dosRefusalCaption.body, dosRefusal.message]) expect(dos).not.toContain(s);
-    expect(dict.dos.flow).toBe("From your files to an answer, as implemented");   // the rail's name, shown (Tay's decision)
+    // The rail's name, shown (Tay's decision); its words are Tay's (2026-11-21, copy pass).
+    expect(dict.dos.flow).toBe("How DeveloperOS answers a question about your code");
   });
   it("a server component that holds still: no client code, no reveal, nothing to focus", () => {
     // "The carousel and Stack's filter are the only client code under the hero" (above) reads Work.tsx; this holds it here.
@@ -441,19 +445,19 @@ describe("About (P3.3): the live About section's own words, ending on the facts 
   const hero = read("components/sections/Hero.tsx");
   const shown = [aboutBlock.eyebrow, ...aboutBlock.title, aboutBlock.lede, ...aboutBlock.facts];
 
+  // Tay, 2026-11-21, copy pass: the title, the lede and the degree's year.
   it("the eyebrow, the title and the four facts are the live ones, word for word", () => {
     expect(aboutBlock.eyebrow).toBe(dict.nav.about);
     expect(aboutBlock.title).toEqual(about.title);
-    expect([...aboutBlock.title]).toEqual(["Engineer by training.", "Builder by nature."]);
+    expect([...aboutBlock.title]).toEqual(["Solid foundations.", "Real products."]);
     expect(aboutBlock.facts).toEqual(about.facts);
-    expect([...aboutBlock.facts]).toEqual(["B.Sc. in Computer Science", "Full-stack: web, mobile, and backend", "Based in Israel", "Working in English and Hebrew"]);
+    expect([...aboutBlock.facts]).toEqual(["B.Sc. in Computer Science (2026)", "Full-stack: web, mobile, and backend", "Based in Israel", "Working in English and Hebrew"]);
   });
-  it("the lede is two sentences of the live copy, word for word (who, then what with)", () => {
-    const [who, what] = ["I'm a Computer Science graduate who enjoys turning complex ideas into useful, dependable software.",
-      "Today, I work with C#/.NET, TypeScript, and Python, taking projects from an initial idea to working software."];
-    expect(aboutBlock.lede).toBe(`${who} ${what}`);
-    expect(about.paragraphs[0].startsWith(who)).toBe(true);
-    expect(about.paragraphs[1]).toContain(` ${what} `);
+  it("the lede is Tay's two sentences, word for word (who, then what with)", () => {
+    const [who, what] = ["I'm a Computer Science graduate who builds dependable software, from the first design to production.",
+      "I work across the stack: C#/.NET and ASP.NET Core, TypeScript with React and React Native, Python, Java and SQL, with PostgreSQL, Redis, RabbitMQ and Docker behind them, and local models through Ollama."];
+    expect(aboutBlock.lede).toBe(about.body);
+    expect(about.body).toBe(`${who} ${what}`);
   });
   it("R10: no availability line and no links; it ends on the facts", () => {
     expect(Object.keys(aboutBlock)).toEqual(["eyebrow", "title", "lede", "facts"]);
@@ -470,10 +474,11 @@ describe("About (P3.3): the live About section's own words, ending on the facts 
     expect(contactBlock.resume.href).toBe(resume.href);
     expect(contactBlock.profiles.map((p) => p.href).sort()).toEqual([socials.github.url, socials.linkedin.url].sort());
   });
-  it("no photo, no capture, no institution, no year or number of its own, and no private repository", () => {
+  it("no photo, no capture, no institution, no number of its own but the degree's year, and no private repository", () => {
     expect(code(block)).not.toMatch(/<img|<picture|<Shot|<Pic|<Image/);
     for (const t of [block, read("components/sections/aboutBlock.ts"), shown.join(" ")]) expect(namesAny(t)).toBe(false);
-    expect(shown.join(" ")).not.toMatch(/\d/);
+    // The one number shown is the degree's year (Tay, 2026-11-21, copy pass).
+    expect(shown.filter((s) => /\d/.test(s))).toEqual(["B.Sc. in Computer Science (2026)"]);
     expect(privateRepoLeaks(block + JSON.stringify(aboutBlock))).toEqual([]);
   });
   it("holds still and ships no client code: the page's one reveal stays the hero's", () => {
@@ -526,30 +531,40 @@ describe("Stack (P3.4): the live Stack's groups, tools and evidence, with a filt
   });
   it("each live tool carries exactly the flagships the live mapping finds for it (projectsFor), in Work order", () => {
     for (const g of groups) for (const t of g.tools) {
-      if (SECURITY_ROWS.some((r) => r.label === t.label)) continue;
+      if (SECURITY_ROWS.some((r) => r.label === t.label) || STATED_ROWS.some((r) => r.label === t.label)) continue;
       expect(t.projects, t.label).toEqual(g.id === "workflow" ? [] : projectsFor(t.label).filter((id) => FLAG.includes(id)));
     }
     expect(groups.find((g) => g.id === "security")!.tools[0].projects).toEqual(["poker", "aegis"]);   // JWT: T Poker · Aegis
+    // The one stated tool: T Poker's landing page imports Framer Motion; Aegis never does, and names it nowhere (Tay, 2026-11-24, copy pass B).
+    expect(STATED_ROWS.map((r) => [r.label, [...r.projects]])).toEqual([["Framer Motion", ["poker"]]]);
+    expect(tools.find((t) => t.label === "Framer Motion")!.projects).toEqual(["poker"]);
+    expect(JSON.stringify(project("aegis"))).not.toMatch(/framer/i);
     // The approved mapping, pinned (a tool's accessible text and hover title: its flagships, as the live Stack says them).
     expect(Object.fromEntries(tools.map((t) => [t.label, t.names]))).toEqual({
-      "C#": "T Poker, Aegis", TypeScript: "T Poker, Aegis, GRAVITY FLOW", Python: "DeveloperOS", Java: null,
+      "C#": "T Poker, Aegis", TypeScript: "T Poker, Aegis, GRAVITY FLOW", Python: "DeveloperOS", Java: "Orders & Delivery",
       JavaScript: "DeveloperOS", SQL: "T Poker, Aegis, DeveloperOS", "C++": null, C: null,
       React: "T Poker, Aegis, DeveloperOS", "Next.js": "Aegis", "React Native / Expo": "T Poker", "Tailwind CSS": "Aegis",
-      "Phaser 3": "GRAVITY FLOW", JavaFX: null, "Framer Motion": null,
+      "Phaser 3": "GRAVITY FLOW", JavaFX: "Orders & Delivery", "Framer Motion": "T Poker",
       "ASP.NET Core": "T Poker, Aegis", "RabbitMQ / MassTransit": "Aegis", "CQRS / MediatR": "T Poker",
       "Clean Architecture": "T Poker, Aegis", SignalR: "Aegis", REST: "T Poker, Aegis",
       JWT: "T Poker, Aegis", "Body HMAC": "Aegis", "CSRF token": "DeveloperOS",
       PostgreSQL: "T Poker, Aegis", "SQLite / FTS5": "DeveloperOS", Redis: "Aegis", "EF Core": "T Poker, Aegis", Ollama: "DeveloperOS",
       Docker: "T Poker, Aegis", "GitHub Actions": "T Poker, DeveloperOS, GRAVITY FLOW", xUnit: "T Poker, Aegis",
-      Testcontainers: "Aegis", Jest: "T Poker", Vitest: "GRAVITY FLOW", pytest: null, Playwright: null,
+      Testcontainers: "Aegis", Jest: "T Poker", Vitest: "GRAVITY FLOW", pytest: "Job Assistant", Playwright: null,
       Capacitor: "GRAVITY FLOW", PyInstaller: "DeveloperOS", Vercel: "T Poker", Railway: "T Poker", Firebase: "GRAVITY FLOW",
       Git: null, Linux: null, "Claude Code": null,
     });
   });
-  it("a tool no flagship uses names no project, so it shows under All only; the live notes are not shown", () => {
+  it("a tool no flagship uses shows under All only, and names only the Two more project its text names; the live notes are not shown", () => {
     expect(tools.filter((t) => !t.projects.length).map((t) => t.label))
-      .toEqual(["Java", "C++", "C", "JavaFX", "Framer Motion", "pytest", "Playwright", "Git", "Linux", "Claude Code"]);
-    for (const t of tools.filter((t) => !t.projects.length)) expect(t.names, t.label).toBeNull();
+      .toEqual(["Java", "C++", "C", "JavaFX", "pytest", "Playwright", "Git", "Linux", "Claude Code"]);
+    // Tay, 2026-11-24, copy pass B: pytest, Java and JavaFX, from the live mapping; the rest still name none.
+    const MORE = moreWork.map((m) => m.id) as string[];
+    for (const t of tools.filter((t) => !t.projects.length))
+      expect(t.names, t.label).toBe(projectsFor(t.label).filter((id) => MORE.includes(id)).map((id) => project(id).name).join(", ") || null);
+    expect(tools.filter((t) => !t.projects.length && t.names).map((t) => [t.label, t.names])).toEqual([["Java", "Orders & Delivery"], ["JavaFX", "Orders & Delivery"], ["pytest", "Job Assistant"]]);
+    // A tool a flagship uses names flagships only.
+    for (const t of tools.filter((t) => t.projects.length)) expect(t.names, t.label).toBe(t.projects.map((id) => project(id).name).join(", "));
     const notes = skillGroups.flatMap((g) => g.items.flatMap((i) => (i.note ? [i.note] : [])));
     for (const n of notes) expect(tools.map((t) => t.names ?? "").join(" | ")).not.toContain(n);
   });
@@ -576,7 +591,7 @@ describe("Stack (P3.4): the live Stack's groups, tools and evidence, with a filt
       expect(o.status).toBe(fmt(dict.stack.showing, { n: o.count, name: o.name }));
       expect(lensProjects.map((l) => l.id)).toContain(o.id);   // the live lens's own projects, never a fifth
     }
-    expect(lens.options.map((o) => o.status)).toEqual(["Showing the 18 tools T Poker uses.", "Showing the 19 tools Aegis uses.",
+    expect(lens.options.map((o) => o.status)).toEqual(["Showing the 19 tools T Poker uses.", "Showing the 19 tools Aegis uses.",
       "Showing the 9 tools DeveloperOS uses.", "Showing the 6 tools GRAVITY FLOW uses."]);
   });
   it("the filter is written from the options exactly as the Product Plates FILTER was: only the project's tools, no empty group", () => {
@@ -735,13 +750,13 @@ describe("Contact (P3.6): the live Contact section's own words, and its four lin
     expect([...c.title]).toEqual(["Let's build something", "people use."]);   // the live title (Tay, session 15)
     expect(c.title.join(" ")).not.toMatch(/meaningful/);                       // not the reference images' draft
     expect(c.lead).toBe(availability.detail);
-    expect(c.lead).toBe("I'm looking for a software engineering opportunity that fits my skills—on-site, hybrid, or remote.");
+    expect(c.lead).toBe("I'm looking for a software engineering role—backend, full-stack, AI or security. On-site or hybrid in central Israel, or remote.");   // Tay, 2026-11-21, copy pass
     expect(block).toMatch(/<span>\{c\.title\[0\]\}<\/span> <span>\{c\.title\[1\]\}<\/span>/);   // each half on its own line, as live
   });
   it("the lead shows only while the site says it is open (Tay, session 15)", () => {
     expect(availability.open).toBe(true);
     expect(src).toMatch(/lead: availability\.open \? availability\.detail : null,/);
-    expect(block).toMatch(/\{c\.lead && <p className="wk__contact-lead">\{c\.lead\}<\/p>\}/);
+    expect(block).toMatch(/\{c\.lead && <p className="wk__contact-lead">\{whole\(c\.lead\)\}<\/p>\}/);   // whole(): only spans round its pieces (Tay, 2026-11-24, copy pass B)
   });
   it("email: the live Contact's mailto, with its subject, in the same tab", () => {
     expect(c.email.href).toBe(`mailto:${socials.email}?subject=${encodeURIComponent(dict.contact.subject)}`);

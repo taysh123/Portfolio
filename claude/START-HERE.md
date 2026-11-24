@@ -19,8 +19,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
    - Tay reopened **D1** for it (2026-11-18). **D2 is still not reopened, so no WebGL.**
    - The Product Plates site it replaced is tagged **`product-plates-final`** (`443a1f9`).
 2. **Next, in this order (Tay, 2026-11-21): P4, then #22.** P4 runs one explainer per session: DeveloperOS (S30, PR
-   #28, merged as `7505b91`, live), Aegis (S31, PR #29, merged as `d0e5e45`, live), T Poker (S32, PR #30, for Tay's
-   review), then GRAVITY FLOW after #18 (the
+   #28, merged as `7505b91`, live), Aegis (S31, PR #29, merged as `d0e5e45`, live), T Poker (S32, PR #30, merged as
+   `5427e45`, live), then GRAVITY FLOW after #18 (the
    GRAVITY FLOW capture swap, whenever Tay has the image). Then #22 (per-browser tests). Low priority: #23 (S25) and #25 (S31). **P4's plan:** `docs/P4_PLAN.md` (S29, PR #27,
    merged as `57b9743`), **approved by Tay on 2026-11-21**, with his decisions at its top. `docs/ROADMAP.md` has each.
    - Done from S24's order: #20 (F2, Safari's focus in the sheets: S25, PR #23, merged as `7ebff9c`), #19 (Next
@@ -55,9 +55,9 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - The six security headers are exactly as before the merge.
   - One 2D canvas, `aria-hidden`, and zero WebGL contexts. 0 console errors at 390 and 1440.
 - **Production** = GitHub `taysh123/Portfolio` **`main`**, the source of truth.
-  - Deployed **`d0e5e45`**: PR #29 (P4's Aegis explainer), 2026-11-21 18:11Z (checked at S31's close: 0 console
-    errors, 0 CSP violations, 0 failed requests at 390 and 1440; Aegis's ring, the wide fork at 1440 and the stacked
-    branches at 390 live). Before it, `7505b91` (PR #28, P4's DeveloperOS explainer), `57b9743` (PR #27, the P4 plan), `c29c0b1` (PR #26, #24's audit), `5080de5` (PR #25, F1),
+  - Deployed **`5427e45`**: PR #30 (P4's T Poker explainer), 2026-11-21 19:41Z (checked at S32's close: 0 console
+    errors, 0 CSP violations, 0 failed requests at 390 and 1440; T Poker's steps drive its carousel live, and the
+    stylesheets are the local build's). Before it, `d0e5e45` (PR #29, P4's Aegis explainer), `7505b91` (PR #28, P4's DeveloperOS explainer), `57b9743` (PR #27, the P4 plan), `c29c0b1` (PR #26, #24's audit), `5080de5` (PR #25, F1),
     `ce818a0` (PR #24, Next 16.4.6), `7ebff9c` (PR #23, the shared focus trap), `2cc324c` (PR #22, docs) and the
     release, `3a98d22` (PR #21, 2026-11-20 02:53Z).
   - **Rollback**, if ever needed:
@@ -465,8 +465,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - Tay's review round: the branches stack below 400px (the restored `:155` now checks side by side at 430, stacked at
     390 and 320); `aegisCopy`'s comment fixed; the ring without darkening and the unused `onScreen` string kept; new
     low-priority backlog #25 (VoiceOver and the site's styled lists).
-- **S32 (2026-11-21): P4, T Poker's explainer: PR #30**, from `feat/p4-tpoker`, for Tay's review (option A, his go at
-  the session's start).
+- **S32 (2026-11-21): P4, T Poker's explainer: PR #30**, from `feat/p4-tpoker`, **merged by Tay as `5427e45`**
+  (Production) after his phone review (option A, his go at the session's start).
   - T Poker's slot holds three steps under "Walk through T Poker": a native radio group (one Tab stop) that drives the
     carousel. A step brings its screen to the front; moving the carousel checks the matching step, none for the
     podium and the stats. Without JS a step still swaps the screen (its two captures are in the server HTML, out of
@@ -476,6 +476,19 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - First-load JS +183 B gzip (the carousel's chunk only); the other three panels' server HTML byte-identical to
     `main`'s; the site's shared stylesheet unchanged. Test changes, each in its own commit, approved in the plan's
     decisions and at the session's start. Detail: `docs/WORKLOG.md`, "Session 32".
+- **S33 (2026-11-21): Tay's copy pass: PR #31**, from `copy/tay-pass-1`, for Tay's review.
+  - Eight strings in his exact words, one commit: DeveloperOS's rail name and refusal caption, Aegis's trace title,
+    Contact's lead, About's title, body and degree year (no institution), and the hero lede's unspaced dash. The
+    assistant's prompt says the same as Contact's lead.
+  - Checked first against the Stack: every tool in About's body lights a flagship except Java (Orders & Delivery only).
+    Tay kept it.
+  - The tests that pinned the old words changed in their own commit. `/`'s stylesheets and the share card are
+    byte-identical to `main`'s; first-load JS +0.02 KiB.
+  - **Part B, applied on Tay's yes (2026-11-24):** on the Stack, Framer Motion names T Poker, pytest Job Assistant, Java
+    and JavaFX Orders & Delivery (the filter keeps to the four flagships); Job Assistant's summary says "before sending
+    the results to Telegram"; Aegis's panel alone says "Runs locally (Docker Compose)". Three line wraps fixed, in
+    Contact's lead and the Aegis trace's title, with a new e2e test. Detail and the corrections to the first report:
+    `docs/WORKLOG.md`, "Session 33".
 - **The release track (P5/P6) is done.** Next, in this order (Tay, S24), each a PR on `main`:
   1. **#20:** F2, Safari's focus leaving the menu sheet or the chat for one Tab; the fix goes in the shared focus trap.
      **Done in S25** (PR #23, merged as `7ebff9c`).
@@ -486,16 +499,19 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   4. **#18:** the GRAVITY FLOW capture swap, whenever Tay provides the image.
   5. **P4**, the project demos, **before #22** (Tay, 2026-11-21): `docs/P4_PLAN.md`, approved. One explainer per
      session: DeveloperOS (**S30, PR #28, merged as `7505b91`**), Aegis (**S31, PR #29, merged as `d0e5e45`**), T Poker
-     (**S32, PR #30**), then GRAVITY FLOW after #18 (`docs/ROADMAP.md`, P4, with the restore record).
+     (**S32, PR #30, merged as `5427e45`**), then GRAVITY FLOW after #18 (`docs/ROADMAP.md`, P4, with the restore
+     record).
   6. **#22:** per-browser handling of the engine-specific tests.
   - Low priority (Tay, S25): **#23**, Safari's focus return after a modal opened by a mouse click. And (Tay, S31)
     **#25**, VoiceOver on Safari doesn't announce the site's styled lists as lists (consider `role="list"`).
   - Later, a small separate PR (Tay, S27): **#24**, dev-dependency audit hygiene. **Done in S28** (PR #26, merged as
     `c29c0b1`).
 
-## Open PRs / branches (S32, 2026-11-21; verified with `gh` and `git ls-remote`)
-- **PR #30** (`feat/p4-tpoker` → `main`), P4's T Poker explainer: **open, ready for review**, for Tay to merge.
-  After the merge: delete the branch once `git merge-base --is-ancestor` confirms it.
+## Open PRs / branches (S33, 2026-11-21; verified with `gh` and `git ls-remote`)
+- **PR #31** (`copy/tay-pass-1` → `main`), Tay's copy pass: **open, ready for review**, for Tay to merge. After the
+  merge: delete the branch once `git merge-base --is-ancestor` confirms it.
+- **PR #30** (`feat/p4-tpoker` → `main`), P4's T Poker explainer: **merged** by Tay on 2026-11-21 as `5427e45`; the
+  branch is deleted, local and remote.
 - **PR #29** (`feat/p4-aegis` → `main`), P4's Aegis explainer: **merged** by Tay on 2026-11-21 as `d0e5e45`; the
   branch is deleted, local and remote.
 - **PR #28** (`feat/p4-developeros` → `main`), P4's DeveloperOS explainer: **merged** by Tay on 2026-11-21 as
@@ -514,7 +530,7 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
 - **PR #22** (`docs/s24-release-closeout` → `main`), the S24 close-out: **merged** by Tay on 2026-11-20 as `2cc324c`.
 - **Deleted after their merges**, local and remote: `release/concept-a` (tip `5ea8d57`),
   `docs/s24-release-closeout`, `fix/f2-focus-trap`, `chore/next-16-4-6`, `fix/f1-launcher-focus`, `chore/dev-audit`,
-  `docs/p4-plan`, `feat/p4-developeros` and `feat/p4-aegis`.
+  `docs/p4-plan`, `feat/p4-developeros`, `feat/p4-aegis` and `feat/p4-tpoker`.
 - **Kept:** `proto/hero-a-cinematic` (tip `92b08fd`, local and remote; **draft PR #18**): not merged, by design. R1
   keeps it frozen as the record ("never merge, never delete"), so deleting it would also need R1 changed.
 - **Tag `product-plates-final`** (`8f0a96a`) on `443a1f9`, pushed in S17: the rollback and P4 restore point (R6, R15).
@@ -528,8 +544,8 @@ Tailwind v4, deployed on Vercel. Full stack and projects: see `docs/PROJECT_CONT
   - `feature/m1-iris-type-motion` (#8), `fix/docs-private-slug` (#9), `fix/m0-followups` (#7), `docs/m0-closeout` (#6).
 
 ## Waiting on Tay
-- **Review PR #30, T Poker's explainer** (S32), on his phone and its Preview (screenshots at 320, 390, 1024 and 1440
-  in the session's scratch only). Then he merges it, which ships the third P4 explainer.
+- **Review PR #31, his copy pass with Part B** (S33), on his phone and its Preview (screenshots at 390 and 1440 in the
+  session's scratch only). Then he merges it.
 - **Optional, on a Mac:** Playwright's WebKit can't reproduce Option+Tab, or Safari with macOS keyboard navigation off.
   Desktop Safari on production (PR #23 is live) would confirm both (the menu at a narrow width, the chat sheet, a case study).
 - **His manual steps after the release, if not done yet:**

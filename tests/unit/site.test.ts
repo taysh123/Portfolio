@@ -52,12 +52,13 @@ describe("the owner's words (2026-10-13)", () => {
     expect([namesAny("the Alpha Beta\nGamma one", t), namesAny("Alpha Gamma", t)]).toEqual([true, false]);
     expect([INSTITUTION.word.size, INSTITUTION.part.get(5)?.size, INSTITUTION.phrase.size]).toEqual([1, 2, 3]);
   });
+  // Tay, 2026-11-21, copy pass: Contact's lead, About's title and the degree's year.
   it("Contact says what the owner wrote", () => {
-    expect(getContent().availability.detail).toBe("I'm looking for a software engineering opportunity that fits my skills—on-site, hybrid, or remote.");
+    expect(getContent().availability.detail).toBe("I'm looking for a software engineering role—backend, full-stack, AI or security. On-site or hybrid in central Israel, or remote.");
   });
-  it("the title stays; the degree is shown on its own", () => {
-    expect(about.title).toEqual(["Engineer by training.", "Builder by nature."]);
-    expect(about.facts[0]).toBe("B.Sc. in Computer Science");
+  it("the title is the owner's; the degree is shown with its year and no institution", () => {
+    expect(about.title).toEqual(["Solid foundations.", "Real products."]);
+    expect(about.facts[0]).toBe("B.Sc. in Computer Science (2026)");
   });
 });
 
@@ -121,7 +122,8 @@ describe("the restored assistant (app/api/chat, components/chat)", () => {
     expect(route).toMatch(/do not claim it minimises the number of transfers/);
     expect(route).toMatch(/never call it pay-to-win/);
     expect(route).toMatch(/academic coursework/);
-    expect(route).toMatch(/looking for a software engineering opportunity that fits his skills/);
+    // Contact's lead, in the assistant's words (Tay, 2026-11-21, copy pass).
+    expect(route).toMatch(/looking for a software engineering role \(backend, full-stack, AI or security\): on-site or hybrid in central Israel, or remote\./);
   });
   it("the launcher says it is an assistant, never a person", () => {
     expect(dict.chat.launcher).toBe("Chat with the assistant");
