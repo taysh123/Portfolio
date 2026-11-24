@@ -2,6 +2,10 @@ import { ArrowUpRightIcon } from "@/components/ui/icons";
 import { dict } from "@/lib/dict";
 import { contactBlock as c } from "./contactBlock";
 
+/** The lead's pieces that stay on one line: a hyphenated word, and a word with the dash that follows it, so no line
+ *  starts with the dash. Only spans are added; the text is the site's own (Tay, 2026-11-24, copy pass B). */
+const whole = (text: string) => text.split(/(\S+—|\S+-\S+)/).map((t, i) => (i % 2 ? <span key={i}>{t}</span> : t));
+
 /**
  * Contact (P3.6), under Think · Build · Ship: the page's conclusion, as the live section has it. The live title on one
  * side; the live lead, one filled action (email) beside the two profiles, and the résumé as a quiet download beneath
@@ -22,7 +26,7 @@ export function Contact() {
         </h2>
       </div>
       <div className="wk__contact-body">
-        {c.lead && <p className="wk__contact-lead">{c.lead}</p>}
+        {c.lead && <p className="wk__contact-lead">{whole(c.lead)}</p>}
         <div className="wk__links wk__contact-links">
           <a href={c.email.href} className="wk__go wk__go--fill" data-email>{c.email.label}</a>
           <span className="wk__contact-profiles">
