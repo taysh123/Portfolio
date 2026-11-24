@@ -1,6 +1,6 @@
 import { projects } from "@/data/projects";
 import { skillGroups } from "@/data/skills";
-import { flagships } from "@/data/work";
+import { flagships, moreWork } from "@/data/work";
 import { projectsFor } from "@/data/stackLens";
 import { dict } from "@/lib/dict";
 import { fmt } from "@/lib/fmt";
@@ -12,6 +12,8 @@ import { fmt } from "@/lib/fmt";
  * - the groups, their tools and each group's evidence sentence are the live Stack's (data/skills.ts), word for word;
  * - which flagship uses each tool is the live mapping (projectsFor in data/stackLens.ts), kept to the four this page
  *   shows. Each tool carries it the live way: `data-p` for the filter, and the names in its accessible text;
+ * - a tool no flagship uses names the Two more project whose text names it (pytest, Java, JavaFX), in its accessible
+ *   text only: the filter keeps to the four (Tay, 2026-11-24, copy pass B);
  * - the filter is written from the options exactly as the live Stack writes its FILTER: a chosen project shows only
  *   its tools, and no group left empty.
  * tests/unit/lab-work.test.ts holds every string to its source.
@@ -22,6 +24,7 @@ import { fmt } from "@/lib/fmt";
  */
 
 const FLAGSHIPS: readonly string[] = flagships.map((f) => f.id);
+const MORE: readonly string[] = moreWork.map((m) => m.id);
 const project = (id: string) => projects.find((p) => p.id === id)!;
 
 /** The tool that moves into Security, out of Services and APIs. */
@@ -39,29 +42,40 @@ export const SECURITY_ROWS = [
 export const SECURITY_EVIDENCE =
   "Aegis authenticates agent ingestion by body HMAC and uses JWT (RS256); DeveloperOS compares a per-instance CSRF token with hmac.compare_digest.";
 
+/** A tool whose project is stated here, because that project's text doesn't name it: T Poker's landing page imports
+ *  Framer Motion, and its data presents the app (Tay, 2026-11-24, copy pass B). */
+export const STATED_ROWS = [{ label: "Framer Motion", projects: ["poker"] }] as const;
+
 export type StackTool = { label: string; projects: readonly string[]; names: string | null };
 export type StackGroup = { id: string; title: string; tools: StackTool[]; evidence: string };
 
-/** `names` is the live Stack's accessible text and hover title for a tool: its projects, comma-separated. */
-const tool = (label: string, ids: readonly string[]): StackTool =>
-  ({ label, projects: ids, names: ids.length ? ids.map((id) => project(id).name).join(", ") : null });
-const flagshipsFor = (label: string) => projectsFor(label).filter((id) => FLAGSHIPS.includes(id));
+/** `names` is the live Stack's accessible text and hover title for a tool: its projects, comma-separated. `projects`
+ *  is what the filter reads; `named` differs from it only for a tool no flagship uses. */
+const tool = (label: string, ids: readonly string[], named: readonly string[] = ids): StackTool =>
+  ({ label, projects: ids, names: named.length ? named.map((id) => project(id).name).join(", ") : null });
+const flagshipsFor = (label: string): readonly string[] =>
+  STATED_ROWS.find((r) => r.label === label)?.projects ?? projectsFor(label).filter((id) => FLAGSHIPS.includes(id));
+/** A group's row: its flagships; or, with none, the Two more projects whose text names the tool. */
+const row = (label: string): StackTool => {
+  const ids = flagshipsFor(label);
+  return tool(label, ids, ids.length ? ids : projectsFor(label).filter((id) => MORE.includes(id)));
+};
 
 const groups: StackGroup[] = skillGroups.flatMap((g) => {
-  const row: StackGroup = {
+  const group: StackGroup = {
     id: g.id,
     title: g.title,
-    tools: g.items.filter((i) => i.label !== MOVED).map((i) => tool(i.label, g.related === false ? [] : flagshipsFor(i.label))),
+    tools: g.items.filter((i) => i.label !== MOVED).map((i) => (g.related === false ? tool(i.label, []) : row(i.label))),
     evidence: g.evidence,
   };
-  if (g.id !== "service") return [row];
+  if (g.id !== "service") return [group];
   const security: StackGroup = {
     id: "security",
     title: "Security",
     tools: [tool(MOVED, flagshipsFor(MOVED)), ...SECURITY_ROWS.map((s) => tool(s.label, s.projects))],
     evidence: SECURITY_EVIDENCE,
   };
-  return [row, security];
+  return [group, security];
 });
 
 /** The filter's options: the four flagships in Work order, each with how many tools it lights and the live status line. */

@@ -5,7 +5,7 @@ import { StackFilter } from "./StackFilter";
  * Stack (P3.4), under About: the tools behind the work, as the live Stack showed them (product-plates-final:
  * components/sections/Stack.tsx), in the cinematic layer. One row per group: its name, its tools on one wrapping line, and the group's evidence
  * sentence under them. Each tool carries its flagships the live way: `data-p` for the filter, and the names in its
- * accessible text and hover title.
+ * accessible text and hover title (a tool no flagship uses names its Two more project there: stackBlock.ts).
  *
  * Above the groups, "Filter by project" (StackFilter.tsx, the one client island here): pressing a project lights its
  * tools and dims the rest. Server-rendered otherwise; without JavaScript the full list shows. Nothing in it moves.
