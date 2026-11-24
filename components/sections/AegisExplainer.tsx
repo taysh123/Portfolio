@@ -2,7 +2,10 @@ import { aegisCopy, aegisTrace } from "@/data/work";
 import { dict } from "@/lib/dict";
 
 type Step = { k: string; name: string; body: string };
-const step = (s: Step) => <><b>{s.name}</b><span>{s.body}</span></>;
+/** A word and the dash that follows it stay on one line, so no line of a step starts with the dash, as in Contact's lead
+ *  (Contact.tsx). Only spans are added; the text is the site's own (Tay, 2026-11-24, copy pass B). */
+const held = (text: string) => text.split(/(\S+—)/).map((t, i) => (i % 2 ? <span key={i}>{t}</span> : t));
+const step = (s: Step) => <><b>{s.name}</b><span>{held(s.body)}</span></>;
 
 /**
  * Aegis, one alert start to finish (P4, docs/P4_PLAN.md §3.2): the panel's explainer, in its own row under the words

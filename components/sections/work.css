@@ -435,6 +435,8 @@
   line-height: var(--cine-leading-label);
   color: var(--cine-mist);
 }
+/* A step's word with its dash stays on one line (AegisExplainer.tsx). */
+.wk__aegis-flow [data-k] > span > span { white-space: nowrap; }
 .wk__aegis-flow [data-k]::before, .wk__aegis-fork::before {
   content: "";
   position: absolute;
