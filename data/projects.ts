@@ -458,7 +458,7 @@ export const projects: Project[] = [
     name: "Job Assistant",
     tagline: "Seven job sources, one Telegram digest, and a deliberate refusal to auto-apply",
     summary:
-      "Collects listings from seven source adapters, then filters and deduplicates them before delivery. LinkedIn data comes from alert emails over IMAP—not page scraping.",
+      "Collects listings from seven source adapters, then filters and deduplicates them before sending the results to Telegram. LinkedIn data comes from alert emails over IMAP—not page scraping.",
     description:
       "Pulls software-engineering postings from seven adapters, scores them against a deterministic rule engine of 310 filter terms, deduplicates across sources with different shapes, and delivers a single paginated Telegram digest whose job cards carry Save, Ignore, Open and Mark-Applied actions. It began as free GitHub Actions crons that committed SQLite back into the repo, and has since been rebuilt around one always-on process that runs in a Docker container.",
     context: "Solo build · Snapshot (June 2026): 287 job listings collected across 57 runs",
